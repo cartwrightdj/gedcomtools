@@ -1,0 +1,147 @@
+{
+  "description": "Example GEDCOM X file demonstrating all major types",
+  "attribution": {
+    "contributor": { "resource": "#agent1" },
+    "modified": "2024-07-21T12:00:00Z",
+    "changeMessage": "Initial example with all types"
+  },
+  "persons": [
+    {
+      "id": "P1",
+      "principal": true,
+      "names": [
+        {
+          "nameForms": [
+            {
+              "fullText": "John Andrew Smith",
+              "parts": [
+                { "type": "http://gedcomx.org/Given", "value": "John Andrew" },
+                { "type": "http://gedcomx.org/Surname", "value": "Smith" }
+              ]
+            }
+          ]
+        }
+      ],
+      "gender": {
+        "type": "http://gedcomx.org/Male"
+      },
+      "facts": [
+        {
+          "type": "http://gedcomx.org/Birth",
+          "date": {
+            "original": "1 January 1900",
+            "formal": "+1900-01-01"
+          },
+          "place": {
+            "original": "Boston, Massachusetts, USA",
+            "description": "#place1"
+          }
+        },
+        {
+          "type": "http://gedcomx.org/Death",
+          "date": { "original": "5 May 1975", "formal": "+1975-05-05" },
+          "place": { "original": "New York, USA", "description": "#place2" }
+        }
+      ],
+      "sources": [{ "description": "#src1" }],
+      "identifiers": [
+        { "type": "http://gedcomx.org/Persistent", "value": "urn:uuid:1234" }
+      ],
+      "notes": [
+        {
+          "text": "Veteran of World War I"
+        }
+      ],
+      "analysis": { "resource": "#analysis1" }
+    }
+  ],
+  "relationships": [
+    {
+      "type": "http://gedcomx.org/Couple",
+      "person1": { "resource": "#P1" },
+      "person2": { "resource": "#P2" },
+      "facts": [
+        {
+          "type": "http://gedcomx.org/Marriage",
+          "date": { "original": "1920", "formal": "+1920" },
+          "place": { "original": "Chicago, IL" }
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc1",
+      "textType": "plain",
+      "text": "Marriage certificate of John and Mary Smith.",
+      "type": "http://gedcomx.org/MarriageCertificate",
+      "attribution": { "contributor": { "resource": "#agent1" } }
+    }
+  ],
+  "sourceDescriptions": [
+    {
+      "id": "src1",
+      "citations": [
+        {
+          "value": "Birth certificate for John A. Smith, Massachusetts Vital Records"
+        }
+      ],
+      "titles": [{ "value": "Birth Record of John A. Smith" }],
+      "mediator": { "resource": "#agent2" },
+      "sources": [{ "description": "#doc1" }],
+      "about": "http://example.com/sources/record1",
+      "coverage": [{ "temporal": { "formal": "+1900-01-01" }, "spatial": { "description": "#place1" } }],
+      "analysis": { "resource": "#analysis1" }
+    }
+  ],
+  "places": [
+    {
+      "id": "place1",
+      "names": [{ "value": "Boston, Massachusetts, USA" }],
+      "type": "http://gedcomx.org/City"
+    },
+    {
+      "id": "place2",
+      "names": [{ "value": "New York, USA" }],
+      "type": "http://gedcomx.org/City"
+    }
+  ],
+  "agents": [
+    {
+      "id": "agent1",
+      "names": [{ "value": "David Genealogist" }],
+      "homepage": "http://example.com/agent1"
+    },
+    {
+      "id": "agent2",
+      "names": [{ "value": "National Archives" }],
+      "homepage": "http://archives.gov"
+    }
+  ],
+  "events": [
+    {
+      "type": "http://gedcomx.org/Christening",
+      "date": { "original": "15 Jan 1900", "formal": "+1900-01-15" },
+      "place": { "description": "#place1" },
+      "roles": [
+        {
+          "person": { "resource": "#P1" },
+          "type": "http://gedcomx.org/Principal"
+        }
+      ]
+    }
+  ],
+  "attributions": [
+    {
+      "contributor": { "resource": "#agent1" },
+      "modified": "2024-07-21T12:00:00Z"
+    }
+  ],
+  "analyses": [
+    {
+      "id": "analysis1",
+      "contributor": { "resource": "#agent1" },
+      "created": "2024-07-20T00:00:00Z"
+    }
+  ]
+}

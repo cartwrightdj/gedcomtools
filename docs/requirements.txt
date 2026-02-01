@@ -1,0 +1,8 @@
+python-dateutil
+orjson
+sphinx==8.2.3
+myst-parser
+furo
+sphinx-copybutton
+sphinx-togglebutton
+sphinx-rtd-theme>=3.0.0

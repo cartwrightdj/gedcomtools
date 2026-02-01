@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gedcomtools"
+version = "0.5.21"
+description = "Gedcom-X tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "orjson","python-dateutil",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["gedcomtools*"]
