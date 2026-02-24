@@ -1,4 +1,15 @@
-from typing import Any, Dict, Optional, List
+"""
+Address data types for the GedcomX conceptual model.
+
+This module contains classes used to represent postal addresses and related
+components in GEDCOMX documents. These classes follow the GedcomX v1
+conceptual model specification.
+
+Classes:
+    Address: Represents a structured postal address.
+"""
+
+from typing import Optional
 
 """
 ======================================================================
@@ -7,10 +18,11 @@ from typing import Any, Dict, Optional, List
  Author:  David J. Cartwright
  Purpose: 
 
- Created: 2025-08-25
+ Created: 2026-02-01
  Updated:
    - 2025-09-03: _from_json_ refactoring
    - 2025-09-09: added schema_class
+   - 2026-02-01: docstrings, and removed logging (to be fixed in the future)
    
 ======================================================================
 """
@@ -20,21 +32,19 @@ from typing import Any, Dict, Optional, List
 GEDCOM Module Types
 ======================================================================
 """
-from ..logging_hub import hub, logging
 from .schemas import extensible
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
+#TODO Logging for serialization/deserilzation
 #=====================================================================
 
 @extensible()
 class Address:
-    """A GedcomX Address Data Type
-    A GedcomX Address Data Type.
+    """
+    GedcomX address data type.
 
     Represents a postal address according to the GedcomX conceptual model.
 
@@ -50,24 +60,43 @@ class Address:
         street4 (str, optional): Fourth street address line.
         street5 (str, optional): Fifth street address line.
         street6 (str, optional): Sixth street address line.
+
+    Attributes:
+        identifier (str): GedcomX identifier URI.
+        version (str): GedcomX conceptual model version URI.
+
+    Example:
+        >>> addr = Address(
+        ...     street="123 Main St",
+        ...     city="Springfield",
+        ...     stateOrProvince="IL",
+        ...     postalCode="62704",
+        ...     country="USA"
+        ... )
+        >>> addr.city
+        'Springfield'
+        >>> addr.postalCode
+        '62704'
     """
 
     identifier = "http://gedcomx.org/v1/Address"
-    version = 'http://gedcomx.org/conceptual-model/v1'
+    version = "http://gedcomx.org/conceptual-model/v1"
 
-    def __init__(self, value: Optional[str] = None,
-                 city: Optional[str] = None,
-                 country: Optional[str] = None,
-                 postalCode: Optional[str] = None,
-                 stateOrProvince: Optional[str] = None,
-                 street: Optional[str] = None,
-                 street2: Optional[str] = None,
-                 street3: Optional[str] = None,
-                 street4: Optional[str] = None,
-                 street5: Optional[str] = None,
-                 street6: Optional[str] = None):
-        
-        self._value = value #TODO impliment a parser for date strings.
+    def __init__(
+        self,
+        value: Optional[str] = None,
+        city: Optional[str] = None,
+        country: Optional[str] = None,
+        postalCode: Optional[str] = None,
+        stateOrProvince: Optional[str] = None,
+        street: Optional[str] = None,
+        street2: Optional[str] = None,
+        street3: Optional[str] = None,
+        street4: Optional[str] = None,
+        street5: Optional[str] = None,
+        street6: Optional[str] = None,
+    ):
+        self._value = value  # TODO: implement structured address parsing
         self.city = city
         self.country = country
         self.postalCode = postalCode

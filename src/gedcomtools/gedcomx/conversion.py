@@ -58,10 +58,7 @@ from .textvalue import TextValue
 from .uri import URI
 
 from gedcomtools.loggingkit import get_log
-
-APP = "gedcomtools"
-CHANNEL = "conversion"
-log = get_log(CHANNEL, app_name=APP)
+log = get_log(__name__)
 
 T = TypeVar("T")
 K = TypeVar("K", bound=Hashable)
@@ -116,7 +113,6 @@ class gxoObjectStack:
     def __repr__(self) -> str:
         keys = ", ".join(str(k) for k in sorted(self._data.keys()))
         return f"gxoObjectStack(levels=[{keys}])"
-
 
 class GedcomConverter:
     type_name_type = {"aka": NameType.AlsoKnownAs}
@@ -866,6 +862,15 @@ class GedcomConverter:
                 self._family_parser.set_wife(wife)
                 log.debug(f"found husband: {wife}")
                 self.object_map[record.level] = wife
+    
+    def handle_chil(self, record: Element):
+        if record is not None:   
+            id = record.value
+            if id:
+                child = self.gedcomx.get_person_by_id(id)
+                self._family_parser.add_child(child)
+                log.debug(f"found child: {child}")
+                self.object_map[record.level] = child
 
     def handle_famc(self, record: Element) -> None:
         #TODO

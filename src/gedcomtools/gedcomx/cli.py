@@ -1,6 +1,12 @@
 from typing import Any, Iterable, Sequence, get_origin
 from .schemas import SCHEMA   # adjust as needed
+from .serialization import Serialization
+from pathlib import Path
+import json
 
+
+from gedcomtools.loggingkit import setup_logging, get_log 
+log = get_log()
 
 def _is_collection_type(tp: Any) -> bool:
     """
@@ -107,3 +113,49 @@ def objects_to_schema_table(
         lines.append(fmt_row(r))
 
     return "\n".join(lines)
+
+def write_jsonl(
+    top_level_collection: Iterable,
+    output_file: Path,
+    overwrite: bool = False,
+    append: bool = False,
+) -> int:
+    """
+    Write an iterable of objects to a JSONL file.
+    Returns the number of records written.
+
+    Args:
+        top_level_collection: Iterable of serializable objects.
+        output_file: Path to the output .jsonl file.
+        overwrite: If True, overwrite existing file. Mutually exclusive with append.
+        append: If True, append to existing file. Mutually exclusive with overwrite.
+
+    Raises:
+        FileExistsError: if file exists and neither overwrite nor append is set.
+        ValueError: if both overwrite and append are set.
+    """
+    log.debug("Starting jsonl write")
+    if overwrite and append:
+        raise ValueError("overwrite and append are mutually exclusive.")
+
+    if output_file.exists():
+        if overwrite:
+            log.info("Overwriting existing file: %s", output_file.name)
+        elif append:
+            log.info("Appending to existing file: %s", output_file.name)
+        else:
+            raise FileExistsError(f"Output file already exists: {output_file}. Use overwrite=True or append=True.")
+    else:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    mode = "a" if append else "w"
+    count = 0
+
+    with output_file.open(mode, encoding="utf-8") as f:
+        for item in top_level_collection:
+            data = Serialization.serialize(item)
+            f.write(json.dumps(data, ensure_ascii=False) + "\n")
+            count += 1
+
+    log.info("Wrote %d records to %s", count, output_file.name)
+    return count

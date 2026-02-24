@@ -132,6 +132,7 @@ class PlaceDescription(Subject):
         return type_as_dict if type_as_dict != {} else None
         return Serialization.serialize_dict(type_as_dict) 
 
+'''
     @classmethod
     def _from_json_(cls, data: Any, context: Any = None) -> "PlaceDescription":
         """
@@ -172,3 +173,4 @@ class PlaceDescription(Subject):
             person_data["spatialDescription"] = Resource._from_json_(sd, context)
 
         return cls(**person_data)   
+'''

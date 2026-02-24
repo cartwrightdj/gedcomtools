@@ -54,7 +54,6 @@ class FamilyParser:
     
     def add_note(self, note: Note):
         self.marr_fact.add_note(note)
-
         
     def set_marr_date(self,record: Element):
         self.marr_date = record.value
@@ -68,7 +67,6 @@ class FamilyParser:
             self.gedcomx.add_place_description(place_des)
             self.marr_fact.place = PlaceReference(original=record.value, description=place_des)
             
-    
     def set_husband(self, husband:Person):
         if husband is not None:
             if self.parent1 is not None: raise ValueError
@@ -90,4 +88,14 @@ class FamilyParser:
                 
                 self.couple_added = True
             self.parent2 = wife
+    
+    def add_child(self, child:Person):
+        if child is not None:
+            if self.parent1 is not None:
+                p1child = Relationship(person1=self.parent1,person2=child,type=RelationshipType.ParentChild)
+                self.gedcomx.add_relationship(p1child)
+            if self.parent2 is not None:
+                p2child = Relationship(person1=self.parent2,person2=child,type=RelationshipType.ParentChild)
+                self.gedcomx.add_relationship(p2child)
+
             

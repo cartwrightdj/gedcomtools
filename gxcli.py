@@ -16,6 +16,7 @@ from __future__ import annotations
     - 2025-10-25 Shell._cmd_getattr: REPL helper to inspect any attribute with kind
     - 2025-11-12 ls: show item IDs in preview and allow cd by id in list-like containers
     - 2026-02-01 added loggingkit, and _cmd_log
+    - 2026-02-23 jsonl to cmd_write, if current node is an iterable, it serializes is to jsonl file
 ======================================================================
 """
 
@@ -32,6 +33,7 @@ import shutil
 import sys
 import traceback
 from dataclasses import asdict, is_dataclass
+from pathlib import Path
 from typing import Any, Dict, Iterable, get_args, get_origin
 
 import orjson
@@ -41,17 +43,19 @@ import orjson
 GEDCOM Module Types
 ======================================================================
 """
+from gedcomtools.loggingkit import setup_logging, get_log, LoggerSpec
+mgr = setup_logging(app_name="gedcomtools")
+get_log("common").info("common is alive")
+
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
 from gedcomtools.gedcom.gedcom5x import Gedcom5x
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
-from gedcomtools.gedcomx.cli import objects_to_schema_table
+from gedcomtools.gedcomx.cli import objects_to_schema_table, write_jsonl
 from gedcomtools.gedcomx.arango import make_arango_graph_files
 
-from gedcomtools.loggingkit import setup_logging, get_log, LoggerSpec
-mgr = setup_logging("gedcomtools")  # console-only
-log = mgr.get_common()
-mgr.get_sublogger(LoggerSpec(name="conversion"))
+
+
 
 def _level_from_str(s: str) -> int:
     s = (s or "").strip().upper()
@@ -1962,13 +1966,13 @@ class Shell:
         else:
             print("Root is not a GedcomX object, no resolver available.")
 
-    def _cmd_write(self, args: list[str]) -> None:
+    def _cmd_write(self, args: list[str]) -> int | None:
         """
         write gx PATH
         Write current root as GEDCOM-X JSON.
         """
-        if len(args) < 2 or args[0] not in ["gx","adbg"]:
-            print("usage: write FORMAT[gx | adbg] PATH")
+        if len(args) < 2 or args[0] not in ["gx","adbg","jsonl"]:
+            print("usage: write FORMAT[gx | adbg | jsonl] PATH")
             return
         if args[0] == "gx":
             js = orjson.dumps(
@@ -1977,10 +1981,30 @@ class Shell:
             )
             with open(args[1], "wb") as f:
                 f.write(js)
+        elif args[0] == "jsonl":
+            if self.cur is not None:
+                path = Path(args[1].strip('"').strip("'"))
+                return write_jsonl(self.cur, Path(path))
+            print("usage: write FORMAT[gx | adbg | jsonl] PATH")
+            return
         elif args[0] == "adbg":
             if args[1]:
+                argo_graph_files_folder = Path(args[1])
+                argo_graph_files_folder.mkdir(parents=True, exist_ok=True)
                 print('Writing Argo Graph Files')
                 file_specs = make_arango_graph_files(self.root)
+                persons_file = argo_graph_files_folder / 'persons.jsonl'
+                with persons_file.open("w", encoding="utf-8") as f:
+                    for line in file_specs['persons']:
+                        print('Writing Person')
+                        f.write(json.dumps(line))
+                        f.write("\n")
+                persons_to_file = argo_graph_files_folder / 'person_to_person.jsonl'
+                with persons_to_file.open("w", encoding="utf-8") as f:
+                    for line in file_specs['relationships']:
+                        print('Writing Relationship')
+                        f.write(json.dumps(line))
+                        f.write("\n")
 
     def _cmd_type(self, args: list[str]) -> None:
         """

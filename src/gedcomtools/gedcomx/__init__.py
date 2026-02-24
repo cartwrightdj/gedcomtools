@@ -57,9 +57,6 @@ SCHEMA.set_resource_class(Resource)
 from .uri import URI
 SCHEMA.set_uri_class(URI)
 
-
-
-
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
 #from ..xxxtranslation import g7toXtable
 
