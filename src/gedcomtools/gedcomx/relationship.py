@@ -34,14 +34,11 @@ from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
 from .subject import Subject
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 
@@ -227,17 +224,17 @@ class Relationship(Subject):
         )
 '''
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         return Serialization.serialize(self)
         
-        type_as_dict = (super()._as_dict_ or {}).copy()
+        type_as_dict = (super().to_dict or {}).copy()
 
         extras = {
             "type": getattr(self.type, "value", None),
-            "person1": Resource(target=self.person1)._as_dict_ if self.person1 else None,
-            "person2": Resource(target=self.person2)._as_dict_ if self.person2 else None,
-            "facts": [f._as_dict_ for f in self.facts if f] if getattr(self, "facts", None) else None,
+            "person1": Resource(target=self.person1).to_dict if self.person1 else None,
+            "person2": Resource(target=self.person2).to_dict if self.person2 else None,
+            "facts": [f.to_dict for f in self.facts if f] if getattr(self, "facts", None) else None,
         }
 
         # only keep non-empty values
@@ -246,7 +243,7 @@ class Relationship(Subject):
         return type_as_dict or None
 
     @classmethod
-    def _from_json_(cls, data: Dict[str, Any], context: Any = None) -> "Relationship":
+    def from_json(cls, data: Dict[str, Any], context: Any = None) -> "Relationship":
         """
         Create a Person instance from a JSON-dict (already parsed).
         """
@@ -254,7 +251,7 @@ class Relationship(Subject):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
         
         relationship_data: Dict[str, Any] = {}
-        relationship_data = Subject._dict_from_json_(data,context)
+        relationship_data = Subject.dict_from_json(data,context)
 
         if (id_ := data.get("id")) is not None:
             relationship_data["id"] = id_
@@ -264,14 +261,14 @@ class Relationship(Subject):
         
         # person1 / person2
         if (p1 := data.get("person1")) is not None:
-            relationship_data["person1"] = Resource._from_json_(p1,context)
+            relationship_data["person1"] = Resource.from_json(p1,context)
 
         if (p2 := data.get("person2")) is not None:
-            relationship_data["person2"] = Resource._from_json_(p2,context)
+            relationship_data["person2"] = Resource.from_json(p2,context)
 
         # facts
         if (facts := data.get("facts")) is not None:
-            relationship_data["facts"] = [Fact._from_json_(f, context) for f in facts]
+            relationship_data["facts"] = [Fact.from_json(f, context) for f in facts]
         
         return cls(**relationship_data)
 '''    

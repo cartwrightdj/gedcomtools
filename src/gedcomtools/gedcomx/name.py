@@ -31,14 +31,11 @@ from .note import Note
 from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 
@@ -157,7 +154,7 @@ class NamePart:
         self.qualifiers = qualifiers if qualifiers else []
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.type:
@@ -169,7 +166,7 @@ class NamePart:
         return type_as_dict if type_as_dict != {} else None
     
     @classmethod
-    def _from_json_(cls, data: dict, context=None) -> "NamePart":
+    def from_json(cls, data: dict, context=None) -> "NamePart":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
 
@@ -253,7 +250,7 @@ class NameForm:
         self.parts = parts if parts else []
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.lang:
@@ -261,12 +258,12 @@ class NameForm:
         if self.fullText:
             type_as_dict['fullText'] = self.fullText
         if self.parts:
-            type_as_dict['parts'] = [part._as_dict_ for part in self.parts if part is not None]
+            type_as_dict['parts'] = [part.to_dict for part in self.parts if part is not None]
         return type_as_dict if type_as_dict != {} else None
         return Serialization.serialize_dict(type_as_dict)
     
     @classmethod
-    def _from_json_(cls, data: dict, context=None) -> "NameForm":
+    def from_json(cls, data: dict, context=None) -> "NameForm":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
 
@@ -281,7 +278,7 @@ class NameForm:
 
         # List of parts
         if (parts := data.get("parts")) is not None:
-            name_form["parts"] = [NamePart._from_json_(p, context) for p in parts if p]
+            name_form["parts"] = [NamePart.from_json(p, context) for p in parts if p]
 
         return cls(**name_form)
     
@@ -374,22 +371,22 @@ class Name(Conclusion):
             self.nameForms[0].parts.append(namepart)
     
     @property
-    def _as_dict_(self):
-        type_as_dict = super()._as_dict_ or {}
+    def to_dict(self):
+        type_as_dict = super().to_dict or {}
         if self.type:
             type_as_dict['type'] = getattr(self.type, 'value', self.type)
         if self.nameForms:
-            type_as_dict['nameForms'] = [nf._as_dict_ for nf in self.nameForms if nf]
+            type_as_dict['nameForms'] = [nf.to_dict for nf in self.nameForms if nf]
         if self.date:
-            type_as_dict['date'] = self.date._as_dict_
+            type_as_dict['date'] = self.date.to_dict
         
         return type_as_dict if type_as_dict != {} else None
 
     
     @classmethod
-    def _from_json_(cls, data: dict,context = None) -> "Name":
+    def from_json(cls, data: dict,context = None) -> "Name":
         """Build a Name from JSON-like dict."""
-        name = Conclusion._dict_from_json_(data)
+        name = Conclusion.dict_from_json(data)
         
         # Enum
         if (typ := data.get("type")) is not None:
@@ -397,11 +394,11 @@ class Name(Conclusion):
 
         # List
         if (forms := data.get("nameForms")) is not None:
-            name["nameForms"] = [NameForm._from_json_(f, context) for f in forms]
+            name["nameForms"] = [NameForm.from_json(f, context) for f in forms]
 
         # Object
         if (date := data.get("date")) is not None:
-            name["date"] = Date._from_json_(date, context)
+            name["date"] = Date.from_json(date, context)
         
         return cls(**name)
     

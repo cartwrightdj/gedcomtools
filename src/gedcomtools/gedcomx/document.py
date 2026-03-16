@@ -27,14 +27,11 @@ from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
 from .source_description import SourceDescription, ResourceType
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible(toplevel=False)

@@ -15,15 +15,12 @@ from typing import Optional
    
 ======================================================================
 """
-from ..logging_hub import hub, logging
 from .schemas import extensible
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()

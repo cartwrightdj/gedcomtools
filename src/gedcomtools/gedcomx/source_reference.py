@@ -116,16 +116,16 @@ class SourceReference:
             raise ValueError("The 'text_to_add' must be a non-empty string.")
     
     @property    
-    def _as_dict_(self):
+    def to_dict(self):
         with hub.use(serial_log):
             log.debug(f"Serializing 'SourceReference' with 'descriptionId': '{self.descriptionId}'")
             type_as_dict = {}
             if self.description is not None:
-                type_as_dict['description']= URI(target=self.description)._as_dict_ if self.description is not None else None
+                type_as_dict['description']= URI(target=self.description).to_dict if self.description is not None else None
             if self.descriptionId is not None:
                 type_as_dict['descriptionId']= self.descriptionId.replace("\n"," ").replace("\r"," ") if self.descriptionId else None
             if self.attribution is not None:
-                type_as_dict['attribution'] = self.attribution._as_dict_ if self.attribution else None
+                type_as_dict['attribution'] = self.attribution.to_dict if self.attribution else None
             if self.qualifiers is not None and self.qualifiers != []:
                 type_as_dict['qualifiers'] = [qualifier.__as_dict__ for qualifier in self.qualifiers] if (self.qualifiers and len(self.qualifiers) > 0) else None
             log.debug(f"'SourceReference' serialized with fields: {type_as_dict.keys()}") 
@@ -133,7 +133,7 @@ class SourceReference:
         return type_as_dict if type_as_dict != {} else None
       
     @classmethod
-    def _from_json_(cls, data: dict, context=None) -> "SourceReference":
+    def from_json(cls, data: dict, context=None) -> "SourceReference":
         ref = {}
 
         # Scalars
@@ -147,17 +147,17 @@ class SourceReference:
                 ref["description"] = URI(description)
             elif isinstance(description, dict):
                 print(">>",description)
-                ref["description"] = Resource._from_json_(description, context)
+                ref["description"] = Resource.from_json(description, context)
                 assert False
         else:
             pass #TODO
             #print(ref["descriptionId"])
 
         if (attribution := data.get("attribution")) is not None:
-            ref["attribution"] = Attribution._from_json_(attribution, context)
+            ref["attribution"] = Attribution.from_json(attribution, context)
 
         if (qualifiers := data.get("qualifiers")) is not None:
-            ref["qualifiers"] = [Qualifier._from_json_(q, context) for q in qualifiers]
+            ref["qualifiers"] = [Qualifier.from_json(q, context) for q in qualifiers]
 
         return cls(**ref)
   

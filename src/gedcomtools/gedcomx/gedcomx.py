@@ -142,14 +142,14 @@ class TypeCollection(Generic[T]):
                             self._name_index.pop(name_value, None)
 
     # --- lookups ---
-    def byId(self, id_: Any) -> T | None:
+    def by_id(self, id_: Any) -> T | None:
         return self._id_index.get(id_)
 
-    def byUri(self, uri: Union[URI, str]) -> T | None:
+    def by_uri(self, uri: Union[URI, str]) -> T | None:
         key = uri.value if isinstance(uri, URI) else str(uri)  # type: ignore
         return self._uri_index.get(key)
 
-    def byName(self, sname: str | None) -> list[T] | None:
+    def by_name(self, sname: str | None) -> list[T] | None:
         if not sname:
             return None
         return self._name_index.get(sname.strip(), None)
@@ -194,16 +194,16 @@ class TypeCollection(Generic[T]):
     @property
     def _items_as_dict(self) -> dict:
         # {"Persons": [ ... ]}
-        return {} #{f"{self.item_type.__name__}s": [it._as_dict_ for it in self._items]}
+        return {} #{f"{self.item_type.__name__}s": [it.to_dict for it in self._items]}
 
     @property
-    def _as_dict_(self) -> dict:
+    def to_dict(self) -> dict:
         # {"persons": [ ... ]}
-        return {} #{f"{self.item_type.__name__.lower()}s": [it._as_dict_ for it in self._items]}
+        return {} #{f"{self.item_type.__name__.lower()}s": [it.to_dict for it in self._items]}
 
     @property
     def json(self) -> str:
-        return json.dumps(self._as_dict_, indent=4)
+        return json.dumps(self.to_dict, indent=4)
 
 
 @extensible()
@@ -359,7 +359,7 @@ class GedcomX:
                 if relationship.person1:
                     if relationship.person1.id is None:
                         relationship.person1.id = self.make_id()
-                    if not self.persons.byId(relationship.person1.id):
+                    if not self.persons.by_id(relationship.person1.id):
                         self.persons.append(relationship.person1)
                     if relationship.person1.id not in self.__relationship_table:
                         self.__relationship_table[relationship.person1.id] = []
@@ -371,7 +371,7 @@ class GedcomX:
                 if relationship.person2:
                     if relationship.person2.id is None:
                         relationship.person2.id = self.make_id() #TODO
-                    if not self.persons.byId(relationship.person2.id):
+                    if not self.persons.by_id(relationship.person2.id):
                         self.persons.append(relationship.person2)
                     if relationship.person2.id not in self.__relationship_table:
                         self.__relationship_table[relationship.person2.id] = []
@@ -392,12 +392,12 @@ class GedcomX:
 
     def add_agent(self,agent: Agent):
         if isinstance(agent,Agent) and agent is not None:
-            if self.agents.byId(agent.id) is not None:  
-                log.info(f"Did not add agent with Duplicate ID: {agent.id}")  
-                return False 
+            if self.agents.by_id(agent.id) is not None:
+                log.debug("Skipped duplicate agent id={}", agent.id)
+                return False
             else:
                 self.agents.append(agent)
-                log.info(f"Added agent with Duplicate ID: {agent.names}") 
+                log.debug("Added agent id={}", agent.id)
         else:
             raise ValueError()
     
@@ -407,8 +407,8 @@ class GedcomX:
             for current_event in self.events:
                 if event_to_add == current_event:
                     print("DUPLICATE EVENT")
-                    print(event_to_add._as_dict_)
-                    print(current_event._as_dict_)                  
+                    print(event_to_add.to_dict)
+                    print(current_event.to_dict)                  
                     return
             self.events.append(event_to_add)
         else:
@@ -465,21 +465,23 @@ class GedcomX:
     def _resolve(self,resource_reference: Union[URI,Resource]):
         #TODO indept URI search, URI index in collections
         if resource_reference:
-            if isinstance(resource_reference,Resource):
-                log.warning(f"Resource: {resource_reference}")
+            if isinstance(resource_reference, Resource):
                 ref_id = resource_reference.resource
                 ref_id = ref_id.partition("#")[2] if ref_id else None
-                ref = self.id_index.get(ref_id,None)
-            elif isinstance(resource_reference,URI):
+                ref = self.id_index.get(ref_id, None)
+            elif isinstance(resource_reference, URI):
                 ref_id = resource_reference.value
                 ref_id = ref_id.partition("#")[2] if ref_id else None
-                ref = self.id_index.get(ref_id,None)    
+                ref = self.id_index.get(ref_id, None)
             else:
                 raise TypeError()
-            
-            if ref is None: log.warning(f"Failed to locate object with id: {ref_id} from {type(resource_reference).__name__}")
-            else: log.info(f"Found id: {ref_id} of type {type(ref).__name__}")
+
+            if ref is None:
+                log.warning("Could not resolve id='{}' from {}", ref_id, type(resource_reference).__name__)
+            else:
+                log.debug("Resolved id='{}' to {}", ref_id, type(ref).__name__)
             return ref
-        else: log.info(f"_resolve was passed a NoneType as a reference.")
+        else:
+            log.debug("_resolve: reference was None")
 
     

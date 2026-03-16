@@ -228,7 +228,7 @@ class SourceDescription:
             raise ValueError(f"Cannot add title of type {type(title_to_add)}")
             
     @property
-    def _as_dict_(self) -> Dict[str, Any] | None:
+    def to_dict(self) -> Dict[str, Any] | None:
         from .serialization import Serialization
         return Serialization.serialize(self)
         with hub.use(serial_log):
@@ -238,7 +238,7 @@ class SourceDescription:
             if self.id:
                 type_as_dict['id'] = self.id
             if self.about:
-                type_as_dict['about'] = self.about._as_dict_
+                type_as_dict['about'] = self.about.to_dict
             if self.resourceType:
                 if isinstance(self.resourceType,str):
                     log.warning(f"'SourceDescription.resourceType' should not be a string {self.resourceType}")
@@ -246,43 +246,43 @@ class SourceDescription:
                 else:
                     type_as_dict['resourceType'] = self.resourceType.value 
             if self.citations:
-                type_as_dict['citations'] = [c._as_dict_ for c in self.citations if c]
+                type_as_dict['citations'] = [c.to_dict for c in self.citations if c]
             if self.mediaType:
                 type_as_dict['mediaType'] = self.mediaType
             
             if self.mediator:
-                type_as_dict['mediator'] = self.mediator._as_dict_
+                type_as_dict['mediator'] = self.mediator.to_dict
             if self.publisher:
-                type_as_dict['publisher'] = self.publisher._as_dict_ #TODO Resource this
+                type_as_dict['publisher'] = self.publisher.to_dict #TODO Resource this
             if self.authors:
-                type_as_dict['authors'] = [a._as_dict_ for a in self.authors if a]
+                type_as_dict['authors'] = [a.to_dict for a in self.authors if a]
             if self.sources:
-                type_as_dict['sources'] = [s._as_dict_ for s in self.sources if s]
+                type_as_dict['sources'] = [s.to_dict for s in self.sources if s]
             
             
             if self.analysis:
-                type_as_dict['analysis'] = self.analysis._as_dict_
+                type_as_dict['analysis'] = self.analysis.to_dict
             if self.componentOf:
-                type_as_dict['componentOf'] = self.componentOf._as_dict_ 
+                type_as_dict['componentOf'] = self.componentOf.to_dict 
             if self.titles:
-                type_as_dict['titles'] = [t._as_dict_ for t in self.titles if t]
+                type_as_dict['titles'] = [t.to_dict for t in self.titles if t]
             if self.notes:
-                type_as_dict['notes'] = [n._as_dict_ for n in self.notes if n]
+                type_as_dict['notes'] = [n.to_dict for n in self.notes if n]
             if self.attribution:
-                type_as_dict['attribution'] = self.attribution._as_dict_
+                type_as_dict['attribution'] = self.attribution.to_dict
             if self.rights:
-                type_as_dict['rights'] = [r._as_dict_ for r in self.rights if r]
+                type_as_dict['rights'] = [r.to_dict for r in self.rights if r]
             
             if self.coverage:
-                type_as_dict['coverage'] = [c._as_dict_ for c in self.coverage if c]
+                type_as_dict['coverage'] = [c.to_dict for c in self.coverage if c]
             
             if self.descriptions:
                 if not (isinstance(self.descriptions, list) and all(isinstance(x, TextValue) for x in self.descriptions)):
                     assert False
-                type_as_dict['descriptions'] = [d._as_dict_ for d in self.descriptions if d]
+                type_as_dict['descriptions'] = [d.to_dict for d in self.descriptions if d]
                 
             if self.identifiers:
-                type_as_dict['identifiers'] = self.identifiers._as_dict_
+                type_as_dict['identifiers'] = self.identifiers.to_dict
             
             if self.created is not None:
                 type_as_dict['created'] = self.created
@@ -292,7 +292,7 @@ class SourceDescription:
                 type_as_dict['published'] = self.published
             
             if self.repository:
-                type_as_dict['repository'] = self.repository._as_dict_ #TODO Resource this       
+                type_as_dict['repository'] = self.repository.to_dict #TODO Resource this       
 
             log.debug(f"'SourceDescription' serialized with fields: '{type_as_dict.keys()}'") 
             if type_as_dict == {}: log.warning("serializing and empty 'SourceDescription'")

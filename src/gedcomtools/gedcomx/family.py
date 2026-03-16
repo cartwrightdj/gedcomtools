@@ -60,8 +60,8 @@ class FamilyParser:
     
     def set_marr_plac(self,record: Element):
         from .place_reference import PlaceReference, PlaceDescription
-        if self.gedcomx.places.byName(record.value):
-            self.marr_fact.place = PlaceReference(original=record.value, description=self.gedcomx.places.byName(record.value)[0])
+        if self.gedcomx.places.by_name(record.value):
+            self.marr_fact.place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
         else:
             place_des = PlaceDescription(names=[TextValue(value=record.value)])
             self.gedcomx.add_place_description(place_des)

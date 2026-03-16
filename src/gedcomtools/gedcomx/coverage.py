@@ -21,15 +21,12 @@ GEDCOM Module Types
 """
 from .date import Date
 from .place_reference import PlaceReference
-from ..logging_hub import hub, logging
 from .schemas import extensible
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -44,23 +41,23 @@ class Coverage:
     # ...existing code...
 
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.spatial:
-            type_as_dict['spatial'] = getattr(self.spatial, '_as_dict_', self.spatial)
+            type_as_dict['spatial'] = getattr(self.spatial, 'to_dict', self.spatial)
         if self.temporal:  # (fixed: no space after the dot)
-            type_as_dict['temporal'] = getattr(self.temporal, '_as_dict_', self.temporal)
+            type_as_dict['temporal'] = getattr(self.temporal, 'to_dict', self.temporal)
         return Serialization.serialize_dict(type_as_dict) 
 
     @classmethod
-    def _from_json_(cls, data: dict):
+    def from_json(cls, data: dict):
         """
         Create a Coverage instance from a JSON-dict (already parsed).
         """
         from .place_reference import PlaceReference
         from .date import Date
 
-        spatial = PlaceReference._from_json_(data.get('spatial')) if data.get('spatial') else None
-        temporal = Date._from_json_(data.get('temporal')) if data.get('temporal') else None
+        spatial = PlaceReference.from_json(data.get('spatial')) if data.get('spatial') else None
+        temporal = Date.from_json(data.get('temporal')) if data.get('temporal') else None
         return cls(spatial=spatial, temporal=temporal)

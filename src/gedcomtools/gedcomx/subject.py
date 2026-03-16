@@ -80,11 +80,9 @@ class Subject(Conclusion):
         raise ValueError()
    
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         with hub.use(serial_log):
-            log.debug(f"Serializing 'Subject' with id: '{self.id}'")
-            type_as_dict = super()._as_dict_  # Start with base class fields
-            if type_as_dict is None: type_as_dict = {}
+            type_as_dict = super().to_dict or {}
             if self.extracted:
                 type_as_dict["extracted"] = self.extracted
             if self.evidence:
@@ -92,16 +90,16 @@ class Subject(Conclusion):
             if self.media:
                 type_as_dict["media"] = [media for media in self.media] if self.media else None
             if self.identifiers:
-                type_as_dict["identifiers"] = self.identifiers._as_dict_ if self.identifiers else None
-            log.debug(f"'Subject' serialized with fields: '{type_as_dict.keys()}'") 
-            if type_as_dict == {} or len(type_as_dict.keys()) == 0: log.warning("serializing and empty 'Subject' Object")
+                type_as_dict["identifiers"] = self.identifiers.to_dict if self.identifiers else None
+            if not type_as_dict:
+                log.warning("Serializing empty Subject (id={})", self.id)
                            
         return type_as_dict if type_as_dict != {} else None
         
     
     @classmethod
-    def _dict_from_json_(cls, data: dict, context = None) -> dict:
-        subject_data = Conclusion._dict_from_json_(data,context)
+    def dict_from_json(cls, data: dict, context = None) -> dict:
+        subject_data = Conclusion.dict_from_json(data,context)
         
         # Bool
         if (extracted := data.get("extracted")) is not None:
@@ -113,14 +111,14 @@ class Subject(Conclusion):
 
         # Lists
         if (evidence := data.get("evidence")) is not None:
-            subject_data["evidence"] = [EvidenceReference._from_json_(e, context) for e in evidence]
+            subject_data["evidence"] = [EvidenceReference.from_json(e, context) for e in evidence]
 
         if (media := data.get("media")) is not None:
-            subject_data["media"] = [SourceReference._from_json_(m, context) for m in media]
+            subject_data["media"] = [SourceReference.from_json(m, context) for m in media]
 
         # Identifiers
         if (identifiers := data.get("identifiers")) is not None:
-            subject_data["identifiers"] = IdentifierList._from_json_(identifiers, context)
+            subject_data["identifiers"] = IdentifierList.from_json(identifiers, context)
 
         # URI
         if (uri := data.get("uri")) is not None:

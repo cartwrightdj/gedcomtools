@@ -33,15 +33,12 @@ from .qualifier import Qualifier
 from .resource import Resource, URI
 from .schemas import extensible
 from .source_reference import SourceReference
-from ..logging_hub import hub, logging
 from .identifier import make_uid
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 
@@ -59,7 +56,7 @@ class ConfidenceLevel(Qualifier):
     }
 
     @classmethod
-    def _from_json_(cls, data,context):
+    def from_json(cls, data,context):
         """
         Accepts:
           - "High" | "Medium" | "Low"

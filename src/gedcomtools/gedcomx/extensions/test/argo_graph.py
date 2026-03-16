@@ -27,44 +27,69 @@ from gedcomtools.gedcomx.person import Person
 def ext_description_set(self) -> str:
     return self.names[0].nameForms[0].fullText
 
-def ext_description_get(self) -> str:
-    parts = []
+def ext_description_get(self) -> dict:
+    person = {
+        "name": None,
+        "gender": None,
+        "living": None,
+        "facts": []
+    }
 
+    # -------------------
     # Name
+    # -------------------
     try:
-        parts.append(self.names[0].nameForms[0].fullText)
+        person["name"] = self.names[0].nameForms[0].fullText
     except (IndexError, AttributeError):
-        parts.append("Unknown Person")
+        person["name"] = "Unknown Person"
 
-    # Gender - strip URL to just the name
-    if self.gender and self.gender.type:
+    # -------------------
+    # Gender
+    # -------------------
+    if getattr(self, "gender", None) and getattr(self.gender, "type", None):
         try:
-            parts.append(f"({self.gender.type.name})")
+            person["gender"] = self.gender.type.name
         except AttributeError:
-            pass
+            person["gender"] = None
 
+    # -------------------
     # Facts
-    for fact in self.facts:
+    # -------------------
+    for fact in getattr(self, "facts", []):
         try:
-            # Use enum name (e.g. "Birth") instead of full URL
-            fact_label = fact.type.name if fact.type else "Unknown"
-            date_str = fact.date.original if fact.date else None
-            place_str = fact.place.original if fact.place and hasattr(fact.place, 'original') else None
+            fact_entry = {
+                "type": None,
+                "date": None,
+                "place": None
+            }
 
-            detail = fact_label
-            if date_str:
-                detail += f": {date_str}"
-            if place_str:
-                detail += f" at {place_str}"
-            parts.append(detail)
+            # Fact Type
+            if getattr(fact, "type", None):
+                try:
+                    fact_entry["type"] = fact.type.name
+                except AttributeError:
+                    fact_entry["type"] = "Unknown"
+
+            # Date
+            if getattr(fact, "date", None):
+                fact_entry["date"] = getattr(fact.date, "original", None)
+
+            # Place
+            if getattr(fact, "place", None):
+                fact_entry["place"] = getattr(fact.place, "original", None)
+
+            person["facts"].append(fact_entry)
+
         except AttributeError:
             continue
 
-    # Living status
-    if self.living is not None:
-        parts.append("(Living)" if self.living else "(Deceased)")
+    # -------------------
+    # Living Status
+    # -------------------
+    if hasattr(self, "living"):
+        person["living"] = bool(self.living)
 
-    return " | ".join(parts)
+    return person
 
 def ext_emb_narrative_get(self) -> str:
     lines = []

@@ -20,14 +20,11 @@ GEDCOM Module Types
 """
 from .schemas import extensible
 from typing import Optional
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -42,7 +39,7 @@ class SourceCitation:
     # ...existing code...
 
     @classmethod
-    def _from_json_(cls, data: dict, context = None):
+    def from_json(cls, data: dict, context = None):
         """
         Create a SourceCitation instance from a JSON-dict (already parsed).
         """
@@ -54,6 +51,6 @@ class SourceCitation:
         return cls(**object_data)
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         return {'lang':self.lang,
                 'value': self.value}

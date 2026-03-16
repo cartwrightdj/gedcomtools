@@ -118,25 +118,12 @@ class Serialization:
     def serialize(obj):
         if obj is not None:
             with hub.use(serial_log):
-                if SCHEMA.is_toplevel(type(obj)):
-                    if hub.logEnabled: log.debug("-" * 20)
-                    if hub.logEnabled: log.debug(f"Serializing TOP LEVEL TYPE '{type(obj).__name__}'")
-                else:
-                    if hub.logEnabled: log.debug(f"Serializing type: '{type(obj).__name__}'")
-
-                #if hub.logEnabled: log.debug(f"Serializing a '{type(obj).__name__}'")
-                
                 if hasattr(obj,'_serializer'):
-                    if hub.logEnabled: log.debug(f"'%s' has a serializer, using it.",type(obj).__name__)
-                    s = obj._serializer #TODO make this a callable/method?
-                    
-                    if hub.logEnabled: log.debug(f"Serializer returned '{type(s).__name__}' with value '{s}")
-                    return s
-                    
+                    return obj._serializer
+
                 if isinstance(obj, (str, int, float, bool, type(None))):
                     return obj
                 if isinstance(obj, dict):
-                    if hub.logEnabled: log.debug(f"'Value is a dict with value: {obj}")
                     r = {k: Serialization.serialize(v) for k, v in obj.items()}
                     return r if r != {} else None
                 if isinstance(obj, URI):
@@ -144,57 +131,42 @@ class Serialization:
                 if isinstance(obj, (list, tuple, set)) or isinstance(obj, TypeCollection):
                     seq = obj if not isinstance(obj, TypeCollection) else list(obj)
                     if len(obj) == 0:
-                        if hub.logEnabled: log.debug(f"'{type(obj).__name__}' is an empty (list, tuple, set)")
                         return None
                     return [Serialization.serialize(v) for v in seq]
-                
-                if isinstance(obj, enum.Enum): 
+
+                if isinstance(obj, enum.Enum):
                     return Serialization.serialize(obj.value)
-                
-                #if hub.logEnabled: log.debug(f"Serializing a '{type(obj).__name__}'")
+
                 type_as_dict = {}
                 fields = SCHEMA.get_class_fields(type(obj).__name__)
                 if fields:
                     for field_name, type_ in fields.items():
-                        if hasattr(obj,field_name):
-                            
-                            if (v := getattr(obj,field_name)) is not None:
-                                if hub.logEnabled: log.debug(f"Found {type(obj).__name__}.{field_name} with a '{type_}'")
+                        if hasattr(obj, field_name):
+                            if (v := getattr(obj, field_name)) is not None:
                                 if type_ == Resource or type_ == 'Resource':
-                                    if type_ == 'Resource': 
-                                        log.error(f"type_ was a {type(type_)}'")
-                                    log.debug(f"<Resource> {type(obj).__name__}.{field_name} is a reference using a '{type_.__name__}'")
+                                    if type_ == 'Resource':
+                                        log.error("SCHEMA field '{}' has unresolved string type 'Resource' on {}", field_name, type(obj).__name__)
                                     res = Resource._of_object(target=v)
                                     type_as_dict[field_name] = Serialization.serialize(res.value)
                                 elif type_ == URI or type_ == 'URI':
-                                    if type_ == 'URI': 
-                                        log.error(f"type_ was a {type(type_)}'")
-                                    log.debug(f"<URI> {type(obj).__name__}.{field_name} is a reference using '{type_.__name__}'")
+                                    if type_ == 'URI':
+                                        log.error("SCHEMA field '{}' has unresolved string type 'URI' on {}", field_name, type(obj).__name__)
                                     uri = URI(target=v)
                                     type_as_dict[field_name] = uri.value
                                 elif (sv := Serialization.serialize(v)) is not None:
-                                    if hub.logEnabled: log.debug(f"{type(obj).__name__}.{field_name} was not a 'Resource' or 'URI', serialized normaly")
                                     type_as_dict[field_name] = sv
-                            else:
-                                if hub.logEnabled: log.warning(f"{type(obj).__name__}.{field_name}' was {type(v).__name__}")
-
                         else:
-                            if hub.logEnabled: log.warning(f"{type(obj).__name__} did not have field '{field_name}'")
-                    #if type_as_dict == {}: log.error(f"Serialized a '{type(obj).__name__}' with empty fields: '{fields}'")
-                    #else: 
-                        #if hub.logEnabled: log.debug(f"Serialized a '{type(obj).__name__}' with fields '{type_as_dict})'")
-                    if hub.logEnabled: log.debug(f"<- Serialized a '%s'",type(obj).__name__)
-                    #return Serialization._serialize_dict(type_as_dict)
-                    return type_as_dict if type_as_dict != {} else None             
+                            log.warning("{} missing expected field '{}'", type(obj).__name__, field_name)
+                    return type_as_dict if type_as_dict != {} else None
                 else:
-                    if hub.logEnabled: log.error(f"Could not find fields for {type(obj).__name__}")
+                    log.error("No SCHEMA fields found for {}", type(obj).__name__)
         return None
 
     @staticmethod
     def _serialize_dict(dict_to_serialize: dict) -> dict:
         """
         Walk a dict and serialize nested GedcomX objects to JSON-compatible values.
-        - Uses `_as_dict_` on your objects when present
+        - Uses `to_dict` on your objects when present
         - Recurse into dicts / lists / sets / tuples
         - Drops None and empty containers
         """
@@ -202,7 +174,7 @@ class Serialization:
             if isinstance(value, (str, int, float, bool, type(None))):
                 return value
             if (fields := SCHEMA.get_class_fields(type(value).__name__)) is not None:
-                # Expect your objects expose a snapshot via _as_dict_
+                # Expect your objects expose a snapshot via to_dict
                 return Serialization.serialize(value)
             if isinstance(value, dict):
                 return {k: _serialize(v) for k, v in value.items()}
@@ -283,8 +255,7 @@ class Serialization:
                 if cache_hit:
                     return _cache[key]
 
-                if hub.logEnabled:
-                    log.debug("looking up: %r from %s at %s", key, ref_type, "/".join(_path))
+                log.debug("looking up: {} from {} at {}", key, ref_type, "/".join(_path))
 
                 t0 = perf_counter()
                 try:
@@ -354,8 +325,7 @@ class Serialization:
                         try:
                             setattr(x, fname, new)
                         except Exception:
-                            if hub.logEnabled:
-                                log.debug("'%s'.'%s' did not resolve", type(x).__name__, fname)
+                            log.debug("'{}' field '{}' did not resolve", type(x).__name__, fname)
                 return x
 
             # Anything else: leave as-is
@@ -393,10 +363,7 @@ class Serialization:
             _coerce = cls._coerce_value
             _hasres = cls._has_reference_value
 
-            log.debug("deserialize[%s]: keys=%s", class_type.__name__, list(data.keys()))
-
             for name, typ in class_fields.items():
-                log.debug("deserialize[%s]: field:%s of type%s", class_type.__name__, name, typ)
                 raw = data.get(name, None)
                 if raw is None:
                     continue
@@ -441,203 +408,144 @@ class Serialization:
                     fns.append(_make())
                 inst._resource_setters = [*existing, *fns]
 
-            log.debug("deserialize[%s]: done in %.3f ms (resolved=%d, queued=%d)",
+            log.debug("deserialize[{}]: {:.3f} ms (resolved={}, queued={})",
                     class_type.__name__, (perf_counter() - t0) * 1000,
                     int(bool(resolver)) * len(pending), len(getattr(inst, "_resource_setters", [])))
-            if isinstance(inst,Resource): assert False
             return inst
 
   
     @classmethod
     def _coerce_value(cls, value: Any, Typ: Any) -> Any:
-        """Coerce `value` into `Typ` using the registry (recursively), with verbose logging."""
-        log.debug("COERCE enter: value=%r (type=%s) -> Typ=%r", value, type(value).__name__, Typ)
-
+        """Coerce `value` into `Typ` using the registry (recursively)."""
         # Enums
         if cls._is_enum_type(Typ):
             U = cls._resolve_forward(cls._unwrap(Typ))
-            log.debug("COERCE enum: casting %r to %s", value, getattr(U, "__name__", U))
             try:
-                ret = U(value)
-                log.debug("COERCE enum: success -> %r", ret)
-                return ret
+                return U(value)
             except Exception:
-                log.exception("COERCE enum: failed to cast %r to %s", value, U)
+                log.exception("coerce: failed to cast {} to {}", value, getattr(U, "__name__", U))
                 return value
 
         # Unwrap typing once
         T = cls._resolve_forward(cls._unwrap(Typ))
         origin = get_origin(T) or T
         args = get_args(T)
-        log.debug("COERCE typing: unwrapped Typ=%r -> T=%r, origin=%r, args=%r", Typ, T, origin, args)
-
 
         # Strings to Resource/URI
         if isinstance(value, str):
             if T is Resource:
-                log.debug("COERCE str->Resource: %r", value)
                 try:
-                    ret = Resource(resourceId=value)
-                    log.debug("COERCE str->Resource: built %r", ret)
-                    return ret
+                    return Resource(resourceId=value)
                 except Exception:
-                    log.exception("COERCE str->Resource: failed for %r", value)
+                    log.exception("coerce: str->Resource failed for {!r}", value)
                     return value
             if T is URI:
-                log.debug("COERCE str->URI: %r", value)
                 try:
-                    ret: Any = URI.from_url(value)
-                    log.debug("COERCE str->URI: built %r", ret)
-                    return ret
+                    return URI.from_url(value)
                 except Exception:
-                    log.exception("COERCE str->URI: failed for %r", value)
+                    log.exception("coerce: str->URI failed for {!r}", value)
                     return value
-            log.debug("COERCE str passthrough: target %r is not Resource/URI", T)
             return value
 
         # Dict to Resource
         if T is Resource and isinstance(value, dict):
-            log.debug("COERCE dict->Resource: %r", value)
             try:
-                ret = Resource(resource=value.get("resource"), resourceId=value.get("resourceId"))
-                log.debug("COERCE dict->Resource: built %r", ret)
-                return ret
+                return Resource(resource=value.get("resource"), resourceId=value.get("resourceId"))
             except Exception:
-                log.exception("COERCE dict->Resource: failed for %r", value)
+                log.exception("coerce: dict->Resource failed for {!r}", value)
                 return value
 
-        # IdentifierList special
-        
+        # IdentifierList
         if T is IdentifierList:
-            log.debug("COERCE IdentifierList: %r", value)
             try:
-                ret = IdentifierList._from_json_(value)
-                log.debug("COERCE IdentifierList: built %r", ret)
-                return ret
+                return IdentifierList.from_json(value)
             except Exception:
-                log.exception("COERCE IdentifierList: _from_json_ failed for %r", value)
+                log.exception("coerce: IdentifierList.from_json failed for {!r}", value)
                 return value
-        
 
         # Containers
         if cls._is_typecollection_annot(T):
             elem_t = cls._typecollection_elem_type(T)
-            # Accept list/tuple/set/TypeCollection inputs; otherwise leave as-is
             if not isinstance(value, (list, tuple, set, TypeCollection)) and value is not None:
-                log.warning("COERCE TypeCollection: expected list-like, got %r", type(value).__name__)
+                log.warning("coerce: TypeCollection expected list-like, got {}", type(value).__name__)
                 return value
             try:
-                # Coerce elements
                 src_iter = [] if value is None else (list(value) if not isinstance(value, list) else value)
                 items = [cls._coerce_value(v, elem_t) for v in src_iter]
-                # Build the wrapper with the concrete element class if we can
                 elem_cls = cls._as_concrete_class(elem_t) or object
                 coll = TypeCollection(elem_cls)
                 coll.extend(items)
-                log.debug("COERCE TypeCollection<%s>: size=%d", getattr(elem_cls, "__name__", elem_cls), len(coll))
                 return coll
             except Exception:
-                log.exception("COERCE TypeCollection: failed value=%r elem_t=%r", value, elem_t)
+                log.exception("coerce: TypeCollection failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
-        # B) Plain List[...] — leave as a plain list
         if cls._is_list_like(T):
             elem_t = args[0] if args else Any
-            log.debug("COERCE list-like: len=%s, elem_t=%r", len(value or []), elem_t)
             try:
-                ret = [cls._coerce_value(v, elem_t) for v in (value or [])]
-                return ret
+                return [cls._coerce_value(v, elem_t) for v in (value or [])]
             except Exception:
-                log.exception("COERCE list-like: failed for value=%r elem_t=%r", value, elem_t)
+                log.exception("coerce: list failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
         if cls._is_set_like(T):
             elem_t = args[0] if args else Any
-            log.debug("COERCE set-like: len=%s, elem_t=%r", len(value or []), elem_t)
             try:
-                ret = {cls._coerce_value(v, elem_t) for v in (value or [])}
-                log.debug("COERCE set-like: result size=%d", len(ret))
-                return ret
+                return {cls._coerce_value(v, elem_t) for v in (value or [])}
             except Exception:
-                log.exception("COERCE set-like: failed for value=%r elem_t=%r", value, elem_t)
+                log.exception("coerce: set failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
         if cls._is_tuple_like(T):
-            log.debug("COERCE tuple-like: value=%r, args=%r", value, args)
             try:
                 if not value:
-                    log.debug("COERCE tuple-like: empty/None -> ()")
                     return tuple(value or ())
                 if len(args) == 2 and args[1] is Ellipsis:
                     elem_t = args[0]
-                    ret = tuple(cls._coerce_value(v, elem_t) for v in (value or ()))
-                    log.debug("COERCE tuple-like variadic: size=%d", len(ret))
-                    return ret
-                ret = tuple(cls._coerce_value(v, t) for v, t in zip(value, args))
-                log.debug("COERCE tuple-like fixed: size=%d", len(ret))
-                return ret
+                    return tuple(cls._coerce_value(v, elem_t) for v in (value or ()))
+                return tuple(cls._coerce_value(v, t) for v, t in zip(value, args))
             except Exception:
-                log.exception("COERCE tuple-like: failed for value=%r args=%r", value, args)
+                log.exception("coerce: tuple failed for {!r} args={!r}", value, args)
                 return value
 
         if cls._is_dict_like(T):
             k_t = args[0] if len(args) >= 1 else Any
             v_t = args[1] if len(args) >= 2 else Any
-            log.debug("COERCE dict-like: keys=%s, k_t=%r, v_t=%r", len((value or {}).keys()), k_t, v_t)
             try:
-                ret = {
+                return {
                     cls._coerce_value(k, k_t): cls._coerce_value(v, v_t)
                     for k, v in (value or {}).items()
                 }
-                log.debug("COERCE dict-like: result size=%d", len(ret))
-                return ret
             except Exception:
-                log.exception("COERCE dict-like: failed for value=%r k_t=%r v_t=%r", value, k_t, v_t)
+                log.exception("coerce: dict failed for {!r} k_t={!r} v_t={!r}", value, k_t, v_t)
                 return value
 
         # Objects via registry
         if isinstance(T, type) and isinstance(value, dict):
             fields = SCHEMA.get_class_fields(T.__name__) or {}
-            log.debug(
-                "COERCE object: class=%s, input_keys=%s, registered_fields=%s",
-                T.__name__, list(value.keys()), list(fields.keys())
-            )
             if fields:
                 kwargs = {}
-                present = []
                 for fname, ftype in fields.items():
                     if fname in value:
                         resolved = cls._resolve_forward(cls._unwrap(ftype))
-                        log.debug("COERCE object.field: %s.%s -> %r, raw=%r", T.__name__, fname, resolved, value[fname])
                         try:
-                            coerced = cls._coerce_value(value[fname], resolved)
-                            kwargs[fname] = coerced
-                            present.append(fname)
-                            log.debug("COERCE object.field: %s.%s coerced -> %r", T.__name__, fname, coerced)
+                            kwargs[fname] = cls._coerce_value(value[fname], resolved)
                         except Exception:
-                            log.exception("COERCE object.field: %s.%s failed", T.__name__, fname)
-                unknown = [k for k in value.keys() if k not in fields]
-                if unknown:
-                    log.debug("COERCE object: %s unknown keys ignored: %s", T.__name__, unknown)
+                            log.exception("coerce: {}.{} field coercion failed", T.__name__, fname)
                 try:
-                    log.debug("COERCE object: instantiate %s(**%s)", T.__name__, present)
-                    ret = T(**kwargs)
-                    log.debug("COERCE object: success -> %r", ret)
-                    return ret
+                    return T(**kwargs)
                 except TypeError as e:
-                    log.error("COERCE object: instantiate %s failed with kwargs=%s: %s", T.__name__, list(kwargs.keys()), e)
-                    log.debug("COERCE object: returning partially coerced dict")
+                    log.error("coerce: instantiate {} failed kwargs={}: {}", T.__name__, list(kwargs.keys()), e)
                     return kwargs
 
         # Already correct type?
         try:
             if isinstance(value, T):
-                log.debug("COERCE passthrough: value already instance of %r", T)
                 return value
         except TypeError:
-            log.debug("COERCE isinstance not applicable: T=%r", T)
+            pass
 
-        log.warning("COERCE fallback: returning original value=%r (type=%s)", value, type(value).__name__)
+        log.warning("coerce: fallback — returning original value={!r} (type={})", value, type(value).__name__)
         return value
 
     @classmethod

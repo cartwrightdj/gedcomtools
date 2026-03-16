@@ -221,14 +221,14 @@ class Element(object):
                 self.__add_concatenation(line[n:])
 
     def __getitem__(self,item):
-        return self.subRecord(item)
+        return self.sub_record(item)
     
-    def subRecord(self, tag: str):
+    def sub_record(self, tag: str):
         for r in self.__children:
             if r.tag == tag: return r
         return None
     
-    def subRecords(self, tag: str | None = None):
+    def sub_records(self, tag: str | None = None):
         if tag is None:
             return self.__children
         result = [r for r in self.__children if r.tag == tag]

@@ -64,7 +64,7 @@ T = TypeVar("T")
 K = TypeVar("K", bound=Hashable)
 
 
-class gxoObjectStack:
+class GxoObjectStack:
     """
     Level-indexed object stack (GEDCOM 'level' -> current GX object at that level)
 
@@ -112,7 +112,7 @@ class gxoObjectStack:
 
     def __repr__(self) -> str:
         keys = ", ".join(str(k) for k in sorted(self._data.keys()))
-        return f"gxoObjectStack(levels=[{keys}])"
+        return f"GxoObjectStack(levels=[{keys}])"
 
 class GedcomConverter:
     type_name_type = {"aka": NameType.AlsoKnownAs}
@@ -124,7 +124,7 @@ class GedcomConverter:
 
     def __init__(self) -> None:
         self.gedcomx: GedcomX = GedcomX()
-        self.object_map = gxoObjectStack()
+        self.object_map = GxoObjectStack()
         self.object_map[-1] = self.gedcomx  # preserve your behavior
 
         self.missing_handler_count: Dict[str, int] = {}
@@ -183,7 +183,7 @@ class GedcomConverter:
         self.missing_handler_count[tag] = self.missing_handler_count.get(tag, 0) + 1
 
     def _iter_subrecords(self, record: Element) -> Iterable[Element]:
-        subs = record.subRecords()
+        subs = record.sub_records()
         if not subs:
             return ()
         return subs
@@ -197,7 +197,7 @@ class GedcomConverter:
             raise AssertionError("record is None")
 
         try:
-            subs = record.subRecords() or []
+            subs = record.sub_records() or []
             log.debug(
                 "Record tag=%s level=%s xref=%r value=%r subrecords=%d",
                 record.tag, record.level, record.xref, record.value, len(subs),
@@ -392,7 +392,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
-            self.object_map[record.level-1].sourceDescription.add_note(gxobject)
+            self.object_map[record.level-1].source_description.add_note(gxobject)
             
             self.object_map[record.level] = gxobject
         else:
@@ -473,8 +473,8 @@ class GedcomConverter:
 
     def handle_auth(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            if record.value is not None and self.gedcomx.agents.byName(record.value):
-                gxobject = self.gedcomx.agents.byName(record.value)[0]
+            if record.value is not None and self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_name(record.value)[0]
             else:
                 gxobject = Agent(names=[TextValue(record.value)])
                 self.gedcomx.add_agent(gxobject)
@@ -548,7 +548,7 @@ class GedcomConverter:
 
     def handle_chan(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            date = record.subRecord('DATE')
+            date = record.sub_record('DATE')
             if date is not None:
                 self.object_map[record.level-1].created = Date(date.value)
         elif isinstance(self.object_map[record.level-1], Agent):
@@ -634,7 +634,7 @@ class GedcomConverter:
     
     def handle_crea(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            date = record.subRecord('DATE')
+            date = record.sub_record('DATE')
             if  date is not None:
                 self.object_map[record.level-1].created = Date(original=date[0].value)
             else: raise ValueError('DATE had not value')                     
@@ -692,7 +692,7 @@ class GedcomConverter:
             self.object_map[record.level-1].created = record.value #TODO String to timestamp
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             
-            self.object_map[record.level-1].sourceDescription.created = record.value #TODO String to timestamp
+            self.object_map[record.level-1].source_description.created = record.value #TODO String to timestamp
         elif isinstance(self.object_map[record.level-1], Attribution):
             if record.parent is not None and record.parent.tag == 'CREA':
                 self.object_map[record.level-1].created = record.value #TODO G7
@@ -753,7 +753,7 @@ class GedcomConverter:
                     self.object_map[record.level] = gxobject
                   
         else:
-            if (even_type := record.subRecord('TYPE')) is not None:
+            if (even_type := record.sub_record('TYPE')) is not None:
                 
                 if possible_fact := FactType.guess(even_type.value):
                     gxobject = Fact(type=possible_fact)
@@ -781,7 +781,7 @@ class GedcomConverter:
 
     def handle_exid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.External,value=[URI._from_json_(record.value) if record.value else URI()]) # type: ignore
+            gxobject = Identifier(type=IdentifierType.External,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)       
             self.object_map[record.level] = gxobject
         else: raise ValueError('Record had no value')
@@ -797,7 +797,7 @@ class GedcomConverter:
         log.debug(f"Converting FAM Record")
         husband, wife, children = None, None, []
 
-        husband_record = record.subRecords('HUSB')
+        husband_record = record.sub_records('HUSB')
         if husband_record is not None:   
             id = husband_record[0].value if len(husband_record) > 0 else None
             if id:
@@ -805,7 +805,7 @@ class GedcomConverter:
                 log.debug(f"found husband: {husband}")
             
 
-        wife_record = record.subRecords('WIFE')
+        wife_record = record.sub_records('WIFE')
         if wife_record:  
             id = wife_record[0].value if len(wife_record) > 0 else None
             if id:
@@ -813,7 +813,7 @@ class GedcomConverter:
                 log.debug(f"found wife: {wife}")
             
 
-        children_records = record.subRecords('CHIL')
+        children_records = record.sub_records('CHIL')
         if children_records:
             for child_record in children_records:
                 id = child_record.value
@@ -837,12 +837,12 @@ class GedcomConverter:
             self.gedcomx.add_relationship(relationship)
             self.object_map[record.level] = relationship
         
-        if (marr_record := record.subRecord('MARR')) is not None:
+        if (marr_record := record.sub_record('MARR')) is not None:
             gxobject = Event(type=EventType.Marriage,roles=[EventRole(type=EventRoleType.Principal,person=husband)])
             self.object_map[1] = gxobject
             self.gedcomx.add_event(gxobject)
             log.debug(f"Added marriage as event")
-            for sub_record in marr_record.subRecords():
+            for sub_record in marr_record.sub_records():
                 self.parse_gedcom5x_record(sub_record)
             
     def handle_husb(self, record: Element):
@@ -923,7 +923,7 @@ class GedcomConverter:
 
     def handle_fsid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI._from_json_(record.value) if record.value else URI()]) # type: ignore
+            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)       
             self.object_map[record.level] = gxobject
         else:
@@ -942,7 +942,7 @@ class GedcomConverter:
         self.object_map[record.level] = attribution
 
     def handle_indi(self, record: Element):
-        person = self.gedcomx.persons.byId(record.xref)
+        person = self.gedcomx.persons.by_id(record.xref)
         if person is None:
             log.warning('Had to create person with id {recrod.xref}')
             if isinstance(record.xref,str):
@@ -1098,7 +1098,7 @@ class GedcomConverter:
     def handle_obje(self, record: Element):
         if record.level == 0:  
             # Use DocumentParser to Create Documnet and Update Underlying SourceDescription Made from OBJE tags     
-            if (gxobject := self.gedcomx.sourceDescriptions.byId(record.xref)) is None:
+            if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from Object {record.tag} {record.describe()}")
                 gxobject = SourceDescription(id=record.value)
@@ -1132,25 +1132,25 @@ class GedcomConverter:
             self.object_map[record.level-1].set_marr_date(record)
 
         elif isinstance(self.object_map[record.level-1], Event):
-            if self.gedcomx.places.byName(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.byName(record.value)[0])
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
                 self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
-                if (record.subRecords() is not None) and len(record.subRecords()) > 0: # type: ignore
+                if (record.sub_records() is not None) and len(record.sub_records()) > 0: # type: ignore
                     self.object_map[record.level]= place_des
 
         elif isinstance(self.object_map[record.level-1], Fact):
-            if self.gedcomx.places.byName(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.byName(record.value)[0])
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
                 self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
             self.object_map[record.level] = self.object_map[record.level-1].place
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            if (place := self.gedcomx.places.byName(record.value)) is not None:
+            if (place := self.gedcomx.places.by_name(record.value)) is not None:
                 self.object_map[record.level-1].place = place
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
@@ -1161,14 +1161,14 @@ class GedcomConverter:
             
             self.object_map[record.level] = place
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            if (place := self.gedcomx.places.byName(record.value)) is not None:
-                self.object_map[record.level-1].sourceDescription.place = place
+            if (place := self.gedcomx.places.by_name(record.value)) is not None:
+                self.object_map[record.level-1].source_description.place = place
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place)
-                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
+                self.object_map[record.level-1].source_description.place = PlaceReference(original=record.value, description=place)
             gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
-            self.object_map[record.level-1].sourceDescription.add_note(gxobject)
+            self.object_map[record.level-1].source_description.add_note(gxobject)
             
             self.object_map[record.level] = place
         else:
@@ -1187,8 +1187,8 @@ class GedcomConverter:
                 if (date := record['DATE']) is not None:
                     self.object_map[record.level-1].published = date
             else:
-                if record.value and self.gedcomx.agents.byName(record.value):
-                    gxobject = self.gedcomx.agents.byName(record.value)[0]
+                if record.value and self.gedcomx.agents.by_name(record.value):
+                    gxobject = self.gedcomx.agents.by_name(record.value)[0]
                 else:
                     gxobject = Agent(names=[TextValue(record.value)])
                     self.gedcomx.add_agent(gxobject)
@@ -1231,17 +1231,17 @@ class GedcomConverter:
 
     def handle_repo(self, record: Element):
         if record.level == 0:
-            if record.value is not None and self.gedcomx.agents.byName(record.value):
-                gxobject = self.gedcomx.agents.byId(record.xref)
+            if record.value is not None and self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_id(record.xref)
                 
             else:
                 gxobject = Agent(id=record.xref,names = [TextValue(record.value)] if record.value else [])
                 self.gedcomx.add_agent(gxobject)            
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            if self.gedcomx.agents.byId(record.value) is not None:            
+            if self.gedcomx.agents.by_id(record.value) is not None:            
                 # TODO WHere and what to add this to?
-                gxobject = self.gedcomx.agents.byId(record.value)
+                gxobject = self.gedcomx.agents.by_id(record.value)
                 self.object_map[record.level-1].repository = gxobject
                 self.object_map[record.level] = gxobject
             else:
@@ -1266,8 +1266,8 @@ class GedcomConverter:
             self.object_map[record.level-1].add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
             self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1].sourceDescription.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
-            self.object_map[record.level-1].sourceDescription.add_note(Note(text=f"Source had RIN: of {record.value}"))
+            self.object_map[record.level-1].source_description.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].source_description.add_note(Note(text=f"Source had RIN: of {record.value}"))
 
         else:
             self.convert_exception_dump(record=record)
@@ -1288,7 +1288,7 @@ class GedcomConverter:
     def handle_sour(self, record: Element):
         
         if record.level == 0 and (record.tag in ['SOUR','OBJE','_WLNK']):        
-            if (gxobject := self.gedcomx.sourceDescriptions.byId(record.xref)) is None:
+            if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from {record.tag} {record.describe()}")
                 gxobject = SourceDescription(id=record.value)
@@ -1299,7 +1299,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
 
         elif (add_method := getattr(self.object_map[record.level-1],"add_source_reference",None)) is not None:
-            if (source_description := self.gedcomx.sourceDescriptions.byId(record.value)) is not None:
+            if (source_description := self.gedcomx.sourceDescriptions.by_id(record.value)) is not None:
                 gxobject = SourceReference(descriptionId=record.value, description=source_description)
                 add_method(gxobject)
                 self.object_map[record.level] = gxobject
@@ -1311,7 +1311,7 @@ class GedcomConverter:
                 self.object_map[record.level] = gxobject
 
         elif record.tag == 'OBJE' and isinstance(self.object_map[record.level-1],SourceReference): #TODO Flesh out OBJECTs/FILES
-            if (source_description := self.gedcomx.sourceDescriptions.byId(record.value)) is not None:
+            if (source_description := self.gedcomx.sourceDescriptions.by_id(record.value)) is not None:
                 gxobject = SourceReference(descriptionId=record.value, description=source_description)
                 self.object_map[record.level-1].description.add_source_reference(gxobject)
                 self.object_map[record.level] = gxobject
@@ -1336,8 +1336,8 @@ class GedcomConverter:
 
     def handle_subm(self, record: Element):
         if record.level == 0:
-            if record.value is not None and self.gedcomx.agents.byId(record.value):
-                gxobject = self.gedcomx.agents.byId(record.xref)
+            if record.value is not None and self.gedcomx.agents.by_id(record.value):
+                gxobject = self.gedcomx.agents.by_id(record.xref)
             else:
                 gxobject = Agent(id=record.xref)
                 self.gedcomx.add_agent(gxobject)
@@ -1350,7 +1350,7 @@ class GedcomConverter:
                 self.convert_exception_dump(record=record)
             self.object_map[record.level] = gxobject
         else:
-            if (gxobject := self.gedcomx.agents.byId(record.value)) is None:
+            if (gxobject := self.gedcomx.agents.by_id(record.value)) is None:
                 gxobject = Agent(id=record.value)
             self.gedcomx.add_agent(gxobject)
             self.object_map[record.level] = gxobject

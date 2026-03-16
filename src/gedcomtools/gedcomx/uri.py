@@ -84,12 +84,11 @@ class URI():
 
         if self.target is not None:
             #log.debug(f"Creating URI from Target {target}, most likely for serialization")
-            if hasattr(self.target,'id'):
-                if hub.logEnabled:log.debug(f"'{type(target).__name__}.id' found {target.id}, using as fragment")
+            if hasattr(self.target, 'id'):
+                log.debug("'{}.id' = {}, using as fragment", type(target).__name__, target.id)
                 self.fragment = self.target.id
-            if hasattr(self.target,'uri'):
-                log.debug(f"'{target}.uri' found, copying")
-                if getattr(self.target,'uri') is not None:
+            if hasattr(self.target, 'uri'):
+                if getattr(self.target, 'uri') is not None:
                     if target:
                         self._value = target.uri._value
                         self.scheme = target.uri.scheme
@@ -99,7 +98,7 @@ class URI():
                         self.fragment = target.uri.fragment
                     #TODO Log
                 else:
-                    log.warning(f"'{target}.uri' was None")
+                    log.warning("target.uri was None for {}", target)
             elif isinstance(target,URI):
                 #log.debug(f"'{target} is a URI, copying")
                 if target:
@@ -167,16 +166,16 @@ class URI():
         return (f"scheme = {self.scheme}, authority={self.authority}, path={self.path}, query={self.query}, fragment={self.fragment}")
     
     @property
-    def _as_dict_(self):
-        return self.value or self._value    
-    
-       
+    def to_dict(self):
+        return self.value or self._value
+
+
     @classmethod
     def from_url(cls,url):
         return cls(target=url)
-    
+
     @classmethod
-    def _from_json_(cls,data,context=None):
+    def from_json(cls,data,context=None):
         return cls(value=data)
 
 #SCHEMA.set_uri_class(URI)    
@@ -230,7 +229,7 @@ class _URI:
         return urlunsplit(self.split())
 
     @property
-    def _as_dict_(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "scheme": self.scheme,
             "authority": self.authority,
@@ -242,7 +241,7 @@ class _URI:
 
     # Accepts {'resource': '...'} or a plain string
     @classmethod
-    def _from_json_(cls, data: str | Mapping[str, object],context=None) -> URI:
+    def from_json(cls, data: str | Mapping[str, object],context=None) -> URI:
         return cls.from_parts(fragment="NOT IMPLIMENTED")
         if isinstance(data, str):
             return cls.from_parts(fragment="NOT IMPLIMENTED")

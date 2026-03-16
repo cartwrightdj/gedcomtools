@@ -21,14 +21,11 @@ GEDCOM Module Types
 """
 from .attribution import Attribution
 from .schemas import extensible
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -53,7 +50,7 @@ class Note:
             raise ValueError("The text to add must be a non-empty string.")
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.lang:
@@ -64,7 +61,7 @@ class Note:
             type_as_dict["text"] = self.text
         if self.attribution:
             # If attribution exposes `_as_dict_` as a property, use it; otherwise include as-is
-            type_as_dict["attribution"] = getattr(self.attribution, "_as_dict_", self.attribution)
+            type_as_dict["attribution"] = getattr(self.attribution, "to_dict", self.attribution)
         return type_as_dict if type_as_dict != {} else None
         return Serialization.serialize_dict(type_as_dict)    
     
@@ -95,7 +92,7 @@ class Note:
 
     
     @classmethod
-    def _from_json_(cls, data: Any, context=None) -> "Note":
+    def from_json(cls, data: Any, context=None) -> "Note":
         # Allow shorthand: "some note text"
         #if isinstance(data, str):
         #    return cls(text=data)
@@ -115,6 +112,6 @@ class Note:
 
         # Object
         if (attr := data.get("attribution")) is not None:
-            obj["attribution"] = Attribution._from_json_(attr, context)
+            obj["attribution"] = Attribution.from_json(attr, context)
 
         return cls(**obj)

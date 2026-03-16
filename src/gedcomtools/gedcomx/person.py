@@ -38,16 +38,9 @@ from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
 from .subject import Subject
-from ..logging_hub import hub, logging
-"""
-======================================================================
-Logging
-======================================================================
-"""
+
 log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
-deserial_log = "degedcomx.serialization"
-#=====================================================================
+deserial_log = "gedcomx.deserialization"
 
 
 @extensible(toplevel=True)
@@ -147,33 +140,34 @@ class Person(Extensible,Subject):
         return self.names[0].nameForms[0].fullText
 
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         return Serialization.serialize(self)
                 
            
     @classmethod
-    def _from_json_(cls, data: dict, context = None) -> "Person":
+    def from_json(cls, data: dict, context = None) -> "Person":
         def _to_bool(v):
             if isinstance(v, str):
                 return v.strip().lower() in ("1", "true", "yes", "y", "t")
             return bool(v)
         with hub.use(deserial_log):
-            log.debug(f"Deserializing a Person")
-            person_data: dict = Subject._dict_from_json_(data,context)
+            log.debug("Deserializing a Person")
+            person_data: dict = Subject.dict_from_json(data,context)
             if (private := data.get("private")) is not None:
                 person_data["private"] = _to_bool(private)
             if (living := data.get("living")) is not None:
                 person_data["living"] = _to_bool(living)
             if (gender := data.get("gender")) is not None:
-                person_data["gender"] = Gender._from_json_(gender, context)
+                person_data["gender"] = Gender.from_json(gender, context)
             if (names := data.get("names")) is not None:
-                person_data["names"] = [Name._from_json_(n, context) for n in names]
+                person_data["names"] = [Name.from_json(n, context) for n in names]
             if (facts := data.get("facts")) is not None:
-                person_data["facts"] = [Fact._from_json_(f, context) for f in facts]
+                person_data["facts"] = [Fact.from_json(f, context) for f in facts]
             
             diff = data.keys() - person_data.keys()
-            log.debug(f"Desserialization found keys {diff} that are not in deserialization list")
+            if diff:
+                log.debug("Deserialization: unrecognised keys {}", diff)
 
         return cls(**person_data)
 
@@ -209,7 +203,7 @@ class Person(Extensible,Subject):
             raise ValueError(f"FamilySearch returned no person for PID {pid}")
 
         # Keep your existing deserialization helper
-        return Person._from_json_(person_json)    
+        return Person.from_json(person_json)    
 
 class QuickPerson:
     """A GedcomX Person Data Type created with basic information.

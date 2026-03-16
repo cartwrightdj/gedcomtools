@@ -387,7 +387,7 @@ class Translater():
                 self.missing_handler_count[record.tag] = 1
             
             convert_log.error(f'Failed Parsing Record: {record.describe()}')
-        for sub_record in record.subRecords():
+        for sub_record in record.sub_records():
             self.parse_record(sub_record)
     
     def handle__apid(self, record: Gedcom5xRecord):
@@ -498,8 +498,8 @@ class Translater():
 
     def handle_auth(self, record: Gedcom5xRecord):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            if self.gedcomx.agents.byName(record.value):
-                gxobject = self.gedcomx.agents.byName(record.value)[0]
+            if self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_name(record.value)[0]
             else:
                 gxobject = Agent(names=[TextValue(record.value)])
                 self.gedcomx.add_agent(gxobject)
@@ -555,7 +555,7 @@ class Translater():
 
     def handle_chan(self, record: Gedcom5xRecord):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].created = Date(record.subRecord('DATE'))
+            self.object_map[record.level-1].created = Date(record.sub_record('DATE'))
         elif isinstance(self.object_map[record.level-1], Agent):
             if self.object_map[record.level-1].attribution is None:
                 gxobject = Attribution()
@@ -623,7 +623,7 @@ class Translater():
     
     def handle_crea(self, record: Gedcom5xRecord):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].created = Date(original=record.subRecord('DATE'))
+            self.object_map[record.level-1].created = Date(original=record.sub_record('DATE'))
             
         elif isinstance(self.object_map[record.level-1], Agent):
             if self.object_map[record.level-1].attribution is None:
@@ -714,7 +714,7 @@ class Translater():
                     raise TagConversionError(record=record,levelstack=self.object_map)
 
         else:
-            possible_fact = FactType.guess(record.subRecord('TYPE')[0].value)
+            possible_fact = FactType.guess(record.sub_record('TYPE')[0].value)
             if possible_fact:
                 gxobject = Fact(type=possible_fact)
                 self.object_map[record.level-1].add_fact(gxobject)
@@ -722,9 +722,9 @@ class Translater():
                 self.object_stack.append(gxobject)
                 self.object_map[record.level] = gxobject
                 return
-            elif EventType.guess(record.subRecord('TYPE')[0].value):
+            elif EventType.guess(record.sub_record('TYPE')[0].value):
                 if isinstance(self.object_map[record.level-1], Person):
-                    gxobject = Event(type=EventType.guess(record.subRecord('TYPE')[0].value), roles=[EventRole(person=self.object_map[record.level-1], type=EventRoleType.Principal)])
+                    gxobject = Event(type=EventType.guess(record.sub_record('TYPE')[0].value), roles=[EventRole(person=self.object_map[record.level-1], type=EventRoleType.Principal)])
                     self.gedcomx.add_event(gxobject)
                     self.object_stack.append(gxobject)
                     self.object_map[record.level] = gxobject
@@ -754,15 +754,15 @@ class Translater():
 
         husband, wife, children = None, None, []
 
-        husband_record = record.subRecords('HUSB')
+        husband_record = record.sub_records('HUSB')
         if husband_record:
             husband = self.gedcomx.get_person_by_id(husband_record[0].xref)
 
-        wife_record = record.subRecords('WIFE')
+        wife_record = record.sub_records('WIFE')
         if wife_record:
             wife = self.gedcomx.get_person_by_id(wife_record[0].xref)
 
-        children_records = record.subRecords('CHIL')
+        children_records = record.sub_records('CHIL')
         if children_records:
             for child_record in children_records:
                 child = self.gedcomx.get_person_by_id(child_record.xref)
@@ -945,18 +945,18 @@ class Translater():
             self.object_stack.append(gxobject)
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], Event):
-            if self.gedcomx.places.byName(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.byName(record.value)[0])
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
                 self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
-                if len(record.subRecords()) > 0:
+                if len(record.sub_records()) > 0:
                     self.object_map[record.level]= place_des
 
         elif isinstance(self.object_map[record.level-1], Fact):
-            if self.gedcomx.places.byName(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.byName(record.value)[0])
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
@@ -977,8 +977,8 @@ class Translater():
     
     def handle_publ(self, record: Gedcom5xRecord):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            if record.value and self.gedcomx.agents.byName(record.value):
-                gxobject = self.gedcomx.agents.byName(record.value)[0]
+            if record.value and self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_name(record.value)[0]
             else:
                 gxobject = Agent(names=[TextValue(record.value)])
                 self.gedcomx.add_agent(gxobject)
@@ -1030,10 +1030,10 @@ class Translater():
             self.object_map[record.level] = gxobject
             
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            if self.gedcomx.agents.byId(record.xref) is not None:
+            if self.gedcomx.agents.by_id(record.xref) is not None:
                 
                 # TODO WHere and what to add this to?
-                gxobject = self.gedcomx.agents.byId(record.xref)
+                gxobject = self.gedcomx.agents.by_id(record.xref)
                 self.object_map[record.level-1].repository = gxobject
                 self.object_map[record.level] = gxobject
 
@@ -1095,8 +1095,8 @@ class Translater():
             if record.xref and record.xref.strip() == '':
                 import_log.warning(f"SOUR points to nothing: {record.describe()}")
                 return False
-            if self.gedcomx.sourceDescriptions.byId(record.xref):
-                gxobject = SourceReference(descriptionId=record.xref, description=self.gedcomx.sourceDescriptions.byId(record.xref))
+            if self.gedcomx.sourceDescriptions.by_id(record.xref):
+                gxobject = SourceReference(descriptionId=record.xref, description=self.gedcomx.sourceDescriptions.by_id(record.xref))
             else:
                 import_log.warning(f'Could not find source with id: {record.xref}')
                 source_description = SourceDescription(id=record.xref)

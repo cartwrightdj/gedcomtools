@@ -1,92 +1,180 @@
+"""GEDCOM 7 structure node types.
+
+This module defines the in-memory node representation used by the GEDCOM 7
+parser and validator.
+
+The design goals are:
+
+- preserve the original GEDCOM line semantics
+- keep xref ids separate from pointer payloads
+- make parent/child traversal easy
+- support validation against the GEDCOM 7 specification registry
+
+The docstrings are written in Google style so they render well with
+Sphinx Napoleon.
+"""
+
 from __future__ import annotations
 
-from typing import Dict, Any
-import warnings
-from . import specification as g7
+from typing import Any, Dict, List, Optional
 
-from typing import Dict, List,Optional,Any
-
-
-gedcom_top_level_terms = ['https://gedcom.io/terms/v7/CONT',
-                          'https://gedcom.io/terms/v7/record-FAM',
-                          'https://gedcom.io/terms/v7/record-INDI',
-                          'https://gedcom.io/terms/v7/record-SNOTE',
-                          'https://gedcom.io/terms/v7/record-SUBM',
-                          'https://gedcom.io/terms/v7/TRLR',
-                          'https://gedcom.io/terms/v7/HEAD',
-                          'https://gedcom.io/terms/v7/record-OBJE',
-                          'https://gedcom.io/terms/v7/record-REPO',
-                          'https://gedcom.io/terms/v7/record-SOUR']
+from .g7interop import get_uri_for_tag
 
 
 class GedcomStructure:
-    version = 'v7'
+    """Represents a single GEDCOM structure node.
+
+    Attributes:
+        level: GEDCOM nesting level for the structure.
+        tag: GEDCOM tag such as ``INDI`` or ``NAME``.
+        xref_id: Optional xref id defined on the line, such as ``@I1@``.
+        payload: Raw payload text following the tag.
+        payload_is_pointer: Whether the payload is a pointer such as ``@F1@``.
+        parent: Parent structure, if any.
+        children: Child structures.
+        line_num: Original source line number.
+        uri: Resolved GEDCOM 7 URI where available.
+        extension: Whether the tag is an extension tag.
+    """
+
+    version = "v7"
 
     def __init__(
         self,
         *,
-        level: int | None = None,
-        xref: str | None = None,
-        tag: str | None = None,
-        pointer: bool | None = None,
-        text: str | None = None,
-        parent: GedcomStructure | None = None,
-        line_num: int | None = None
+        level: int,
+        tag: str,
+        xref_id: Optional[str] = None,
+        payload: Optional[str] = None,
+        payload_is_pointer: bool = False,
+        parent: Optional["GedcomStructure"] = None,
+        line_num: Optional[int] = None,
     ) -> None:
-        """Create a GEDCOM structure node.
+        """Initialize the GEDCOM structure node.
 
         Args:
-            level: GEDCOM line level (0..n).
-            xref: Optional cross-reference id (e.g., '@I1@').
-            tag: GEDCOM tag (e.g., 'INDI', 'NAME').
-            pointer: True if this line is a pointer, False if not, None if unknown.
-            text: Literal text payload for this line.
-            parent: Parent node in the structure tree, if any.
+            level: GEDCOM line level.
+            tag: GEDCOM tag.
+            xref_id: Optional xref id defined on the line.
+            payload: Optional payload text.
+            payload_is_pointer: Whether the payload is a pointer.
+            parent: Parent structure.
+            line_num: Source line number.
         """
         self.level = level
-        self.xref = xref
-        self.tag = tag
-        self.pointer = pointer
-        self.text = text
+        self.tag = tag.upper()
+        self.xref_id = xref_id
+        self.payload = payload or ""
+        self.payload_is_pointer = payload_is_pointer
         self.parent = parent
-        self.value = text
-        self.pointer = pointer if pointer else False
+        self.children: List[GedcomStructure] = []
         self.line_num = line_num
-        
-        if self.level and self.level > 0 and text and text.startswith('@') and text.endswith('@'):
-            self.pointer = True
-            self.xref = text
-        
-        self.parent: GedcomStructure | None = parent if parent else None
-        if self.parent and isinstance(self.parent, GedcomStructure):
-            parent.subtructures.append(self)
 
-        self.extension = False if not tag else True if tag.startswith('_') else False 
-        self.uri = g7.match_uri(tag,self.parent) 
-        self.label = g7.get_label(self.uri)
-        
-        self.subtructures = []
-        
+        self.uri = get_uri_for_tag(self.tag)
+        self.extension = self.tag.startswith("_")
 
-    def _as_dict_(self):
-        as_dict =  {}
-        as_dict['level'] = self.level
-        if self.xref: as_dict['xref'] = self.xref
-        as_dict['tag'] = self.tag
-        if self.value: as_dict['value'] = self.value
-        if self.subtructures: as_dict['substructures'] = [substructure._as_dict_() for substructure in self.subtructures]
-        return {g7.get_label(self.uri):as_dict}
-       
-    def __repr__(self):
+        if self.parent is not None:
+            self.parent.children.append(self)
+
+    @property
+    def value(self) -> str:
+        """Return the line payload."""
+        return self.payload
+
+    @value.setter
+    def value(self, new_value: Optional[str]) -> None:
+        """Set the line payload.
+
+        Args:
+            new_value: New payload value.
+        """
+        self.payload = new_value or ""
+
+    @property
+    def pointer_target(self) -> Optional[str]:
+        """Return the payload if it is a pointer."""
+        return self.payload if self.payload_is_pointer else None
+
+    def add_child(self, child: "GedcomStructure") -> None:
+        """Attach a child node.
+
+        Args:
+            child: Child structure to attach.
+        """
+        child.parent = self
+        self.children.append(child)
+
+    def get_children(self, tag: str) -> List["GedcomStructure"]:
+        """Return direct children for a tag.
+
+        Args:
+            tag: GEDCOM tag.
+
+        Returns:
+            Matching child structures.
+        """
+        wanted = tag.upper()
+        return [child for child in self.children if child.tag == wanted]
+
+    def first_child(self, tag: str) -> Optional["GedcomStructure"]:
+        """Return the first direct child matching a tag.
+
+        Args:
+            tag: GEDCOM tag.
+
+        Returns:
+            First matching child or ``None``.
+        """
+        matches = self.get_children(tag)
+        return matches[0] if matches else None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the node and descendants to a serializable dictionary.
+
+        Returns:
+            Nested dictionary representation of the structure tree.
+        """
+        data: Dict[str, Any] = {
+            "level": self.level,
+            "tag": self.tag,
+            "uri": self.uri,
+        }
+
+        if self.xref_id:
+            data["xref_id"] = self.xref_id
+        if self.payload:
+            data["payload"] = self.payload
+        if self.payload_is_pointer:
+            data["payload_is_pointer"] = True
+        if self.line_num is not None:
+            data["line_num"] = self.line_num
+        if self.children:
+            data["children"] = [child.to_dict() for child in self.children]
+
+        return data
+
+    def __getitem__(self, tag: str) -> List["GedcomStructure"]:
+        """Return direct children by tag.
+
+        Args:
+            tag: GEDCOM tag.
+
+        Returns:
+            Matching child structures.
+        """
+        return self.get_children(tag)
+
+    def __repr__(self) -> str:
+        """Return a developer-friendly representation."""
         return (
             "GedcomStructure("
-            f"level: {self.level} tag={self.tag:<6} ({self.label}), {'(Ext)' if self.extension else ''} xref:{self.xref}  pointer={self.pointer}, text='{self.value}',  "
-            f"uri={self.uri} subStructures: {len(self.subtructures)}"
+            f"level={self.level}, "
+            f"tag={self.tag!r}, "
+            f"xref_id={self.xref_id!r}, "
+            f"payload={self.payload!r}, "
+            f"payload_is_pointer={self.payload_is_pointer}, "
+            f"uri={self.uri!r}, "
+            f"children={len(self.children)}, "
+            f"line_num={self.line_num}"
+            ")"
         )
-    
-    def __getitem__(self,index) -> List['GedcomStructure']:
-        return [s for s in self.subtructures if s.tag == index]
-
-    
-    
-    

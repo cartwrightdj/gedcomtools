@@ -23,14 +23,11 @@ GEDCOM Module Types
 from ._gedcom5x import Gedcom5xRecord
 from .fact import Fact, FactType
 from .event import Event, EventType
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 fact_event_table = {

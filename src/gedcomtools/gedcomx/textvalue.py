@@ -21,15 +21,12 @@ from typing import Any, Optional, Dict
 GEDCOM Module Types
 ======================================================================
 """
-from ..logging_hub import hub, logging
 from .schemas import extensible
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -50,7 +47,7 @@ class TextValue:
         else: self.value += ' ' + value_to_append
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         return Serialization.serialize(self)
         type_as_dict = {}
@@ -79,7 +76,7 @@ class TextValue:
     # ...existing code...
 
     @classmethod
-    def _from_json_(cls, data: Any, context: Any = None) -> "TextValue":
+    def from_json(cls, data: Any, context: Any = None) -> "TextValue":
         """
         Create a TextValue from JSON.
         - Accepts a dict like {"value": "...", "lang": "en"} or a plain string shorthand.

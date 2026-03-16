@@ -113,20 +113,20 @@ class Gedcom5xRecord():
     # Dict/JSON friendly view
     # ───────────────────────────────
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         return {
             "level": self.level,
             "xref": self.xref,
             "tag": self.tag,
             "pointer": self.pointer,
             "value": self.value,
-            "subrecords": [sub._as_dict_ for sub in self._subRecords],
+            "subrecords": [sub.to_dict for sub in self._subRecords],
         }
 
     # ───────────────────────────────
     # Subrecord management
     # ───────────────────────────────
-    def addSubRecord(self, record: "Gedcom5xRecord"):
+    def add_sub_record(self, record: "Gedcom5xRecord"):
        
         if record is not None and (record.level == (self.level + 1)):
             record.parent = self
@@ -136,7 +136,7 @@ class Gedcom5xRecord():
                 f"SubRecord must be next level from this record (level:{self.level}, subRecord has level {record.level})"
             )
 
-    def recordOnly(self):
+    def record_only(self):
         return Gedcom5xRecord(
             line_num=self.line, level=self.level, tag=self.tag, value=self.value
         )
@@ -153,26 +153,26 @@ class Gedcom5xRecord():
             record_dump += "\t" + record.dump()
         return record_dump
 
-    def describe(self, subRecords: bool = False) -> str:
+    def describe(self, sub_records: bool = False) -> str:
         level_str = "\t" * self.level
         description = (
             f"Line {self.line}: {level_str} Level: {self.level}, "
             f"tag: '{self.tag}', xref={self.xref} value: '{self.value}', "
-            f"subRecords: {len(self._subRecords)}"
+            f"sub_records: {len(self._subRecords)}"
         )
-        if subRecords:
-            for subRecord in self.subRecords() or []:
-                description += "\n" + subRecord.describe(subRecords=True)
+        if sub_records:
+            for sub_record in self.sub_records() or []:
+                description += "\n" + sub_record.describe(sub_records=True)
         return description
 
     # ───────────────────────────────
     # Subrecord access
     # ───────────────────────────────
-    def subRecord(self, tag: str):
+    def sub_record(self, tag: str):
         result = [r for r in self._subRecords if r.tag == tag]
         return None if not result else result
 
-    def subRecords(self, tag: str | None = None) -> List['Gedcom5xRecord']:
+    def sub_records(self, tag: str | None = None) -> List['Gedcom5xRecord']:
         if not tag:
             return self._subRecords
         tags = tag.split("/", 1)
@@ -188,7 +188,7 @@ class Gedcom5xRecord():
         # Recurse deeper
         results = []
         for r in matches:
-            sub_result = r.subRecords(tags[1])
+            sub_result = r.sub_records(tags[1])
             if sub_result:
                 if isinstance(sub_result, list):
                     results.extend(sub_result)
@@ -391,7 +391,7 @@ class Gedcom5x():
     @property
     def json(self):
         import json
-        return json.dumps({'Individuals': [indi._as_dict_ for indi in self._individuals]},indent=4)
+        return json.dumps({'Individuals': [indi.to_dict for indi in self._individuals]},indent=4)
 
     @property
     def contents(self):
@@ -569,7 +569,7 @@ class Gedcom5x():
                 else:
                     new_record.root = record_map[0]
                     new_record.parent = record_map[int(level) - 1]
-                    record_map[int(level) - 1].addSubRecord(new_record)
+                    record_map[int(level) - 1].add_sub_record(new_record)
                 record_map[int(level)] = new_record
                 with hub.use(job_id):
                     log.info(new_record.describe())
@@ -578,7 +578,7 @@ class Gedcom5x():
         return records if records else []
 
     @staticmethod
-    def fromFile(file_path: str) -> 'Gedcom5x':
+    def from_file(file_path: str) -> 'Gedcom5x':
         """
         Static method to create a Gedcom object from a GEDCOM file.
 

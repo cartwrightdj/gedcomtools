@@ -26,15 +26,12 @@ GEDCOM Module Types
 """
 from .resource import Resource
 from .schemas import extensible
-from ..logging_hub import hub, logging
 from .uri import URI
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -58,18 +55,18 @@ class PlaceReference:
         self.description = description # descriptionRef
 
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         
         type_as_dict = {}
         if self.original:
             type_as_dict['original'] = self.original
         if self.description:
-            type_as_dict['description'] = URI(target=self.description)._as_dict_ 
+            type_as_dict['description'] = URI(target=self.description).to_dict 
         return type_as_dict if type_as_dict != {} else None
         
     
     @classmethod
-    def _from_json_(cls, data, context=None) -> "PlaceReference":
+    def from_json(cls, data, context=None) -> "PlaceReference":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict or str, got {type(data)}")
 
@@ -79,7 +76,7 @@ class PlaceReference:
         if (orig := data.get("original")) is not None:
             place_reference_data["original"] = orig
         if (desc := data.get("description")) is not None:
-            place_reference_data["description"] = URI._from_json_(desc, context)
+            place_reference_data["description"] = URI.from_json(desc, context)
         
         return cls(**place_reference_data)
 

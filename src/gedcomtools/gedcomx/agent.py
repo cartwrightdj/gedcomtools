@@ -30,15 +30,12 @@ from .resource import Resource
 from .schemas import extensible
 from .textvalue import TextValue
 from .uri import URI
-from ..logging_hub import hub, logging
 from .identifier import make_uid
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible(toplevel=True)
@@ -142,16 +139,16 @@ class Agent:
         self.identifiers.append(identifier_to_add)
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
 
         if self.id:
             type_as_dict["id"] = self.id
         if self.identifiers:
-            type_as_dict["identifiers"] = self.identifiers._as_dict_
+            type_as_dict["identifiers"] = self.identifiers.to_dict
         if self.names:
-            type_as_dict["names"] = [name._as_dict_ for name in self.names if name]
+            type_as_dict["names"] = [name.to_dict for name in self.names if name]
         if self.homepage:
             type_as_dict["homepage"] = self.homepage
         if self.openid:
@@ -163,14 +160,14 @@ class Agent:
         if self.phones:
             type_as_dict["phones"] = self.phones
         if self.addresses:
-            type_as_dict["addresses"] = [address._as_dict_ for address in self.addresses if address]
+            type_as_dict["addresses"] = [address.to_dict for address in self.addresses if address]
         if self.xnotes:
-            type_as_dict["notes"] = [note._as_dict_() for note in self.xnotes if note]
+            type_as_dict["notes"] = [note.to_dict() for note in self.xnotes if note]
         return type_as_dict if type_as_dict != {} else None
         return Serialization.serialize_dict(type_as_dict)
     
     @classmethod
-    def _from_json_(cls, data: Any, context: Any = None) -> "Agent":
+    def from_json(cls, data: Any, context: Any = None) -> "Agent":
         
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict or str, got {type(data)}")
@@ -183,14 +180,14 @@ class Agent:
 
         # ── Objects ─────────────────────────────────────────────────────────────
         if (identifiers := data.get("identifiers")) is not None:
-            agent_data["identifiers"] = IdentifierList._from_json_(identifiers, context)
+            agent_data["identifiers"] = IdentifierList.from_json(identifiers, context)
 
         # homepage / openid / uri: accept string or dict
         if (homepage := data.get("homepage")) is not None:
-            agent_data["homepage"] = URI.from_url_(homepage) if isinstance(homepage, str) else URI._from_json_(homepage, context)
+            agent_data["homepage"] = URI.from_url_(homepage) if isinstance(homepage, str) else URI.from_json(homepage, context)
 
         if (openid := data.get("openid")) is not None:
-            agent_data["openid"] = URI.from_url_(openid) if isinstance(openid, str) else URI._from_json_(openid, context)
+            agent_data["openid"] = URI.from_url_(openid) if isinstance(openid, str) else URI.from_json(openid, context)
 
         if (uri := data.get("uri")) is not None:
             if isinstance(uri, str):
@@ -200,7 +197,7 @@ class Agent:
         # person can be a full Person object or a Resource/URI reference
         if (person := data.get("person")) is not None:
             if isinstance(person, dict):
-                agent_data["person"] = Resource._from_json_(person, context)
+                agent_data["person"] = Resource.from_json(person, context)
             else:
                 raise ValueError()
 
@@ -214,25 +211,25 @@ class Agent:
             from .attribution import Attribution
             #======================================================================
             if isinstance(attr, dict) and any(k in attr for k in ("contributor", "created", "modified")):
-                agent_data["attribution"] = Attribution._from_json_(attr, context)
+                agent_data["attribution"] = Attribution.from_json(attr, context)
             else:
                 raise ValueError()
 
         # ── Lists ───────────────────────────────────────────────────────────────
         if (names := data.get("names")) is not None:
-            agent_data["names"] = [TextValue._from_json_(n, context) if isinstance(n, (dict,)) else TextValue(n) for n in names]
+            agent_data["names"] = [TextValue.from_json(n, context) if isinstance(n, (dict,)) else TextValue(n) for n in names]
 
         if (accounts := data.get("accounts")) is not None:
-            agent_data["accounts"] = [OnlineAccount._from_json_(a, context) for a in accounts]
+            agent_data["accounts"] = [OnlineAccount.from_json(a, context) for a in accounts]
 
         if (emails := data.get("emails")) is not None:
-            agent_data["emails"] = [URI.from_url_(e) if isinstance(e, str) else URI._from_json_(e, context) for e in emails]
+            agent_data["emails"] = [URI.from_url_(e) if isinstance(e, str) else URI.from_json(e, context) for e in emails]
 
         if (phones := data.get("phones")) is not None:
-            agent_data["phones"] = [URI.from_url_(p) if isinstance(p, str) else URI._from_json_(p, context) for p in phones]
+            agent_data["phones"] = [URI.from_url_(p) if isinstance(p, str) else URI.from_json(p, context) for p in phones]
 
         if (addresses := data.get("addresses")) is not None:
-            agent_data["addresses"] = [Address._from_json_(a, context) for a in addresses]
+            agent_data["addresses"] = [Address.from_json(a, context) for a in addresses]
 
         return cls(**agent_data)
     

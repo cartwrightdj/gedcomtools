@@ -32,14 +32,11 @@ from .resource import Resource
 from .schemas import extensible, SCHEMA
 from .uri import URI
 from .extensible_enum import ExtensibleEnum
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 def make_uid(length: int = 10, alphabet: str = string.ascii_letters + string.digits) -> str:
@@ -83,18 +80,18 @@ class Identifier:
         self.values = value if value else []
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.values:
-            type_as_dict["value"] = None # [v._as_dict_ for v in self.values]
+            type_as_dict["value"] = None # [v.to_dict for v in self.values]
         if self.type:
             type_as_dict["type"] = None #getattr(self.type, "value", self.type)  # type: ignore[attr-defined]
 
         return Serialization._serialize_dict(type_as_dict)
 
     @classmethod
-    def _from_json_(cls, data: Dict[str, Any]) -> Union[Identifier, None]:
+    def from_json(cls, data: Dict[str, Any]) -> Union[Identifier, None]:
         """
         Construct an Identifier from a dict parsed from JSON.
         """
@@ -129,9 +126,9 @@ class IdentifierList:
         elif isinstance(obj, (list, set, tuple)):
             return tuple(self.make_hashable(i) for i in obj)
         elif isinstance(obj, URI):
-            return obj._as_dict_
-        elif hasattr(obj, "_as_dict_"):
-            d = getattr(obj, "_as_dict_")
+            return obj.to_dict
+        elif hasattr(obj, "to_dict"):
+            d = getattr(obj, "to_dict")
             return tuple(sorted((k, self.make_hashable(v)) for k, v in d.items()))
         else:
             return obj
@@ -227,7 +224,7 @@ class IdentifierList:
                 yield (k, v)
     
     @classmethod
-    def _from_json_(cls, data,context=None):
+    def from_json(cls, data,context=None):
         if isinstance(data, dict):
             identifier_list = IdentifierList()
             for key, vals in data.items():
@@ -243,7 +240,7 @@ class IdentifierList:
     def _serializer(self):
         type_as_dict = {}
         for k in self.identifiers.keys():
-            type_as_dict[k] = [i._as_dict_ for i in self.identifiers[k]]
+            type_as_dict[k] = [i.to_dict for i in self.identifiers[k]]
         return type_as_dict if type_as_dict != {} else None
 
     def __repr__(self) -> str:

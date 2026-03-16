@@ -4,13 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gedcomtools"
-version = "0.5.21"
+version = "0.5.22"
 description = "Gedcom-X tools"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "orjson","python-dateutil",
+  "orjson","python-dateutil","loguru",
 ]
+
+[project.scripts]
+gxcli = "gedcomtools.gedcomx.gxcli:main"
+validat7 = "gedcomtools.gedcom7.validat7:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

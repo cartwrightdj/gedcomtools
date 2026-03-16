@@ -37,14 +37,11 @@ from .schemas import extensible
 from .subject import Subject
 from .textvalue import TextValue
 from .uri import URI
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible(toplevel=True)
@@ -108,44 +105,44 @@ class PlaceDescription(Subject):
         self.spatialDescription = spatialDescription
 
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
-        type_as_dict = super()._as_dict_ or {}
+        type_as_dict = super().to_dict or {}
         
         if self.names:
-            type_as_dict["names"] = [n._as_dict_ for n in self.names if n]
+            type_as_dict["names"] = [n.to_dict for n in self.names if n]
         if self.type:
             type_as_dict["type"] = self.type    #TODO
         if self.place:
-            type_as_dict["place"] = self.place._as_dict_
+            type_as_dict["place"] = self.place.to_dict
         if self.jurisdiction:
-            type_as_dict["jurisdiction"] = self.jurisdiction._as_dict_ 
+            type_as_dict["jurisdiction"] = self.jurisdiction.to_dict 
         if self.latitude is not None: # include 0.0; exclude only None
             type_as_dict["latitude"] = float(self.latitude)
         if self.longitude is not None: # include 0.0; exclude only None
             type_as_dict["longitude"] = float(self.longitude)
         if self.temporalDescription:
-            type_as_dict["temporalDescription"] = self.temporalDescription._as_dict_
+            type_as_dict["temporalDescription"] = self.temporalDescription.to_dict
         if self.spatialDescription:
-            type_as_dict["spatialDescription"] = self.spatialDescription._as_dict_
+            type_as_dict["spatialDescription"] = self.spatialDescription.to_dict
 
         return type_as_dict if type_as_dict != {} else None
         return Serialization.serialize_dict(type_as_dict) 
 
 '''
     @classmethod
-    def _from_json_(cls, data: Any, context: Any = None) -> "PlaceDescription":
+    def from_json(cls, data: Any, context: Any = None) -> "PlaceDescription":
         """
         Create a PlaceDescription instance from a JSON-dict (already parsed).
         """        
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict or str, got {type(data)}")
 
-        person_data: Dict[str, Any] = Subject._dict_from_json_(data,context)
+        person_data: Dict[str, Any] = Subject.dict_from_json(data,context)
 
         # names (allow both list and a single 'name' alias)
         if (names := data.get("names")) is not None:
-            person_data["names"] = [TextValue._from_json_(n, context) for n in names]
+            person_data["names"] = [TextValue.from_json(n, context) for n in names]
         
         # type (string for now; promote to enum later)
         if (typ := data.get("type")) is not None:
@@ -157,7 +154,7 @@ class PlaceDescription(Subject):
 
         # jurisdiction: Resource | PlaceDescription
         if (jur := data.get("jurisdiction")) is not None:
-            person_data["jurisdiction"] = Resource._from_json_(jur, context)
+            person_data["jurisdiction"] = Resource.from_json(jur, context)
             
         # coordinates
         if (lat := data.get("latitude")) is not None:
@@ -167,10 +164,10 @@ class PlaceDescription(Subject):
 
         # temporal / spatial descriptions
         if (td := data.get("temporalDescription")) is not None:
-            person_data["temporalDescription"] = Date._from_json_(td, context)
+            person_data["temporalDescription"] = Date.from_json(td, context)
 
         if (sd := data.get("spatialDescription")) is not None:
-            person_data["spatialDescription"] = Resource._from_json_(sd, context)
+            person_data["spatialDescription"] = Resource.from_json(sd, context)
 
         return cls(**person_data)   
 '''

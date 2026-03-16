@@ -34,14 +34,11 @@ from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
 from .subject import Subject
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()
@@ -115,10 +112,10 @@ class EventRole(Conclusion):
         )
     
     @property
-    def _as_dict_(self):
-        type_as_dict = super()._as_dict_
+    def to_dict(self):
+        type_as_dict = super().to_dict
         if self.person:
-            type_as_dict['person'] = Resource(target=self.person)._as_dict_
+            type_as_dict['person'] = Resource(target=self.person).to_dict
         if self.type is not None:
             type_as_dict['type'] = getattr(self.type, 'value', self.type)
         if self.details:
@@ -128,17 +125,17 @@ class EventRole(Conclusion):
 
 
     @classmethod
-    def _from_json_(cls,data,context):
+    def from_json(cls,data,context):
         
         if not isinstance(data, dict):
             print("Event: from:",data)
             raise TypeError(f"{cls.__name__}._from_json_ expected dict or str, got {type(data)}")
-        event_role_data = Conclusion._dict_from_json_(data,context)
+        event_role_data = Conclusion.dict_from_json(data,context)
         event_role_data: Dict[str, Any] = {}
 
         # person: Person | Resource | URI string
         if (p := data.get("person")) is not None:
-            event_role_data["person"] = Resource._from_json_(p, context)
+            event_role_data["person"] = Resource.from_json(p, context)
             
 
         # type: EventRoleType (enum-ish)
@@ -306,31 +303,31 @@ class Event(Subject):
         self.roles = roles if roles and isinstance(roles, list) else []
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.type:
             type_as_dict['type'] = self.type.value
         if self.date:
-            type_as_dict['date'] = self.date._as_dict_
+            type_as_dict['date'] = self.date.to_dict
         if self.place:
-            type_as_dict['place'] = self.place._as_dict_ 
+            type_as_dict['place'] = self.place.to_dict 
         if self.roles:
             #print(self.roles)
             for role in self.roles:
                 if isinstance(role,list):
                     assert False
-            type_as_dict['roles'] = [role._as_dict_ for role in self.roles]
+            type_as_dict['roles'] = [role.to_dict for role in self.roles]
         
         return type_as_dict if type_as_dict != {} else None
   
     
     @classmethod
-    def _from_json_(cls, data: Dict[str, Any], context: Any = None) -> "Event":
+    def from_json(cls, data: Dict[str, Any], context: Any = None) -> "Event":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
 
-        event_data: Dict[str, Any] = Subject._dict_from_json_(data,context)
+        event_data: Dict[str, Any] = Subject.dict_from_json(data,context)
 
         # Enum / type
         if (typ := data.get("type")) is not None:
@@ -339,13 +336,13 @@ class Event(Subject):
 
         # Objects
         if (dt := data.get("date")) is not None:
-            event_data["date"] = Date._from_json_(dt, context)
+            event_data["date"] = Date.from_json(dt, context)
 
         if (pl := data.get("place")) is not None:
-            event_data["place"] = PlaceReference._from_json_(pl, context)
+            event_data["place"] = PlaceReference.from_json(pl, context)
 
         # Lists
         if (rls := data.get("roles")) is not None:
-            event_data["roles"] = [EventRole._from_json_(r, context) for r in rls]
+            event_data["roles"] = [EventRole.from_json(r, context) for r in rls]
 
         return cls(**event_data)

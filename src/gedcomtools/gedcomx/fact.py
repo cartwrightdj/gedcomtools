@@ -445,48 +445,43 @@ class Fact(Conclusion):
         self._qualifiers.extend(value)
 
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         '''
         Standard GedcomX Type JSON Serialization
         Returns: dict that contains only field for which the object has data in
         '''
         with hub.use(serial_log):
-            log.debug(f"Serializing 'Fact' with id: {self.id}")
-            type_as_dict = super()._as_dict_ 
-            if type_as_dict is None:
-                log.debug(f"Subject had no fields, creating new dict") 
-                type_as_dict ={}
-            # Only add Relationship-specific fields
+            type_as_dict = super().to_dict or {}
             if self.type:
                 type_as_dict['type'] = getattr(self.type, 'value', self.type)
             if self.date:
-                type_as_dict['date'] = self.date._as_dict_
+                type_as_dict['date'] = self.date.to_dict
             if self.place:
-                type_as_dict['place'] = self.place._as_dict_
+                type_as_dict['place'] = self.place.to_dict
             if self.value:
                 type_as_dict['value'] = self.value
             if self.qualifiers and self.qualifiers != []:
                 type_as_dict['qualifiers'] = [getattr(q, 'value', q) for q in self.qualifiers]
-            log.debug(f"'Fact' serialized with fields: {type_as_dict.keys()}") 
-            if type_as_dict == {}: log.warning("serializing and empty 'Fact'")
+            if type_as_dict == {}:
+                log.warning("Serializing empty Fact (id={})", self.id)
         
         return type_as_dict if type_as_dict != {} else None 
         
     @classmethod
-    def _from_json_(cls, data: Dict[str, Any], context: Any = None) -> "Fact":
+    def from_json(cls, data: Dict[str, Any], context: Any = None) -> "Fact":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
-        fact_data = Conclusion._dict_from_json_(data,context)
+        fact_data = Conclusion.dict_from_json(data,context)
         if (val := data.get("value")) is not None:
             fact_data["value"] = val
         if (date := data.get("date")) is not None:
-            fact_data["date"] = Date._from_json_(date, context)
+            fact_data["date"] = Date.from_json(date, context)
         if (place := data.get("place")) is not None:
-            fact_data["place"] = PlaceReference._from_json_(place, context)
+            fact_data["place"] = PlaceReference.from_json(place, context)
         if (ft := data.get("type")) is not None:
             fact_data["type"] = FactType(ft)
         if (quals := data.get("qualifiers")) is not None:
-            fact_data["qualifiers"] = [Qualifier._from_json_(q) for q in quals if q is not None] 
+            fact_data["qualifiers"] = [Qualifier.from_json(q) for q in quals if q is not None] 
             
         return cls(**fact_data) 
 

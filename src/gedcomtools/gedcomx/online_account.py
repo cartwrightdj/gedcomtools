@@ -20,14 +20,11 @@ GEDCOM Module Types
 """
 from .resource import Resource
 from .schemas import extensible
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 @extensible()

@@ -28,14 +28,11 @@ from .note import Note
 from .resource import Resource
 from .schemas import extensible
 from .source_reference import SourceReference
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 
@@ -140,9 +137,9 @@ class Gender(Conclusion):
 
     '''
     @property
-    def _as_dict_(self):
+    def to_dict(self):
             
-        type_as_dict = super()._as_dict_  or {}
+        type_as_dict = super().to_dict  or {}
         if self.type:
             type_as_dict['type'] = self.type.value if self.type else None                   
         
@@ -150,8 +147,8 @@ class Gender(Conclusion):
         
 
     @classmethod
-    def _from_json_(cls,data,context):
-        conclusion = Conclusion._dict_from_json_(data,context)
+    def from_json(cls,data,context):
+        conclusion = Conclusion.dict_from_json(data,context)
         if (type_ := data.get("type")) is not None:
             conclusion["type"] = GenderType(type_)
         

@@ -35,14 +35,11 @@ from .resource import Resource
 from .textvalue import TextValue
 from .schemas import extensible
 from .subject import Subject
-from ..logging_hub import hub, logging
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 class GroupRoleType(Enum):                              #TODO Impliment

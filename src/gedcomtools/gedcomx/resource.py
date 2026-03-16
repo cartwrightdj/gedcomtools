@@ -69,16 +69,16 @@ class Resource:
                 self.resourceId = target.resourceId
                 self.target = target.target
             elif isinstance(target,URI):
-                if hub.logEnabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
+                if hub.log_enabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
                 assert False
             else:
-                if hub.logEnabled: log.debug(f"Target of type: {type(target)}")
+                if hub.log_enabled: log.debug(f"Target of type: {type(target)}")
                 if hasattr(target,'uri'):
                     self.resource = target.uri
                 else:
                     self.resourceId = URI(fragment=target.id)
                     self.resourceId = target.id
-            if hub.logEnabled: log.debug(f"Resource '{self.value} ")
+            if hub.log_enabled: log.debug(f"Resource '{self.value} ")
         '''
 
     @property
@@ -93,7 +93,7 @@ class Resource:
         return res_dict if res_dict != {} else None
     
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         raise NotImplemented
     
     @property
@@ -110,19 +110,19 @@ class Resource:
             resource = target.resource
             target = target._target
         elif isinstance(target,URI):
-            if hub.logEnabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
+            if hub.log_enabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
             assert False
         else:
-            if hub.logEnabled: log.debug(f"Target of type: {type(target)}")
+            if hub.log_enabled: log.debug(f"Target of type: {type(target)}")
             if hasattr(target,'_uri'):
                 resource = target._uri
             else:
                 resource = URI(fragment=target.id)
-        if hub.logEnabled: log.debug(f"Resource '{resource} ")
+        if hub.log_enabled: log.debug(f"Resource '{resource} ")
         return Resource(resource=resource)
 
     @classmethod
-    def _from_json_(cls, data: dict, context=None) -> "Resource":
+    def from_json(cls, data: dict, context=None) -> "Resource":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)} {data}")
         resource = {}

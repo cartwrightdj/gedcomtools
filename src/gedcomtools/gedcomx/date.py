@@ -37,15 +37,12 @@ except ImportError:
 GEDCOM Module Types
 ======================================================================
 """
-from ..logging_hub import hub, logging
 from .schemas import extensible
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 
@@ -69,7 +66,7 @@ class Date:
     
     '''
     @property
-    def _as_dict_(self):
+    def to_dict(self):
         from .serialization import Serialization
         type_as_dict = {}
         if self.original:
@@ -80,7 +77,7 @@ class Date:
         return Serialization.serialize_dict(type_as_dict)
 
     @classmethod
-    def _from_json_(cls,data: Any, context=None):
+    def from_json(cls,data: Any, context=None):
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict or str, got {type(data)} data:{data}")
 

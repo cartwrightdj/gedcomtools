@@ -117,7 +117,7 @@ class rsLink:
         )
 
     @classmethod
-    def _from_json_(cls, data: Any, context: Any = None) -> "rsLink":
+    def from_json(cls, data: Any, context: Any = None) -> "rsLink":
         if not isinstance(data, dict):
             raise TypeError(f"{cls.__name__}._from_json_ expected dict, got {type(data)}")
 
