@@ -35,7 +35,7 @@ from .coverage import Coverage
 from .date import Date
 from .identifier import Identifier, IdentifierList
 from .identifier import make_uid
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 from .note import Note
 from .resource import Resource
 from .schemas import extensible
@@ -48,7 +48,7 @@ from .uri import URI
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.deserialization"
 #=====================================================================

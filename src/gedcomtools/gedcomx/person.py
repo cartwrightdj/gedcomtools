@@ -31,7 +31,7 @@ from .extensible import Extensible
 from .fact import Fact, FactType
 from .gender import Gender, GenderType
 from .identifier import IdentifierList
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 from .name import Name, QuickName
 from .note import Note
 from .resource import Resource
@@ -39,7 +39,7 @@ from .schemas import extensible
 from .source_reference import SourceReference
 from .subject import Subject
 
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 deserial_log = "gedcomx.deserialization"
 
 

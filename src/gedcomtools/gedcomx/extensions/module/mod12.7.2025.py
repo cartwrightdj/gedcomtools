@@ -26,7 +26,7 @@ GEDCOM Module Types
 from gedcomtools.conclusion import Conclusion
 from gedcomtools.name import Name
 from ...exceptions import GedcomClassAttributeError
-from ...logging_hub import hub, logging
+from ...glog import get_logger
 from ...schemas import extensible, SCHEMA
 from gedcomtools.extensible import Extensible
 from ...uri import URI
@@ -38,7 +38,7 @@ from gedcomtools.textvalue import TextValue
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.deserialization"
 #=====================================================================

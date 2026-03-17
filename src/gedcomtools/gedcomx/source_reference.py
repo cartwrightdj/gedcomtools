@@ -31,13 +31,13 @@ from .resource import Resource
 from .schemas import extensible
 
 from .uri import URI
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 #=====================================================================
 

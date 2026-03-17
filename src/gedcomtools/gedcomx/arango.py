@@ -14,8 +14,8 @@ from typing import Dict, Any
 
 from .gedcomx import GedcomX
 from .fact import FactType
-from gedcomtools.loggingkit import setup_logging, get_log, LoggerSpec
-log = get_log(__name__)
+from gedcomtools.glog import setup_logging, get_logger, LoggerSpec
+log = get_logger(__name__)
 
 def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
     graph_files = {

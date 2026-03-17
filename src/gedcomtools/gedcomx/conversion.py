@@ -55,8 +55,8 @@ from .source_reference import SourceReference, KnownSourceReference
 from .textvalue import TextValue
 from .uri import URI
 
-from gedcomtools.loggingkit import get_log
-log = get_log(__name__)
+from gedcomtools.glog import get_logger
+log = get_logger(__name__)
 
 T = TypeVar("T")
 K = TypeVar("K", bound=Hashable)

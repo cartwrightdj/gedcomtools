@@ -35,7 +35,7 @@ from .document import Document
 from .event import Event
 from .group import Group
 from .identifier import make_uid
-from ..logging_hub import logging, hub, ChannelConfig
+from ..glog import get_logger, hub
 from .person import Person
 from .place_description import PlaceDescription
 from .relationship import Relationship, RelationshipType
@@ -46,7 +46,7 @@ from .textvalue import TextValue
 from .uri import URI
 #=====================================================================
 
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.serialization"
 

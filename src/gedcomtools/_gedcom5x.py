@@ -26,17 +26,11 @@ from typing import Iterable, Iterator, List, Optional, Tuple, Union
 GEDCOM Module Types
 ======================================================================
 """
-#import logging
-from .logging_hub import hub, ChannelConfig, logging
+from .glog import get_logger, hub, ChannelConfig
+import logging as _logging
 
-"""
-======================================================================
-Logging
-======================================================================
-"""
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
-#=====================================================================
 
 job_id = "gedcomx.parsing.GEDCOM5x"
 
@@ -44,12 +38,10 @@ hub.start_channel(
     ChannelConfig(
         name=job_id,
         path=f"logs/{job_id}.log",
-        level=logging.DEBUG,
-        rotation="size:10MB:3",   # rotate by size, keep 3 backups
+        level=_logging.DEBUG,
+        rotation="size:10MB:3",
     )
 )
-
-log = logging.getLogger("gedcomx")
 
 BOM = '\ufeff'
 

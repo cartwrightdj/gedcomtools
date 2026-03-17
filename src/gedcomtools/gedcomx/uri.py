@@ -20,14 +20,14 @@ from urllib.parse import urlsplit, urlunsplit, urlunparse, SplitResult
 GEDCOM Module Types
 ======================================================================
 """
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 from .schemas import extensible, SCHEMA
 """
 ======================================================================
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 #=====================================================================
 

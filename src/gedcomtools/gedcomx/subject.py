@@ -23,7 +23,7 @@ from .attribution import Attribution
 from .conclusion import ConfidenceLevel, Conclusion
 from .evidence_reference import EvidenceReference
 from .identifier import Identifier, IdentifierList
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 from .note import Note
 from .resource import Resource
 from .source_reference import SourceReference
@@ -33,7 +33,7 @@ from .uri import URI
 Logging
 ======================================================================
 """
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 #=====================================================================
 

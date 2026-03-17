@@ -43,7 +43,7 @@ import orjson
 GEDCOM Module Types
 ======================================================================
 """
-from gedcomtools.loggingkit import setup_logging, get_log, LoggerSpec
+from gedcomtools.glog import setup_logging, get_logger, LoggerSpec
 
 # Logging is initialized in main() to avoid side effects on import.
 _LOG_MGR = None
@@ -920,7 +920,7 @@ class Shell:
                 print("Usage: log show <channel>")
                 return
             channel = args[1]
-            logger = get_log(channel)  # uses active manager config
+            logger = get_logger(channel)  # uses active manager config
             print(f"Logger: {logger.name}")
             print(f"  level: {logging.getLevelName(logger.level)}")
             print(f"  propagate: {logger.propagate}")
@@ -967,7 +967,7 @@ class Shell:
                 # If not configured, configure console-only so changes actually do something
                 if not mgr.log_exists(channel):
                     mgr.get_sublogger(LoggerSpec(name=channel, filename="", level=level, also_to_console=True))
-                logger = get_log(channel)
+                logger = get_logger(channel)
 
             logger.setLevel(level)
             print(f"Set logger '{channel}' to {logging.getLevelName(level)}")

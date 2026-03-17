@@ -1,0 +1,14 @@
+# Sphinx build dependencies for Read the Docs
+# Runtime deps required so autodoc can import the package
+loguru
+python-dateutil
+orjson
+
+# Sphinx core
+sphinx>=7.0
+
+# Theme
+furo
+
+# Extensions
+sphinx-autodoc-typehints

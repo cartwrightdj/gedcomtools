@@ -22,14 +22,9 @@ GEDCOM Module Types
 """
 
 from .uri import URI
-from ..logging_hub import hub, logging
+from ..glog import get_logger
 from .schemas import extensible, SCHEMA
-"""
-======================================================================
-Logging
-======================================================================
-"""
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 #=====================================================================
 
@@ -105,16 +100,16 @@ class Resource:
         if isinstance(target,Resource):
             resource = target.resource
             target = target._target
-        elif isinstance(target,URI):
-            if hub.log_enabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
-            raise NotImplementedError(f"Resource._of_object() does not yet handle URI targets")
+        elif isinstance(target, URI):
+            log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value}")
+            raise NotImplementedError("Resource._of_object() does not yet handle URI targets")
         else:
-            if hub.log_enabled: log.debug(f"Target of type: {type(target)}")
-            if hasattr(target,'_uri'):
+            log.debug(f"Target of type: {type(target)}")
+            if hasattr(target, '_uri'):
                 resource = target._uri
             else:
                 resource = URI(fragment=target.id)
-        if hub.log_enabled: log.debug(f"Resource '{resource} ")
+        log.debug(f"Resource '{resource}")
         return Resource(resource=resource)
 
     def __repr__(self) -> str:

@@ -17,8 +17,8 @@ from pathlib import Path
 import json
 
 
-from gedcomtools.loggingkit import setup_logging, get_log 
-log = get_log()
+from gedcomtools.glog import setup_logging, get_logger 
+log = get_logger(__name__)
 
 def _is_collection_type(tp: Any) -> bool:
     """

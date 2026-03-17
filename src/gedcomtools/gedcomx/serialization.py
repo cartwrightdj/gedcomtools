@@ -50,7 +50,7 @@ from .fact import Fact, FactType, FactQualifier
 from .gedcomx import TypeCollection
 from .gender import Gender, GenderType
 from .identifier import IdentifierList, Identifier
-from ..logging_hub import hub, ChannelConfig, logging
+from ..glog import get_logger, hub
 from .name import Name, NameType, NameForm, NamePart, NamePartType, NamePartQualifier
 from .note import Note
 from .online_account import OnlineAccount
@@ -67,7 +67,7 @@ from .textvalue import TextValue
 from .uri import URI
 #======================================================================
 
-log = logging.getLogger("gedcomx")
+log = get_logger(__name__)
 
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.deserialization"

@@ -237,74 +237,6 @@
         <article role="main" id="furo-main-content">
           <section id="module-gedcomtools.gedcom5.parser">
 <span id="gedcom-5-x-api"></span><h1>GEDCOM 5.x API<a class="headerlink" href="#module-gedcomtools.gedcom5.parser" title="Link to this heading">¶</a></h1>
-<p>GEDCOM 5.x file parser — builds a typed element tree from a .ged file.</p>
-<p>All high-level analysis lives in <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom5</span></code>.
-This module is the raw parsing engine only.</p>
-<section id="changes-from-the-original-python-gedcom-source">
-<h2>Changes from the original python-gedcom source<a class="headerlink" href="#changes-from-the-original-python-gedcom-source" title="Link to this heading">¶</a></h2>
-<p><strong>Module / file</strong></p>
-<ul class="simple">
-<li><p>Renamed from <code class="docutils literal notranslate"><span class="pre">gedcom5x.py</span></code> (which was itself a rename of the original
-<code class="docutils literal notranslate"><span class="pre">parser.py</span></code> from python-gedcom) to <code class="docutils literal notranslate"><span class="pre">parser.py</span></code> inside the <code class="docutils literal notranslate"><span class="pre">gedcom5</span></code>
-sub-package.  The class retains the name <code class="docutils literal notranslate"><span class="pre">Gedcom5x</span></code> to distinguish it from
-the high-level <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom5</span></code> facade.</p></li>
-</ul>
-<p><strong>Dead code removed</strong></p>
-<p>The following methods were present in the original but are entirely superseded
-by the <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom5</span></code> facade and were never
-called from outside it.  All have been deleted:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">get_marriages()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_marriage_years()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">marriage_year_match()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">marriage_range_match()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_families()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_ancestors()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_parents()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">find_path_to_ancestor()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_family_members()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">describe_individual()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">zero_records</span></code> (property)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">records</span></code> (property)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">__build_list()</span></code> (private helper for the above)</p></li>
-<li><p>Module-level <code class="docutils literal notranslate"><span class="pre">FAMILY_MEMBERS_TYPE_*</span></code> constants (only used by the removed
-methods)</p></li>
-</ul>
-<p><strong>Dead ``__init__`` state removed</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">self.__notes</span></code> — GEDCOM 5 has no top-level NOTE records; the list was
-allocated and never populated.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">self.__element_dictionary</span></code> — caching dict replaced by the on-demand
-<code class="docutils literal notranslate"><span class="pre">get_element_dictionary()</span></code> method.</p></li>
-</ul>
-<p><strong>Dead ``parse()`` variable removed</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">last_element</span></code> — assigned on every iteration but never read.</p></li>
-</ul>
-<p><strong>Unused imports removed</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">Iterator</span></code>, <code class="docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="docutils literal notranslate"><span class="pre">Tuple</span></code>, <code class="docutils literal notranslate"><span class="pre">Any</span></code> from <code class="docutils literal notranslate"><span class="pre">typing</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">version_info</span></code> from <code class="docutils literal notranslate"><span class="pre">sys</span></code></p></li>
-</ul>
-<p><strong>Python 2 compatibility shim removed from ``save_gedcom()``</strong></p>
-<p>The original used <code class="docutils literal notranslate"><span class="pre">isinstance(open_file,</span> <span class="pre">io.IOBase)</span></code> to decide whether to
-call <code class="docutils literal notranslate"><span class="pre">.write()</span></code> or <code class="docutils literal notranslate"><span class="pre">sys.stdout.write()</span></code>.  The project requires Python ≥
-3.10; the shim was removed and <code class="docutils literal notranslate"><span class="pre">save_gedcom()</span></code> now always calls
-<code class="docutils literal notranslate"><span class="pre">open_file.write()</span></code>.</p>
-<p><strong>Bug fixes</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">__parse_line()</span></code> — CONC fallback path set <code class="docutils literal notranslate"><span class="pre">pointer</span> <span class="pre">=</span> <span class="pre">None</span></code>; storing
-<code class="docutils literal notranslate"><span class="pre">None</span></code> as an element xref later caused a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> in
-<code class="docutils literal notranslate"><span class="pre">to_gedcom_string()</span></code>.  Fixed: <code class="docutils literal notranslate"><span class="pre">pointer</span> <span class="pre">=</span> <span class="pre">&quot;&quot;</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_element_dictionary()</span></code> — xref keys are now normalised via
-<code class="docutils literal notranslate"><span class="pre">_normalize_xref()</span></code> so that lookups are case-insensitive (e.g. <code class="docutils literal notranslate"><span class="pre">&#64;I1&#64;</span></code>
-and <code class="docutils literal notranslate"><span class="pre">&#64;i1&#64;</span></code> resolve to the same record).</p></li>
-<li><p>Pedigree comparison in the removed <code class="docutils literal notranslate"><span class="pre">get_family_members()</span></code> — right-hand
-side of <code class="docutils literal notranslate"><span class="pre">_normalize_xref(fm.value)</span> <span class="pre">==</span> <span class="pre">individual.xref</span></code> was not normalised,
-meaning a case mismatch silently skipped the pedigree check.  Fixed in the
-facade; the raw method was deleted.</p></li>
-</ul>
-</section>
 <dl class="py exception">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.GedcomFormatViolationError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.parser.</span></span><span class="sig-name descname"><span class="pre">GedcomFormatViolationError</span></span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/parser.html#GedcomFormatViolationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.parser.GedcomFormatViolationError" title="Link to this definition">¶</a></dt>
@@ -882,8 +814,7 @@ Includes name, gender, birth/death data, and occupation if available.</p>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
 </dd></dl>
 
-<p id="module-gedcomtools.gedcom5.helpers">Helper methods.</p>
-<dl class="py function">
+<dl class="py function" id="module-gedcomtools.gedcom5.helpers">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.helpers.deprecated">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.helpers.</span></span><span class="sig-name descname"><span class="pre">deprecated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/helpers.html#deprecated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.helpers.deprecated" title="Link to this definition">¶</a></dt>
 <dd><p>This is a decorator which can be used to mark functions
@@ -891,9 +822,8 @@ as deprecated. It will result in a warning being emitted
 when the function is used.</p>
 </dd></dl>
 
-<p id="module-gedcomtools.gedcom5.tags"><span id="module-gedcomtools.gedcom5.source"></span>GEDCOM tags.</p>
-<dl class="py data">
-<dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL">
+<dl class="py data" id="module-gedcomtools.gedcom5.tags">
+<span id="module-gedcomtools.gedcom5.source"></span><dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_PROGRAM_DEFINED_TAG_MREL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'_MREL'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL" title="Link to this definition">¶</a></dt>
 <dd><p><cite>_MREL</cite></p>
 <p>Relationship to a mother.</p>
@@ -1350,7 +1280,6 @@ the genealogical data.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">GEDCOM 5.x API</a><ul>
-<li><a class="reference internal" href="#changes-from-the-original-python-gedcom-source">Changes from the original python-gedcom source</a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.GedcomFormatViolationError"><code class="docutils literal notranslate"><span class="pre">GedcomFormatViolationError</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x"><code class="docutils literal notranslate"><span class="pre">Gedcom5x</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.individuals"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.individuals</span></code></a></li>

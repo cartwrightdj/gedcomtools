@@ -266,7 +266,7 @@
 <span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">Event</span>
 <span class="kn">from</span> <span class="nn">.group</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">make_uid</span>
-<span class="kn">from</span> <span class="nn">..logging_hub</span> <span class="kn">import</span> <span class="n">logging</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">ChannelConfig</span>
+<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">hub</span>
 <span class="kn">from</span> <span class="nn">.person</span> <span class="kn">import</span> <span class="n">Person</span>
 <span class="kn">from</span> <span class="nn">.place_description</span> <span class="kn">import</span> <span class="n">PlaceDescription</span>
 <span class="kn">from</span> <span class="nn">.relationship</span> <span class="kn">import</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>
@@ -277,7 +277,7 @@
 <span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
 <span class="c1">#=====================================================================</span>
 
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gedcomx&quot;</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">serial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
 <span class="n">deserial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
 
