@@ -24,8 +24,8 @@ from gedcomtools.gedcomx.person import Person
 
 
 
-def ext_description_set(self) -> str:
-    return self.names[0].nameForms[0].fullText
+def ext_description_set(self, value) -> None:
+    pass  # computed property; incoming values are ignored
 
 def ext_description_get(self) -> dict:
     person = {
@@ -181,10 +181,14 @@ bind_schema_property(
     schema=SCHEMA,
 )
 
+def ext_emb_narrative_set(self, value) -> None:
+    pass  # computed property; incoming values are ignored
+
+
 bind_schema_property(
     Person,
     ext_emb_narrative_get,
-    fset=None,
+    fset=ext_emb_narrative_set,
     name="Narrative_for_Embedding",
     schema=SCHEMA,
 )

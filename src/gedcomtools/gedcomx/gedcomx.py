@@ -401,6 +401,18 @@ class GedcomX:
         if gedcomx is not None:
             for person in gedcomx.persons:
                 self.add_person(person)
+            for agent in gedcomx.agents:
+                self.add_agent(agent)
+            for rel in gedcomx.relationships:
+                self.add_relationship(rel)
+            for sd in gedcomx.sourceDescriptions:
+                self.add_source_description(sd)
+            for event in gedcomx.events:
+                self.add_event(event)
+            for doc in gedcomx.documents:
+                self.add_document(doc)
+            for place in gedcomx.places:
+                self.add_place_description(place)
 
     @lru_cache(maxsize=65536)
     def get_person_by_id(self,id: str):

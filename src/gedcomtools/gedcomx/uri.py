@@ -1,5 +1,5 @@
 from __future__ import annotations
-from urllib.parse import urlsplit, urlunsplit, urlunparse
+from urllib.parse import urlsplit, urlunsplit, urlunparse, SplitResult
 
 """
 ======================================================================

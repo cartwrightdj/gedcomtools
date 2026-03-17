@@ -390,7 +390,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
-            self.object_map[record.level-1].source_description.add_note(gxobject)
+            self.object_map[record.level-1].sourceDescription.add_note(gxobject)
             
             self.object_map[record.level] = gxobject
         else:
@@ -690,7 +690,7 @@ class GedcomConverter:
             self.object_map[record.level-1].created = record.value #TODO String to timestamp
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             
-            self.object_map[record.level-1].source_description.created = record.value #TODO String to timestamp
+            self.object_map[record.level-1].sourceDescription.created = record.value #TODO String to timestamp
         elif isinstance(self.object_map[record.level-1], Attribution):
             if record.parent is not None and record.parent.tag == 'CREA':
                 self.object_map[record.level-1].created = record.value #TODO G7
@@ -1105,13 +1105,13 @@ class GedcomConverter:
             self.object_map[record.level] = place
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             if (place := self.gedcomx.places.by_name(record.value)) is not None:
-                self.object_map[record.level-1].source_description.place = place
+                self.object_map[record.level-1].sourceDescription.place = place
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place)
-                self.object_map[record.level-1].source_description.place = PlaceReference(original=record.value, description=place)
+                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
             gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
-            self.object_map[record.level-1].source_description.add_note(gxobject)
+            self.object_map[record.level-1].sourceDescription.add_note(gxobject)
             
             self.object_map[record.level] = place
         else:
@@ -1209,8 +1209,8 @@ class GedcomConverter:
             self.object_map[record.level-1].add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
             self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1].source_description.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
-            self.object_map[record.level-1].source_description.add_note(Note(text=f"Source had RIN: of {record.value}"))
+            self.object_map[record.level-1].sourceDescription.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].sourceDescription.add_note(Note(text=f"Source had RIN: of {record.value}"))
 
         else:
             self.convert_exception_dump(record=record)
@@ -1287,8 +1287,8 @@ class GedcomConverter:
 
             if isinstance(self.object_map[record.level-1], Attribution):
                 self.object_map[record.level-1].contributor = gxobject
-            elif isinstance(self.object_map[record.level-1], Gedcom5x):
-                self.object_map[record.level-1].add_agent(gxobject)
+            elif isinstance(self.object_map[record.level-1], (Gedcom5x, GedcomX)):
+                pass  # agent already added to self.gedcomx above
             else:
                 self.convert_exception_dump(record=record)
             self.object_map[record.level] = gxobject

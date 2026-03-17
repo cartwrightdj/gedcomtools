@@ -73,7 +73,7 @@ pip install gedcomtools
 Or from source:
 
 ```bash
-git clone https://github.com/yourrepo/gedcomtools.git
+git clone https://github.com/cartwrightdj/gedcomtools.git
 cd gedcomtools
 pip install -e .
 ```
