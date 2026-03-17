@@ -1,4 +1,15 @@
-"""GEDCOM 7 structure node types.
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom7/structure.py
+ Author:  David J. Cartwright
+ Purpose: In-memory GEDCOM 7 structure node used by the parser,
+          validator, and writer.
+
+ Created: 2026-03-01
+ Updated:
+   - 2026-03-15: added get_path(), depth property, get_ancestor()
+======================================================================
 
 This module defines the in-memory node representation used by the GEDCOM 7
 parser and validator.
@@ -127,6 +138,52 @@ class GedcomStructure:
         """
         matches = self.get_children(tag)
         return matches[0] if matches else None
+
+    @property
+    def depth(self) -> int:
+        """Return the nesting depth (0 for top-level records).
+
+        Returns:
+            Number of ancestor nodes above this node.
+        """
+        n = 0
+        node = self.parent
+        while node is not None:
+            n += 1
+            node = node.parent
+        return n
+
+    def get_path(self) -> str:
+        """Return a human-readable path from the root to this node.
+
+        Returns:
+            Slash-separated path of tags and xref ids.
+        """
+        parts: list[str] = []
+        node: Optional["GedcomStructure"] = self
+        while node is not None:
+            label = node.xref_id if node.xref_id else node.tag
+            parts.append(label)
+            node = node.parent
+        parts.reverse()
+        return "/" + "/".join(parts)
+
+    def get_ancestor(self, tag: str) -> Optional["GedcomStructure"]:
+        """Walk up the tree and return the first ancestor with the given tag.
+
+        Args:
+            tag: GEDCOM tag to search for.
+
+        Returns:
+            Matching ancestor node or ``None``.
+        """
+        wanted = tag.upper()
+        node = self.parent
+        while node is not None:
+            if node.tag == wanted:
+                return node
+            node = node.parent
+        return None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the node and descendants to a serializable dictionary.

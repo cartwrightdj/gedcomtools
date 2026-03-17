@@ -28,8 +28,8 @@ import re
 import shutil
 from typing import Any, Callable, Dict, Hashable, Iterable, List, Mapping, Optional, TypeVar
 
-from ..gedcom.elements import Element
-from ..gedcom.gedcom5x import Gedcom5x
+from ..gedcom5.elements import Element
+from ..gedcom5.parser import Gedcom5x
 
 from .address import Address
 from .agent import Agent

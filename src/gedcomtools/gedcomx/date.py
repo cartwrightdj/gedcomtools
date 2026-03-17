@@ -18,8 +18,8 @@ except ImportError:
 
 """
 ======================================================================
- Project: Gedcom-X
- File:    date.py
+ Project: gedcomtools
+ File:    gedcomx/date.py
  Author:  David J. Cartwright
  Purpose: 
 

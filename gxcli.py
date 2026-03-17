@@ -48,7 +48,7 @@ mgr = setup_logging(app_name="gedcomtools")
 get_log("common").info("common is alive")
 
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
-from gedcomtools.gedcom.gedcom5x import Gedcom5x
+from gedcomtools.gedcom5.parser import Gedcom5x
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.cli import objects_to_schema_table, write_jsonl

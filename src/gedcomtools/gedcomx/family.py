@@ -16,7 +16,7 @@ from enum import Enum
 GEDCOM Module Types
 ======================================================================
 """
-from ..gedcom.elements import Element
+from ..gedcom5.elements import Element
 from .gedcomx import GedcomX, Person, Relationship, RelationshipType
 from .fact import Fact, FactType
 from .note import Note

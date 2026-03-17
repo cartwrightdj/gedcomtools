@@ -14,7 +14,8 @@ dependencies = [
 
 [project.scripts]
 gxcli = "gedcomtools.gedcomx.gxcli:main"
-validat7 = "gedcomtools.gedcom7.validat7:main"
+g7cli = "gedcomtools.gedcom7.g7cli:main"
+validate7 = "gedcomtools.gedcom7.validate7:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -1,4 +1,19 @@
-"""GEDCOM 7 specification helper layer.
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom7/specification.py
+ Author:  David J. Cartwright
+ Purpose: GEDCOM 7 structural specification rule layer used by the
+          parser, validator, and writer.
+
+ Created: 2026-03-01
+ Updated:
+   - 2026-03-15: added full enum_values for MEDI, PEDI, ROLE;
+                 FAMC.STAT enum constant; CHIL PHRASE substructure
+   - 2026-03-16: added _CONTEXT_ENUM_RULES and get_context_enum_values()
+                 for FAMC.STAT context-specific validation;
+                 get_label() now returns real human-readable labels via _TAG_LABELS
+======================================================================
 
 This module provides a normalized rule layer that sits on top of the raw
 GEDCOM 7 tag/URI mapping. It intentionally starts with a practical core rule
@@ -34,6 +49,15 @@ PAYLOAD_TEXT = "text"
 PAYLOAD_POINTER = "pointer"
 PAYLOAD_NONE = "none"
 PAYLOAD_ENUM = "enum"
+
+# Enumeration value sets used by the validator and spec registry.
+FAMC_STAT_ENUM = frozenset({"CHALLENGED", "DISPROVEN", "PROVEN"})
+
+# Context-specific enum rules: (tag, parent_tag) → frozenset of valid values.
+# Used when the same tag has different allowed values depending on its parent.
+_CONTEXT_ENUM_RULES: Dict[tuple, frozenset] = {
+    ("STAT", "FAMC"): FAMC_STAT_ENUM,
+}
 
 # ---------------------------------------------------------------------------
 # Shared substructure building blocks used to construct _CORE_RULES.
@@ -631,7 +655,13 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
 
     # ── Role ──────────────────────────────────────────────────────────────────
     "ROLE": {
-        "payload_type": PAYLOAD_TEXT,
+        "payload_type": PAYLOAD_ENUM,
+        "enum_values": {
+            "CHIL", "HUSB", "WIFE", "MOTH", "FATH", "SPOU",
+            "CLERGY", "FRIEND", "GODP", "GODPARENT", "GUARDIAN",
+            "MULTIPLE", "NGHBR", "OFFICIATOR", "PARENT",
+            "PRIN", "WITN", "OTHER",
+        },
         "substructures": {"PHRASE": "PHRASE"},
         "cardinality":   {"PHRASE": (0, 1)},
     },
@@ -645,7 +675,8 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
 
     # ── Pedigree linkage type ─────────────────────────────────────────────────
     "PEDI": {
-        "payload_type": PAYLOAD_TEXT,
+        "payload_type": PAYLOAD_ENUM,
+        "enum_values": {"ADOPTED", "BIRTH", "FOSTER", "SEALING", "OTHER"},
         "substructures": {"PHRASE": "PHRASE"},
         "cardinality":   {"PHRASE": (0, 1)},
     },
@@ -698,7 +729,16 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     "NICK":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
     "SPFX":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
     "PAGE":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
-    "MEDI":  {"payload_type": PAYLOAD_TEXT, "substructures": {"PHRASE": "PHRASE"}, "cardinality": {"PHRASE": (0, 1)}},
+    "MEDI": {
+        "payload_type": PAYLOAD_ENUM,
+        "enum_values": {
+            "AUDIO", "BOOK", "CARD", "ELECTRONIC", "FICHE", "FILM",
+            "MAGAZINE", "MANUSCRIPT", "MAP", "NEWSPAPER", "PHOTO",
+            "TOMBSTONE", "VIDEO", "OTHER",
+        },
+        "substructures": {"PHRASE": "PHRASE"},
+        "cardinality":   {"PHRASE": (0, 1)},
+    },
     "ADR1":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
     "ADR2":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
     "ADR3":  {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
@@ -784,19 +824,95 @@ def get_uri(key: str) -> Optional[str]:
     return get_uri_for_tag(key)
 
 
+# Human-readable display labels for standard GEDCOM 7 tags.
+# Falls back to the tag itself for anything not listed here.
+_TAG_LABELS: Dict[str, str] = {
+    "ABBR": "Abbreviation",      "ADDR": "Address",
+    "ADOP": "Adoption",          "ADR1": "Address Line 1",
+    "ADR2": "Address Line 2",    "ADR3": "Address Line 3",
+    "AGE":  "Age",               "AGNC": "Agency",
+    "ALIA": "Alias",             "ANCI": "Ancestor Interest",
+    "ANUL": "Annulment",         "ASSO": "Association",
+    "AUTH": "Author",
+    "BAPL": "Baptism (LDS)",     "BAPM": "Baptism",
+    "BARM": "Bar Mitzvah",       "BASM": "Bas Mitzvah",
+    "BIRT": "Birth",             "BLES": "Blessing",
+    "BURI": "Burial",
+    "CALN": "Call Number",       "CAST": "Caste",
+    "CAUS": "Cause",             "CENS": "Census",
+    "CHAN": "Change",            "CHIL": "Child",
+    "CHR":  "Christening",       "CHRA": "Adult Christening",
+    "CITY": "City",              "CONF": "Confirmation",
+    "CONL": "Confirmation (LDS)", "CONT": "Continuation",
+    "COPR": "Copyright",         "CORP": "Corporate",
+    "CREA": "Creation",          "CTRY": "Country",
+    "DATA": "Data",              "DATE": "Date",
+    "DEAT": "Death",             "DESI": "Descendant Interest",
+    "DEST": "Destination",       "DIV":  "Divorce",
+    "DIVF": "Divorce Filed",     "DSCR": "Description",
+    "EDUC": "Education",         "EMAIL": "Email",
+    "EMIG": "Emigration",        "ENDL": "Endowment (LDS)",
+    "ENGA": "Engagement",        "EVEN": "Event",
+    "EXID": "External Identifier",
+    "FAM":  "Family",            "FAMC": "Family (child)",
+    "FAMF": "Family File",       "FAMS": "Family (spouse)",
+    "FAX":  "Fax",               "FCOM": "First Communion",
+    "FILE": "File",              "FORM": "Format",
+    "GEDC": "GEDCOM",            "GIVN": "Given Name",
+    "GRAD": "Graduation",
+    "HEAD": "Header",            "HUSB": "Husband",
+    "IDNO": "ID Number",         "IMMI": "Immigration",
+    "INDI": "Individual",        "INIL": "Initiatory (LDS)",
+    "LANG": "Language",          "LATI": "Latitude",
+    "LONG": "Longitude",
+    "MAP":  "Map",               "MARB": "Marriage Banns",
+    "MARC": "Marriage Contract", "MARL": "Marriage License",
+    "MARR": "Marriage",          "MARS": "Marriage Settlement",
+    "MEDI": "Media",             "MIME": "MIME Type",
+    "NAME": "Name",              "NATI": "Nationality",
+    "NATU": "Naturalization",    "NICK": "Nickname",
+    "NO":   "Did Not Happen",    "NOTE": "Note",
+    "NPFX": "Name Prefix",       "NSFX": "Name Suffix",
+    "OBJE": "Object",            "OCCU": "Occupation",
+    "ORDI": "Ordinance",         "ORDN": "Ordination",
+    "PAGE": "Page",              "PEDI": "Pedigree",
+    "PHON": "Phone",             "PLAC": "Place",
+    "POST": "Postal Code",       "PROB": "Probate",
+    "PUBL": "Publication",       "QUAY": "Quality",
+    "REFN": "Reference Number",  "RELI": "Religion",
+    "REPO": "Repository",        "RESI": "Residence",
+    "RESN": "Restriction",       "RETI": "Retirement",
+    "ROLE": "Role",
+    "SCHMA": "Schema",           "SEX":  "Sex",
+    "SLGC": "Sealing — Child (LDS)", "SLGS": "Sealing — Spouse (LDS)",
+    "SNOTE": "Shared Note",      "SOUR": "Source",
+    "SPFX": "Surname Prefix",    "SSN":  "Social Security Number",
+    "STAE": "State",             "STAT": "Status",
+    "SUBM": "Submitter",         "SURN": "Surname",
+    "TAG":  "Tag",               "TEMP": "Temple",
+    "TEXT": "Text",              "TIME": "Time",
+    "TITL": "Title",             "TRAN": "Translation",
+    "TRLR": "Trailer",           "TYPE": "Type",
+    "UID":  "Unique Identifier", "VERS": "Version",
+    "WIFE": "Wife",              "WILL": "Will",
+    "WWW":  "Website",
+}
+
+
 def get_label(key: Optional[str]) -> str:
-    """Return a display label for a tag or URI.
+    """Return a human-readable display label for a GEDCOM tag or URI.
 
     Args:
-        key: GEDCOM tag or URI.
+        key: GEDCOM tag (e.g. ``"BIRT"``) or URI.
 
     Returns:
-        Human-readable label.
+        Human-readable label such as ``"Birth"``, or the tag itself
+        if no label is registered.
     """
     if not key:
         return "Unknown"
     tag = get_tag(key)
-    return tag
+    return _TAG_LABELS.get(tag.upper(), tag)
 
 
 def top_level_tags() -> List[str]:
@@ -913,6 +1029,23 @@ def get_enum_values(key: Optional[str]) -> Optional[set[str]]:
     return {str(value) for value in values}
 
 
+def get_context_enum_values(tag: str, parent_tag: Optional[str]) -> Optional[frozenset]:
+    """Return context-specific enumeration values when the same tag has different
+    allowed values depending on its parent structure.
+
+    Args:
+        tag: GEDCOM tag.
+        parent_tag: Tag of the parent structure, or ``None`` for top-level.
+
+    Returns:
+        Frozenset of valid values if a context-specific rule exists, otherwise
+        ``None`` (meaning fall through to the general enum check).
+    """
+    if parent_tag is None:
+        return None
+    return _CONTEXT_ENUM_RULES.get((tag.upper(), parent_tag.upper()))
+
+
 def register_extension_tag(tag: str, uri: str) -> None:
     """Register an extension tag from ``HEAD.SCHMA.TAG``.
 
@@ -942,6 +1075,7 @@ __all__ = [
     "PAYLOAD_POINTER",
     "PAYLOAD_NONE",
     "PAYLOAD_ENUM",
+    "FAMC_STAT_ENUM",
     "TOP_LEVEL_TAGS",
     "get_spec",
     "get_tag",
@@ -954,5 +1088,6 @@ __all__ = [
     "get_cardinality",
     "get_payload_type",
     "get_enum_values",
+    "get_context_enum_values",
     "register_extension_tag",
 ]

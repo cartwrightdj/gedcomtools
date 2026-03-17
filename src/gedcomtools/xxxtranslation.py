@@ -217,8 +217,8 @@ g7toXtable = {
     "https://gedcom.io/terms/v7/record-SUBM": {'type':'Object','Object':Resource,'Args':{'Id':'xref'}},
 }
 
-from .gedcom.gedcom5x import Gedcom5x
-from .gedcom.elements  import Element as Gedcom5xRecord
+from .gedcom5.parser import Gedcom5x
+from .gedcom5.elements import Element as Gedcom5xRecord
 from .header import Header
 
 class Translater():

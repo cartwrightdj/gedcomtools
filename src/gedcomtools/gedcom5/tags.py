@@ -157,6 +157,12 @@ GEDCOM_TAG_OCCUPATION = "OCCU"
 
 The type of work or profession of an individual."""
 
+GEDCOM_TAG_PEDI = "PEDI"
+"""Value: `PEDI`
+
+Information pertaining to the pedigree (lineage) of an individual.
+Common values: birth, adopted, foster, sealing."""
+
 GEDCOM_TAG_PLACE = "PLAC"
 """Value: `PLAC`
 
@@ -167,10 +173,6 @@ GEDCOM_TAG_PRIVATE = "PRIV"
 
 Flag for private address or event."""
 
-GEDCOM_Z_REPO = "REPO"
-"""Value: `PRIV`
-
-Flag for private address or event."""
 
 GEDCOM_TAG_SEX = "SEX"
 """Value: `SEX`
@@ -186,6 +188,18 @@ GEDCOM_TAG_SURNAME = "SURN"
 """Value: `SURN`
 
 A family name passed on or used by members of a family."""
+
+GEDCOM_TAG_SUBMITTER = "SUBM"
+"""Value: `SUBM`
+
+A submitter record identifying the person or organization that contributed
+the genealogical data."""
+
+GEDCOM_TAG_REPOSITORY = "REPO"
+"""Value: `REPO`
+
+A repository record identifying where a source is stored
+(archive, library, etc.)."""
 
 GEDCOM_TAG_WIFE = "WIFE"
 """Value: `WIFE`

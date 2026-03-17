@@ -30,7 +30,7 @@ from .fact import Fact
 from .fact import FactQualifier
 from .fact import FactType
 #from .gedcom import Gedcom
-from ..gedcom.gedcom5x import Gedcom5x
+from ..gedcom5.parser import Gedcom5x
 from .gedcomx import GedcomX
 from .gender import Gender, GenderType
 from .group import Group, GroupRole

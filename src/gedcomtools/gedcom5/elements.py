@@ -31,7 +31,7 @@ Base GEDCOM element
 """
 
 from sys import version_info
-from gedcomtools.gedcom.helpers import deprecated
+from gedcomtools.gedcom5.helpers import deprecated
 
 from .tags import *
 
@@ -75,7 +75,6 @@ class Element(object):
         # structuring
         self.__parent = None
         self.__children = []
-        self.__parent = None
 
         if multi_line:
             self.set_multi_line_value(value)
@@ -112,9 +111,8 @@ class Element(object):
         """
         return self.__tag
     @tag.setter
-
-    def tag(self,tag):
-        pass #todo check for valid tag
+    def tag(self, tag):
+        self.__tag = tag
 
     @property
     def value(self):
@@ -136,6 +134,11 @@ class Element(object):
         """
         self.__value = value
 
+    @property
+    def crlf(self) -> str:
+        """Returns the line ending used for this element."""
+        return self.__crlf
+
     def get_multi_line_value(self):
         """Returns the value of this element including concatenations or continuations
         :rtype: str
@@ -146,10 +149,10 @@ class Element(object):
             tag = element.tag
             if tag == GEDCOM_TAG_CONCATENATION:
                 result += element.get_value()
-                last_crlf = element.__crlf
+                last_crlf = element.crlf
             elif tag == GEDCOM_TAG_CONTINUED:
                 result += last_crlf + element.get_value()
-                last_crlf = element.__crlf
+                last_crlf = element.crlf
         return result
 
     def __available_characters(self):
@@ -231,8 +234,7 @@ class Element(object):
     def sub_records(self, tag: str | None = None):
         if tag is None:
             return self.__children
-        result = [r for r in self.__children if r.tag == tag]
-        return None if not result else result
+        return [r for r in self.__children if r.tag == tag]
     
     def get_child_elements(self):
         """Returns the direct child elements of this element
@@ -307,7 +309,7 @@ class Element(object):
 
         result = str(self.level)
 
-        if self.xref != "":
+        if self.xref:
             result += ' ' + self.xref
 
         result += ' ' + self.tag
@@ -446,7 +448,7 @@ class IndividualRecord(Element):
         :rtype: bool
         """
         (given_name, surname) = self.get_name()
-        return regex.search(surname_to_match, surname, regex.IGNORECASE)
+        return bool(regex.search(surname_to_match, surname, regex.IGNORECASE))
 
     @deprecated
     def given_match(self, name):
@@ -463,7 +465,7 @@ class IndividualRecord(Element):
         :rtype: bool
         """
         (given_name, surname) = self.get_name()
-        return regex.search(given_name_to_match, given_name, regex.IGNORECASE)
+        return bool(regex.search(given_name_to_match, given_name, regex.IGNORECASE))
 
     def get_gender(self):
         """Returns the gender of a person in string format
@@ -501,24 +503,20 @@ class IndividualRecord(Element):
         return date, place, sources
 
     def get_birth_year(self):
-        """Returns the birth year of a person in integer format
-        :rtype: int
+        """Returns the birth year of a person as an integer, or ``None`` if unknown.
+        :rtype: int or None
         """
-        date = ""
-
         for child in self.get_child_elements():
             if child.tag == GEDCOM_TAG_BIRTH:
                 for childOfChild in child.get_child_elements():
                     if childOfChild.tag == GEDCOM_TAG_DATE:
                         date_split = childOfChild.get_value().split()
-                        date = date_split[len(date_split) - 1]
-
-        if date == "":
-            return -1
-        try:
-            return int(date)
-        except ValueError:
-            return -1
+                        if date_split:
+                            try:
+                                return int(date_split[-1])
+                            except ValueError:
+                                pass
+        return None
 
     def get_death_data(self):
         """Returns the death data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)
@@ -541,35 +539,31 @@ class IndividualRecord(Element):
         return date, place, sources
 
     def get_death_year(self):
-        """Returns the death year of a person in integer format
-        :rtype: int
+        """Returns the death year of a person as an integer, or ``None`` if unknown.
+        :rtype: int or None
         """
-        date = ""
-
         for child in self.get_child_elements():
             if child.tag == GEDCOM_TAG_DEATH:
                 for childOfChild in child.get_child_elements():
                     if childOfChild.tag == GEDCOM_TAG_DATE:
                         date_split = childOfChild.get_value().split()
-                        date = date_split[len(date_split) - 1]
-
-        if date == "":
-            return -1
-        try:
-            return int(date)
-        except ValueError:
-            return -1
+                        if date_split:
+                            try:
+                                return int(date_split[-1])
+                            except ValueError:
+                                pass
+        return None
 
     @deprecated
     def get_burial(self):
-        """Returns the burial data of a person formatted as a tuple: (`str` date, `str´ place, `list` sources)
+        """Returns the burial data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)
         ::deprecated:: As of version 1.0.0 use `get_burial_data()` method instead
         :rtype: tuple
         """
-        self.get_burial_data()
+        return self.get_burial_data()
 
     def get_burial_data(self):
-        """Returns the burial data of a person formatted as a tuple: (`str` date, `str´ place, `list` sources)
+        """Returns the burial data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)
         :rtype: tuple
         """
         date = ""
@@ -593,14 +587,14 @@ class IndividualRecord(Element):
 
     @deprecated
     def get_census(self):
-        """Returns a list of censuses of an individual formatted as tuples: (`str` date, `str´ place, `list` sources)
+        """Returns a list of censuses of an individual formatted as tuples: (`str` date, `str` place, `list` sources)
         ::deprecated:: As of version 1.0.0 use `get_census_data()` method instead
         :rtype: list of tuple
         """
-        self.get_census_data()
+        return self.get_census_data()
 
     def get_census_data(self):
-        """Returns a list of censuses of an individual formatted as tuples: (`str` date, `str´ place, `list` sources)
+        """Returns a list of censuses of an individual formatted as tuples: (`str` date, `str` place, `list` sources)
         :rtype: list of tuple
         """
         census = []
@@ -654,44 +648,42 @@ class IndividualRecord(Element):
         return occupation
 
     def birth_year_match(self, year):
-        """Returns `True` if the given year matches the birth year of this person
+        """Returns `True` if the given year matches the birth year of this person.
+        Returns ``False`` if the birth year is unknown.
         :type year: int
         :rtype: bool
         """
-        return self.get_birth_year() == year
+        by = self.get_birth_year()
+        return by is not None and by == year
 
     def birth_range_match(self, from_year, to_year):
-        """Checks if the birth year of a person lies within the given range
+        """Checks if the birth year of a person lies within the given range.
+        Returns ``False`` if the birth year is unknown.
         :type from_year: int
         :type to_year: int
         :rtype: bool
         """
         birth_year = self.get_birth_year()
-
-        if from_year <= birth_year <= to_year:
-            return True
-
-        return False
+        return birth_year is not None and from_year <= birth_year <= to_year
 
     def death_year_match(self, year):
-        """Returns `True` if the given year matches the death year of this person
+        """Returns `True` if the given year matches the death year of this person.
+        Returns ``False`` if the death year is unknown.
         :type year: int
         :rtype: bool
         """
-        return self.get_death_year() == year
+        dy = self.get_death_year()
+        return dy is not None and dy == year
 
     def death_range_match(self, from_year, to_year):
-        """Checks if the death year of a person lies within the given range
+        """Checks if the death year of a person lies within the given range.
+        Returns ``False`` if the death year is unknown.
         :type from_year: int
         :type to_year: int
         :rtype: bool
         """
         death_year = self.get_death_year()
-
-        if from_year <= death_year <= to_year:
-            return True
-
-        return False
+        return death_year is not None and from_year <= death_year <= to_year
 
     def criteria_match(self, criteria):
         """Checks if this individual matches all of the given criteria
@@ -723,7 +715,7 @@ class IndividualRecord(Element):
         match = True
 
         for criterion in criteria.split(':'):
-            key, value = criterion.split('=')
+            key, value = criterion.split('=', 1)
 
             if key == "surname" and not self.surname_match(value):
                 match = False

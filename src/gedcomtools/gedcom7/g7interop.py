@@ -1,12 +1,21 @@
-"""GEDCOM 7 interoperability helpers.
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom7/g7interop.py
+ Author:  David J. Cartwright
+ Purpose: GEDCOM 7 tag/URI mapping and interoperability helpers.
+
+ Created: 2026-03-01
+ Updated:
+   - 2026-03-15: exported via package __init__; no logic changes
+======================================================================
 
 This module provides normalized GEDCOM 7 tag and URI lookup helpers.
 
-The uploaded version of this file was a flat ``g7toX`` mapping. This updated
-version keeps that mapping but adds:
+The core mapping is a flat ``G7_TAG_TO_URI`` dict. This module adds:
 
 - normalized lookup helpers
-- reverse lookup helpers
+- reverse lookup (URI → tag)
 - dynamic extension tag registration
 - convenience exports for the GEDCOM 7 parser and validator
 

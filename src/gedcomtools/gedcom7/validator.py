@@ -1,4 +1,25 @@
-"""GEDCOM 7 validator.
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom7/validator.py
+ Author:  David J. Cartwright
+ Purpose: Multi-phase GEDCOM 7 structural and semantic validator.
+
+ Created: 2026-03-01
+ Updated:
+   - 2026-03-15: added INT date format; MEDI/PEDI/ROLE enum validation;
+                 orphaned record detection; line-length warning;
+                 TRAN context validation; @VOID@ restriction check
+   - 2026-03-16: extended TRAN context for NAME.TRAN and PLAC.TRAN
+   - 2026-03-16: fix pointer case-sensitivity (normalize xrefs to uppercase);
+                 wire FAMC.STAT context enum; catch malformed @@ pointer;
+                 validate required xref ids on top-level records; VERS format check;
+                 FILE.TRAN now checks for MIME in addition to FORM;
+                 TRAN invalid-parent check; DATE INT regex tightened;
+                 orphaned check uses broader pointer detection to catch HEAD.SOUR refs;
+                 SDATE added to _TRAN_LEGAL_PARENTS
+   - 2026-03-16: import updated GedcomStructure.py → structure.py
+======================================================================
 
 This module performs structural and semantic validation of parsed GEDCOM 7
 trees.
@@ -11,6 +32,10 @@ Validation phases:
 4. basic payload validation
 5. pointer validation
 6. selected enumeration validation
+7. payload format validation (DATE, TIME, AGE, LATI, LONG, LANG, RESN)
+8. orphaned record detection
+9. bidirectional pointer consistency
+10. TRAN context validation
 
 The docstrings are written in Google style so they render well with
 Sphinx Napoleon.
@@ -23,7 +48,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Set
 
-from .GedcomStructure import GedcomStructure
+from .structure import GedcomStructure
 from . import specification as g7specs
 from .g7interop import is_known_tag
 
@@ -45,7 +70,8 @@ _DP = (
 
 _DATE_RE = re.compile(
     rf"^(?:{_DP}|(?:ABT|CAL|EST)\s+{_DP}|BEF\s+{_DP}|AFT\s+{_DP}"
-    rf"|FROM\s+{_DP}(?:\s+TO\s+{_DP})?|TO\s+{_DP}|BET\s+{_DP}\s+AND\s+{_DP})$",
+    rf"|FROM\s+{_DP}(?:\s+TO\s+{_DP})?|TO\s+{_DP}|BET\s+{_DP}\s+AND\s+{_DP}"
+    rf"|INT\s+\S[^(]*\([^)]+\))$",
     re.IGNORECASE,
 )
 
@@ -170,6 +196,7 @@ class GedcomValidator:
 
         self.validate_pointers()
         self.validate_bidirectional_links()
+        self.validate_orphaned_records()
         return self.issues
 
     def walk(self) -> Iterable[GedcomStructure]:
@@ -249,6 +276,36 @@ class GedcomValidator:
                     line_num=gedc.line_num,
                     tag="VERS",
                 )
+            elif not re.match(r"^\d+\.\d+", vers.payload.strip()):
+                self.add_issue(
+                    "invalid_gedc_vers_format",
+                    f"HEAD.GEDC.VERS value {vers.payload.strip()!r} does not look like "
+                    "a valid version number (expected e.g. '7.0').",
+                    line_num=vers.line_num,
+                    tag="VERS",
+                    severity="warning",
+                )
+
+        # INDI, FAM, OBJE, REPO, SNOTE, SOUR, SUBM must have xref ids.
+        # HEAD and TRLR must not.
+        _REQUIRES_XREF = {"INDI", "FAM", "OBJE", "REPO", "SNOTE", "SOUR", "SUBM"}
+        _FORBIDS_XREF  = {"HEAD", "TRLR"}
+        for record in self.records:
+            if record.tag in _REQUIRES_XREF and not record.xref_id:
+                self.add_issue(
+                    "missing_xref_id",
+                    f"{record.tag} record at line {record.line_num} must have an xref id.",
+                    line_num=record.line_num,
+                    tag=record.tag,
+                )
+            elif record.tag in _FORBIDS_XREF and record.xref_id:
+                self.add_issue(
+                    "unexpected_xref_id",
+                    f"{record.tag} record must not have an xref id "
+                    f"(found {record.xref_id!r}).",
+                    line_num=record.line_num,
+                    tag=record.tag,
+                )
 
     def index_xrefs(self) -> None:
         """Build an index of all defined xref ids."""
@@ -260,7 +317,8 @@ class GedcomValidator:
 
             self.validate_xref_format(node)
 
-            if node.xref_id in self._xref_index:
+            key = node.xref_id.upper()
+            if key in self._xref_index:
                 self.add_issue(
                     "duplicate_xref",
                     f"Duplicate xref id {node.xref_id!r}.",
@@ -268,7 +326,7 @@ class GedcomValidator:
                     tag=node.tag,
                 )
             else:
-                self._xref_index[node.xref_id] = node
+                self._xref_index[key] = node
 
     def collect_declared_extension_tags(self) -> None:
         """Collect extension tags declared in ``HEAD.SCHMA.TAG``."""
@@ -300,6 +358,8 @@ class GedcomValidator:
         self.validate_payload(node)
         self.validate_payload_format(node)
         self.validate_enumeration(node)
+        self.validate_tran_context(node)
+        self.validate_void_pointer(node)
 
         for child in node.children:
             self.validate_node(child)
@@ -453,6 +513,22 @@ class GedcomValidator:
                     tag=node.tag,
                 )
 
+        # GEDCOM 7 recommends lines ≤ 255 chars.
+        # Estimate assembled line length: level + space + [xref + space] + tag + space + payload
+        if node.payload:
+            xref_part = len(node.xref_id) + 1 if node.xref_id else 0
+            # level digits + space + xref_part + tag + space + first line of payload
+            first_payload_line = node.payload.split("\n")[0]
+            estimated = len(str(node.level)) + 1 + xref_part + len(node.tag) + 1 + len(first_payload_line)
+            if estimated > 255:
+                self.add_issue(
+                    "line_too_long",
+                    f"{node.tag} line is approximately {estimated} chars; GEDCOM 7 recommends ≤ 255.",
+                    line_num=node.line_num,
+                    tag=node.tag,
+                    severity="warning",
+                )
+
         if node.tag == "TRLR" and node.children:
             self.add_issue(
                 "trlr_has_children",
@@ -464,11 +540,29 @@ class GedcomValidator:
     def validate_enumeration(self, node: GedcomStructure) -> None:
         """Validate selected enumeration payloads.
 
+        Checks the general enum for the tag first; if none is registered,
+        falls back to context-specific enums keyed on (tag, parent_tag).
+
         Args:
             node: Node to validate.
         """
+        parent_tag = node.parent.tag if node.parent else None
         values = g7specs.get_enum_values(node.tag)
+
         if values is None:
+            # Fall back to context-specific enum (e.g. FAMC.STAT)
+            ctx = g7specs.get_context_enum_values(node.tag, parent_tag)
+            if ctx is None:
+                return
+            value = node.payload.strip()
+            if value and value not in ctx:
+                self.add_issue(
+                    "invalid_enumeration_value",
+                    f"{node.tag} under {parent_tag} has invalid value {value!r}. "
+                    f"Allowed: {sorted(ctx)}.",
+                    line_num=node.line_num,
+                    tag=node.tag,
+                )
             return
 
         value = node.payload.strip()
@@ -487,11 +581,21 @@ class GedcomValidator:
                 continue
 
             target = node.payload.strip()
-            if target == "@VOID@":
+            if target.upper() == "@VOID@":
                 # @VOID@ is a valid sentinel meaning "intentionally no target"
                 continue
 
-            if target not in self._xref_index:
+            # Fix 8: catch malformed pointer like @@
+            if not _XREF_RE.match(target):
+                self.add_issue(
+                    "malformed_pointer",
+                    f"Pointer value {target!r} is not a valid xref id.",
+                    line_num=node.line_num,
+                    tag=node.tag,
+                )
+                continue
+
+            if target.upper() not in self._xref_index:
                 self.add_issue(
                     "dangling_pointer",
                     f"Pointer target {target!r} does not exist.",
@@ -507,21 +611,22 @@ class GedcomValidator:
         - INDI.FAMS @FAM@ → that FAM must have HUSB or WIFE @INDI@ pointing back
         - FAM.CHIL @INDI@ → that INDI must have FAMC @FAM@ pointing back
         """
-        # Build maps from xref → set of pointer values for relevant tags
+        # Build maps from xref (uppercased) → set of pointer values (uppercased)
         def _pointer_set(record: GedcomStructure, tag: str) -> set:
             return {
-                child.payload.strip()
+                child.payload.strip().upper()
                 for child in record.get_children(tag)
-                if child.payload_is_pointer and child.payload.strip() != "@VOID@"
+                if child.payload_is_pointer
+                and child.payload.strip().upper() != "@VOID@"
             }
 
         indi_records = {
-            node.xref_id: node
+            node.xref_id.upper(): node
             for node in self.records
             if node.tag == "INDI" and node.xref_id
         }
         fam_records = {
-            node.xref_id: node
+            node.xref_id.upper(): node
             for node in self.records
             if node.tag == "FAM" and node.xref_id
         }
@@ -529,7 +634,7 @@ class GedcomValidator:
         for indi_xref, indi in indi_records.items():
             # INDI.FAMC → FAM must have CHIL back
             for famc in indi.get_children("FAMC"):
-                fam_xref = famc.payload.strip()
+                fam_xref = famc.payload.strip().upper()
                 if fam_xref == "@VOID@" or fam_xref not in fam_records:
                     continue
                 fam = fam_records[fam_xref]
@@ -547,7 +652,7 @@ class GedcomValidator:
 
             # INDI.FAMS → FAM must have HUSB or WIFE back
             for fams in indi.get_children("FAMS"):
-                fam_xref = fams.payload.strip()
+                fam_xref = fams.payload.strip().upper()
                 if fam_xref == "@VOID@" or fam_xref not in fam_records:
                     continue
                 fam = fam_records[fam_xref]
@@ -567,7 +672,7 @@ class GedcomValidator:
         for fam_xref, fam in fam_records.items():
             # FAM.CHIL → INDI must have FAMC back
             for chil in fam.get_children("CHIL"):
-                indi_xref = chil.payload.strip()
+                indi_xref = chil.payload.strip().upper()
                 if indi_xref == "@VOID@" or indi_xref not in indi_records:
                     continue
                 indi = indi_records[indi_xref]
@@ -582,6 +687,160 @@ class GedcomValidator:
                         tag="CHIL",
                         severity="warning",
                     )
+
+    def validate_tran_context(self, node: GedcomStructure) -> None:
+        """Validate TRAN substructures match their parent context.
+
+        TRAN under NOTE/SNOTE must have LANG, may have MIME.
+        TRAN under NAME must have LANG, may have NAME-part subs (GIVN, SURN…).
+        TRAN under PLAC must have LANG, may have PLAC subs (MAP, FORM…).
+        TRAN under FILE must have LANG plus FORM and MIME.
+
+        Args:
+            node: Node to validate (any node; only acts on TRAN nodes).
+        """
+        if node.tag != "TRAN":
+            return
+        if node.parent is None:
+            return
+
+        _TRAN_LEGAL_PARENTS = {"NOTE", "SNOTE", "FILE", "NAME", "PLAC", "SDATE"}
+        parent_tag = node.parent.tag
+        if parent_tag not in _TRAN_LEGAL_PARENTS:
+            self.add_issue(
+                "tran_invalid_parent",
+                f"TRAN is not permitted under {parent_tag}. "
+                f"Allowed parents: {', '.join(sorted(_TRAN_LEGAL_PARENTS))}.",
+                line_num=node.line_num,
+                tag="TRAN",
+            )
+            return
+
+        # LANG is required in all TRAN contexts
+        if not node.get_children("LANG"):
+            self.add_issue(
+                "tran_missing_lang",
+                "TRAN must have a LANG substructure.",
+                line_num=node.line_num,
+                tag="TRAN",
+                severity="warning",
+            )
+
+        child_tags = {child.tag for child in node.children}
+
+        # FILE.TRAN must have FORM and MIME (and LANG already checked above)
+        if parent_tag == "FILE":
+            if "FORM" not in child_tags:
+                self.add_issue(
+                    "tran_file_missing_form",
+                    "FILE.TRAN must have a FORM substructure specifying the media type.",
+                    line_num=node.line_num,
+                    tag="TRAN",
+                    severity="warning",
+                )
+            if "MIME" not in child_tags:
+                self.add_issue(
+                    "tran_file_missing_mime",
+                    "FILE.TRAN must have a MIME substructure specifying the media type.",
+                    line_num=node.line_num,
+                    tag="TRAN",
+                    severity="warning",
+                )
+
+        # NAME.TRAN may only have name-part subs and LANG
+        if parent_tag == "NAME":
+            _NAME_TRAN_OK = {"LANG", "GIVN", "SURN", "NPFX", "NSFX", "NICK", "SPFX"}
+            bad = child_tags - _NAME_TRAN_OK
+            if bad:
+                self.add_issue(
+                    "tran_name_invalid_child",
+                    f"NAME.TRAN contains unexpected substructure(s): {', '.join(sorted(bad))}.",
+                    line_num=node.line_num,
+                    tag="TRAN",
+                    severity="warning",
+                )
+
+        # PLAC.TRAN may only have LANG
+        if parent_tag == "PLAC":
+            bad = child_tags - {"LANG"}
+            if bad:
+                self.add_issue(
+                    "tran_plac_invalid_child",
+                    f"PLAC.TRAN contains unexpected substructure(s): {', '.join(sorted(bad))}. "
+                    "Only LANG is permitted.",
+                    line_num=node.line_num,
+                    tag="TRAN",
+                    severity="warning",
+                )
+
+    def validate_orphaned_records(self) -> None:
+        """Warn about top-level records that are defined but never cited.
+
+        Checks SOUR, REPO, OBJE, SNOTE records to see whether any
+        pointer in the entire tree references their xref id.
+
+        Note: SUBM records referenced by HEAD.SUBM are treated as cited.
+        """
+        # Collect all pointer values used anywhere in the tree (uppercased).
+        # Use both the payload_is_pointer flag and a regex fallback so that
+        # nodes like HEAD.SOUR whose payload looks like a pointer but was not
+        # flagged as one (e.g. because the spec marks it as text) are still
+        # treated as citations.
+        all_pointers: set = set()
+        for node in self.walk():
+            p = node.payload.strip() if node.payload else ""
+            if not p or p.upper() == "@VOID@":
+                continue
+            if node.payload_is_pointer or _XREF_RE.match(p):
+                all_pointers.add(p.upper())
+
+        # Check records of types that should be cited
+        CITABLE = {"SOUR", "REPO", "OBJE", "SNOTE"}
+        for record in self.records:
+            if record.tag not in CITABLE:
+                continue
+            if not record.xref_id:
+                continue
+            if record.xref_id.upper() not in all_pointers:
+                self.add_issue(
+                    "orphaned_record",
+                    f"{record.tag} record {record.xref_id!r} is defined but never cited.",
+                    line_num=record.line_num,
+                    tag=record.tag,
+                    severity="warning",
+                )
+
+    def validate_void_pointer(self, node: GedcomStructure) -> None:
+        """Warn if @VOID@ is used in a context where it is not meaningful.
+
+        @VOID@ is only appropriate for pointer-type payloads on tags that
+        the GEDCOM 7 spec explicitly allows to point to @VOID@:
+        FAMC, FAMS, CHIL, HUSB, WIFE, ASSO, SOUR (citation), OBJE (citation),
+        REPO (citation), SUBM.
+
+        Args:
+            node: Node to validate.
+        """
+        VOID_OK_TAGS = frozenset({
+            # Family / individual links
+            "FAMC", "FAMS", "CHIL", "HUSB", "WIFE",
+            # Record citations
+            "ASSO", "SOUR", "OBJE", "REPO", "SUBM", "SNOTE",
+            # Interest pointers
+            "ALIA", "ANCI", "DESI",
+        })
+        if not node.payload_is_pointer:
+            return
+        if node.payload.strip() != "@VOID@":
+            return
+        if node.tag not in VOID_OK_TAGS:
+            self.add_issue(
+                "void_in_wrong_context",
+                f"@VOID@ pointer on {node.tag!r} is not a spec-defined use of @VOID@.",
+                line_num=node.line_num,
+                tag=node.tag,
+                severity="warning",
+            )
 
     def validate_xref_format(self, node: GedcomStructure) -> None:
         """Validate that a node's xref id matches the required format.

@@ -32,10 +32,11 @@ A Python module for parsing, analyzing, and manipulating GEDCOM files.
 """
 
 __all__ = [
-    # Subpackages
-    
-    "gedcom5x",
-    "tags"
+    "parser",
+    "tags",
+    "Gedcom5x",
+    "Gedcom5",
 ]
 
-from .gedcom5x import Gedcom5x
+from .parser import Gedcom5x
+from .gedcom5 import Gedcom5
