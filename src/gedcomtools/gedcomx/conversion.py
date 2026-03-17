@@ -1,0 +1,1501 @@
+
+
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    converter.py
+ Author:  David J. Cartwright
+ Purpose: convert gedcom versions
+
+ Created: 2025-08-25
+ Updated:
+   - 2025-09-01: added docs and fixed imports for lowercase module names
+   
+======================================================================
+"""
+
+"""
+======================================================================
+GEDCOM Module Types
+======================================================================
+"""
+
+import mimetypes
+import re
+import math
+import mimetypes
+import re
+import shutil
+from typing import Any, Callable, Dict, Hashable, Iterable, List, Mapping, Optional, TypeVar
+
+from ..gedcom5.elements import Element
+from ..gedcom5.parser import Gedcom5x
+
+from .address import Address
+from .agent import Agent
+from .attribution import Attribution
+from .conclusion import Conclusion
+from .date import Date
+from .document import Document, DocumentParsingContainer
+from .event import Event, EventType, EventRole, EventRoleType
+from .exceptions import TagConversionError, ConversionErrorDump
+from .fact import Fact, FactType
+from .family import FamilyParser
+from .gedcomx import GedcomX
+from .gender import Gender, GenderType
+from .identifier import Identifier, IdentifierType
+from .name import Name, NameType, NamePart, NamePartType, NamePartQualifier
+from .note import Note
+from .person import Person
+from .place_description import PlaceDescription
+from .place_reference import PlaceReference
+from .qualifier import Qualifier
+from .relationship import Relationship, RelationshipType
+from .schemas import fact_from_even_tag
+from .source_description import SourceDescription, ResourceType
+from .source_reference import SourceReference, KnownSourceReference
+from .textvalue import TextValue
+from .uri import URI
+
+from gedcomtools.loggingkit import get_log
+log = get_log(__name__)
+
+T = TypeVar("T")
+K = TypeVar("K", bound=Hashable)
+
+
+class GxoObjectStack:
+    """
+    Level-indexed object stack (GEDCOM 'level' -> current GX object at that level)
+
+    This replaces the old push/pop hybrid behavior with what your converter *actually*
+    uses everywhere: `self.object_map[level] = obj` and `self.object_map[level-1]`.
+    """
+
+    def __init__(self) -> None:
+        self._data: Dict[int, Any] = {}
+
+    def __getitem__(self, level: int) -> Any:
+        return self._data[level]
+
+    def __setitem__(self, level: int, value: Any) -> None:
+        self._data[level] = value
+
+    def __delitem__(self, level: int) -> None:
+        del self._data[level]
+
+    def __contains__(self, level: int) -> bool:
+        return level in self._data
+
+    def get(self, level: int, default: Any = None) -> Any:
+        return self._data.get(level, default)
+
+    def items(self):
+        return self._data.items()
+
+    def clear(self) -> None:
+        self._data.clear()
+
+    # ---- ergonomic helpers ----
+    def parent(self, record: Element) -> Any:
+        return self._data[record.level - 1]
+
+    def ancestor(self, record: Element, up: int) -> Any:
+        return self._data[record.level - up]
+
+    def set_level(self, level: int, value: Any) -> Any:
+        self._data[level] = value
+        return value
+
+    def items_desc(self) -> List[tuple[int, Any]]:
+        return sorted(self._data.items(), key=lambda kv: kv[0], reverse=True)
+
+    def __repr__(self) -> str:
+        keys = ", ".join(str(k) for k in sorted(self._data.keys()))
+        return f"GxoObjectStack(levels=[{keys}])"
+
+class GedcomConverter:
+    type_name_type = {"aka": NameType.AlsoKnownAs}
+
+    personal_events = {
+        "BARM", "BASM", "BLES", "CHRA", "CONF", "CENS", "CREM", "EMIG",
+        "GRAD", "NATU", "ORDN", "RETI", "WILL",
+    }
+
+    def __init__(self) -> None:
+        self.gedcomx: GedcomX = GedcomX()
+        self.object_map = GxoObjectStack()
+        self.object_map[-1] = self.gedcomx  # preserve your behavior
+
+        self.missing_handler_count: Dict[str, int] = {}
+        self._line_num: int = 0
+        self._family_parser = FamilyParser(self.gedcomx)
+
+        # Build dispatch table once.
+        # Keys are GEDCOM tags (e.g., "NAME", "_APID") mapped to bound methods.
+        self._dispatch: Dict[str, Callable[[Element], None]] = self._build_dispatch()
+
+    # ------------------------------------------------------------------
+    # Core utilities
+    # ------------------------------------------------------------------
+
+    @property
+    def ignored_tags(self):
+        return self.missing_handler_count if self.missing_handler_count else None
+
+    @staticmethod
+    def clean_str(text: str | None) -> str:
+        if text is None:
+            return ""
+        t = text.strip()
+        if not t:
+            return ""
+        return re.sub(r"<[^>]+>", "", t)
+
+    def _build_dispatch(self) -> Dict[str, Callable[[Element], None]]:
+        """
+        Maps GEDCOM tag -> handler.
+
+        Your naming convention is handle_<lowercase tag>, so:
+          handle_name -> tag NAME
+          handle__apid -> tag _APID
+          handle__wlnk -> tag _WLNK
+        """
+        dispatch: Dict[str, Callable[[Element], None]] = {}
+
+        for attr_name in dir(self):
+            if not attr_name.startswith("handle_"):
+                continue
+            fn = getattr(self, attr_name, None)
+            if not callable(fn):
+                continue
+
+            suffix = attr_name[len("handle_"):]  # e.g. "name", "_apid"
+            # Convert python-ish to GEDCOM tag:
+            # name -> NAME
+            # _apid -> _APID
+            tag = suffix.upper()
+            dispatch[tag] = fn  # type: ignore[assignment]
+
+        return dispatch
+
+    def _bump_missing(self, tag: str) -> None:
+        self.missing_handler_count[tag] = self.missing_handler_count.get(tag, 0) + 1
+
+    def _iter_subrecords(self, record: Element) -> Iterable[Element]:
+        subs = record.sub_records()
+        if not subs:
+            return ()
+        return subs
+
+    # ------------------------------------------------------------------
+    # Main parse loop
+    # ------------------------------------------------------------------
+
+    def parse_gedcom5x_record(self, record: Element) -> None:
+        if record is None:
+            raise AssertionError("record is None")
+
+        try:
+            subs = record.sub_records() or []
+            log.debug(
+                "Record tag=%s level=%s xref=%r value=%r subrecords=%d",
+                record.tag, record.level, record.xref, record.value, len(subs),
+            )
+
+            # Special-case “personal event tags”
+            if record.tag in self.personal_events:
+                self.handle_pevent(record)
+            else:
+                handler = self._dispatch.get(record.tag)
+                if handler is None:
+                    self._bump_missing(record.tag)
+                    log.error("No handler for %s: %s", record.tag, record.describe())
+                    return
+
+                log.info("Using %s for: %s", handler.__name__, record.describe())
+                handler(record)
+
+            # Recurse (your existing behavior)
+            for sub in subs:
+                log.debug("Subrecord: %s", sub.describe())
+                self.parse_gedcom5x_record(sub)
+
+        except ConversionErrorDump:
+            raise
+        except Exception as exc:
+            # Force a consistent diagnostic dump, then re-raise as your dump exception
+            self.convert_exception_dump(record, note=f"Unhandled exception: {exc!r}")
+
+    # ------------------------------------------------------------------
+    # Diagnostics / reporting
+    # ------------------------------------------------------------------
+
+    def convert_exception_dump(self, record: Element, note: Optional[str] = None) -> None:
+        """
+        Library-safe dump: logs full stack context, then raises ConversionErrorDump.
+        No prints.
+        """
+        if note:
+            log.error("Conversion dump note: %s", note)
+        log.error("Failed at record: %s", record.describe())
+
+        for level, obj in self.object_map.items_desc():
+            try:
+                s = str(obj)
+            except Exception:
+                s = "<str() failed>"
+            log.error("STACK level=%s type=%s repr=%r str=%s", level, type(obj).__name__, obj, s[:200])
+
+        raise ConversionErrorDump()
+
+    @staticmethod
+    def format_counts_table(counts: Mapping[Any, int]) -> str:
+        items = [(str(k), int(v)) for k, v in counts.items()]
+        if not items:
+            return "(empty)"
+
+        items.sort(key=lambda kv: (-kv[1], kv[0]))
+
+        key_w = max(len(k) for k, _ in items)
+        num_w = max(len(str(v)) for _, v in items)
+        cell_fmt = f"{{k:<{key_w}}}  {{v:>{num_w}}}"
+        cell_width = key_w + 2 + num_w + 2
+
+        term_cols = shutil.get_terminal_size(fallback=(100, 24)).columns
+        fit_cols = max(1, term_cols // cell_width)
+        sqrt_cols = max(1, int(math.sqrt(len(items))))
+        cols = max(1, min(len(items), max(fit_cols, sqrt_cols)))
+        rows = math.ceil(len(items) / cols)
+
+        lines: List[str] = []
+        for r in range(rows):
+            line = []
+            for c in range(cols):
+                i = c * rows + r
+                if i < len(items):
+                    k, v = items[i]
+                    cell = cell_fmt.format(k=k, v=v)
+                    line.append(cell.ljust(cell_width))
+            lines.append("".join(line).rstrip())
+        return "\n".join(lines)
+
+    # ------------------------------------------------------------------
+    # Misc helpers you already use elsewhere
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def has_duplicates(seq) -> bool:
+        return len(seq) != len(set(seq))
+
+    @staticmethod
+    def find_duplicates(seq):
+        seen, dups = set(), []
+        for x in seq:
+            if x in seen and x not in dups:
+                dups.append(x)
+            seen.add(x)
+        return dups
+
+    def unique(self, seq: Iterable[T], key: Optional[Callable[[T], K]] = None) -> List[T]:
+        seen: set[K] = set()
+        out: List[T] = []
+        for item in seq:
+            k = item if key is None else key(item)  # type: ignore[assignment]
+            if k not in seen:
+                seen.add(k)
+                out.append(item)
+        return out
+
+    # ------------------------------------------------------------------
+    # Conversion entrypoint
+    # ------------------------------------------------------------------
+
+    def Gedcom5x_GedcomX(self, gedcom5x: Gedcom5x) -> GedcomX:
+        if not gedcom5x:
+            raise ValueError("gedcom5x is falsy")
+
+        log.debug("Priming top-level IDs")
+        for obj in gedcom5x.objects:
+            gx_obj = SourceDescription(id=obj.xref, type=ResourceType.DigitalArtifact)
+            self.gedcomx.add_source_description(gx_obj)
+
+        base_docs = len(self.gedcomx.documents)
+        log.debug("Primed %d SourceDescriptions from GEDCOM5 Objects", base_docs)
+
+        for source in gedcom5x.sources:
+            gx_obj = SourceDescription(id=source.xref)
+            self.gedcomx.add_source_description(gx_obj)
+
+        log.debug(
+            "Primed %d SourceDescriptions from GEDCOM5 Sources",
+            len(self.gedcomx.sourceDescriptions) - base_docs,
+        )
+
+        for repo in gedcom5x.repositories:
+            gx_obj = Agent(id=repo.xref)
+            self.gedcomx.add_agent(gx_obj)
+
+        for submitter in gedcom5x.submitters:
+            gx_obj = Agent(id=submitter.xref)
+            self.gedcomx.add_agent(gx_obj)
+
+        for indi in gedcom5x.individuals:
+            gx_obj = Person(id=indi.xref)
+            self.gedcomx.add_person(gx_obj)
+
+        # Parse all top-level records
+        for header in gedcom5x.header:
+            self.parse_gedcom5x_record(header)
+
+        for source in gedcom5x.sources:
+            self.parse_gedcom5x_record(source)
+        for obj in gedcom5x.objects:
+            self.parse_gedcom5x_record(obj)
+        for indi in gedcom5x.individuals:
+            self.parse_gedcom5x_record(indi)
+        for repo in gedcom5x.repositories:
+            self.parse_gedcom5x_record(repo)
+        for fam in gedcom5x.families:
+            self.parse_gedcom5x_record(fam)
+        for sub in gedcom5x.submitters:
+            self.parse_gedcom5x_record(sub)
+
+        # Cleanup duplicates
+        for sd in self.gedcomx.sourceDescriptions:
+            sd.notes = self.unique(sd.notes, key=lambda n: n._key())
+            sd.descriptions = self.unique(sd.descriptions, key=lambda n: n._key())
+
+        # record unhandled tags for diagnostics
+        self.gedcomx._import_unhandled_tags = dict(self.missing_handler_count)
+
+        # Log missing counts (don’t print)
+        if self.missing_handler_count:
+            log.warning("Unhandled tags:\n%s", self.format_counts_table(self.missing_handler_count))
+
+        return self.gedcomx
+
+    
+    def handle__apid(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceReference):
+            self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other, value=[URI.from_url('APID://' + record.value if record.value else '')])) # type: ignore
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('APID://' + record.value if record.value else '')])) # type: ignore
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle__meta(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
+            self.object_map[record.level-1].add_note(gxobject)
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
+            self.object_map[record.level-1].source_description.add_note(gxobject)
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle__wlnk(self, record: Element):
+        return self.handle_sour(record)
+
+    def handle_adop(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Adoption)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_addr(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            # TODO CHeck if URL?
+            if record.value is not None and self.clean_str(record.value):
+                gxobject = Address(value=self.clean_str(record.value))
+            else:
+                gxobject = Address()
+            self.object_map[record.level-1].address = gxobject
+            self.object_map[record.level] = gxobject
+        else:
+            raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
+    
+    def handle_adr1(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street = self.clean_str(record.value)
+            else:
+                self.convert_exception_dump(record=record)     
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_adr2(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street2 = self.clean_str(record.value)        
+            else:
+                self.convert_exception_dump(record=record)     
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_adr3(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street3 = self.clean_str(record.value)  
+            else:
+                self.convert_exception_dump(record=record)     
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_adr4(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street4 = self.clean_str(record.value)        
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_adr5(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street5 = self.clean_str(record.value)        
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_adr6(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].street6 = self.clean_str(record.value)        
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_auth(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            if record.value is not None and self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_name(record.value)[0]
+            else:
+                gxobject = Agent(names=[TextValue(record.value)])
+                self.gedcomx.add_agent(gxobject)
+            
+            self.object_map[record.level-1].author = gxobject
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_phon(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].phones.append(self.clean_str(record.value))        
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_email(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].emails.append(self.clean_str(record.value))        
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_fax(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            if record.value is not None and self.clean_str(record.value):
+                self.object_map[record.level-1].emails.append('FAX:' + (self.clean_str(record.value) if record.value is not None else ''))        
+        else:
+            self.convert_exception_dump(record=record)
+
+    
+    def handle_bapm(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Baptism)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_birt(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Birth)
+            self.object_map[record.level-1].add_fact(gxobject)
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_buri(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Burial)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_caln(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceReference):
+            self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
+        elif isinstance(self.object_map[record.level-1], Agent):
+            pass
+            # TODO Why is GEDCOM so shitty? A callnumber for a repository?
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_chan(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            date = record.sub_record('DATE')
+            if date is not None:
+                self.object_map[record.level-1].created = Date(date.value)
+        elif isinstance(self.object_map[record.level-1], Agent):
+            if self.object_map[record.level-1].attribution is None:
+                gxobject = Attribution()
+                self.object_map[record.level-1].attribution = gxobject
+                self.object_map[record.level] = gxobject
+            else:
+                self.convert_exception_dump(record=record)
+        elif isinstance(self.object_map[record.level-1], Person):
+            if self.object_map[record.level-1].attribution is None:
+                gxobject = Attribution()
+                self.object_map[record.level-1].attribution = gxobject
+                self.object_map[record.level] = gxobject
+            else:
+                self.convert_exception_dump(record=record)
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_chr(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Christening)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_city(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None:
+                self.object_map[record.level-1].city = self.clean_str(record.value)
+            else: raise ValueError('Record had no value')
+        else:
+            raise ValueError(f"I do not know how to handle an 'CITY' tag for a {type(self.object_map[record.level-1])}")
+        
+    def handle_conc(self, record: Element):
+        obj_map = sorted(self.object_map.items(), reverse=True)
+        obj_map = dict(obj_map)
+        if isinstance(self.object_map[record.level-1], Note):
+            gxobject = self.clean_str(str(record.value))
+            self.object_map[record.level-1].append(gxobject)
+        elif isinstance(self.object_map[record.level-1], Agent):
+            gxobject = str(record.value)
+            self.object_map[record.level-1]._append_to_name(gxobject)
+        elif isinstance(self.object_map[record.level-1], Qualifier):
+            gxobject = str(record.value)
+            self.object_map[record.level-1]._append(gxobject)
+        elif isinstance(self.object_map[record.level-1], TextValue):
+            #gxobject = TextValue(value=self.clean_str(record.value))
+            self.object_map[record.level-1]._append_to_value(record.value)
+        elif isinstance(self.object_map[record.level-1], SourceReference):
+            self.object_map[record.level-1].append(record.value)
+        elif isinstance(self.object_map[record.level-1], Fact):
+            self.object_map[record.level-1].notes[0].text += record.value
+        elif isinstance(self.object_map[record.level-1], str):
+            self.object_map[record.level-1] = self.object_map[record.level-1] = record.value
+            
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_cont(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Note):
+            gxobject = str(" " + record.value if record.value else '')
+            self.object_map[record.level-1].append(gxobject)
+        elif isinstance(self.object_map[record.level-1], Agent):
+            gxobject = str(" " + record.value if record.value else '')
+        elif isinstance(self.object_map[record.level-1], Qualifier):
+            gxobject = str(" " + record.value if record.value else '')
+            self.object_map[record.level-1]._append(gxobject)
+        elif isinstance(self.object_map[record.level-1], TextValue):
+            #gxobject = TextValue(value="\n" + record.value)
+            self.object_map[record.level-1]._append_to_value(record.value if record.value else '\n')
+        elif isinstance(self.object_map[record.level-1], SourceReference):
+            self.object_map[record.level-1].append(record.value)
+        elif isinstance(self.object_map[record.level-1], Address):
+            self.object_map[record.level-1]._append(record.value)
+        elif isinstance(self.object_map[record.level-1], str):
+            self.object_map[record.level-1] = self.object_map[record.level-1] = record.value
+        else:
+            self.convert_exception_dump(record=record)
+    
+    def handle_crea(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            date = record.sub_record('DATE')
+            if  date is not None:
+                self.object_map[record.level-1].created = Date(original=date[0].value)
+            else: raise ValueError('DATE had not value')                     
+            
+        elif isinstance(self.object_map[record.level-1], Agent):
+            if self.object_map[record.level-1].attribution is None:
+                gxobject = Attribution()
+                self.object_map[record.level-1].attribution = gxobject
+                
+                self.object_map[record.level] = gxobject
+            else:
+                log.info(f"[{record.tag}] Attribution already exists for SourceDescription with id: {self.object_map[record.level-1].id}")
+        else:
+            raise ValueError(f"Could not handle '{record.tag}' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
+    
+    def handle__crea(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            if  record.value is not None:
+                self.object_map[record.level-1].created = Date(original=record.value)
+            else: raise ValueError('DATE had not value')   
+
+    def handle_ctry(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            if record.value is not None:
+                self.object_map[record.level-1].country = self.clean_str(record.value)
+            else:
+                raise ValueError('Recrod had no value')
+        else:
+            raise ValueError(f"I do not know how to handle an '{record.tag}' tag for a {type(self.object_map[record.level-1])}")
+     
+    def handle_data(self, record: Element) -> None:
+        self.object_map[record.level] = self.object_map[record.level-1]
+
+    def handle_date(self, record: Element):
+        if record.parent is not None and record.parent.tag == 'PUBL':
+            #gxobject = Date(original=record.value) #TODO Make a parser for solid timestamps
+            #self.object_map[0].published = gxobject
+            #self.object_map[0].published = date_to_timestamp(record.value) if record.value else None 
+            self.object_map[0].published = record.value    
+            #
+            #self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], FamilyParser):
+            self.object_map[record.level-1].set_marr_date(record)
+        elif isinstance(self.object_map[record.level-1], Event):
+            self.object_map[record.level-1].date = Date(original=record.value)
+        elif isinstance(self.object_map[record.level-1], Fact):
+            self.object_map[record.level-1].date = Date(original=record.value)
+        elif record.parent is not None and record.parent.tag == 'DATA' and isinstance(self.object_map[record.level-2], SourceReference):
+            gxobject = Note(text='Date: ' + record.value if record.value else '')
+            self.object_map[record.level-2].description.add_note(gxobject)
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            
+            self.object_map[record.level-1].created = record.value #TODO String to timestamp
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            
+            self.object_map[record.level-1].source_description.created = record.value #TODO String to timestamp
+        elif isinstance(self.object_map[record.level-1], Attribution):
+            if record.parent is not None and record.parent.tag == 'CREA':
+                self.object_map[record.level-1].created = record.value #TODO G7
+                
+            elif record.parent is not None and record.parent.tag == "CHAN":
+                self.object_map[record.level-1].modified = record.value #TODO G7
+            elif (created := self.object_map[record.level-1].created) is None:
+                self.object_map[record.level-1].created = record.value
+             
+                
+        elif record.parent is not None and record.parent.tag in ['CREA','CHAN']:
+            pass
+        
+
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_deat(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Death)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_pevent(self, record: Element):
+        # EVEN (Fact) specific to INDI (Person)
+        if (fact_type := fact_from_even_tag(record.tag)) is not None:
+            if isinstance(self.object_map[record.level-1], Person):
+                gxobject = Fact(type=fact_type)
+                self.object_map[record.level-1].add_fact(gxobject)
+                self.object_map[record.level] = gxobject
+
+    def handle_even(self, record: Element):
+        # TODO If events in a @S, check if only 1 person matches?
+        # TODO, how to deal with and diferentiate Events
+        if record.value and (not record.value.strip() == ''):
+            values = [value.strip() for value in record.value.split(",")]
+            for value in values:
+                if (fact_type := fact_from_even_tag(value)) is not None:
+                    if isinstance(self.object_map[record.level-1], Person):
+                        gxobject = Fact(type=fact_type)
+                        self.object_map[record.level-1].add_fact(gxobject)
+                        self.object_map[record.level] = gxobject
+
+                    elif isinstance(self.object_map[record.level-1], SourceDescription):
+                        gxobject = Event(type=fact_type,sources=[self.object_map[record.level-1]])
+                        self.gedcomx.add_event(gxobject)
+                        self.object_map[record.level] = gxobject
+                    else:
+                        self.convert_exception_dump(record=record)
+                else:
+                    log.warning(f"EVEN type is not known {record.describe()}")
+                    gxobject = Event(roles=[EventRole(person=self.object_map[record.level],type=EventRoleType.Principal)])
+                    self.gedcomx.add_event(gxobject)
+                    self.object_map[record.level] = gxobject
+                  
+        else:
+            if (even_type := record.sub_record('TYPE')) is not None:
+                
+                if possible_fact := FactType.guess(even_type.value):
+                    gxobject = Fact(type=possible_fact)
+                    self.object_map[record.level-1].add_fact(gxobject)                   
+                    self.object_map[record.level] = gxobject
+                    return
+                elif EventType.guess(even_type.value):
+                    if isinstance(self.object_map[record.level-1], Person):
+                        gxobject = Event(type=EventType.guess(even_type.value), roles=[EventRole(person=self.object_map[record.level-1], type=EventRoleType.Principal)])
+                        self.gedcomx.add_event(gxobject)
+                        
+                        self.object_map[record.level] = gxobject
+                    return
+                else:
+                    if isinstance(self.object_map[record.level-1], Person):
+                        gxobject = Event(type=None, roles=[EventRole(person=self.object_map[record.level-1], type=EventRoleType.Principal)])
+                        gxobject.add_note(Note(subject='Event', text=record.value))
+                        self.gedcomx.add_event(gxobject)
+                        
+                        self.object_map[record.level] = gxobject
+                        return
+                        
+                    else:
+                        self.convert_exception_dump(record=record)  
+
+    def handle_exid(self,record: Element):
+        if record.value:
+            gxobject = Identifier(type=IdentifierType.External,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject)       
+            self.object_map[record.level] = gxobject
+        else: raise ValueError('Record had no value')
+
+    def handle_fam(self, record: Element) -> None:
+        self._family_parser.reset()
+        self.object_map[record.level] = self._family_parser
+        return
+
+        if record.tag != 'FAM' or record.level != 0:
+            raise ValueError("Invalid record: Must be a level 0 FAM record")
+
+        log.debug(f"Converting FAM Record")
+        husband, wife, children = None, None, []
+
+        husband_record = record.sub_records('HUSB')
+        if husband_record is not None:   
+            id = husband_record[0].value if len(husband_record) > 0 else None
+            if id:
+                husband = self.gedcomx.get_person_by_id(id)
+                log.debug(f"found husband: {husband}")
+            
+
+        wife_record = record.sub_records('WIFE')
+        if wife_record:  
+            id = wife_record[0].value if len(wife_record) > 0 else None
+            if id:
+                wife = self.gedcomx.get_person_by_id(id)
+                log.debug(f"found wife: {wife}")
+            
+
+        children_records = record.sub_records('CHIL')
+        if children_records:
+            for child_record in children_records:
+                id = child_record.value
+                if id:
+                    child = self.gedcomx.get_person_by_id(id)
+                    log.debug(f"found child: {child}")
+                    if child:
+                        children.append(child)
+
+        if husband:
+            
+            for child in children:
+                relationship = Relationship(person1=husband, person2=child, type=RelationshipType.ParentChild)
+                self.gedcomx.add_relationship(relationship)
+        if wife:          
+            for child in children:
+                relationship = Relationship(person1=wife, person2=child, type=RelationshipType.ParentChild)
+                self.gedcomx.add_relationship(relationship)
+        if husband and wife:
+            relationship = Relationship(person1=husband, person2=wife, type=RelationshipType.Couple)
+            self.gedcomx.add_relationship(relationship)
+            self.object_map[record.level] = relationship
+        
+        if (marr_record := record.sub_record('MARR')) is not None:
+            gxobject = Event(type=EventType.Marriage,roles=[EventRole(type=EventRoleType.Principal,person=husband)])
+            self.object_map[1] = gxobject
+            self.gedcomx.add_event(gxobject)
+            log.debug(f"Added marriage as event")
+            for sub_record in marr_record.sub_records():
+                self.parse_gedcom5x_record(sub_record)
+            
+    def handle_husb(self, record: Element):
+        if record is not None:   
+            id = record.value
+            if id:
+                husband = self.gedcomx.get_person_by_id(id)
+                self._family_parser.set_husband(husband)
+                log.debug(f"found husband: {husband}")
+                self.object_map[record.level] = husband
+    
+    def handle_wife(self, record: Element):
+        if record is not None:   
+            id = record.value
+            if id:
+                wife = self.gedcomx.get_person_by_id(id)
+                self._family_parser.set_wife(wife)
+                log.debug(f"found husband: {wife}")
+                self.object_map[record.level] = wife
+    
+    def handle_chil(self, record: Element):
+        if record is not None:   
+            id = record.value
+            if id:
+                child = self.gedcomx.get_person_by_id(id)
+                self._family_parser.add_child(child)
+                log.debug(f"found child: {child}")
+                self.object_map[record.level] = child
+
+    def handle_famc(self, record: Element) -> None:
+        #TODO
+        return
+
+    def handle_fams(self, record: Element) -> None:
+        #TODO
+        return
+
+    def handle_file(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            self.object_map[record.level-1].resourceType = ResourceType.DigitalArtifact
+            if record.value != '':
+                self.object_map[record.level-1].about = record.value
+
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            self.object_map[record.level-1]._init_file()
+            self.object_map[record.level] = self.object_map[record.level-1]
+            
+
+
+        elif isinstance(self.object_map[record.level-1], Attribution):
+            log.warning(f"Encountered a 'FILE' tag under an 'Attribution', assuming this is in the 'HEAD' block and skipping")
+        else:
+            self.convert_exception_dump(record=record)        
+           
+    def handle_form(self, record: Element):
+        if record.parent is not None and record.parent.tag == 'FILE' and isinstance(self.object_map[record.level-2], SourceDescription):
+            if record.value and record.value.strip() != '':
+                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+                if mime_type:
+                    self.object_map[record.level-2].mediaType = mime_type
+                else:
+                    log.error(f"Could not determing mime type from {record.value}")
+        elif isinstance(self.object_map[record.level-1], PlaceDescription):
+            self.object_map[record.level-1].names.append(TextValue(value=record.value))
+        
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+            if mime_type:
+                self.object_map[record.level-1]._set_form(mime_type)
+            else:
+                log.error(f"Could not determing mime type from {record.value}")
+            self.object_map[record.level] = self.object_map[record.level-1]
+
+        elif record.parent is not None and record.parent.tag == 'TRAN':
+            pass #TODO
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_fsid(self,record: Element):
+        if record.value:
+            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject)       
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_givn(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Name):
+            given_name = NamePart(value=record.value, type=NamePartType.Given)
+            self.object_map[record.level-1]._add_name_part(given_name)
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_head(self,record: Element):
+        attribution = Attribution()
+        self.gedcomx.attribution = attribution
+        self.object_map[record.level] = attribution
+
+    def handle_indi(self, record: Element):
+        person = self.gedcomx.persons.by_id(record.xref)
+        if person is None:
+            log.warning('Had to create person with id {recrod.xref}')
+            if isinstance(record.xref,str):
+                person = Person(id=record.xref)
+                self.gedcomx.add_person(person)
+            else:
+                self.convert_exception_dump(record=record)  
+        self.object_map[record.level] = person
+
+    def handle_immi(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Immigration)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_map(self, record: Element):
+        if isinstance(self.object_map[record.level-1],PlaceReference):
+            self.object_map[record.level] = self.object_map[record.level-1].description
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_marr(self, record: Element):
+        """
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Marriage)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        """
+        if record.parent.tag == 'FAM':
+            self._family_parser.reset()
+            self.object_map[record.level] = self._family_parser
+            return
+
+
+        elif (add_fact := getattr(self.object_map[record.level-1],'add_fact',None)) is not None:
+            gxobject = Fact(type=FactType.Marriage)
+            add_fact(gxobject)
+            self.object_map[record.level] = gxobject       
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_lati(self, record: Element):
+        if isinstance(self.object_map[record.level-1], PlaceDescription):
+            self.object_map[record.level-1].latitude = record.value
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_long(self, record: Element):
+        if isinstance(self.object_map[record.level-1], PlaceDescription):
+            self.object_map[record.level-1].longitude = record.value
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle__link(self,record: Element):
+        if isinstance(self.object_map[record.level-1], SourceReference):
+            gxobject = Identifier([URI.from_url(record.value)],IdentifierType.External) # type: ignore
+            self.object_map[record.level-1].description.add_identifier(gxobject)
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle__milt(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.MilitaryService)
+            self.object_map[record.level-1].add_fact(gxobject)
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_name(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Name.simple(record.value if record.value else 'WARNING: NAME had no value')
+            #gxobject = Name(nameForms=[NameForm(fullText=record.value)], type=NameType.BirthName)
+            self.object_map[record.level-1].add_name(gxobject)
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Agent):
+            gxobject = TextValue(value=record.value)
+            self.object_map[record.level-1].add_name(gxobject)    
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_note(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            gxobject = Note(text=self.clean_str(record.value))
+            self.object_map[record.level-1].add_note(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], SourceReference):
+            if self.object_map[record.level-1].description is not None:
+                gxobject = Note(text=self.clean_str(record.value))
+                self.object_map[record.level-1].description.add_note(gxobject)
+                self.object_map[record.level] = gxobject
+            else:
+                log.error('SourceReference does not have description')
+
+            
+            
+        elif isinstance(self.object_map[record.level-1], Conclusion):
+            gxobject = Note(text=record.value)
+            self.object_map[record.level-1].add_note(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Agent):
+            gxobject = Note(text=record.value)
+            self.object_map[record.level-1].add_note(gxobject)           
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Attribution):
+            if self.object_map[record.level-1].changeMessage is None:
+                gxobject = record.value
+                self.object_map[record.level-1].changeMessage = gxobject
+            else:
+                gxobject = self.object_map[record.level-1].changeMessage + '' + record.value
+                self.object_map[record.level-1].changeMessage = gxobject
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Note):
+            gxobject = Note(text=self.clean_str(record.value))
+            self.object_map[record.level-2].add_note(gxobject)          
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], FamilyParser):
+            gxobject = Note(text=self.clean_str(record.value))
+            self.object_map[record.level-1].add_note(gxobject)          
+            self.object_map[record.level] = gxobject
+
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_nsfx(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Name):
+            surname = NamePart(value=record.value, type=NamePartType.Suffix)
+            self.object_map[record.level-1]._add_name_part(surname)
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_occu(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Occupation)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_obje(self, record: Element):
+        if record.level == 0:  
+            # Use DocumentParser to Create Documnet and Update Underlying SourceDescription Made from OBJE tags     
+            if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
+                log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
+                log.debug(f"Creating SourceDescription from Object {record.tag} {record.describe()}")
+                gxobject = SourceDescription(id=record.value)
+                self.object_map[record.level-1].add_source_description(gxobject)
+                gxobject = DocumentParsingContainer(source=gxobject)     
+            else:
+                log.debug(f"Found SourceDescription with id:{record.xref}")
+                gxobject = DocumentParsingContainer(source=gxobject)     
+            self.object_map[record.level] = gxobject
+
+        if isinstance(self.object_map[record.level-1],SourceReference) and record.level > 0:
+            gxobject = DocumentParsingContainer(source=self.object_map[record.level-1].description)
+            self.object_map[record.level] = gxobject
+            return
+       
+    def handle_page(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceReference):
+            #self.object_map[record.level-1].descriptionId = record.value
+            gx_object = Qualifier(name=KnownSourceReference.Page,value=record.value)
+            self.object_map[record.level-1].add_qualifier(gx_object)
+            self.object_map[record.level] = gx_object
+        else:
+            pass
+           
+    def handle_plac(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            gxobject = Address(value=record.value)
+            self.object_map[record.level-1].add_address(gxobject)
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], FamilyParser):
+            self.object_map[record.level-1].set_marr_date(record)
+
+        elif isinstance(self.object_map[record.level-1], Event):
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
+            else:
+                place_des = PlaceDescription(names=[TextValue(value=record.value)])
+                self.gedcomx.add_place_description(place_des)
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
+                if (record.sub_records() is not None) and len(record.sub_records()) > 0: # type: ignore
+                    self.object_map[record.level]= place_des
+
+        elif isinstance(self.object_map[record.level-1], Fact):
+            if self.gedcomx.places.by_name(record.value):
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
+            else:
+                place_des = PlaceDescription(names=[TextValue(value=record.value)])
+                self.gedcomx.add_place_description(place_des)
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
+            self.object_map[record.level] = self.object_map[record.level-1].place
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            if (place := self.gedcomx.places.by_name(record.value)) is not None:
+                self.object_map[record.level-1].place = place
+            else:
+                place = PlaceDescription(names=[TextValue(value=record.value)])
+                self.gedcomx.add_place_description(place)
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place)
+            gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
+            self.object_map[record.level-1].add_note(gxobject)
+            
+            self.object_map[record.level] = place
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            if (place := self.gedcomx.places.by_name(record.value)) is not None:
+                self.object_map[record.level-1].source_description.place = place
+            else:
+                place = PlaceDescription(names=[TextValue(value=record.value)])
+                self.gedcomx.add_place_description(place)
+                self.object_map[record.level-1].source_description.place = PlaceReference(original=record.value, description=place)
+            gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
+            self.object_map[record.level-1].source_description.add_note(gxobject)
+            
+            self.object_map[record.level] = place
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_post(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            self.object_map[record.level-1].postalCode = self.clean_str(record.value)
+        else:
+            self.convert_exception_dump(record=record) 
+    
+    def handle_publ(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            if record.value == None or record.value.strip() == '':
+                #check for date
+                if (date := record['DATE']) is not None:
+                    self.object_map[record.level-1].published = date
+            else:
+                if record.value and self.gedcomx.agents.by_name(record.value):
+                    gxobject = self.gedcomx.agents.by_name(record.value)[0]
+                else:
+                    gxobject = Agent(names=[TextValue(record.value)])
+                    self.gedcomx.add_agent(gxobject)
+                self.object_map[record.level-1].publisher = gxobject
+                self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_prob(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Probate)
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_uid(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            gxobject = Identifier(value=[URI('UID:' + record.value)] if record.value else [URI('WARNING: NOTE had no value')],type=IdentifierType.Primary) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject) #NOTE GC7 
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_refn(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person) or isinstance(self.object_map[record.level-1], SourceDescription):
+            gxobject = Identifier(value=[URI.from_url('Reference Number:' + record.value)] if record.value else [],type=IdentifierType.External) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject)
+            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Agent):
+            gxobject = Identifier(value=[URI('Reference Number:' + record.value)] if record.value else [],type=IdentifierType.External) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject) #NOTE GC7
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_repo(self, record: Element):
+        if record.level == 0:
+            if record.value is not None and self.gedcomx.agents.by_name(record.value):
+                gxobject = self.gedcomx.agents.by_id(record.xref)
+                
+            else:
+                gxobject = Agent(id=record.xref,names = [TextValue(record.value)] if record.value else [])
+                self.gedcomx.add_agent(gxobject)            
+            self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            if self.gedcomx.agents.by_id(record.value) is not None:            
+                # TODO WHere and what to add this to?
+                gxobject = self.gedcomx.agents.by_id(record.value)
+                self.object_map[record.level-1].repository = gxobject
+                self.object_map[record.level] = gxobject
+            else:
+                self.convert_exception_dump(record=record)
+        else:
+            self.convert_exception_dump(record=record)
+        
+    def handle_resi(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            gxobject = Fact(type=FactType.Residence)
+            if record.value and record.value.strip() != '':
+                gxobject.add_note(Note(text=record.value))
+            self.object_map[record.level-1].add_fact(gxobject)
+
+            
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_rin(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            self.object_map[record.level-1].add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            self.object_map[record.level-1].source_description.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].source_description.add_note(Note(text=f"Source had RIN: of {record.value}"))
+
+        else:
+            self.convert_exception_dump(record=record)
+        
+    def handle_sex(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Person):
+            if record.value == 'M':
+                gxobject = Gender(type=GenderType.Male)
+            elif record.value == 'F':
+                gxobject = Gender(type=GenderType.Female)
+            else:
+                gxobject = Gender(type=GenderType.Unknown)
+            self.object_map[record.level-1].gender = gxobject
+            self.object_map[record.level] = gxobject
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_sour(self, record: Element):
+        
+        if record.level == 0 and (record.tag in ['SOUR','OBJE','_WLNK']):        
+            if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
+                log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
+                log.debug(f"Creating SourceDescription from {record.tag} {record.describe()}")
+                gxobject = SourceDescription(id=record.value)
+                self.object_map[record.level-1].add_source_description(gxobject)
+                
+            else:
+                log.debug(f"Found SourceDescription with id:{record.xref}")
+            self.object_map[record.level] = gxobject
+
+        elif (add_method := getattr(self.object_map[record.level-1],"add_source_reference",None)) is not None:
+            if (source_description := self.gedcomx.sourceDescriptions.by_id(record.value)) is not None:
+                gxobject = SourceReference(descriptionId=record.value, description=source_description)
+                add_method(gxobject)
+                self.object_map[record.level] = gxobject
+            else:
+                log.error(f"Could not find source with id: {record.value}, Creating Place Holder Description")
+                gxobject = SourceDescription(id=record.value)
+                gxobject._place_holder = True
+                gxobject = SourceReference(descriptionId=record.value, description=gxobject)
+                self.object_map[record.level] = gxobject
+
+        elif record.tag == 'OBJE' and isinstance(self.object_map[record.level-1],SourceReference): #TODO Flesh out OBJECTs/FILES
+            if (source_description := self.gedcomx.sourceDescriptions.by_id(record.value)) is not None:
+                gxobject = SourceReference(descriptionId=record.value, description=source_description)
+                self.object_map[record.level-1].description.add_source_reference(gxobject)
+                self.object_map[record.level] = gxobject
+            else:
+                self.convert_exception_dump(record=record)
+        elif isinstance(self.object_map[record.level-1],Attribution): #TODO Flesh out OBJECTs/FILES
+            gxobject = Agent(names=[TextValue(value=record.value)])
+            
+            self.gedcomx.add_agent(gxobject)
+            self.object_map[record.level-1].creator = gxobject
+            self.object_map[record.level] = gxobject
+            
+            
+        else:
+            self.convert_exception_dump(record=record)
+                  
+    def handle_stae(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Address):
+            self.object_map[record.level-1].stateOrProvince = self.clean_str(record.value)
+        else:
+            raise ValueError(f"I do not know how to handle an 'STAE' tag for a {type(self.object_map[record.level-1])}")
+
+    def handle_subm(self, record: Element):
+        if record.level == 0:
+            if record.value is not None and self.gedcomx.agents.by_id(record.value):
+                gxobject = self.gedcomx.agents.by_id(record.xref)
+            else:
+                gxobject = Agent(id=record.xref)
+                self.gedcomx.add_agent(gxobject)
+
+            if isinstance(self.object_map[record.level-1], Attribution):
+                self.object_map[record.level-1].contributor = gxobject
+            elif isinstance(self.object_map[record.level-1], Gedcom5x):
+                self.object_map[record.level-1].add_agent(gxobject)
+            else:
+                self.convert_exception_dump(record=record)
+            self.object_map[record.level] = gxobject
+        else:
+            if (gxobject := self.gedcomx.agents.by_id(record.value)) is None:
+                gxobject = Agent(id=record.value)
+            self.gedcomx.add_agent(gxobject)
+            self.object_map[record.level] = gxobject
+       
+    def handle_surn(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Name):
+            surname = NamePart(value=record.value, type=NamePartType.Surname)
+            self.object_map[record.level-1]._add_name_part(surname)
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_text(self, record: Element):
+        if record.parent is not None and record.parent.tag == 'DATA':
+            if isinstance(self.object_map[record.level-2], SourceReference):
+                gxobject = TextValue(value=record.value)
+                self.object_map[record.level-2].description.add_description(gxobject)
+                
+                self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], SourceDescription):
+            gxobject = Document(text=record.value)
+            self.object_map[record.level-1].analysis = gxobject
+        else:
+            assert False
+
+    def handle_titl(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription):
+            
+            gxobject = TextValue(value=self.clean_str(record.value))
+            self.object_map[record.level-1].add_title(gxobject)
+            self.object_map[record.level] = gxobject
+        
+        elif (record.parent is not None) and (record.parent.tag == 'FILE') and isinstance(self.object_map[record.level-2], SourceDescription):
+            gxobject = TextValue(value=record.value)
+            self.object_map[record.level-2].add_title(gxobject)
+            self.object_map[record.level] = gxobject
+        elif self.object_map[record.level] and isinstance(self.object_map[record.level], Name):
+            gxobject = NamePart(value=record.value, qualifiers=[NamePartQualifier.Title])
+
+            self.object_map[record.level]._add_name_part(gxobject)
+        else:
+            log.warning(f"Could not parse TITLE")
+           #log.debug(self.convert_exception_dump(record=record))
+
+    def handle_tran(self, record: Element):
+        pass
+
+    def handle_type(self, record: Element):
+        # peek to see if event or fact
+        if isinstance(self.object_map[record.level-1], Event):
+            if EventType.guess(record.value):
+                self.object_map[record.level-1].type = EventType.guess(record.value)                
+            else:
+                log.warning(f"Could not determine type of event with value '{record.value}'")  
+            # add as a note anyway, guess works of text in the string    
+            self.object_map[record.level-1].add_note(Note(text=self.clean_str(record.value)))
+        elif isinstance(self.object_map[record.level-1], Fact):
+            if not self.object_map[record.level-1].type:
+                self.object_map[record.level-1].type = FactType.guess(record.value)
+        elif isinstance(self.object_map[record.level-1], Identifier):
+            
+            self.object_map[record.level-1].values.append(self.clean_str(record.value))
+            self.object_map[record.level-1].type = IdentifierType.Other # type: ignore
+        elif isinstance(self.object_map[record.level-1], Document):
+            
+            self.object_map[record.level-1].values.append(self.clean_str(record.value))
+            self.object_map[record.level-1].type = IdentifierType.Other # type: ignore
+        
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            self.object_map[record.level-1]._set_type(record.value)
+            self.object_map[record.level] = self.object_map[record.level-1]
+            
+            
+
+        elif record.parent is not None and record.parent.tag == 'FORM':
+            if not self.object_map[0].mediaType:
+                self.object_map[0].mediaType = record.value
+        elif isinstance(self.object_map[record.level-1], Name):
+            self.object_map[record.level-1].type = GedcomConverter.type_name_type.get(record.value,NameType.Other)
+
+        else:
+            raise TagConversionError(record,self.object_map)
+
+    def handle__url(self, record: Element):
+        if isinstance(self.object_map[record.level-2], SourceDescription):
+            self.object_map[record.level-2].about = URI.from_url(record.value) if record.value else None
+        else:
+            raise ValueError(f"Could not handle '_URL' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
+            
+    def handle_www(self, record: Element):
+        if isinstance(self.object_map[record.level-1], Agent):
+            self.object_map[record.level-1].homepage = self.clean_str(record.value)
+        elif isinstance(self.object_map[record.level-2], SourceReference):
+            self.object_map[record.level-2].description.add_identifier(Identifier(value=[URI.from_url(record.value)] if record.value else []))
+        else:
+            raise ValueError(f"Could not handle 'WWW' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
+
+    def parse_gedcom5x_fam_record(self, record: Element):
+        log.info(f"Parsing family recrods")
+        with open('./logs/gedcomx.convert.families.json', 'a') as f:
+            for fam in record._flatten_subrecords(record):
+                f.write(fam.describe() + "\n")
+
+    def print_counts_table(self, counts: Mapping[Any, int]) -> None:
+        """
+        Pretty-print {key: int} as columns, largest count first.
+        Column count adapts to terminal width and number of items.
+        """
+        items = [(str(k), int(v)) for k, v in counts.items()]
+        if not items:
+            print("(empty)")
+            return
+
+        # Sort: by value desc, then key asc for stable ordering
+        items.sort(key=lambda kv: (-kv[1], kv[0]))
+
+        # Cell formatting widths
+        key_w = max(len(k) for k, _ in items)
+        num_w = max(len(str(v)) for _, v in items)
+        cell_fmt = f"{{k:<{key_w}}}  {{v:>{num_w}}}"  # e.g., 'Surname        123'
+        cell_width = key_w + 2 + num_w + 2            # +2 padding between columns
+
+        # Decide number of columns: fit to terminal, but also scale with item count
+        term_cols = shutil.get_terminal_size(fallback=(100, 24)).columns
+        fit_cols = max(1, term_cols // cell_width)
+        sqrt_cols = max(1, int(math.sqrt(len(items))))  # more cols when many items
+        cols = max(1, min(len(items), max(fit_cols, sqrt_cols)))
+
+        rows = math.ceil(len(items) / cols)
+
+        # Print row-wise, reading items column-major so columns stay balanced
+        for r in range(rows):
+            line = []
+            for c in range(cols):
+                i = c * rows + r
+                if i < len(items):
+                    k, v = items[i]
+                    cell = cell_fmt.format(k=k, v=v)
+                    line.append(cell.ljust(cell_width))
+            print("".join(line).rstrip())
+
+
+   
+      
+    
+
+    
+   
+    
