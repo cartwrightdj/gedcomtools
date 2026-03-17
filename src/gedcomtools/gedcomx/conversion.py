@@ -23,8 +23,6 @@ GEDCOM Module Types
 import mimetypes
 import re
 import math
-import mimetypes
-import re
 import shutil
 from typing import Any, Callable, Dict, Hashable, Iterable, List, Mapping, Optional, TypeVar
 
@@ -781,7 +779,7 @@ class GedcomConverter:
 
     def handle_exid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.External,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
+            gxobject = Identifier(type=IdentifierType.External,value=[URI.from_url(record.value)]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)       
             self.object_map[record.level] = gxobject
         else: raise ValueError('Record had no value')
@@ -789,62 +787,7 @@ class GedcomConverter:
     def handle_fam(self, record: Element) -> None:
         self._family_parser.reset()
         self.object_map[record.level] = self._family_parser
-        return
 
-        if record.tag != 'FAM' or record.level != 0:
-            raise ValueError("Invalid record: Must be a level 0 FAM record")
-
-        log.debug(f"Converting FAM Record")
-        husband, wife, children = None, None, []
-
-        husband_record = record.sub_records('HUSB')
-        if husband_record is not None:   
-            id = husband_record[0].value if len(husband_record) > 0 else None
-            if id:
-                husband = self.gedcomx.get_person_by_id(id)
-                log.debug(f"found husband: {husband}")
-            
-
-        wife_record = record.sub_records('WIFE')
-        if wife_record:  
-            id = wife_record[0].value if len(wife_record) > 0 else None
-            if id:
-                wife = self.gedcomx.get_person_by_id(id)
-                log.debug(f"found wife: {wife}")
-            
-
-        children_records = record.sub_records('CHIL')
-        if children_records:
-            for child_record in children_records:
-                id = child_record.value
-                if id:
-                    child = self.gedcomx.get_person_by_id(id)
-                    log.debug(f"found child: {child}")
-                    if child:
-                        children.append(child)
-
-        if husband:
-            
-            for child in children:
-                relationship = Relationship(person1=husband, person2=child, type=RelationshipType.ParentChild)
-                self.gedcomx.add_relationship(relationship)
-        if wife:          
-            for child in children:
-                relationship = Relationship(person1=wife, person2=child, type=RelationshipType.ParentChild)
-                self.gedcomx.add_relationship(relationship)
-        if husband and wife:
-            relationship = Relationship(person1=husband, person2=wife, type=RelationshipType.Couple)
-            self.gedcomx.add_relationship(relationship)
-            self.object_map[record.level] = relationship
-        
-        if (marr_record := record.sub_record('MARR')) is not None:
-            gxobject = Event(type=EventType.Marriage,roles=[EventRole(type=EventRoleType.Principal,person=husband)])
-            self.object_map[1] = gxobject
-            self.gedcomx.add_event(gxobject)
-            log.debug(f"Added marriage as event")
-            for sub_record in marr_record.sub_records():
-                self.parse_gedcom5x_record(sub_record)
-            
     def handle_husb(self, record: Element):
         if record is not None:   
             id = record.value
@@ -923,7 +866,7 @@ class GedcomConverter:
 
     def handle_fsid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI.from_json(record.value) if record.value else URI()]) # type: ignore
+            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI.from_url(record.value)]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)       
             self.object_map[record.level] = gxobject
         else:
@@ -1373,7 +1316,7 @@ class GedcomConverter:
             gxobject = Document(text=record.value)
             self.object_map[record.level-1].analysis = gxobject
         else:
-            assert False
+            raise TagConversionError(record, self.object_map)
 
     def handle_titl(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
@@ -1447,55 +1390,3 @@ class GedcomConverter:
         else:
             raise ValueError(f"Could not handle 'WWW' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
 
-    def parse_gedcom5x_fam_record(self, record: Element):
-        log.info(f"Parsing family recrods")
-        with open('./logs/gedcomx.convert.families.json', 'a') as f:
-            for fam in record._flatten_subrecords(record):
-                f.write(fam.describe() + "\n")
-
-    def print_counts_table(self, counts: Mapping[Any, int]) -> None:
-        """
-        Pretty-print {key: int} as columns, largest count first.
-        Column count adapts to terminal width and number of items.
-        """
-        items = [(str(k), int(v)) for k, v in counts.items()]
-        if not items:
-            print("(empty)")
-            return
-
-        # Sort: by value desc, then key asc for stable ordering
-        items.sort(key=lambda kv: (-kv[1], kv[0]))
-
-        # Cell formatting widths
-        key_w = max(len(k) for k, _ in items)
-        num_w = max(len(str(v)) for _, v in items)
-        cell_fmt = f"{{k:<{key_w}}}  {{v:>{num_w}}}"  # e.g., 'Surname        123'
-        cell_width = key_w + 2 + num_w + 2            # +2 padding between columns
-
-        # Decide number of columns: fit to terminal, but also scale with item count
-        term_cols = shutil.get_terminal_size(fallback=(100, 24)).columns
-        fit_cols = max(1, term_cols // cell_width)
-        sqrt_cols = max(1, int(math.sqrt(len(items))))  # more cols when many items
-        cols = max(1, min(len(items), max(fit_cols, sqrt_cols)))
-
-        rows = math.ceil(len(items) / cols)
-
-        # Print row-wise, reading items column-major so columns stay balanced
-        for r in range(rows):
-            line = []
-            for c in range(cols):
-                i = c * rows + r
-                if i < len(items):
-                    k, v = items[i]
-                    cell = cell_fmt.format(k=k, v=v)
-                    line.append(cell.ljust(cell_width))
-            print("".join(line).rstrip())
-
-
-   
-      
-    
-
-    
-   
-    

@@ -10,7 +10,6 @@
    
 ======================================================================
 """
-from enum import Enum
 """
 ======================================================================
 GEDCOM Module Types
@@ -22,9 +21,6 @@ from .fact import Fact, FactType
 from .note import Note
 from .source_reference import SourceReference
 from .textvalue import TextValue
-
-class EvenFactTypes(Enum):
-    Marriage = 0x01
 
 class FamilyParser:
     def __init__(self,gx: GedcomX) -> None:
@@ -45,9 +41,6 @@ class FamilyParser:
         self.couple_added: bool = False
         self.marr_fact = Fact(type=FactType.Marriage)
         self.marr_date:str = ''
-
-    def marr(self):
-        self.parent1.facts
 
     def add_source_reference(self, source_ref:SourceReference):
         self.marr_fact.add_source_reference(source_ref)
