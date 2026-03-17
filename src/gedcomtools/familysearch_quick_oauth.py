@@ -1,4 +1,16 @@
 """
+======================================================================
+ Project: gedcomtools
+ File:    familysearch_quick_oauth.py
+ Author:  David J. Cartwright
+ Purpose: Minimal FamilySearch OAuth 2.0 PKCE helper for desktop/CLI tools
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
+"""
 familysearch_quick_oauth.py
 
 Minimal FamilySearch OAuth helper.

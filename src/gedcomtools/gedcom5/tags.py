@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom5/tags.py
+ Author:  David J. Cartwright
+ Purpose: GEDCOM 5.x tag constants and definitions
 
+ Created: 2026-01-01
+ Updated:
+
+======================================================================
+"""
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)

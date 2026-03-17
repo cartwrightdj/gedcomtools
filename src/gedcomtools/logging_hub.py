@@ -1,3 +1,16 @@
+from __future__ import annotations
+"""
+======================================================================
+ Project: gedcomtools
+ File:    logging_hub.py
+ Author:  David J. Cartwright
+ Purpose: Backward-compatible logging hub backed by loguru with channel context management
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
 """
 Logging hub — backward-compatible wrapper backed by loguru.
 
@@ -18,7 +31,6 @@ Or add channels directly wherever you need them:
     from gedcomtools.logging_hub import hub, ChannelConfig
     hub.start_channel(ChannelConfig(name="myjob", path="logs/myjob.log"))
 """
-from __future__ import annotations
 
 import logging          # re-exported for call-site backward compat
 import os

@@ -93,3 +93,31 @@ class TestIdentifierList:
         il2 = IdentifierList()
         il1.append(Identifier(value=[_uri("https://example.com/1")], type=IdentifierType.Primary))
         assert len(il2) == 0
+
+    def test_repr_non_empty(self):
+        """Regression: __repr__ must produce a useful string, not garbage."""
+        il = IdentifierList()
+        il.append(Identifier(value=[_uri("https://example.com/1")], type=IdentifierType.Primary))
+        r = repr(il)
+        assert "IdentifierList" in r
+        assert "1" in r  # at least one type reported
+
+    def test_repr_empty(self):
+        il = IdentifierList()
+        r = repr(il)
+        assert "IdentifierList" in r
+        assert "0" in r
+
+    def test_str_non_empty_contains_type_key(self):
+        """Regression: __str__ must show identifier type keys, not garbage."""
+        il = IdentifierList()
+        il.append(Identifier(value=[_uri("https://example.com/1")], type=IdentifierType.Primary))
+        s = str(il)
+        # Should contain the type key (Primary URI) or at minimum not be empty
+        assert s and s != "None"
+        assert "gedcomx.org" in s or "Primary" in s
+
+    def test_str_empty_sentinel(self):
+        """__str__ on an empty IdentifierList returns the sentinel string."""
+        il = IdentifierList()
+        assert str(il) == "IdentifierList(empty)"

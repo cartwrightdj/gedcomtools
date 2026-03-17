@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom5/elements.py
+ Author:  David J. Cartwright
+ Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records
+
+ Created: 2026-01-01
+ Updated:
+
+======================================================================
+"""
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)

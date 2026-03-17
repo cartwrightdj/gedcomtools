@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/zip.py
+ Author:  David J. Cartwright
+ Purpose: Read and write Gedcom-X ZIP file packages with manifest and resource entries
+
+ Created: 2025-08-25
+ Updated:
+
+======================================================================
+"""
 import json
 import os
 import tempfile

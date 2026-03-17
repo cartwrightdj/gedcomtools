@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/arango.py
+ Author:  David J. Cartwright
+ Purpose: Build ArangoDB graph import files (vertices and edges) from a GedcomX object
+
+ Created: 2025-08-25
+ Updated:
+
+======================================================================
+"""
 from typing import Dict, Any
 
 from .gedcomx import GedcomX

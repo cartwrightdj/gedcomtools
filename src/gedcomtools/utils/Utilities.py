@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: gedcomtools
+ File:    utils/Utilities.py
+ Author:  David J. Cartwright
+ Purpose: Utility functions including dynamic enum combination helper
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
 from enum import Enum
 
 def combine_enums(name: str, *enums, allow_aliases=False, prefix_on_conflict=False) -> Enum:

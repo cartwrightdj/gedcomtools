@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: gedcomtools
+ File:    gedcom.py
+ Author:  David J. Cartwright
+ Purpose: Top-level Gedcom helper for reading GEDCOM file version info
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
 import re
 
 from .logging_hub import hub, logging

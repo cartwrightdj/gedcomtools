@@ -142,6 +142,58 @@ class TestGedcomXExtend:
         assert gx1.agents.by_id("A1") is not None
         assert gx1.agents.by_id("A2") is not None
 
+    def test_extend_merges_relationships(self):
+        gx1 = GedcomX()
+        p1 = Person(id="P10")
+        p2 = Person(id="P11")
+        gx1.add_person(p1)
+        gx1.add_person(p2)
+
+        gx2 = GedcomX()
+        p3 = Person(id="P12")
+        p4 = Person(id="P13")
+        gx2.add_person(p3)
+        gx2.add_person(p4)
+        r = Relationship(person1=p3, person2=p4, type=RelationshipType.Couple)
+        gx2.add_relationship(r)
+
+        gx1.extend(gx2)
+        assert len(gx1.relationships) >= 1
+
+    def test_extend_merges_source_descriptions(self):
+        gx1 = GedcomX()
+        gx1.add_source_description(SourceDescription(id="S1"))
+
+        gx2 = GedcomX()
+        gx2.add_source_description(SourceDescription(id="S2"))
+
+        gx1.extend(gx2)
+        assert gx1.source_by_id("S1") is not None
+        assert gx1.source_by_id("S2") is not None
+
+    def test_extend_merges_events(self):
+        gx1 = GedcomX()
+        gx2 = GedcomX()
+        gx2.add_event(Event(id="E1", type=EventType.Birth))
+
+        gx1.extend(gx2)
+        assert gx1.events.by_id("E1") is not None
+
+    def test_extend_merges_places(self):
+        gx1 = GedcomX()
+        gx2 = GedcomX()
+        place = PlaceDescription(id="PL1", names=[TextValue(value="London")])
+        gx2.add_place_description(place)
+
+        gx1.extend(gx2)
+        assert gx1.places.by_id("PL1") is not None
+
+    def test_extend_with_none_is_no_op(self):
+        gx = GedcomX()
+        gx.add_person(Person(id="P99"))
+        gx.extend(None)  # should not raise
+        assert len(gx.persons) == 1
+
 
 class TestGedcomXContents:
     def test_contents_dict(self):

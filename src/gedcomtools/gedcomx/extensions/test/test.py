@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/extensions/test/test.py
+ Author:  David J. Cartwright
+ Purpose: Test class using the extensible decorator for extension development testing
+
+ Created: 2025-08-25
+ Updated:
+
+======================================================================
+"""
 from gedcomtools.gedcomx.schemas import extensible
 
 @extensible()

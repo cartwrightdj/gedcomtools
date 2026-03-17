@@ -4,7 +4,7 @@ Tests for gedcomtools.gedcomx.person.Person and QuickPerson
 import pytest
 from gedcomtools.gedcomx.person import Person, QuickPerson
 from gedcomtools.gedcomx.fact import Fact, FactType
-from gedcomtools.gedcomx.name import Name, NameForm, QuickName
+from gedcomtools.gedcomx.name import Name, NameForm, NameType, QuickName
 from gedcomtools.gedcomx.gender import Gender, GenderType
 
 
@@ -84,6 +84,47 @@ class TestPersonAddName:
         n = QuickName("John Smith")
         p.add_name(n)
         assert p.add_name(n) is False
+
+    def test_add_more_than_five_names_does_not_crash(self):
+        """Regression: add_name() must not crash when more than 5 names are added.
+
+        Name inherits Conclusion.__eq__ which compares id/lang/sources etc. but
+        not nameForms, so names without explicit ids compare equal.  Give each
+        name a unique id to make them distinct.
+        """
+        p = Person()
+        for i in range(10):
+            n = Name(id=f"N{i}", nameForms=[NameForm(fullText=f"Name{i}")])
+            result = p.add_name(n)
+            assert result is True, f"Expected True for name {i}, got False"
+        assert len(p.names) == 10
+
+    def test_add_name_none_returns_false(self):
+        p = Person()
+        assert p.add_name(None) is False
+
+    def test_add_name_wrong_type_returns_false(self):
+        p = Person()
+        assert p.add_name("not a name") is False
+
+
+class TestPersonNameProperty:
+    def test_name_property_returns_fulltext(self):
+        p = Person()
+        p.add_name(QuickName("Alice Wonder"))
+        assert p.name == "Alice Wonder"
+
+    def test_name_property_returns_none_when_no_names(self):
+        """Regression: name property must return None when names list is empty."""
+        p = Person()
+        assert p.name is None
+
+    def test_name_property_returns_none_when_nameform_missing(self):
+        """name property must return None when Name has no nameForms."""
+        p = Person()
+        bare_name = Name()  # no nameForms
+        p.names.append(bare_name)
+        assert p.name is None
 
 
 class TestPersonGender:

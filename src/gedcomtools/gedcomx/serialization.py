@@ -1,4 +1,17 @@
 from __future__ import annotations
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/serialization.py
+ Author:  David J. Cartwright
+ Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
+
+ Created: 2025-08-25
+ Updated:
+   - 2025-08-31: cleaned up imports and documentation
+
+======================================================================
+"""
 
 from collections.abc import Sized
 from dataclasses import dataclass, field
@@ -19,20 +32,6 @@ from typing import (
     get_args,
     get_origin,
 )
-
-"""
-======================================================================
- Project: Gedcom-X
- File:    Serialization.py
- Author:  David J. Cartwright
- Purpose: Serialization/Deserialization of gedcomx Objects
-
- Created: 2025-08-25
- Updated:
-   - 2025-08-31: cleaned up imports and documentation
-   
-======================================================================
-"""
 
 """
 ======================================================================

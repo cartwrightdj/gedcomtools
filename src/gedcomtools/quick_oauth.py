@@ -1,4 +1,16 @@
 """
+======================================================================
+ Project: gedcomtools
+ File:    quick_oauth.py
+ Author:  David J. Cartwright
+ Purpose: Generic OAuth 2.0 PKCE authorization-code flow helper for desktop/CLI tools
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
+"""
 quick_oauth.py
 
 A small OAuth2 helper that:

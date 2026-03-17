@@ -1,4 +1,21 @@
 from __future__ import annotations
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/schemas.py
+ Author:  David J. Cartwright
+ Purpose: Central schema registry providing field type metadata for serialization and extensibility
+
+ Created: 2025-08-25
+ Updated:
+   - 2025-09-03: _from_json_ refactor
+   - 2025-09-09: added schema_class
+   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding
+   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict
+   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA
+
+======================================================================
+"""
 
 import functools
 import inspect
@@ -17,25 +34,6 @@ except Exception:  # pragma: no cover
 _UNION_ORIGINS = tuple(
     x for x in (Union, getattr(types, "UnionType", None)) if x is not None
 )
-
-
-"""
-======================================================================
- Project: Gedcom-X
- File:    schema.py
- Author:  David J. Cartwright
- Purpose: provide schema for serialization and extensibility
-
- Created: 2026-02-01
- Updated:
-   - 2025-09-03: _from_json_ refactor
-   - 2025-09-09: added schema_class
-   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding
-   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict
-   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA
-
-======================================================================
-"""
 
 
 class Schema:

@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: gedcomtools
+ File:    xxxtranslation.py
+ Author:  David J. Cartwright
+ Purpose: Mapping table for translating GEDCOM 7 tags to Gedcom-X objects
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
 from  import *
 from ..mutations import GedcomXEventOrFact
 import re

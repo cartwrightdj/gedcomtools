@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/__init__.py
+ Author:  David J. Cartwright
+ Purpose: Package initializer for the Gedcom-X module exposing all public classes
+
+ Created: 2025-08-25
+ Updated:
+
+======================================================================
+"""
 from .schemas import SCHEMA
 from .extensible import Extensible, import_plugins
 

@@ -1,3 +1,18 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/date.py
+ Author:  David J. Cartwright
+ Purpose: Gedcom-X Date class with GEDCOM date format parsing and ISO 8601 support
+
+ Created: 2025-08-25
+ Updated:
+   - 2025-09-03: _from_json refactored
+   - 2025-09-09: added schema_class
+   - 2025-11-13: added Gedcom-X Date Format API
+
+======================================================================
+"""
 import re
 
 from typing import Any, Optional, Dict
@@ -15,22 +30,6 @@ try:
     from dateutil import parser as dateutil_parser
 except ImportError:
     dateutil_parser = None
-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcomx/date.py
- Author:  David J. Cartwright
- Purpose: 
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json refactored
-   - 2025-09-09: added schema_class
-   - 2025-11-13: added Gedcom-X Date Format API
-   
-======================================================================
-"""
 
 """
 ======================================================================

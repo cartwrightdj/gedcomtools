@@ -1,3 +1,16 @@
+from __future__ import annotations
+"""
+======================================================================
+ Project: gedcomtools
+ File:    loggingkit.py
+ Author:  David J. Cartwright
+ Purpose: Reusable logging utilities backed by loguru with setup and channel management
+
+ Created: 2025-07-01
+ Updated:
+
+======================================================================
+"""
 """
 Reusable logging utilities backed by loguru.
 
@@ -18,7 +31,6 @@ Environment variable overrides (optional):
     LOG_FILES           truthy (1/true/yes/on) enables file logging
     LOG_DIR             overrides base_dir
 """
-from __future__ import annotations
 
 import os
 import sys

@@ -154,6 +154,32 @@ class TestNameSimple:
         assert n is not None
         assert isinstance(n, Name)
 
+    def test_simple_sets_birth_name_type(self):
+        """Name.simple() should set the type to BirthName."""
+        n = Name.simple("John Smith")
+        assert n.type == NameType.BirthName
+
+    def test_slash_sets_birth_name_type(self):
+        """Name.simple() with slash notation should also set BirthName type."""
+        n = Name.simple("John /Smith/")
+        assert n.type == NameType.BirthName
+
+    def test_slash_fulltext_strips_extra_spaces(self):
+        """fullText derived from slash notation should not have leading/trailing spaces."""
+        n = Name.simple("John /Smith/")
+        ft = n.nameForms[0].fullText
+        assert ft == ft.strip()
+        assert ft == "John Smith"
+
+    def test_slash_suffix_only_no_given(self):
+        """When input is '/Smith/ Jr.', there should be no Given part."""
+        n = Name.simple("/Smith/ Jr.")
+        nf = n.nameForms[0]
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Given not in types
+        assert NamePartType.Surname in types
+        assert NamePartType.Suffix in types
+
 
 class TestQuickName:
     def test_creates_name(self):

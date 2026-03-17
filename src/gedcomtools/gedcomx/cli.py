@@ -1,3 +1,15 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/cli.py
+ Author:  David J. Cartwright
+ Purpose: CLI utilities for inspecting and displaying Gedcom-X schema and objects
+
+ Created: 2025-08-25
+ Updated:
+
+======================================================================
+"""
 from typing import Any, Iterable, Sequence, get_origin
 from .schemas import SCHEMA   # adjust as needed
 from .serialization import Serialization
