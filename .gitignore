@@ -13,7 +13,6 @@ dist/
 build/
 .claude/
 .venv/
-*.toml
 Makefile
 make.bat
 STATUS.md
