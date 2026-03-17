@@ -120,8 +120,6 @@ class Address:
     @value.setter
     def value(self,value: str):
         self._value = value
-        return
-        raise NotImplementedError("Parsing of a full address is not implimented.")
     
     def _append(self,value):
         if self._value:
