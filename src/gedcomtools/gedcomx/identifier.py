@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import List, Optional, Dict, Any, Union
 from collections.abc import Iterator
-import json
 import secrets
 import string
-import json
 
 """
 ======================================================================
@@ -120,6 +118,11 @@ class IdentifierList:
 
     # -------------------- public mutation API --------------------
     def append(self, identifier: "Identifier"):
+        """Add an Identifier to the list; alias for add_identifier.
+
+        Raises:
+            ValueError: If the argument is not an Identifier instance.
+        """
         if isinstance(identifier, Identifier):
             self.add_identifier(identifier)
         else:
@@ -183,12 +186,15 @@ class IdentifierList:
 
     # -------------------- dict-style convenience --------------------
     def keys(self):
+        """Return the identifier type keys."""
         return self.identifiers.keys()
 
     def values(self):
+        """Return the lists of URI values for each type."""
         return self.identifiers.values()
 
     def items(self):
+        """Return (type_key, values_list) pairs."""
         return self.identifiers.items()
 
     def iter_pairs(self) -> Iterator[tuple[str, object]]:
@@ -198,7 +204,19 @@ class IdentifierList:
                 yield (k, v)
     
     @classmethod
-    def from_json(cls, data,context=None):
+    def from_json(cls, data, context=None):
+        """Deserialize an IdentifierList from a JSON dict mapping type URIs to value lists.
+
+        Args:
+            data: A dict of ``{type_uri: [value, ...]}`` pairs.
+            context: Unused; present for interface consistency.
+
+        Returns:
+            An IdentifierList populated from the dict.
+
+        Raises:
+            ValueError: If ``data`` is not a dict.
+        """
         if isinstance(data, dict):
             identifier_list = IdentifierList()
             for key, vals in data.items():
@@ -219,10 +237,11 @@ class IdentifierList:
         return type_as_dict if type_as_dict != {} else None
 
     def __repr__(self) -> str:
-        return f'{len(self.identifiers)} '.join(self.identifiers.keys())
+        keys = ', '.join(self.identifiers.keys())
+        return f"IdentifierList({len(self.identifiers)} types: [{keys}])"
 
     def __str__(self) -> str:
-        return f'{len(self.identifiers)} '.join(self.identifiers.keys())
+        return ', '.join(self.identifiers.keys()) or "IdentifierList(empty)"
 
 SCHEMA.field_type_table['IdentifierList'] = {
     "http://gedcomx.org/Primary":List[URI],

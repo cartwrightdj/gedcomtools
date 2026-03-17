@@ -1,0 +1,1312 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>gedcomtools.gedcomx.schemas - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for gedcomtools.gedcomx.schemas</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">get_type_hints</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># typing.Annotated may not exist in older 3.9 without typing_extensions</span>
+    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>  <span class="c1"># type: ignore</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">Annotated</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+
+<span class="n">_UNION_ORIGINS</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+    <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Union</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="s2">&quot;UnionType&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<span class="p">)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">======================================================================</span>
+<span class="sd"> Project: Gedcom-X</span>
+<span class="sd"> File:    schema.py</span>
+<span class="sd"> Author:  David J. Cartwright</span>
+<span class="sd"> Purpose: provide schema for serialization and extensibility</span>
+
+<span class="sd"> Created: 2026-02-01</span>
+<span class="sd"> Updated:</span>
+<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
+<span class="sd">   - 2025-09-09: added schema_class</span>
+<span class="sd">   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding</span>
+<span class="sd">   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict</span>
+<span class="sd">   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA</span>
+
+<span class="sd">======================================================================</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Schema">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema">[docs]</a>
+<span class="k">class</span> <span class="nc">Schema</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Central registry of fields for classes.</span>
+
+<span class="sd">    - field_type_table: {&quot;ClassName&quot;: {&quot;field&quot;: &lt;type or type-string&gt;}}</span>
+<span class="sd">    - URI/Resource preference in unions: URI &gt; Resource &gt; first-declared</span>
+<span class="sd">    - Optional/None is stripped</span>
+<span class="sd">    - Containers are preserved; their inner args are normalized recursively</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># NEW: inheritance tracking + inherited extras cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bases</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>              <span class="c1"># class_name -&gt; [base names]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subclasses</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>          <span class="c1"># base_name -&gt; {subclass names}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># class_name -&gt; {field: type}</span>
+
+        <span class="c1"># Optional binding to concrete classes to avoid name-only matching.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Utils</span>
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="k">def</span> <span class="nf">_cls_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Bind concrete classes (optional)</span>
+    <span class="c1"># ──────────────────────────────</span>
+<div class="viewcode-block" id="Schema.set_uri_class">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_uri_class">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_uri_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span> <span class="o">=</span> <span class="bp">cls</span></div>
+
+
+<div class="viewcode-block" id="Schema.set_resource_class">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_resource_class">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_resource_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span> <span class="o">=</span> <span class="bp">cls</span></div>
+
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Public API</span>
+    <span class="c1"># ──────────────────────────────</span>
+<div class="viewcode-block" id="Schema.register_class">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_class">[docs]</a>
+    <span class="k">def</span> <span class="nf">register_class</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_bases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_annotations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">ignore</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">toplevel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">toplevel_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Introspect and register fields for a class.</span>
+
+<span class="sd">        - reads class __annotations__ (preferred) or __init__ annotations</span>
+<span class="sd">        - merges base classes (MRO) if include_bases=True</span>
+<span class="sd">        - applies `mapping` overrides last</span>
+<span class="sd">        - normalizes each type:</span>
+<span class="sd">            strip Optional → prefer URI/Resource → collapse union to single</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cname</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">ignore</span> <span class="o">=</span> <span class="n">ignore</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+            <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">use_annotations</span><span class="p">:</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_hints_from_class</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">use_init</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="p">:</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_hints_from_init</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+            <span class="c1"># filter private / ignored</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ignore</span> <span class="ow">or</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># normalize each</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">d</span>
+
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">mro</span><span class="p">()))</span> <span class="k">if</span> <span class="n">include_bases</span> <span class="k">else</span> <span class="p">[</span><span class="bp">cls</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="nb">object</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">collect</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">mapping</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">fields</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="c1"># Track inheritance relationships</span>
+        <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">mro</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">object</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bases</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="n">bases</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subclasses</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cname</span><span class="p">)</span>
+
+        <span class="c1"># Apply extras defined directly for this class (if registered earlier)</span>
+        <span class="n">direct_extras</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="k">if</span> <span class="n">direct_extras</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">direct_extras</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">fields</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="c1"># Inherit extras from bases (direct + their inherited), without overriding subclass fields</span>
+        <span class="n">inherited</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">bname</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bname</span><span class="p">,</span> <span class="p">{}),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bname</span><span class="p">,</span> <span class="p">{})):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+                        <span class="n">inherited</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inherited</span><span class="p">:</span>
+            <span class="n">merged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">inherited</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">inherited</span><span class="p">)</span>
+
+        <span class="c1"># Commit the table</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="n">cname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="n">fields</span>
+
+        <span class="k">if</span> <span class="n">toplevel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">toplevel_meta</span> <span class="ow">or</span> <span class="p">{})</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_propagate_extra_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply an inherited extra to subclass and its descendants if not overridden.&quot;&quot;&quot;</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">subclass_name</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">typ</span>
+            <span class="n">inh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">subclass_name</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">inh</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">typ</span>
+        <span class="k">for</span> <span class="n">deeper</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subclasses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">subclass_name</span><span class="p">,</span> <span class="nb">set</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_extra_down</span><span class="p">(</span><span class="n">deeper</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Schema.register_extra">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_extra">[docs]</a>
+    <span class="k">def</span> <span class="nf">register_extra</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a single extra field (normalized) and propagate to subclasses.&quot;&quot;&quot;</span>
+        <span class="n">cname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">nt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+
+        <span class="c1"># record on declaring class</span>
+        <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cname</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cname</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="p">{})[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nt</span>
+
+        <span class="c1"># propagate to current subclasses</span>
+        <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subclasses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="nb">set</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_extra_down</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">nt</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Schema.normalize_all">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.normalize_all">[docs]</a>
+    <span class="k">def</span> <span class="nf">normalize_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Re-run normalization across all registered fields.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">fields</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">fields</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+
+    <span class="c1"># lookups</span>
+<div class="viewcode-block" id="Schema.get_class_fields">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_class_fields">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_class_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Schema.set_toplevel">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_toplevel">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span></div>
+
+
+<div class="viewcode-block" id="Schema.is_toplevel">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span></div>
+
+    
+<div class="viewcode-block" id="Schema.is_toplevel_obj">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel_obj">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_toplevel_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Like is_toplevel, but takes an arbitrary object and checks its class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_toplevel</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_toplevel</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Schema.get_toplevel">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_toplevel">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Schema.get_extras">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_extras">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Direct extras declared on this class (not inherited).&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span></div>
+
+
+<div class="viewcode-block" id="Schema.get_all_extras">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_all_extras">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_all_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Direct + inherited extras for this class.&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls_name</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inherited_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="n">schema_to_jsonable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Introspection helpers</span>
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="k">def</span> <span class="nf">_get_hints_from_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+        <span class="n">gns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span> <span class="k">if</span> <span class="n">module</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="c1"># Ensure these names exist even if the module didn&#39;t import them:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gns</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;URI&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gns</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;Resource&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span><span class="p">)</span>
+
+        <span class="n">lns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">globalns</span><span class="o">=</span><span class="n">gns</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">lns</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># fallback keeps strings — but we’ll fix those below</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+
+    <span class="k">def</span> <span class="nf">_get_hints_from_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parameter annotations from __init__ (excluding self/return/*args/**kwargs).&quot;&quot;&quot;</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__init__&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__init__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+        <span class="n">gns</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">if</span> <span class="n">module</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="c1"># Ensure these names exist even if the module didn&#39;t import them:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gns</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;URI&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gns</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;Resource&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span><span class="p">)</span>
+        <span class="n">lns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">globalns</span><span class="o">=</span><span class="n">gns</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">lns</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">hints</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">hints</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">hints</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># drop *args/**kwargs</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pname</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">VAR_POSITIONAL</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">VAR_KEYWORD</span><span class="p">):</span>
+                <span class="n">hints</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">hints</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Normalization pipeline</span>
+    <span class="c1">#   strip Optional -&gt; prefer URI/Resource -&gt; collapse unions</span>
+    <span class="c1">#   (recurse into containers)</span>
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="k">def</span> <span class="nf">_normalize_field_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tp</span>
+
+    <span class="c1"># 1) Remove None from unions and strip Optional[...] wrappers</span>
+    <span class="k">def</span> <span class="nf">_strip_optional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">Annotated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">_UNION_ORIGINS</span><span class="p">:</span>
+            <span class="n">kept</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># noqa: E721</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">kept</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Any</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">kept</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="c1"># rebuild union (still a union; later steps will collapse)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_union_tuple</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_param</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tp</span>
+
+    <span class="c1"># 2) In any union, prefer URI (if present), else Resource (if present), else first declared</span>
+    <span class="k">def</span> <span class="nf">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># if these are strings but we know the classes, return the classes</span>
+            <span class="k">if</span> <span class="n">tp</span> <span class="o">==</span> <span class="s2">&quot;URI&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span>
+            <span class="k">if</span> <span class="n">tp</span> <span class="o">==</span> <span class="s2">&quot;Resource&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>  <span class="c1"># legacy fallback</span>
+
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">Annotated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">_UNION_ORIGINS</span><span class="p">:</span>
+            <span class="c1"># pick URI if present, else Resource, else first</span>
+            <span class="n">pick</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">a</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;URI&quot;</span><span class="p">):</span>
+                    <span class="n">pick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span> <span class="ow">or</span> <span class="n">a</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">pick</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">a</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;Resource&quot;</span><span class="p">):</span>
+                        <span class="n">pick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span> <span class="ow">or</span> <span class="n">a</span>
+                        <span class="k">break</span>
+            <span class="k">if</span> <span class="n">pick</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">pick</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="n">pick</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_param</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tp</span>
+
+
+    <span class="c1"># 3) If any union still remains (it shouldn&#39;t after step 2), collapse to first</span>
+    <span class="k">def</span> <span class="nf">_collapse_unions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">Annotated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">_UNION_ORIGINS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># first only</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_param</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tp</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Helpers: typing objects</span>
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="k">def</span> <span class="nf">_name_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="c1"># typing objects: str(...) fallback</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_rebuild_union_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># Prefer PEP 604 A|B|C; fall back to typing.Union</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">or_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>  <span class="c1"># e.g., A | B | C</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span> <span class="k">as</span> <span class="n">_TypingUnion</span>
+            <span class="k">return</span> <span class="n">_TypingUnion</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># typing.Union[A, B, C]</span>
+
+    <span class="k">def</span> <span class="nf">_rebuild_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">sub</span><span class="p">]</span> <span class="k">if</span> <span class="n">sub</span> <span class="k">else</span> <span class="n">origin</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fallback</span>
+
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="c1"># Helpers: strings</span>
+    <span class="c1"># ──────────────────────────────</span>
+    <span class="k">def</span> <span class="nf">_strip_optional_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="c1"># peel Optional[...] wrappers</span>
+        <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Optional[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Optional[&quot;</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="c1"># Union[A, B, None]</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;NoneType&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Union[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span><span class="p">)</span>
+
+        <span class="c1"># A | B | None</span>
+        <span class="k">if</span> <span class="s2">&quot;|&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">)]</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="s2">&quot;NoneType&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span><span class="p">)</span>
+
+        <span class="c1"># containers: normalize inside</span>
+        <span class="k">for</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">,</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">,</span> <span class="s2">&quot;Dict&quot;</span><span class="p">,</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">head</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+                <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">head</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">:</span>
+                    <span class="c1"># Annotated[T, ...] -&gt; T</span>
+                    <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">):</span>
+                    <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">elem</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">:</span>
+                    <span class="n">elems</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Tuple[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Dict&quot;</span><span class="p">:</span>
+                    <span class="n">kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">kv</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_prefer_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="c1"># Union[...] form</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="s2">&quot;URI&quot;</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;URI&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;Resource&quot;</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;Resource&quot;</span>
+            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+
+        <span class="c1"># PEP 604 bars</span>
+        <span class="k">if</span> <span class="s2">&quot;|&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="s2">&quot;URI&quot;</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;URI&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;Resource&quot;</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;Resource&quot;</span>
+            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+
+        <span class="c1"># containers</span>
+        <span class="k">for</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">,</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">,</span> <span class="s2">&quot;Dict&quot;</span><span class="p">,</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">head</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+                <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">head</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">:</span>
+                    <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">):</span>
+                    <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">elem</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">:</span>
+                    <span class="n">elems</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Tuple[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Dict&quot;</span><span class="p">:</span>
+                    <span class="n">kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">kv</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_collapse_unions_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;|&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+
+        <span class="c1"># containers</span>
+        <span class="k">for</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">,</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">,</span> <span class="s2">&quot;Dict&quot;</span><span class="p">,</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">head</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
+                <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">head</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Annotated&quot;</span><span class="p">:</span>
+                    <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;List&quot;</span><span class="p">,</span> <span class="s2">&quot;Set&quot;</span><span class="p">):</span>
+                    <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">elem</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">:</span>
+                    <span class="n">elems</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Tuple[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">&quot;Dict&quot;</span><span class="p">:</span>
+                    <span class="n">kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_top_level</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">kv</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;Any&quot;</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">_split_top_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split `s` by single-char separator (&#39;,&#39; or &#39;|&#39;) at top level (not inside brackets).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">buf</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;[&quot;</span><span class="p">:</span>
+                <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;]&quot;</span><span class="p">:</span>
+                <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">sep</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">out</span> <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ──────────────────────────────</span>
+<span class="c1"># Stringification helpers (JSON dump)</span>
+<span class="c1"># ──────────────────────────────</span>
+<div class="viewcode-block" id="type_repr">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.type_repr">[docs]</a>
+<span class="k">def</span> <span class="nf">type_repr</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tp</span>
+
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">tp</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">_UNION_ORIGINS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">type_repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;List[</span><span class="si">{</span><span class="n">type_repr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s2">&quot;List[Any]&quot;</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="nb">set</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Set[</span><span class="si">{</span><span class="n">type_repr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s2">&quot;Set[Any]&quot;</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Tuple[&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">type_repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s2">&quot;Tuple&quot;</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="n">type_repr</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">type_repr</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="schema_to_jsonable">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_to_jsonable">[docs]</a>
+<span class="k">def</span> <span class="nf">schema_to_jsonable</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">cls_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">):</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cls_name</span><span class="p">]</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">cls_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">fname</span><span class="p">:</span> <span class="n">type_repr</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">fname</span><span class="p">])</span> <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="schema_class">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_class">[docs]</a>
+<span class="k">def</span> <span class="nf">schema_class</span><span class="p">(</span>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">include_bases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_annotations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">ignore</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">toplevel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">toplevel_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to register a class with SCHEMA at import time.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="n">SCHEMA</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span>
+            <span class="n">mapping</span><span class="o">=</span><span class="n">mapping</span><span class="p">,</span>
+            <span class="n">include_bases</span><span class="o">=</span><span class="n">include_bases</span><span class="p">,</span>
+            <span class="n">use_annotations</span><span class="o">=</span><span class="n">use_annotations</span><span class="p">,</span>
+            <span class="n">use_init</span><span class="o">=</span><span class="n">use_init</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+            <span class="n">ignore</span><span class="o">=</span><span class="n">ignore</span><span class="p">,</span>
+            <span class="n">toplevel</span><span class="o">=</span><span class="n">toplevel</span><span class="p">,</span>
+            <span class="n">toplevel_meta</span><span class="o">=</span><span class="n">toplevel_meta</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+    <span class="k">return</span> <span class="n">deco</span></div>
+
+
+<div class="viewcode-block" id="bind_schema_property">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.bind_schema_property">[docs]</a>
+<span class="k">def</span> <span class="nf">bind_schema_property</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+    <span class="n">fget</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fset</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fdel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">doc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">property</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bind module-level getter (and optional setter/deleter) as a property on cls,</span>
+<span class="sd">    and register it in schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prop_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">fget</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="c1"># infer schema type from getter return annotation (preferred)</span>
+    <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">hints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="n">doc</span> <span class="ow">or</span> <span class="n">fget</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">setter</span><span class="p">(</span><span class="n">fset</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fdel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">deleter</span><span class="p">(</span><span class="n">fdel</span><span class="p">)</span>
+
+    <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">schema</span><span class="o">.</span><span class="n">register_extra</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="schema_property">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property">[docs]</a>
+<span class="k">def</span> <span class="nf">schema_property</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span>
+    <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use on a method inside a class.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        @schema_property(schema=SCHEMA)</span>
+<span class="sd">        def display_name(self) -&gt; str: ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+        <span class="n">prop_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="k">def</span> <span class="nf">_register</span><span class="p">(</span><span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">typ</span>
+            <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">typ</span> <span class="o">=</span> <span class="n">hints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+            <span class="n">schema</span><span class="o">.</span><span class="n">register_extra</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+        <span class="c1"># Hook: when class is created, Python calls __set_name__ on descriptors.</span>
+        <span class="k">class</span> <span class="nc">_RegisteredProperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_register</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_RegisteredProperty</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fget</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fset</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fdel</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">deco</span></div>
+
+
+<div class="viewcode-block" id="schema_property_plugin">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property_plugin">[docs]</a>
+<span class="k">def</span> <span class="nf">schema_property_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="n">fget</span><span class="p">):</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">fget</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">&quot;typ&quot;</span><span class="p">:</span> <span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;fset&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;fdel&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="s2">&quot;__schema_prop__&quot;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="n">fset</span><span class="p">):</span>
+            <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fset</span>
+            <span class="k">return</span> <span class="n">fget</span>   <span class="c1"># &lt;-- IMPORTANT: keep name bound to getter (like @property.setter does)</span>
+
+        <span class="k">def</span> <span class="nf">deleter</span><span class="p">(</span><span class="n">fdel</span><span class="p">):</span>
+            <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fdel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdel</span>
+            <span class="k">return</span> <span class="n">fget</span>
+
+        <span class="n">fget</span><span class="o">.</span><span class="n">setter</span> <span class="o">=</span> <span class="n">setter</span>
+        <span class="n">fget</span><span class="o">.</span><span class="n">deleter</span> <span class="o">=</span> <span class="n">deleter</span>
+        <span class="k">return</span> <span class="n">fget</span>
+    <span class="k">return</span> <span class="n">deco</span></div>
+
+
+<div class="viewcode-block" id="apply_schema_property">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.apply_schema_property">[docs]</a>
+<span class="k">def</span> <span class="nf">apply_schema_property</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">fget</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="s2">&quot;__schema_prop__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;__name__&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">fget</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> missing @schema_property_plugin metadata&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bind_schema_property</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">fget</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+        <span class="n">typ</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;typ&quot;</span><span class="p">],</span>
+        <span class="n">fset</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fset&quot;</span><span class="p">],</span>
+        <span class="n">fdel</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fdel&quot;</span><span class="p">],</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+<span class="c1"># ──────────────────────────────</span>
+<span class="c1"># Accept unknown kwargs (propagates to subclasses)</span>
+<span class="c1"># ──────────────────────────────</span>
+<div class="viewcode-block" id="accept_extras">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.accept_extras">[docs]</a>
+<span class="k">def</span> <span class="nf">accept_extras</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_extras&quot;</span><span class="p">,</span>
+                  <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span>  <span class="c1"># e.g., lambda cls: set(SCHEMA.get_all_extras(cls).keys())</span>
+                 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps the class __init__ to swallow unknown kwargs, and propagates to subclasses.</span>
+<span class="sd">    - If a subclass defines its own __init__, it gets wrapped automatically via __init_subclass__.</span>
+<span class="sd">    - Unknown kwargs are attached as attributes, or stashed in `stash_attr` if __slots__ present.</span>
+<span class="sd">    - If `allow_only` is provided (callable(cls) -&gt; set[str]), only those keys are accepted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">WRAPPED_FLAG</span> <span class="o">=</span> <span class="s2">&quot;__extras_wrapped__&quot;</span>
+    <span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_wrap_init</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">WRAPPED_FLAG</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="k">return</span>
+            <span class="n">orig</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="fm">__init__</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">orig</span><span class="p">)</span>
+
+            <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">orig</span><span class="p">)</span>
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="c1"># Split known from extras using THIS class&#39;s signature</span>
+                <span class="n">known</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;self&quot;</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                        <span class="n">known</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+                <span class="c1"># Call original with only known kwargs</span>
+                <span class="n">orig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">known</span><span class="p">)</span>
+
+                <span class="c1"># Filter extras if requested</span>
+                <span class="n">extras</span> <span class="o">=</span> <span class="n">kwargs</span>
+                <span class="k">if</span> <span class="n">allow_only</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">allowed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">allow_only</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
+                    <span class="n">extras</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">extras</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">}</span>
+
+                <span class="k">if</span> <span class="n">extras</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__slots__&quot;</span><span class="p">):</span>
+                        <span class="n">stash</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">stash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">,</span> <span class="p">{})</span>
+                            <span class="n">stash</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">)</span>
+                        <span class="n">stash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">extras</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+            <span class="n">klass</span><span class="o">.</span><span class="fm">__init__</span> <span class="o">=</span> <span class="fm">__init__</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">WRAPPED_FLAG</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_decorator</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+        <span class="c1"># wrap the base class now</span>
+        <span class="n">_wrap_init</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+
+        <span class="c1"># chain any existing __init_subclass__</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="s2">&quot;__init_subclass__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">prev_func</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="vm">__func__</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="nb">classmethod</span><span class="p">)</span> <span class="k">else</span> <span class="n">prev</span>
+
+        <span class="nd">@classmethod</span>
+        <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="n">subcls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">prev_func</span><span class="p">:</span>
+                <span class="n">prev_func</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>  <span class="c1"># call original</span>
+            <span class="n">_wrap_init</span><span class="p">(</span><span class="n">subcls</span><span class="p">)</span>   <span class="c1"># wrap subclass&#39; __init__ too</span>
+
+        <span class="n">klass</span><span class="o">.</span><span class="n">__init_subclass__</span> <span class="o">=</span> <span class="n">__init_subclass__</span>  <span class="c1"># propagate to future subclasses</span>
+        <span class="k">return</span> <span class="n">klass</span>
+
+    <span class="k">return</span> <span class="n">_decorator</span></div>
+
+
+<div class="viewcode-block" id="extensible">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible">[docs]</a>
+<span class="k">def</span> <span class="nf">extensible</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply schema_class then accept_extras in the right order.</span>
+<span class="sd">    Example: @extensible(toplevel=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># 1) register class with schema (inner)</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">schema_class</span><span class="p">(</span><span class="o">**</span><span class="n">schema_kwargs</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="c1"># 2) wrap for extras (outer) using an effective allow_only</span>
+        <span class="n">eff_allow</span> <span class="o">=</span> <span class="n">allow_only</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">accept_extras</span><span class="p">(</span><span class="n">allow_only</span><span class="o">=</span><span class="n">eff_allow</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+    <span class="k">return</span> <span class="n">deco</span></div>
+
+
+<div class="viewcode-block" id="extensible_dataclass">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible_dataclass">[docs]</a>
+<span class="k">def</span> <span class="nf">extensible_dataclass</span><span class="p">(</span><span class="o">*</span><span class="n">d_args</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span> <span class="k">as</span> <span class="n">_dc</span>
+    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">_dc</span><span class="p">(</span><span class="o">*</span><span class="n">d_args</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>                          <span class="c1"># generate __init__</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">schema_class</span><span class="p">(</span><span class="o">**</span><span class="n">schema_kwargs</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>         <span class="c1"># register with SCHEMA</span>
+        <span class="n">eff_allow</span> <span class="o">=</span> <span class="n">allow_only</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">accept_extras</span><span class="p">(</span><span class="n">allow_only</span><span class="o">=</span><span class="n">eff_allow</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>   <span class="c1"># wrap for extras</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+    <span class="k">return</span> <span class="n">deco</span></div>
+
+
+<span class="c1"># put this in your schemas.py (or a shared helpers module)</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<div class="viewcode-block" id="ExtrasAwareMeta">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.ExtrasAwareMeta">[docs]</a>
+<span class="k">class</span> <span class="nc">ExtrasAwareMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.</span>
+
+<span class="sd">    - Only passes constructor-known kwargs into ``__init__``.</span>
+<span class="sd">    - Allowed extras (from SCHEMA) are attached after construction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># what extras are allowed for this class?</span>
+        <span class="n">allow_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__extras_allow__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">)</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c1"># inspect the CURRENT __init__ (dataclass/custom OK)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">known</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">accepts_varkw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">sig</span><span class="p">:</span>
+            <span class="n">accepts_varkw</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">VAR_KEYWORD</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;self&quot;</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">VAR_POSITIONAL</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">VAR_KEYWORD</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                    <span class="n">known</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># call __init__: pass only known, and optionally extras if it already accepts **kwargs</span>
+        <span class="n">call_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">known</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">kwargs</span> <span class="k">if</span> <span class="n">accepts_varkw</span> <span class="k">else</span> <span class="p">{})}</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">call_kwargs</span><span class="p">)</span>
+
+        <span class="c1"># attach remaining extras that are allowed</span>
+        <span class="n">extras</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">extras</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__slots__&quot;</span><span class="p">):</span>
+                <span class="n">stash</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_extras&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_extras&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                    <span class="n">stash</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_extras</span>
+                <span class="n">stash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">extras</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span></div>
+
+
+
+
+<span class="c1"># Singleton instance</span>
+<span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="p">()</span>
+
+<span class="c1"># -------------</span>
+<div class="viewcode-block" id="fact_from_even_tag">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.fact_from_even_tag">[docs]</a>
+<span class="k">def</span> <span class="nf">fact_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">FactType</span>
+    <span class="n">gedcom_even_to_fact</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Person Fact Types</span>
+        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
+        <span class="s2">&quot;CHR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
+        <span class="s2">&quot;EVEN&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Amnesty</span><span class="p">,</span>  <span class="c1"># and other FactTypes with no direct GEDCOM tag</span>
+        <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
+        <span class="s2">&quot;BARM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
+        <span class="s2">&quot;BASM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
+        <span class="s2">&quot;BIRT&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
+        <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
+        <span class="s2">&quot;BLES&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
+        <span class="s2">&quot;BURI&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
+        <span class="s2">&quot;CAST&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Caste</span><span class="p">,</span>
+        <span class="s2">&quot;CENS&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
+        <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
+        <span class="s2">&quot;CONF&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
+        <span class="s2">&quot;CREM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
+        <span class="s2">&quot;DEAT&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
+        <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
+        <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
+        <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
+        <span class="s2">&quot;GRAD&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Graduation</span><span class="p">,</span>
+        <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
+        <span class="s2">&quot;MIL&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MilitaryService</span><span class="p">,</span>
+        <span class="s2">&quot;NATI&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Nationality</span><span class="p">,</span>
+        <span class="s2">&quot;NATU&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
+        <span class="s2">&quot;OCCU&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Occupation</span><span class="p">,</span>
+        <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
+        <span class="s2">&quot;DSCR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">PhysicalDescription</span><span class="p">,</span>
+        <span class="s2">&quot;PROB&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Probate</span><span class="p">,</span>
+        <span class="s2">&quot;PROP&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Property</span><span class="p">,</span>
+        <span class="s2">&quot;RELI&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Religion</span><span class="p">,</span>
+        <span class="s2">&quot;RESI&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Residence</span><span class="p">,</span>
+        <span class="s2">&quot;WILL&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Will</span><span class="p">,</span>
+
+        <span class="c1"># Couple Relationship Fact Types</span>
+        <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
+        <span class="s2">&quot;DIV&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
+        <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
+        <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
+        <span class="s2">&quot;MARR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">,</span>
+        <span class="s2">&quot;MARB&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageBanns</span><span class="p">,</span>
+        <span class="s2">&quot;MARC&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageContract</span><span class="p">,</span>
+        <span class="s2">&quot;MARL&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageLicense</span><span class="p">,</span>
+        <span class="s2">&quot;SEPA&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Separation</span><span class="p">,</span>
+
+        <span class="c1"># Parent-Child Relationship Fact Types</span>
+        <span class="c1"># (Note: Only ADOPTION has a direct GEDCOM tag, others are under &quot;EVEN&quot;)</span>
+        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">AdoptiveParent</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">gedcom_even_to_fact</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">even_value</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="event_from_even_tag">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.event_from_even_tag">[docs]</a>
+<span class="k">def</span> <span class="nf">event_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span> 
+    <span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">EventType</span>
+    <span class="n">gedcom_even_to_evnt</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Person Fact Types</span>
+        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
+        <span class="s2">&quot;CHR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
+        <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
+        <span class="s2">&quot;BARM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
+        <span class="s2">&quot;BASM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
+        <span class="s2">&quot;BIRT&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
+        <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
+        <span class="s2">&quot;BLES&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
+        <span class="s2">&quot;BURI&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
+        
+        <span class="s2">&quot;CENS&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
+        <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
+        <span class="s2">&quot;CONF&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
+        <span class="s2">&quot;CREM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
+        <span class="s2">&quot;DEAT&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
+        <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
+        <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
+        <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
+        
+        <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
+        
+        <span class="s2">&quot;NATU&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
+        
+        <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
+        
+
+        <span class="c1"># Couple Relationship Fact Types</span>
+        <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
+        <span class="s2">&quot;DIV&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
+        <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
+        <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
+        <span class="s2">&quot;MARR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Marriage</span>
+        
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">gedcom_even_to_evnt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">even_value</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

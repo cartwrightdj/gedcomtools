@@ -57,14 +57,17 @@ class ConfidenceLevel(Qualifier):
 
     @classmethod
     def from_json(cls, data,context):
-        """
+        """Parse a confidence level from various input forms.
+
         Accepts:
-          - "High" | "Medium" | "Low"
-          - "http://gedcomx.org/High" | ".../Medium" | ".../Low"
-          - {"type": "..."} or {"value": "..."} or {"confidence": "..."} or {"level": "..."} or {"uri": "..."}
-          - existing ConfidenceLevel instance
+
+        - ``"High"`` | ``"Medium"`` | ``"Low"``
+        - ``"http://gedcomx.org/High"`` | ``".../Medium"`` | ``".../Low"``
+        - dict with keys ``type``, ``value``, ``confidence``, ``level``, or ``uri``
+        - existing ``ConfidenceLevel`` instance
+
         Returns:
-          ConfidenceLevel instance with .value set to the canonical URI.
+            ConfidenceLevel: instance with ``.value`` set to the canonical URI.
         """
         if data is None:
             return None
@@ -163,7 +166,12 @@ class Conclusion():
         self.attribution = attribution
         self._uri = URI(fragment=id) if id else None
     
-    def add_note(self,note: Note):
+    def add_note(self, note: Note):
+        """Add a Note to this conclusion, skipping exact duplicates.
+
+        Raises:
+            ValueError: If the argument is not a Note instance.
+        """
         if note and isinstance(note,Note):
             for existing in self.notes:
                 if note == existing:
@@ -172,14 +180,19 @@ class Conclusion():
         else: raise ValueError(f"'note' must be of Type 'Note'")
 
     def add_source_reference(self, source_to_add: SourceReference):
+        """Add a SourceReference to this conclusion, skipping exact duplicates.
+
+        Raises:
+            ValueError: If the argument is not a SourceReference instance.
+        """
         if source_to_add and isinstance(source_to_add,SourceReference):
             for current_source in self.sources:
                 if source_to_add == current_source:
                     return
             self.sources.append(source_to_add)
         else:
-            raise ValueError()
-        
+            raise ValueError(f"source_to_add must be a SourceReference, got {type(source_to_add).__name__}")
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False

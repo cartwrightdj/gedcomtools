@@ -95,6 +95,11 @@ class SourceReference:
         self.qualifiers = qualifiers if qualifiers and isinstance(qualifiers, list) else [] 
 
     def add_qualifier(self, qualifier: Qualifier):
+        """Add a qualifier to the source reference, skipping exact duplicates.
+
+        Raises:
+            ValueError: If the argument is not a Qualifier or KnownSourceReference.
+        """
         if isinstance(qualifier, (Qualifier,KnownSourceReference)):
             if self.qualifiers:
                 #TODO Prevent Duplicates
@@ -106,7 +111,11 @@ class SourceReference:
         raise ValueError("The 'qualifier' must be type 'Qualifier' or 'KnownSourceReference', not " + str(type(qualifier))) 
     
     def append(self, text_to_add: str):
-        raise ValueError
+        """Append text to descriptionId, setting it if not yet assigned.
+
+        Raises:
+            ValueError: If text_to_add is not a non-empty string.
+        """
         if text_to_add and isinstance(text_to_add, str):
             if self.descriptionId is None:
                 self.descriptionId = text_to_add
@@ -117,6 +126,7 @@ class SourceReference:
     
     @classmethod
     def from_json(cls, data: dict, context=None) -> "SourceReference":
+        """Deserialize a SourceReference from a JSON dict."""
         ref = {}
 
         # Scalars
@@ -129,9 +139,7 @@ class SourceReference:
             if isinstance(description, str):
                 ref["description"] = URI(description)
             elif isinstance(description, dict):
-                print(">>",description)
                 ref["description"] = Resource.from_json(description, context)
-                assert False
         else:
             pass #TODO
             #print(ref["descriptionId"])
@@ -146,8 +154,7 @@ class SourceReference:
   
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False  
-
-        return (
-            self.description._uri == other.description._uri
-        )
+            return False
+        self_uri  = getattr(self.description,  '_uri', None)
+        other_uri = getattr(other.description, '_uri', None)
+        return self_uri == other_uri

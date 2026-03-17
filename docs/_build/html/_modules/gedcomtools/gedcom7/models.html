@@ -1,0 +1,1313 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>gedcomtools.gedcom7.models - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for gedcomtools.gedcom7.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">======================================================================</span>
+<span class="sd"> Project: gedcomtools</span>
+<span class="sd"> File:    gedcom7/models.py</span>
+<span class="sd"> Author:  David J. Cartwright</span>
+<span class="sd"> Purpose: High-level aggregation dataclasses for GEDCOM 7 top-level</span>
+<span class="sd">          records.  Each class walks the raw GedcomStructure tree once</span>
+<span class="sd">          and exposes the fields a caller cares about without needing</span>
+<span class="sd">          to know GEDCOM tag names.</span>
+
+<span class="sd"> Created: 2026-03-16</span>
+<span class="sd"> Updated:</span>
+<span class="sd">   - 2026-03-16: initial implementation covering INDI, FAM, SOUR,</span>
+<span class="sd">                 REPO, OBJE, SNOTE, SUBM</span>
+<span class="sd">   - 2026-03-16: EventDetail gains sources/shared_note_refs/media_refs and</span>
+<span class="sd">                 age_years property; FamilyDetail gains divorce_year/num_children;</span>
+<span class="sd">                 MediaDetail.files typed as List[Tuple[str, Optional[str]]]</span>
+<span class="sd">   - 2026-03-16: import updated GedcomStructure.py → structure.py</span>
+<span class="sd">======================================================================</span>
+
+<span class="sd">High-level view objects for GEDCOM 7 records.</span>
+
+<span class="sd">These are **read-only snapshots** — they are built from a</span>
+<span class="sd">``GedcomStructure`` tree at construction time and do not stay in sync</span>
+<span class="sd">if the tree is later mutated.</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    from gedcomtools.gedcom7 import Gedcom7</span>
+<span class="sd">    from gedcomtools.gedcom7.models import individual_detail, family_detail</span>
+
+<span class="sd">    g = Gedcom7(&quot;family.ged&quot;)</span>
+
+<span class="sd">    # by xref</span>
+<span class="sd">    person = g.get_individual(&quot;@I1@&quot;)</span>
+<span class="sd">    print(person.full_name, person.birth_year, person.death_year)</span>
+
+<span class="sd">    # iterate all</span>
+<span class="sd">    for p in g.individuals():</span>
+<span class="sd">        print(p.full_name, p.sex)</span>
+
+<span class="sd">    for f in g.families():</span>
+<span class="sd">        print(f.xref, f.husband_xref, f.wife_xref, len(f.children_xrefs))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Supporting types</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="EventDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.EventDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">EventDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A genealogical event (birth, death, marriage, etc.).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        date:        Raw GEDCOM date string, e.g. ``&quot;1 JAN 2000&quot;`` or</span>
+<span class="sd">                     ``&quot;ABT 1850&quot;``.</span>
+<span class="sd">        place:       Place name from the PLAC substructure.</span>
+<span class="sd">        age:         Age of the individual at the event (AGE substructure).</span>
+<span class="sd">        cause:       Cause of the event (CAUS — typically used for death).</span>
+<span class="sd">        event_type:  Free-text TYPE qualifier attached to the event node.</span>
+<span class="sd">        agency:      AGNC substructure value.</span>
+<span class="sd">        note:        First inline NOTE payload, if any.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">place</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">age</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cause</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">event_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">agency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">media_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the four-digit year from the date string, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(\d{3,4})\b&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">qualifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return any date qualifier prefix: ABT, BEF, AFT, CAL, EST, etc.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;^(ABT|CAL|EST|BEF|AFT|FROM|TO|BET|INT)\b&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">age_years</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the year component from the AGE string (e.g. ``&quot;45y 3m&quot;`` → 45).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\d+)\s*y&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="NameDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.NameDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">NameDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single name entry from an INDI NAME structure.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        full:       Raw GEDCOM NAME payload, e.g. ``&quot;Lt. /de Allen/ jr.&quot;``.</span>
+<span class="sd">        given:      GIVN substructure value.</span>
+<span class="sd">        surname:    SURN substructure value.</span>
+<span class="sd">        prefix:     NPFX name prefix (title before name).</span>
+<span class="sd">        suffix:     NSFX name suffix (Jr., III, etc.).</span>
+<span class="sd">        nickname:   NICK substructure value.</span>
+<span class="sd">        surname_prefix: SPFX surname prefix (de, van, von, etc.).</span>
+<span class="sd">        name_type:  TYPE substructure value (BIRTH, AKA, IMMIGRANT, etc.).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">full</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">given</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">surname</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nickname</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">surname_prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">name_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean display name with GEDCOM surname slashes removed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/([^/]*)/&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="SourceCitation">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceCitation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SourceCitation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A source citation attached to a record or event.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:  Pointer to the SOUR record (e.g. ``&quot;@S1@&quot;``).</span>
+<span class="sd">        page:  PAGE substructure value (where within the source).</span>
+<span class="sd">        quality: QUAY substructure value (0–3 quality assessment).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">page</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">quality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Top-level record detail types</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="IndividualDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.IndividualDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">IndividualDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 INDI record.</span>
+
+<span class="sd">    All repeated structures (names, residences, events, source citations)</span>
+<span class="sd">    are collected into lists.  Single-valued fields like birth and death</span>
+<span class="sd">    use the first occurrence found.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:              Xref id, e.g. ``&quot;@I1@&quot;``.</span>
+<span class="sd">        names:             All NAME entries, primary first.</span>
+<span class="sd">        sex:               SEX payload (``&quot;M&quot;``, ``&quot;F&quot;``, ``&quot;X&quot;``, ``&quot;U&quot;``).</span>
+<span class="sd">        birth:             First BIRT event.</span>
+<span class="sd">        christening:       First CHR event.</span>
+<span class="sd">        death:             First DEAT event.</span>
+<span class="sd">        burial:            First BURI event.</span>
+<span class="sd">        cremation:         First CREM event.</span>
+<span class="sd">        occupation:        First OCCU payload.</span>
+<span class="sd">        title:             First TITL payload.</span>
+<span class="sd">        religion:          First RELI payload.</span>
+<span class="sd">        nationality:       First NATI payload.</span>
+<span class="sd">        residences:        All RESI events.</span>
+<span class="sd">        events:            All generic EVEN structures.</span>
+<span class="sd">        families_as_child: FAMC pointer values.</span>
+<span class="sd">        families_as_spouse: FAMS pointer values.</span>
+<span class="sd">        source_citations:  All SOUR citations on the INDI record itself.</span>
+<span class="sd">        note_texts:        Inline NOTE payloads (not shared-note pointers).</span>
+<span class="sd">        shared_note_refs:  SNOTE pointer values.</span>
+<span class="sd">        media_refs:        OBJE pointer values.</span>
+<span class="sd">        uid:               First UID payload.</span>
+<span class="sd">        restriction:       RESN payload.</span>
+<span class="sd">        last_changed:      CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NameDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">sex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">birth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">christening</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">death</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">burial</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cremation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">occupation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">religion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nationality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">residences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">families_as_child</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">families_as_spouse</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">source_citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">media_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">restriction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IndividualDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.IndividualDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If this Detail was not obtained via a parser</span>
+<span class="sd">                accessor (i.e. has no attached record).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_individual_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Convenience properties</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NameDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Primary (first) name entry.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">full_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean display name of the primary name entry.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">display</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;Unknown&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">birth_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the birth date, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">death_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the death date, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_living</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``True`` when no death event is recorded.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">age_at_death</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Approximate age at death computed from birth/death years.&quot;&quot;&quot;</span>
+        <span class="n">by</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth_year</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">death_year</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">dy</span> <span class="o">-</span> <span class="n">by</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">by</span> <span class="ow">and</span> <span class="n">dy</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="FamilyDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.FamilyDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">FamilyDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 FAM record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:            Xref id, e.g. ``&quot;@F1@&quot;``.</span>
+<span class="sd">        husband_xref:    HUSB pointer value.</span>
+<span class="sd">        wife_xref:       WIFE pointer value.</span>
+<span class="sd">        children_xrefs:  CHIL pointer values (in document order).</span>
+<span class="sd">        marriage:        First MARR event.</span>
+<span class="sd">        divorce:         First DIV event.</span>
+<span class="sd">        events:          All generic EVEN structures.</span>
+<span class="sd">        source_citations: SOUR citations on the FAM record.</span>
+<span class="sd">        note_texts:      Inline NOTE payloads.</span>
+<span class="sd">        shared_note_refs: SNOTE pointer values.</span>
+<span class="sd">        media_refs:      OBJE pointer values.</span>
+<span class="sd">        uid:             First UID payload.</span>
+<span class="sd">        restriction:     RESN payload.</span>
+<span class="sd">        last_changed:    CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">husband_xref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">wife_xref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">children_xrefs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">marriage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">divorce</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">source_citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">media_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">restriction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FamilyDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.FamilyDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_family_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">marriage_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the marriage date, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">marriage</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">marriage</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">divorce_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the divorce date, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divorce</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">divorce</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of children listed in the family record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children_xrefs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SourceDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SourceDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SOUR record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:       Xref id.</span>
+<span class="sd">        title:      TITL payload.</span>
+<span class="sd">        author:     AUTH payload.</span>
+<span class="sd">        publication: PUBL payload.</span>
+<span class="sd">        abbreviation: ABBR payload.</span>
+<span class="sd">        repository_refs: REPO pointer values.</span>
+<span class="sd">        note_texts:  Inline NOTE payloads.</span>
+<span class="sd">        shared_note_refs: SNOTE pointer values.</span>
+<span class="sd">        media_refs:  OBJE pointer values.</span>
+<span class="sd">        uid:         First UID payload.</span>
+<span class="sd">        last_changed: CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">author</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">publication</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">repository_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">media_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SourceDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_source_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RepositoryDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.RepositoryDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">RepositoryDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 REPO record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:       Xref id.</span>
+<span class="sd">        name:       NAME payload.</span>
+<span class="sd">        address:    ADDR payload.</span>
+<span class="sd">        phone:      First PHON payload.</span>
+<span class="sd">        email:      First EMAIL payload.</span>
+<span class="sd">        website:    First WWW payload.</span>
+<span class="sd">        note_texts:  Inline NOTE payloads.</span>
+<span class="sd">        shared_note_refs: SNOTE pointer values.</span>
+<span class="sd">        uid:         First UID payload.</span>
+<span class="sd">        last_changed: CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">phone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">website</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RepositoryDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.RepositoryDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_repository_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MediaDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.MediaDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">MediaDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 OBJE record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:       Xref id.</span>
+<span class="sd">        files:      List of (file_path, media_type) tuples from FILE substructures.</span>
+<span class="sd">        title:      TITL payload.</span>
+<span class="sd">        note_texts:  Inline NOTE payloads.</span>
+<span class="sd">        shared_note_refs: SNOTE pointer values.</span>
+<span class="sd">        uid:         First UID payload.</span>
+<span class="sd">        last_changed: CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># (path, form)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MediaDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.MediaDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_media_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SharedNoteDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SharedNoteDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SharedNoteDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SNOTE record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:       Xref id.</span>
+<span class="sd">        text:       Full note text (CONT lines already merged).</span>
+<span class="sd">        mime:       MIME type if declared.</span>
+<span class="sd">        language:   LANG payload.</span>
+<span class="sd">        source_citations: SOUR citations.</span>
+<span class="sd">        uid:         First UID payload.</span>
+<span class="sd">        last_changed: CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">mime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source_citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SharedNoteDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SharedNoteDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_shared_note_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubmitterDetail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SubmitterDetail">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SubmitterDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SUBM record.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        xref:       Xref id.</span>
+<span class="sd">        name:       NAME payload.</span>
+<span class="sd">        address:    ADDR payload.</span>
+<span class="sd">        phone:      First PHON payload.</span>
+<span class="sd">        email:      First EMAIL payload.</span>
+<span class="sd">        website:    First WWW payload.</span>
+<span class="sd">        language:   First LANG payload.</span>
+<span class="sd">        note_texts:  Inline NOTE payloads.</span>
+<span class="sd">        shared_note_refs: SNOTE pointer values.</span>
+<span class="sd">        uid:         First UID payload.</span>
+<span class="sd">        last_changed: CHAN.DATE payload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">phone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">website</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_changed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_record</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_save_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SubmitterDetail.save">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SubmitterDetail.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No raw record attached. Obtain the Detail via &quot;</span>
+                <span class="s2">&quot;get_submitter_detail() to enable save().&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Internal helpers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span> <span class="nf">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the payload of the first child matching *tag*, or ``None``.&quot;&quot;&quot;</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">payload</span> <span class="k">if</span> <span class="n">child</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_payloads</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return payloads of all children matching *tag*.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">payload</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pointer payload of the first matching child, or ``None``.&quot;&quot;&quot;</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">child</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;@VOID@&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">payload</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all non-void pointer payloads for children matching *tag*.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;@VOID@&quot;</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return CHAN.DATE payload if present.&quot;&quot;&quot;</span>
+    <span class="n">chan</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CHAN&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chan</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_payload</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="s2">&quot;DATE&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first UID payload.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;UID&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect all SOUR citation children of *node*.&quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">sour</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sour</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SourceCitation</span><span class="p">(</span>
+            <span class="n">xref</span><span class="o">=</span><span class="n">sour</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">sour</span><span class="p">,</span> <span class="s2">&quot;PAGE&quot;</span><span class="p">),</span>
+            <span class="n">quality</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">sour</span><span class="p">,</span> <span class="s2">&quot;QUAY&quot;</span><span class="p">),</span>
+        <span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span> <span class="nf">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return inline NOTE payloads (skip pointer notes).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;NOTE&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">payload</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">n</span><span class="o">.</span><span class="n">payload_is_pointer</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return SNOTE pointer values (non-void).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SNOTE&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an EventDetail from an event structure node.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">EventDetail</span><span class="p">(</span>
+        <span class="n">date</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;DATE&quot;</span><span class="p">),</span>
+        <span class="n">place</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PLAC&quot;</span><span class="p">),</span>
+        <span class="n">age</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;AGE&quot;</span><span class="p">),</span>
+        <span class="n">cause</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;CAUS&quot;</span><span class="p">),</span>
+        <span class="n">event_type</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">),</span>
+        <span class="n">agency</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;AGNC&quot;</span><span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)),</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">sources</span><span class="o">=</span><span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">),</span>
+        <span class="n">shared_note_refs</span><span class="o">=</span><span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">),</span>
+        <span class="n">media_refs</span><span class="o">=</span><span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_extract_name</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NameDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a NameDetail from a NAME structure node.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NameDetail</span><span class="p">(</span>
+        <span class="n">full</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
+        <span class="n">given</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;GIVN&quot;</span><span class="p">),</span>
+        <span class="n">surname</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SURN&quot;</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NPFX&quot;</span><span class="p">),</span>
+        <span class="n">suffix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NSFX&quot;</span><span class="p">),</span>
+        <span class="n">nickname</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NICK&quot;</span><span class="p">),</span>
+        <span class="n">surname_prefix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SPFX&quot;</span><span class="p">),</span>
+        <span class="n">name_type</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Public factory functions</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="individual_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.individual_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">individual_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndividualDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an :class:`IndividualDetail` from an INDI :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level INDI structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`IndividualDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">IndividualDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">_extract_name</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)]</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">sex</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SEX&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">birth</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;BIRT&quot;</span><span class="p">))</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">christening</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CHR&quot;</span><span class="p">))</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">death</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;DEAT&quot;</span><span class="p">))</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">burial</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;BURI&quot;</span><span class="p">))</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">cremation</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CREM&quot;</span><span class="p">))</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">occupation</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OCCU&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">religion</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RELI&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">nationality</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NATI&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">residences</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_extract_event</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;RESI&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_extract_event</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;EVEN&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">families_as_child</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;FAMC&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">families_as_spouse</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;FAMS&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">source_citations</span> <span class="o">=</span> <span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">media_refs</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_individual_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="family_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.family_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">family_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FamilyDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`FamilyDetail` from a FAM :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level FAM structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`FamilyDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">FamilyDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">husband_xref</span> <span class="o">=</span> <span class="n">_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;HUSB&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">wife_xref</span> <span class="o">=</span> <span class="n">_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WIFE&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">children_xrefs</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;CHIL&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">marriage</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;MARR&quot;</span><span class="p">))</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">divorce</span> <span class="o">=</span> <span class="n">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;DIV&quot;</span><span class="p">))</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_extract_event</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;EVEN&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">source_citations</span> <span class="o">=</span> <span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">media_refs</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_family_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="source_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.source_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">source_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourceDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SourceDetail` from a SOUR :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level SOUR structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`SourceDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">SourceDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;AUTH&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">publication</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PUBL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">abbreviation</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ABBR&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">repository_refs</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;REPO&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">media_refs</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_source_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="repository_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.repository_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">repository_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RepositoryDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`RepositoryDetail` from a REPO :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level REPO structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`RepositoryDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">RepositoryDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">phone</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;EMAIL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">website</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WWW&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_repository_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="media_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.media_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">media_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`MediaDetail` from an OBJE :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level OBJE structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`MediaDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">MediaDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span> <span class="n">_payload</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;FORM&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FILE&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">payload</span>
+    <span class="p">]</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_media_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="shared_note_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.shared_note_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">shared_note_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SharedNoteDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SharedNoteDetail` from an SNOTE :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level SNOTE structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`SharedNoteDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">SharedNoteDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">mime</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;MIME&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">source_citations</span> <span class="o">=</span> <span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_shared_note_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<div class="viewcode-block" id="submitter_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.submitter_detail">[docs]</a>
+<span class="k">def</span> <span class="nf">submitter_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubmitterDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SubmitterDetail` from a SUBM :class:`GedcomStructure`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        node: A top-level SUBM structure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Populated :class:`SubmitterDetail` snapshot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">SubmitterDetail</span><span class="p">(</span><span class="n">xref</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">detail</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">phone</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;EMAIL&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">website</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WWW&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">note_texts</span> <span class="o">=</span> <span class="n">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">shared_note_refs</span> <span class="o">=</span> <span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="n">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_record</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">_save_fn</span> <span class="o">=</span> <span class="n">_save_submitter_g7</span>
+
+    <span class="k">return</span> <span class="n">detail</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># G7 write-back helpers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span> <span class="nf">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set, create, or remove a single-value child node.</span>
+
+<span class="sd">    * value is not None  → set existing child&#39;s payload, or create one.</span>
+<span class="sd">    * value is None      → remove existing child, if present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">child</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">child</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">child</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">GedcomStructure</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">node</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_g7_save_event</span><span class="p">(</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;EventDetail&quot;</span><span class="p">],</span>
+    <span class="n">event_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">],</span>
+    <span class="n">parent_node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span>
+    <span class="n">event_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write an EventDetail back into its GedcomStructure node.</span>
+
+<span class="sd">    Creates the event node under *parent_node* if it doesn&#39;t exist yet.</span>
+<span class="sd">    Does nothing when *event* is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">event_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">event_node</span> <span class="o">=</span> <span class="n">GedcomStructure</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">parent_node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">event_tag</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent_node</span>
+        <span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;DATE&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;PLAC&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">place</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;AGE&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">age</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;CAUS&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">cause</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;AGNC&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">agency</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;NOTE&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_g7_save_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;NameDetail&quot;</span><span class="p">,</span> <span class="n">name_node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a NameDetail back into a NAME GedcomStructure node.&quot;&quot;&quot;</span>
+    <span class="n">name_node</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">full</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;GIVN&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">given</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;SURN&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">surname</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;NPFX&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;NSFX&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;NICK&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">nickname</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;SPFX&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">surname_prefix</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">name_type</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_individual_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;IndividualDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">name_nodes</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">nd</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">name_nodes</span><span class="p">):</span>
+            <span class="n">_g7_save_name</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">name_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="n">GedcomStructure</span><span class="p">(</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">nd</span><span class="o">.</span><span class="n">full</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">node</span>
+            <span class="p">)</span>
+            <span class="n">_g7_save_name</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">new_node</span><span class="p">)</span>
+    <span class="c1"># Remove any NAME nodes beyond what the detail list now contains</span>
+    <span class="k">for</span> <span class="n">orphan</span> <span class="ow">in</span> <span class="n">name_nodes</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">names</span><span class="p">):]:</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">orphan</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SEX&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">sex</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">birth</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;BIRT&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;BIRT&quot;</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">christening</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CHR&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;CHR&quot;</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">death</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;DEAT&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;DEAT&quot;</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">burial</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;BURI&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;BURI&quot;</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">cremation</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CREM&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;CREM&quot;</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OCCU&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">occupation</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RELI&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">religion</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NATI&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">nationality</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_family_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;FamilyDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">marriage</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;MARR&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;MARR&quot;</span><span class="p">)</span>
+    <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">divorce</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;DIV&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;DIV&quot;</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_source_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SourceDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;AUTH&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">author</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PUBL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">publication</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ABBR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">abbreviation</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_repository_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;RepositoryDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">phone</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;EMAIL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WWW&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">website</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_media_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;MediaDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_shared_note_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SharedNoteDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">detail</span><span class="o">.</span><span class="n">text</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;MIME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">mime</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">language</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_save_submitter_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SubmitterDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">phone</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;EMAIL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WWW&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">website</span><span class="p">)</span>
+    <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">language</span><span class="p">)</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

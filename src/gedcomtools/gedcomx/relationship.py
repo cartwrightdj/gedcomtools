@@ -96,7 +96,12 @@ class Relationship(Subject):
         self.person2 = person2
         self.facts = facts if facts else []
     
-    def add_fact(self,fact: Fact):
+    def add_fact(self, fact: Fact):
+        """Add a Fact to the relationship, skipping exact duplicates.
+
+        Raises:
+            TypeError: If the argument is not a Fact instance.
+        """
         if (fact is not None) and isinstance(fact,Fact):
             for existing_fact in self.facts:
                 if fact == existing_fact:

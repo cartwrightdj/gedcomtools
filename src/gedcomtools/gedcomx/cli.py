@@ -43,8 +43,7 @@ def objects_to_schema_table(
     exclude: set[str] | None = None,
     max_col_width: int | None = 60,
 ) -> str:
-    """
-    Build a text table for a homogeneous list of objects using SCHEMA
+    """Build a text table for a homogeneous list of objects using SCHEMA
     to determine which fields exist and how to treat collections.
 
     - objs: sequence of objects of the same class

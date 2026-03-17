@@ -67,11 +67,19 @@ class DocumentParsingContainer:
         if form:
             self.sourceDescription.mediaType = form
     
-    def _set_type(self,type: str):
-        if type == 'image':
+    def _set_resource_type(self, type: str):
+        _digital     = {"image", "audio", "video", "electronic"}
+        _physical    = {"book", "card", "fiche", "film", "magazine", "manuscript", "map", "newspaper", "photo", "tombstone"}
+        _collection  = {"collection"}
+        t = (type or "").lower()
+        if t in _digital:
             self.sourceDescription.resourceType = ResourceType.DigitalArtifact
+        elif t in _physical:
+            self.sourceDescription.resourceType = ResourceType.PhysicalArtifact
+        elif t in _collection:
+            self.sourceDescription.resourceType = ResourceType.Collection
         else:
-            self.sourceDescription.resourceType = ResourceType.DigitalArtifact
+            self.sourceDescription.resourceType = ResourceType.Record
 
 
 class Document(Conclusion):

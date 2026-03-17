@@ -71,15 +71,88 @@ class TestNameSimple:
         n = Name.simple("John Smith")
         assert len(n.nameForms) >= 1
 
-    def test_simple_has_full_text(self):
+    def test_simple_has_given_and_surname(self):
         n = Name.simple("John Smith")
         nf = n.nameForms[0]
-        assert "John" in nf.fullText or "Smith" in nf.fullText
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Given in types
+        assert NamePartType.Surname in types
+
+    def test_simple_given_value(self):
+        n = Name.simple("John Smith")
+        nf = n.nameForms[0]
+        given = next(p for p in nf.parts if p.type == NamePartType.Given)
+        assert given.value == "John"
+
+    def test_simple_surname_value(self):
+        n = Name.simple("John Smith")
+        nf = n.nameForms[0]
+        surname = next(p for p in nf.parts if p.type == NamePartType.Surname)
+        assert surname.value == "Smith"
 
     def test_simple_single_name(self):
-        # Single-word name — should not crash
         n = Name.simple("Madonna")
+        nf = n.nameForms[0]
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Given in types
+        assert NamePartType.Surname not in types
+
+    # --- GEDCOM slash notation ---
+
+    def test_slash_surname(self):
+        n = Name.simple("John /Smith/")
+        nf = n.nameForms[0]
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Given in types
+        assert NamePartType.Surname in types
+
+    def test_slash_surname_value(self):
+        n = Name.simple("John /Smith/")
+        nf = n.nameForms[0]
+        surname = next(p for p in nf.parts if p.type == NamePartType.Surname)
+        assert surname.value == "Smith"
+
+    def test_slash_given_value(self):
+        n = Name.simple("John /Smith/")
+        nf = n.nameForms[0]
+        given = next(p for p in nf.parts if p.type == NamePartType.Given)
+        assert given.value == "John"
+
+    def test_slash_multiword_given(self):
+        n = Name.simple("John Robert /Smith/")
+        nf = n.nameForms[0]
+        given = next(p for p in nf.parts if p.type == NamePartType.Given)
+        assert given.value == "John Robert"
+
+    def test_slash_compound_surname(self):
+        n = Name.simple("John /van der Berg/")
+        nf = n.nameForms[0]
+        surname = next(p for p in nf.parts if p.type == NamePartType.Surname)
+        assert surname.value == "van der Berg"
+
+    def test_slash_with_suffix(self):
+        n = Name.simple("John /Smith/ Jr.")
+        nf = n.nameForms[0]
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Suffix in types
+        suffix = next(p for p in nf.parts if p.type == NamePartType.Suffix)
+        assert suffix.value == "Jr."
+
+    def test_slash_surname_only(self):
+        n = Name.simple("/Smith/")
+        nf = n.nameForms[0]
+        types = [p.type for p in nf.parts]
+        assert NamePartType.Surname in types
+        assert NamePartType.Given not in types
+
+    def test_slash_fulltext_has_no_slashes(self):
+        n = Name.simple("John /Smith/")
+        assert "/" not in n.nameForms[0].fullText
+
+    def test_empty_string_returns_empty_name(self):
+        n = Name.simple("")
         assert n is not None
+        assert isinstance(n, Name)
 
 
 class TestQuickName:

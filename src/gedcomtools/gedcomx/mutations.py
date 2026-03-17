@@ -20,7 +20,7 @@
 GEDCOM Module Types
 ======================================================================
 """
-from ._gedcom5x import Gedcom5xRecord
+from .._gedcom5x import Gedcom5xRecord
 from .fact import Fact, FactType
 from .event import Event, EventType
 """
@@ -241,7 +241,8 @@ class GedcomXEventOrFact(GedcomXObject):
                 obj = Fact(type=fact_event_table[record.tag]['Fact'])
                 return obj
             elif 'Event' in fact_event_table[record.tag].keys():
-                obj = Event(type=fact_event_table[record.tag]['Fact'])
+                obj = Event(type=fact_event_table[record.tag]['Event'])
+                return obj
             else:
                 raise ValueError
         else:

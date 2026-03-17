@@ -34,6 +34,7 @@ class FamilyParser:
         self.marr_fact: Fact = None
 
     def reset(self):
+        """Reset all family members and the couple relationship for the next FAM record."""
         self.parent1: Person = None
         self.parent2: Person = None
         self.children: list[Person] = []
@@ -42,16 +43,20 @@ class FamilyParser:
         self.marr_fact = Fact(type=FactType.Marriage)
         self.marr_date:str = ''
 
-    def add_source_reference(self, source_ref:SourceReference):
+    def add_source_reference(self, source_ref: SourceReference):
+        """Add a SourceReference to the marriage fact."""
         self.marr_fact.add_source_reference(source_ref)
     
     def add_note(self, note: Note):
+        """Add a Note to the marriage fact."""
         self.marr_fact.add_note(note)
         
-    def set_marr_date(self,record: Element):
+    def set_marr_date(self, record: Element):
+        """Set the marriage date from a GEDCOM DATE element."""
         self.marr_date = record.value
     
-    def set_marr_plac(self,record: Element):
+    def set_marr_plac(self, record: Element):
+        """Set the marriage place from a GEDCOM PLAC element, creating a PlaceDescription if needed."""
         from .place_reference import PlaceReference, PlaceDescription
         if self.gedcomx.places.by_name(record.value):
             self.marr_fact.place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
@@ -60,7 +65,8 @@ class FamilyParser:
             self.gedcomx.add_place_description(place_des)
             self.marr_fact.place = PlaceReference(original=record.value, description=place_des)
             
-    def set_husband(self, husband:Person):
+    def set_husband(self, husband: Person):
+        """Assign the husband (person1) of the couple relationship and register it in the genealogy."""
         if husband is not None:
             if self.parent1 is not None: raise ValueError
             self.couple.person1 = husband
@@ -71,7 +77,8 @@ class FamilyParser:
                 self.couple_added = True
             self.parent1 = husband
     
-    def set_wife(self, wife:Person):
+    def set_wife(self, wife: Person):
+        """Assign the wife (person2) of the couple relationship and register it in the genealogy."""
         if wife is not None:
             if self.parent2 is not None: raise ValueError
             self.couple.person2 = wife
@@ -82,7 +89,8 @@ class FamilyParser:
                 self.couple_added = True
             self.parent2 = wife
     
-    def add_child(self, child:Person):
+    def add_child(self, child: Person):
+        """Create ParentChild relationships between the child and each known parent."""
         if child is not None:
             if self.parent1 is not None:
                 p1child = Relationship(person1=self.parent1,person2=child,type=RelationshipType.ParentChild)

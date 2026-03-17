@@ -104,10 +104,6 @@ def _copy_default(v: Any) -> Any:
     if isinstance(v, (list, dict, set)):
         return v.copy()
     return v
-    # avoid shared mutable defaults
-    if isinstance(v, (list, dict, set)):
-        return v.copy()
-    return v
 
 def import_plugins(
     base_package: str,                    # e.g., "gedcomx"  (or "gedcomtools.gedcomx")

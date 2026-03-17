@@ -1,60 +1,66 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 import os
+import re
 import sys
-sys.path.insert(0, os.path.abspath('..'))  # Point to your project root
 
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+sys.path.insert(0, os.path.abspath("../src"))
 
-project = 'gedcom-x'
-copyright = '2025, David J. Cartwright'
-author = 'David J. Cartwright'
-release = '0.6.2'
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+def _strip_file_header(app, what, name, obj, options, lines):
+    """Strip ====== file-header banners from module docstrings."""
+    if what != "module":
+        return
+    clean = []
+    in_banner = False
+    for line in lines:
+        if re.match(r"^={60,}\s*$", line):
+            in_banner = not in_banner
+            continue
+        if in_banner:
+            continue
+        clean.append(line)
+    lines[:] = clean
+
+
+def setup(app):
+    app.connect("autodoc-process-docstring", _strip_file_header)
+
+project   = "gedcomtools"
+copyright = "2025, David J. Cartwright"
+author    = "David J. Cartwright"
+release   = "0.6.0"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",  # For Google/NumPy style docstrings
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+    "sphinx_autodoc_typehints",
 ]
-extensions += ["sphinx_togglebutton"]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+autosummary_generate = False
 
-
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
-html_theme = "sphinx_rtd_theme"
-#html_static_path = ['_static']
-
-# 1) Hide module prefixes in object names/signatures (headings, autosummaries, etc.)
-add_module_names = False
-
-# 2) Shorten how type hints are rendered (pick the one that matches your setup):
-
-# If you're on Sphinx ≥ 7.1 (built-in handling):
-autodoc_typehints = "description"      # or "both"/"signature" as you prefer
-autodoc_typehints_format = "short"     # show short names instead of fully qualified
-
-# If you use the sphinx-autodoc-typehints extension:
-#extensions += ["sphinx_autodoc_typehints"]
-typehints_fully_qualified = False      # shorten names like 'pathlib.Path' → 'Path'
-# (optional)
-simplify_optional_unions = True
-
-# Don’t list inherited members on subclasses (recommended default)
 autodoc_default_options = {
-    "members": True,
-    "undoc-members": True,
+    "members":          True,
+    "undoc-members":    False,
+    "private-members":  False,
     "show-inheritance": True,
-    "inherited-members": False,   # <- key: avoid duplicate methods on subclasses
+    "member-order":     "bysource",
 }
 
+napoleon_google_docstring   = True
+napoleon_numpy_docstring    = False
+napoleon_include_init_with_doc = True
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+}
+
+html_theme = "furo"
+html_static_path = ["_static"]
+html_title = "gedcomtools"
+
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+suppress_warnings = ["ref.duplicate"]

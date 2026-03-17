@@ -122,6 +122,7 @@ class URI():
 
     @property
     def value(self) -> str | None:
+        """Return the full URI string assembled from its components, or None if empty."""
         parts = [
         self.scheme or "",
         self.authority or "",
@@ -135,6 +136,7 @@ class URI():
         return str(urlunparse(parts))
 
     def split(self) -> SplitResult:
+        """Return the URI components as a urllib SplitResult named tuple."""
         return SplitResult(
             self.scheme or "",
             self.authority or "",
@@ -150,7 +152,8 @@ class URI():
         return (f"scheme = {self.scheme}, authority={self.authority}, path={self.path}, query={self.query}, fragment={self.fragment}")
     
     @classmethod
-    def from_url(cls,url):
+    def from_url(cls, url):
+        """Construct a URI from a URL string or target object."""
         return cls(target=url)
 
 #SCHEMA.set_uri_class(URI)

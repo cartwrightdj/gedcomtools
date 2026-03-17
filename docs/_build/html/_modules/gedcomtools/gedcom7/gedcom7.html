@@ -1,0 +1,1153 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>gedcomtools.gedcom7.gedcom7 - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for gedcomtools.gedcom7.gedcom7</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">======================================================================</span>
+<span class="sd"> Project: gedcomtools</span>
+<span class="sd"> File:    gedcom7/gedcom7.py</span>
+<span class="sd"> Author:  David J. Cartwright</span>
+<span class="sd"> Purpose: GEDCOM 7 file parser, tree builder, and validation entry point.</span>
+
+<span class="sd"> Created: 2026-03-01</span>
+<span class="sd"> Updated:</span>
+<span class="sd">   - 2026-03-15: added parse_string() and parse_lines() helpers;</span>
+<span class="sd">                 line-length warning on load; write() convenience method</span>
+<span class="sd">   - 2026-03-16: version gate in validate(); GedcomParseError in loadfile();</span>
+<span class="sd">                 reject negative GEDCOM levels in parse_gedcom_line();</span>
+<span class="sd">                 strip payload before pointer detection; _rebuild_tag_index();</span>
+<span class="sd">                 individuals(), families(), sources() etc. convenience methods;</span>
+<span class="sd">                 imported models layer; get_parents/get_children_of/get_spouses</span>
+<span class="sd">                 relationship traversal helpers</span>
+<span class="sd">   - 2026-03-16: import updated GedcomStructure.py → structure.py</span>
+<span class="sd">======================================================================</span>
+
+<span class="sd">This module parses GEDCOM 7 files into an in-memory tree and exposes</span>
+<span class="sd">validation and serialization entry points.</span>
+
+<span class="sd">Validation currently focuses on:</span>
+
+<span class="sd">- line parsing</span>
+<span class="sd">- hierarchy integrity</span>
+<span class="sd">- top-level file structure</span>
+<span class="sd">- legal child tags</span>
+<span class="sd">- child cardinality</span>
+<span class="sd">- pointer validation</span>
+<span class="sd">- selected enumeration validation</span>
+<span class="sd">- payload format validation</span>
+<span class="sd">- orphaned record detection</span>
+
+<span class="sd">The docstrings are written in Google style so they render well with</span>
+<span class="sd">Sphinx Napoleon.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">specification</span> <span class="k">as</span> <span class="n">g7specs</span>
+<span class="kn">from</span> <span class="nn">.validator</span> <span class="kn">import</span> <span class="n">GedcomValidator</span>
+<span class="kn">from</span> <span class="nn">.writer</span> <span class="kn">import</span> <span class="n">Gedcom7Writer</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">GedcomParseError</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IndividualDetail</span><span class="p">,</span> <span class="n">FamilyDetail</span><span class="p">,</span> <span class="n">SourceDetail</span><span class="p">,</span> <span class="n">RepositoryDetail</span><span class="p">,</span>
+    <span class="n">MediaDetail</span><span class="p">,</span> <span class="n">SharedNoteDetail</span><span class="p">,</span> <span class="n">SubmitterDetail</span><span class="p">,</span>
+    <span class="n">individual_detail</span><span class="p">,</span> <span class="n">family_detail</span><span class="p">,</span> <span class="n">source_detail</span><span class="p">,</span> <span class="n">repository_detail</span><span class="p">,</span>
+    <span class="n">media_detail</span><span class="p">,</span> <span class="n">shared_note_detail</span><span class="p">,</span> <span class="n">submitter_detail</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="GedcomValidationError">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">GedcomValidationError</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a validation problem.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        code: Stable machine-readable code.</span>
+<span class="sd">        message: Human-readable description.</span>
+<span class="sd">        line_num: Source line number if available.</span>
+<span class="sd">        tag: GEDCOM tag associated with the problem.</span>
+<span class="sd">        severity: ``&quot;error&quot;`` or ``&quot;warning&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">line_num</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Gedcom7">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7">[docs]</a>
+<span class="k">class</span> <span class="nc">Gedcom7</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse and validate GEDCOM 7 files.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Gedcom7.__init__">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the parser.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath: Optional GEDCOM file path to load immediately.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span> <span class="k">if</span> <span class="n">filepath</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomValidationError</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loadfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_norm_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize a GEDCOM tag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tag: GEDCOM tag.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Uppercase GEDCOM tag.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_append_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append a top-level record.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            record: Top-level record to append.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_rebuild_tag_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild the tag index from the current records list.</span>
+
+<span class="sd">        Call this after any direct mutation of ``self.records`` (e.g. pop or</span>
+<span class="sd">        insert) to keep ``g[&quot;TAG&quot;]`` lookups consistent.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">record</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of top-level records.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over top-level records.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether a tag or record exists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Tag name or structure.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return records by position or tag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Index, slice, tag, or ``(tag, subindex)``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Matching record or records.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the key type is unsupported.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">indexes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="p">[])</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">tag</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">items</span><span class="p">[</span><span class="n">subkey</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported sub-key type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported key type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Gedcom7.parse_gedcom_line">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_gedcom_line">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_gedcom_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one GEDCOM line into normalized fields.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            line: Raw GEDCOM line.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Parsed line dictionary or ``None`` for blank lines.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the line is malformed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\ufeff</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Malformed GEDCOM line: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid GEDCOM level: </span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+
+        <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GEDCOM level must be non-negative, got </span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">xref_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing tag after xref id: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">xref_id</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">payload_is_pointer</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">bool</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">payload</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="s2">&quot; &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">payload</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="n">level</span><span class="p">,</span>
+            <span class="s2">&quot;xref_id&quot;</span><span class="p">:</span> <span class="n">xref_id</span><span class="p">,</span>
+            <span class="s2">&quot;tag&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span>
+            <span class="s2">&quot;payload&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="p">,</span>
+            <span class="s2">&quot;payload_is_pointer&quot;</span><span class="p">:</span> <span class="n">payload_is_pointer</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_handle_schema_registration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register extension tags defined under ``HEAD.SCHMA.TAG``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node: Newly created node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;TAG&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;SCHMA&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">ext_tag</span><span class="p">,</span> <span class="n">uri</span> <span class="o">=</span> <span class="n">parts</span>
+        <span class="n">g7specs</span><span class="o">.</span><span class="n">register_extension_tag</span><span class="p">(</span><span class="n">ext_tag</span><span class="p">,</span> <span class="n">uri</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Gedcom7.loadfile">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.loadfile">[docs]</a>
+    <span class="k">def</span> <span class="nf">loadfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and parse a GEDCOM file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath: Path to the GEDCOM file.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            GedcomParseError: If the file cannot be opened or read.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">handle</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot open file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">with</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parse_lines</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.parse_string">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse GEDCOM 7 content from a string.</span>
+
+<span class="sd">        This resets any previously loaded data.  Useful for testing or</span>
+<span class="sd">        when GEDCOM content is available in memory rather than on disk.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text: Complete GEDCOM 7 file content as a string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_lines</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(</span><span class="n">keepends</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.parse_lines">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_lines">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse GEDCOM 7 content from an iterable of raw lines.</span>
+
+<span class="sd">        This resets any previously loaded data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lines: Iterable of raw GEDCOM lines (with or without newlines).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="n">context</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">line_num</span><span class="p">,</span> <span class="n">raw_line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># C0 control character check</span>
+            <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">raw_line</span><span class="p">:</span>
+                <span class="n">cp</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cp</span> <span class="o">&lt;=</span> <span class="mh">0x1F</span> <span class="ow">and</span> <span class="n">ch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;</span><span class="se">\n\r</span><span class="s2">&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">cp</span> <span class="o">==</span> <span class="mh">0x00</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">GedcomValidationError</span><span class="p">(</span>
+                                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;nul_character&quot;</span><span class="p">,</span>
+                                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;NUL byte (U+0000) is forbidden in GEDCOM 7.&quot;</span><span class="p">,</span>
+                                <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+                                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">GedcomValidationError</span><span class="p">(</span>
+                                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;control_character&quot;</span><span class="p">,</span>
+                                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Forbidden C0 control character U+</span><span class="si">{</span><span class="n">cp</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2"> on line </span><span class="si">{</span><span class="n">line_num</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                                <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+                                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">break</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_gedcom_line</span><span class="p">(</span><span class="n">raw_line</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">GedcomValidationError</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;parse_error&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
+                        <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">level</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;level&quot;</span><span class="p">]</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;tag&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">GedcomValidationError</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;missing_parent_level&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Level </span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2"> line has no active parent at level </span><span class="si">{</span><span class="n">level</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+                        <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">previous_parent</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="n">g7specs</span><span class="o">.</span><span class="n">CONC</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">GedcomValidationError</span><span class="p">(</span>
+                            <span class="n">code</span><span class="o">=</span><span class="s2">&quot;conc_deprecated&quot;</span><span class="p">,</span>
+                            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;CONC was removed in GEDCOM 7.0; use longer lines or CONT instead.&quot;</span><span class="p">,</span>
+                            <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+                            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;CONC&quot;</span><span class="p">,</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">previous_parent</span><span class="o">.</span><span class="n">value</span> <span class="o">+=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;payload&quot;</span><span class="p">]</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="n">g7specs</span><span class="o">.</span><span class="n">CONT</span><span class="p">:</span>
+                    <span class="n">previous_parent</span><span class="o">.</span><span class="n">value</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;payload&quot;</span><span class="p">]</span>
+                    <span class="k">continue</span>
+
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">GedcomStructure</span><span class="p">(</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">xref_id</span><span class="o">=</span><span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;xref_id&quot;</span><span class="p">],</span>
+                <span class="n">payload</span><span class="o">=</span><span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;payload&quot;</span><span class="p">],</span>
+                <span class="n">payload_is_pointer</span><span class="o">=</span><span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;payload_is_pointer&quot;</span><span class="p">],</span>
+                <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+                <span class="n">line_num</span><span class="o">=</span><span class="n">line_num</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_append_record</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+            <span class="n">context</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+            <span class="n">stale_levels</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">context</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="n">level</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">stale</span> <span class="ow">in</span> <span class="n">stale_levels</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">context</span><span class="p">[</span><span class="n">stale</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_schema_registration</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.validate">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.validate">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomValidationError</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the loaded GEDCOM tree.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            All parse errors plus structural errors and warnings from the</span>
+<span class="sd">            validator. Check ``issue.severity`` (``&quot;error&quot;`` or</span>
+<span class="sd">            ``&quot;warning&quot;``) to distinguish them.</span>
+
+<span class="sd">        If the file is not a GEDCOM 7 file a single error is returned</span>
+<span class="sd">        instead of running the full validator (which would produce</span>
+<span class="sd">        thousands of false positives on GEDCOM 5.x files).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">_re</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect_gedcom_version</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^7\.&quot;</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;GEDCOM </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">version</span> <span class="k">else</span> <span class="s2">&quot;unknown version&quot;</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span>
+                <span class="n">GedcomValidationError</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;not_gedcom7&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;This file is </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">; the GEDCOM 7 validator only &quot;</span>
+                        <span class="s2">&quot;validates GEDCOM 7.x files.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+
+        <span class="n">validator</span> <span class="o">=</span> <span class="n">GedcomValidator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
+        <span class="n">issues</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>  <span class="c1"># parse-time errors (always severity=&quot;error&quot;)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">GedcomValidationError</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="n">issue</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="n">issue</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+                <span class="n">line_num</span><span class="o">=</span><span class="n">issue</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">issue</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">issue</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.detect_gedcom_version">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.detect_gedcom_version">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_gedcom_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GEDCOM version declared in ``HEAD.GEDC.VERS``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Version string if present, otherwise ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">head_records</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;HEAD&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">head_records</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">head</span> <span class="o">=</span> <span class="n">head_records</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">gedc</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;GEDC&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gedc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">vers</span> <span class="o">=</span> <span class="n">gedc</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;VERS&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="n">vers</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.write">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.write">[docs]</a>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">line_ending</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">bom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the loaded records to a GEDCOM 7 file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath: Destination path.</span>
+<span class="sd">            line_ending: Line terminator (default LF per GEDCOM 7 spec).</span>
+<span class="sd">            bom: Whether to write a UTF-8 BOM (discouraged by the spec).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">Gedcom7Writer</span><span class="p">(</span><span class="n">line_ending</span><span class="o">=</span><span class="n">line_ending</span><span class="p">,</span> <span class="n">bom</span><span class="o">=</span><span class="n">bom</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Internal helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span> <span class="nf">_records_by_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_record_by_xref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">xref</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span>
+             <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">xref_id</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">key</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Raw record accessors</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="Gedcom7.individuals">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individuals">[docs]</a>
+    <span class="k">def</span> <span class="nf">individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every INDI record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_individual">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_individual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single INDI by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.families">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.families">[docs]</a>
+    <span class="k">def</span> <span class="nf">families</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every FAM record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_family">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_family</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single FAM by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.sources">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.sources">[docs]</a>
+    <span class="k">def</span> <span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SOUR record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_source">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SOUR by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.repositories">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repositories">[docs]</a>
+    <span class="k">def</span> <span class="nf">repositories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every REPO record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_repository">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single REPO by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.media_objects">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_objects">[docs]</a>
+    <span class="k">def</span> <span class="nf">media_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every OBJE record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_media">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single OBJE by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.shared_notes">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_notes">[docs]</a>
+    <span class="k">def</span> <span class="nf">shared_notes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SNOTE record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_shared_note">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_shared_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SNOTE by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.submitters">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitters">[docs]</a>
+    <span class="k">def</span> <span class="nf">submitters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SUBM record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_submitter">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_submitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SUBM by xref.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Detail model accessors  (explicit snapshot; not editable)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="Gedcom7.individual_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individual_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">individual_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`IndividualDetail` for every INDI record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_individual_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_individual_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`IndividualDetail` for a single INDI by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">individual_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.family_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.family_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">family_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`FamilyDetail` for every FAM record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">family_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_family_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_family_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`FamilyDetail` for a single FAM by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">family_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.source_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.source_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">source_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SourceDetail` for every SOUR record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">source_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_source_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_source_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SourceDetail` for a single SOUR by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">source_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.repository_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repository_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">repository_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`RepositoryDetail` for every REPO record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">repository_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_repository_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_repository_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`RepositoryDetail` for a single REPO by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">repository_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.media_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">media_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`MediaDetail` for every OBJE record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">media_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_media_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_media_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`MediaDetail` for a single OBJE by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">media_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.shared_note_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_note_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">shared_note_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SharedNoteDetail` for every SNOTE record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">shared_note_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_shared_note_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_shared_note_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SharedNoteDetail` for a single SNOTE by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">shared_note_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.submitter_details">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitter_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">submitter_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SubmitterDetail` for every SUBM record.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">submitter_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_submitter_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_submitter_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SubmitterDetail` for a single SUBM by xref.&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">submitter_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Relationship traversal — raw records</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="Gedcom7.get_parents">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the parents of an individual as raw records.</span>
+
+<span class="sd">        Walks FAMC → FAM → HUSB/WIFE.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            indi_xref: Xref id of the individual (e.g. ``&quot;@I1@&quot;``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Raw :class:`GedcomStructure` for each parent found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">indi_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indi_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">famc</span> <span class="ow">in</span> <span class="n">indi_node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FAMC&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">famc</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">famc</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fam_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">famc</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fam_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;HUSB&quot;</span><span class="p">,</span> <span class="s2">&quot;WIFE&quot;</span><span class="p">):</span>
+                <span class="n">ptr_node</span> <span class="o">=</span> <span class="n">fam_node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ptr_node</span> <span class="ow">and</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                    <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_children_of">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_of">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_children_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the children of an individual as raw records.</span>
+
+<span class="sd">        Walks FAMS → FAM → CHIL.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            indi_xref: Xref id of the individual.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Raw :class:`GedcomStructure` for each child found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">indi_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indi_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fams</span> <span class="ow">in</span> <span class="n">indi_node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FAMS&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fam_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fam_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">chil</span> <span class="ow">in</span> <span class="n">fam_node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;CHIL&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">chil</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">chil</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                    <span class="n">child_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">chil</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">child_node</span><span class="p">:</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_spouses">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_spouses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the spouses of an individual as raw records.</span>
+
+<span class="sd">        For each FAMS family, returns the other HUSB or WIFE record.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            indi_xref: Xref id of the individual.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Raw :class:`GedcomStructure` for each spouse found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">indi_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indi_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">norm_xref</span> <span class="o">=</span> <span class="n">indi_xref</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fams</span> <span class="ow">in</span> <span class="n">indi_node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FAMS&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fam_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">fams</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fam_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;HUSB&quot;</span><span class="p">,</span> <span class="s2">&quot;WIFE&quot;</span><span class="p">):</span>
+                <span class="n">ptr_node</span> <span class="o">=</span> <span class="n">fam_node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ptr_node</span> <span class="ow">and</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload</span>
+                        <span class="ow">and</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="n">norm_xref</span><span class="p">):</span>
+                    <span class="n">spouse_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">ptr_node</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">spouse_node</span><span class="p">:</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spouse_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Relationship traversal — Detail models (explicit)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="Gedcom7.get_parents_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_parents_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return parents as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_children_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_children_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return children as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children_of</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.get_spouses_detail">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses_detail">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_spouses_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return spouses as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spouses</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.to_dict">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the full GEDCOM file into a serializable dictionary.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Serializable representation of the parsed GEDCOM file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;filepath&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;records&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">],</span>
+            <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                    <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+                    <span class="s2">&quot;line_num&quot;</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                    <span class="s2">&quot;tag&quot;</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span>
+            <span class="p">],</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

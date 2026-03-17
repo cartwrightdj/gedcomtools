@@ -116,6 +116,11 @@ class Serialization:
  
     @staticmethod
     def serialize(obj):
+        """Serialize a GedcomX object (or primitive) to a JSON-compatible dict/value.
+
+        Returns:
+            A JSON-serializable representation, or None if the input is None or empty.
+        """
         if obj is not None:
             with hub.use(serial_log):
                 if hasattr(obj,'_serializer'):
@@ -351,7 +356,18 @@ class Serialization:
         resolver: Callable[[Any], Any] | None = None,
         queue_setters: bool = True,
     ) -> Any:
-        
+        """Deserialize a JSON dict into an instance of ``class_type``.
+
+        Args:
+            data: A JSON-compatible dict whose keys correspond to ``class_type`` fields.
+            class_type: The target class to instantiate.
+            resolver: Optional callable to immediately resolve Resource/URI references.
+            queue_setters: If True, unresolved references are stored as lazy setters
+                on the instance for deferred resolution.
+
+        Returns:
+            An instance of ``class_type`` populated from ``data``.
+        """
         with hub.use(deserial_log):
             t0 = perf_counter()
             class_fields = SCHEMA.get_class_fields(class_type.__name__)

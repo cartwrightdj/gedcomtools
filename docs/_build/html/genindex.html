@@ -1,689 +1,2748 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#"><link rel="search" title="Search" href="search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 --><title>Index - gedcomtools</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
 
 
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; gedcom-x 0.6.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
-      <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
-
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
   
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1c28bd9a"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script>let toggleHintShow = 'Click to show';</script>
-      <script>let toggleHintHide = 'Click to hide';</script>
-      <script>let toggleOpenOnPrint = 'true';</script>
-      <script src="_static/togglebutton.js?v=4a39c7ea"></script>
-      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="#" />
-    <link rel="search" title="Search" href="search.html" /> 
-</head>
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
 
-          
-          
-          <a href="index.html" class="icon icon-home">
-            gedcom-x
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="TopLevel.html">GedcomX</a></li>
-<li class="toctree-l1"><a class="reference internal" href="TopLevel.html#top-level-types">1. Top Level Types</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ComponentLevel.html">2. Component-Level Data Types</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Extensions.html">GedcomX Extensions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="HelperClasses.html">Extensibility &amp; Extension System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/cli.html">CLI Reference</a></li>
 </ul>
 
-        </div>
+</div>
+</div>
+
       </div>
-    </nav>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#J"><strong>J</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#Q"><strong>Q</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a> | <a href="#X"><strong>X</strong></a> | <a href="#Y"><strong>Y</strong></a></div>
+</section>
+<section id="_" class="genindex-section">
+  <h2>_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.__init__">__init__() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">gedcom-x</a>
-      </nav>
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.__init__">(gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.__init__">(gedcomtools.gedcomx.zip.GedcomZip method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Index</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType.Abstract">Abstract (gedcomtools.gedcomx.document.DocumentType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.accept_extras">accept_extras() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add">add() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_address">add_address() (gedcomtools.gedcomx.agent.Agent method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_agent">add_agent() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.add_child">add_child() (gedcomtools.gedcom7.structure.GedcomStructure method)</a>
 
-<h1 id="index">Index</h1>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_child">(gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.add_child_element">add_child_element() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_description">add_description() (gedcomtools.gedcomx.source_description.SourceDescription method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_document">add_document() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_event">add_event() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.add_fact">add_fact() (gedcomtools.gedcomx.person.Person method)</a>
 
-<div class="genindex-jumpbox">
- <a href="#A"><strong>A</strong></a>
- | <a href="#C"><strong>C</strong></a>
- | <a href="#D"><strong>D</strong></a>
- | <a href="#E"><strong>E</strong></a>
- | <a href="#F"><strong>F</strong></a>
- | <a href="#G"><strong>G</strong></a>
- | <a href="#H"><strong>H</strong></a>
- | <a href="#I"><strong>I</strong></a>
- | <a href="#J"><strong>J</strong></a>
- | <a href="#K"><strong>K</strong></a>
- | <a href="#L"><strong>L</strong></a>
- | <a href="#M"><strong>M</strong></a>
- | <a href="#N"><strong>N</strong></a>
- | <a href="#O"><strong>O</strong></a>
- | <a href="#P"><strong>P</strong></a>
- | <a href="#S"><strong>S</strong></a>
- | <a href="#T"><strong>T</strong></a>
- | <a href="#U"><strong>U</strong></a>
- | <a href="#V"><strong>V</strong></a>
- | <a href="#X"><strong>X</strong></a>
- 
-</div>
-<h2 id="A">A</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.document.DocumentType.Abstract">Abstract (DocumentType attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.Relationship.add_fact">(gedcomtools.gedcomx.relationship.Relationship method)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.agent.Agent.add_address">add_address() (Agent method)</a>
-</li>
-      <li><a href="TopLevel.html#gedcomx.agent.Agent.add_identifier">add_identifier() (Agent method)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_identifier">add_identifier() (gedcomtools.gedcomx.agent.Agent method)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.add_identifier">(IdentifierList method)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.add_identifier">(gedcomtools.gedcomx.identifier.IdentifierList method)</a>
 </li>
-      </ul></li>
-      <li><a href="TopLevel.html#gedcomx.agent.Agent.add_name">add_name() (Agent method)</a>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_identifier">(gedcomtools.gedcomx.source_description.SourceDescription method)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.agent.Agent.add_note">add_note() (Agent method)</a>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.subject.Subject.add_identifier">(gedcomtools.gedcomx.subject.Subject method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_name">add_name() (gedcomtools.gedcomx.agent.Agent method)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#gedcomx.conclusion.Conclusion.add_note">(Conclusion method)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.add_name">(gedcomtools.gedcomx.person.Person method)</a>
 </li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.Conclusion.add_source_reference">add_source_reference() (Conclusion method)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.address.Address">Address (class in gedcomx.address)</a>
-</li>
-      <li><a href="TopLevel.html#gedcomx.agent.Agent">Agent (class in gedcomx.agent)</a>
-</li>
-      <li><a href="TopLevel.html#gedcomx.document.DocumentType.Analysis">Analysis (DocumentType attribute)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.append">append() (IdentifierList method)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.attribution.Attribution">Attribution (class in gedcomx.attribution)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.Authority">Authority (IdentifierType attribute)</a>
-</li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_note">add_note() (gedcomtools.gedcomx.agent.Agent method)</a>
 
-<h2 id="C">C</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.ChildAndParentsRelationship">ChildAndParentsRelationship (IdentifierType attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.add_note">(gedcomtools.gedcomx.conclusion.Conclusion method)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.Conclusion">Conclusion (class in gedcomx.conclusion)</a>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_note">(gedcomtools.gedcomx.family.FamilyParser method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.ConfidenceLevel">ConfidenceLevel (class in gedcomx.conclusion)</a>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_note">(gedcomtools.gedcomx.source_description.SourceDescription method)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.contains">contains() (IdentifierList method)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.add_object_as_resource">add_object_as_resource() (gedcomtools.gedcomx.zip.GedcomZip method)</a>
 </li>
-  </ul></td>
-</tr></table>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_person">add_person() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_place_description">add_place_description() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.add_qualifier">add_qualifier() (gedcomtools.gedcomx.source_reference.SourceReference method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_relationship">add_relationship() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_source_description">add_source_description() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.add_source_reference">add_source_reference() (gedcomtools.gedcomx.conclusion.Conclusion method)</a>
 
-<h2 id="D">D</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.Name.date">date (in module gedcomx.Name)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_source_reference">(gedcomtools.gedcomx.family.FamilyParser method)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.Deprecated">Deprecated (IdentifierType attribute)</a>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_source_reference">(gedcomtools.gedcomx.source_description.SourceDescription method)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.ConfidenceLevel.description">description (ConfidenceLevel property)</a>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_title">add_title() (gedcomtools.gedcomx.source_description.SourceDescription method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.address.Address">Address (class in gedcomtools.gedcomx.address)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Adoption">Adoption (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#gedcomx.document.DocumentType.description">(DocumentType property)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Adoption">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-        <li><a href="ComponentLevel.html#gedcomx.PlaceReference.description">(in module gedcomx.PlaceReference)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.AdoptiveName">AdoptiveName (gedcomtools.gedcomx.name.NameType attribute)</a>
 </li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.document.Document">Document (class in gedcomx.document)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.AdoptiveParent">AdoptiveParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.document.DocumentType">DocumentType (class in gedcomx.document)</a>
-</li>
-  </ul></td>
-</tr></table>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.AdultChristening">AdultChristening (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="E">E</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.External">External (IdentifierType attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.AdultChristening">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.Age">Age (gedcomtools.gedcomx.fact.FactQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent">Agent (class in gedcomtools.gedcomx.agent)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.allowed_child_map">allowed_child_map() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.allowed_child_tags">allowed_child_tags() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.AlsoKnownAs">AlsoKnownAs (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Amnesty">Amnesty (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType.Analysis">Analysis (gedcomtools.gedcomx.document.DocumentType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.ancestor">ancestor() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.AncestralHall">AncestralHall (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.AncestralPoem">AncestralPoem (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Annulment">Annulment (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="F">F</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.FamilySearchId">FamilySearchId (IdentifierType attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Annulment">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.append">append() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
 
-<h2 id="G">G</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    gedcomx.address
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.append">(gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.note.Note.append">(gedcomtools.gedcomx.note.Note method)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.append">(gedcomtools.gedcomx.source_reference.SourceReference method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.apply_resource_resolutions">apply_resource_resolutions() (gedcomtools.gedcomx.serialization.Serialization class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.apply_schema_property">apply_schema_property() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Apprenticeship">Apprenticeship (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Arrest">Arrest (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.attempts">attempts (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.attribution.Attribution">Attribution (class in gedcomtools.gedcomx.attribution)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.Authority">Authority (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Award">Award (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.address">module</a>
-</li>
-      </ul></li>
-      <li>
-    gedcomx.agent
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Baptism">Baptism (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.agent">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Baptism">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.attribution
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.BarMitzvah">BarMitzvah (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.attribution">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.BarMitzvah">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.conclusion
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.BatMitzvah">BatMitzvah (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.conclusion">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.BatMitzvah">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Coverage
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.bind_schema_property">bind_schema_property() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.BiologicalParent">BiologicalParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Birth">Birth (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Coverage">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Birth">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Date
+        </ul></li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.birth_range_match">birth_range_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.birth_year_match">birth_year_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.BirthName">BirthName (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.BirthNotice">BirthNotice (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Blessing">Blessing (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Date">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Blessing">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.document
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Branch">Branch (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Burial">Burial (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.document">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Burial">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Event
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_id">by_id() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name">by_name() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.by_ref_type">by_ref_type (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.by_target_type">by_target_type (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri">by_uri() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.Event">module</a>
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.cache_hits">cache_hits (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.EventRole
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.cache_misses">cache_misses (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Caste">Caste (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.Cause">Cause (gedcomtools.gedcomx.fact.FactQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Census">Census (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.EventRole">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Census">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.EvidenceReference
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Characteristic">Characteristic (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference.CharacterRegion">CharacterRegion (gedcomtools.gedcomx.source_reference.KnownSourceReference attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.ChildAndParentsRelationship">ChildAndParentsRelationship (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.ChildOrder">ChildOrder (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.children">children (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Christening">Christening (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.EvidenceReference">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Christening">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Fact
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Circumcision">Circumcision (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Fact">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Circumcision">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Gender
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.CivilUnion">CivilUnion (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Clan">Clan (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.clean_str">clean_str() (gedcomtools.gedcomx.conversion.GedcomConverter static method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.clear">clear() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.close">close() (gedcomtools.gedcomx.zip.GedcomZip method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError.code">code (gedcomtools.gedcom7.gedcom7.GedcomValidationError attribute)</a>, <a href="api/gedcom7.html#id0">[1]</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.Collection">Collection (gedcomtools.gedcomx.source_description.ResourceType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.CommonLawMarriage">CommonLawMarriage (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion">Conclusion (class in gedcomtools.gedcomx.conclusion)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel">ConfidenceLevel (class in gedcomtools.gedcomx.conclusion)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Confirmation">Confirmation (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Gender">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Confirmation">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.GroupRole
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.contains">contains() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.contents">contents (gedcomtools.gedcomx.gedcomx.GedcomX property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.exceptions.ConversionErrorDump">ConversionErrorDump</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.convert_exception_dump">convert_exception_dump() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.RelationshipType.Couple">Couple (gedcomtools.gedcomx.relationship.RelationshipType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Court">Court (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.coverage.Coverage">Coverage (class in gedcomtools.gedcomx.coverage)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Cremation">Cremation (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.GroupRole">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Cremation">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.identifier
+        </ul></li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.criteria_match">criteria_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.crlf">crlf (gedcomtools.gedcom5.elements.Element property)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.identifier">module</a>
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.Date">Date (class in gedcomtools.gedcomx.date)</a>
 </li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    gedcomx.Name
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.date">date (gedcomtools.gedcomx.name.Name attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.date_to_timestamp">date_to_timestamp() (in module gedcomtools.gedcomx.date)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.DateFormat">DateFormat (class in gedcomtools.gedcomx.date)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.DateNormalization">DateNormalization (class in gedcomtools.gedcomx.date)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Death">Death (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Name">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Death">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Note
+        </ul></li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.death_range_match">death_range_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.death_year_match">death_year_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.extensible.Extensible.declared_extras">declared_extras() (gedcomtools.gedcomx.extensible.Extensible class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.extensible.Extensible.define_ext">define_ext() (gedcomtools.gedcomx.extensible.Extensible class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.Deprecated">Deprecated (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.helpers.deprecated">deprecated() (in module gedcomtools.gedcom5.helpers)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.depth">depth (gedcomtools.gedcom7.structure.GedcomStructure property)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.describe">describe() (gedcomtools.gedcom5.elements.Element method)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Note">module</a>
+        <ul>
+          <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.describe">(gedcomtools.gedcom5.elements.IndividualRecord method)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.OnlineAccount
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.description">description (gedcomtools.gedcomx.conclusion.ConfidenceLevel property)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.OnlineAccount">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType.description">(gedcomtools.gedcomx.document.DocumentType property)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Person
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType.description">(gedcomtools.gedcomx.event.EventRoleType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.description">(gedcomtools.gedcomx.event.EventType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.description">(gedcomtools.gedcomx.fact.FactQualifier property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.description">(gedcomtools.gedcomx.fact.FactType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType.description">(gedcomtools.gedcomx.gender.GenderType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.description">(gedcomtools.gedcomx.name.NamePartQualifier property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType.description">(gedcomtools.gedcomx.name.NamePartType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.description">(gedcomtools.gedcomx.name.NameType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_reference.PlaceReference.description">(gedcomtools.gedcomx.place_reference.PlaceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.RelationshipType.description">(gedcomtools.gedcomx.relationship.RelationshipType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.description">(gedcomtools.gedcomx.source_description.ResourceType property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference.description">(gedcomtools.gedcomx.source_reference.KnownSourceReference property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.deserialize">deserialize() (gedcomtools.gedcomx.serialization.Serialization class method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.detect_gedcom_version">detect_gedcom_version() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.DigitalArtifact">DigitalArtifact (gedcomtools.gedcomx.source_description.ResourceType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.display">display() (gedcomtools.gedcomx.person.Person method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Divorce">Divorce (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.Person">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Divorce">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.PlaceDescription
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.DivorceFiling">DivorceFiling (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.PlaceDescription">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.DivorceFiling">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.PlaceReference
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.Document">Document (class in gedcomtools.gedcomx.document)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentParsingContainer">DocumentParsingContainer (class in gedcomtools.gedcomx.document)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType">DocumentType (class in gedcomtools.gedcomx.document)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.DomesticPartnership">DomesticPartnership (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.PlaceReference">module</a>
-</li>
-      </ul></li>
-      <li>
-    gedcomx.Qualifier
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Education">Education (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Qualifier">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Education">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Relationship
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.EducationEnrollment">EducationEnrollment (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element">Element (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Emigration">Emigration (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.Relationship">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Emigration">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.SourceCitation
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Engagement">Engagement (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.SourceCitation">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Engagement">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.SourceDescription
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Enslavement">Enslavement (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.ensure_list">ensure_list() (in module gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.EnteringHeir">EnteringHeir (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.errors">errors (gedcomtools.gedcom7.gedcom7.Gedcom7 attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Ethnicity">Ethnicity (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.Event">Event (class in gedcomtools.gedcomx.event)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.event_from_even_tag">event_from_even_tag() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRole">EventRole (class in gedcomtools.gedcomx.event)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType">EventRoleType (class in gedcomtools.gedcomx.event)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType">EventType (class in gedcomtools.gedcomx.event)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.evidence_reference.EvidenceReference">EvidenceReference (class in gedcomtools.gedcomx.evidence_reference)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Excommunication">Excommunication (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#module-gedcomx.SourceDescription">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Excommunication">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.SourceReference
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.ExitingHeir">ExitingHeir (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.ext_description">ext_description (gedcomtools.gedcomx.person.Person property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.extend">extend() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.SourceReference">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.extend">(gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.Subject
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.extensible.Extensible">Extensible (class in gedcomtools.gedcomx.extensible)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible">extensible() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible_dataclass">extensible_dataclass() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.extension">extension (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.External">External (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.extensible.Extensible.extras">extras (gedcomtools.gedcomx.extensible.Extensible attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.ExtrasAwareMeta">ExtrasAwareMeta (class in gedcomtools.gedcomx.schemas)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.Subject">module</a>
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.Fact">Fact (class in gedcomtools.gedcomx.fact)</a>
 </li>
-      </ul></li>
-      <li>
-    gedcomx.textvalue
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.fact_from_even_tag">fact_from_even_tag() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier">FactQualifier (class in gedcomtools.gedcomx.fact)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType">FactType (class in gedcomtools.gedcomx.fact)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.failures">failures (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Familiar">Familiar (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.families">families (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.families">families() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Family">Family (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.family_details">family_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser">FamilyParser (class in gedcomtools.gedcomx.family)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.FamilyRecord">FamilyRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.FamilySearchId">FamilySearchId (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType.Female">Female (gedcomtools.gedcomx.gender.GenderType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.FileElement">FileElement (class in gedcomtools.gedcom5.elements)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.filepath">filepath (gedcomtools.gedcom7.gedcom7.Gedcom7 attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.find_duplicates">find_duplicates() (gedcomtools.gedcomx.conversion.GedcomConverter static method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.first_child">first_child() (gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.FirstCommunion">FirstCommunion (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.textvalue">module</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.FirstCommunion">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.FormalName">FormalName (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.format_counts_table">format_counts_table() (gedcomtools.gedcomx.conversion.GedcomConverter static method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.FosterParent">FosterParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.from_familysearch">from_familysearch() (gedcomtools.gedcomx.person.Person class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.from_json">from_json() (gedcomtools.gedcomx.conclusion.ConfidenceLevel class method)</a>
 
-<h2 id="H">H</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.ConfidenceLevel.High">High (ConfidenceLevel attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.from_json">(gedcomtools.gedcomx.identifier.IdentifierList class method)</a>
 </li>
-  </ul></td>
-</tr></table>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.from_json">(gedcomtools.gedcomx.source_reference.SourceReference class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.uri.URI.from_url">from_url() (gedcomtools.gedcomx.uri.URI class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.from_value">from_value() (gedcomtools.gedcomx.fact.FactType class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Funeral">Funeral (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="I">I</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.address.Address.identifier">identifier (Address attribute)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Funeral">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
 
-      <ul>
-        <li><a href="ComponentLevel.html#gedcomx.attribution.Attribution.identifier">(Attribution attribute)</a>
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x">Gedcom5x (class in gedcomtools.gedcom5.parser)</a>
 </li>
-      </ul></li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.Identifier">Identifier (class in gedcomx.identifier)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX">Gedcom5x_GedcomX() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.Conclusion.identifier">identifier (Conclusion attribute)</a>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7">Gedcom7 (class in gedcomtools.gedcom7.gedcom7)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer">Gedcom7Writer (class in gedcomtools.gedcom7.writer)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_FREL">GEDCOM_PROGRAM_DEFINED_TAG_FREL (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL">GEDCOM_PROGRAM_DEFINED_TAG_MREL (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_BIRTH">GEDCOM_TAG_BIRTH (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_BURIAL">GEDCOM_TAG_BURIAL (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_CENSUS">GEDCOM_TAG_CENSUS (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_CHANGE">GEDCOM_TAG_CHANGE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_CHILD">GEDCOM_TAG_CHILD (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_CONCATENATION">GEDCOM_TAG_CONCATENATION (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_CONTINUED">GEDCOM_TAG_CONTINUED (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_DATE">GEDCOM_TAG_DATE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_DEATH">GEDCOM_TAG_DEATH (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY">GEDCOM_TAG_FAMILY (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_CHILD">GEDCOM_TAG_FAMILY_CHILD (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_SPOUSE">GEDCOM_TAG_FAMILY_SPOUSE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_FILE">GEDCOM_TAG_FILE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_GIVEN_NAME">GEDCOM_TAG_GIVEN_NAME (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_HEADER">GEDCOM_TAG_HEADER (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_HUSBAND">GEDCOM_TAG_HUSBAND (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_INDIVIDUAL">GEDCOM_TAG_INDIVIDUAL (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_MARRIAGE">GEDCOM_TAG_MARRIAGE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_NAME">GEDCOM_TAG_NAME (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_OBJECT">GEDCOM_TAG_OBJECT (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_OCCUPATION">GEDCOM_TAG_OCCUPATION (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_PEDI">GEDCOM_TAG_PEDI (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_PLACE">GEDCOM_TAG_PLACE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_PRIVATE">GEDCOM_TAG_PRIVATE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_REPOSITORY">GEDCOM_TAG_REPOSITORY (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_SEX">GEDCOM_TAG_SEX (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_SOURCE">GEDCOM_TAG_SOURCE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_SUBMITTER">GEDCOM_TAG_SUBMITTER (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_SURNAME">GEDCOM_TAG_SURNAME (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.tags.GEDCOM_TAG_WIFE">GEDCOM_TAG_WIFE (in module gedcomtools.gedcom5.tags)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomClassAttributeError">GedcomClassAttributeError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter">GedcomConverter (class in gedcomtools.gedcomx.conversion)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.exceptions.GedcomError">GedcomError</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.GedcomFormatViolationError">GedcomFormatViolationError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomHeaderField">GedcomHeaderField (class in gedcomtools.gedcomx.zip)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomManifest">GedcomManifest (class in gedcomtools.gedcomx.zip)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.exceptions.GedcomParseError">GedcomParseError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomResource">GedcomResource (class in gedcomtools.gedcomx.zip)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure">GedcomStructure (class in gedcomtools.gedcom7.structure)</a>
+</li>
+        <li>
+    gedcomtools.gedcom5.elements
 
-      <ul>
-        <li><a href="TopLevel.html#gedcomx.document.Document.identifier">(Document attribute)</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.elements">module</a>
 </li>
-        <li><a href="ComponentLevel.html#gedcomx.identifier.Identifier.identifier">(Identifier attribute)</a>
-</li>
-        <li><a href="TopLevel.html#gedcomx.SourceDescription.identifier">(in module gedcomx.SourceDescription)</a>
-</li>
-        <li><a href="ComponentLevel.html#gedcomx.textvalue.TextValue.identifier">(TextValue attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList">IdentifierList (class in gedcomx.identifier)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType">IdentifierType (class in gedcomx.identifier)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.items">items() (IdentifierList method)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.iter_pairs">iter_pairs() (IdentifierList method)</a>
-</li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom5.helpers
 
-<h2 id="J">J</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.jurisdiction">jurisdiction (in module gedcomx.PlaceDescription)</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.helpers">module</a>
 </li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom5.parser
 
-<h2 id="K">K</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.keys">keys() (IdentifierList method)</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.parser">module</a>
 </li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom5.source
 
-<h2 id="L">L</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.latitude">latitude (in module gedcomx.PlaceDescription)</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.source">module</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.longitude">longitude (in module gedcomx.PlaceDescription)</a>
-</li>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.ConfidenceLevel.Low">Low (ConfidenceLevel attribute)</a>
-</li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom5.tags
 
-<h2 id="M">M</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.make_hashable">make_hashable() (IdentifierList method)</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.tags">module</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.make_uid">make_uid() (in module gedcomx.identifier)</a>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.exceptions
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.exceptions">module</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.conclusion.ConfidenceLevel.Medium">Medium (ConfidenceLevel attribute)</a>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.g7cli
+
+        <ul>
+          <li><a href="api/cli.html#module-gedcomtools.gedcom7.g7cli">module</a>
 </li>
-      <li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.g7interop
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.g7interop">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.gedcom7
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.gedcom7">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.specification
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.specification">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.structure
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.structure">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcom7.writer
+
+        <ul>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.writer">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.address
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.address">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.agent
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.agent">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.attribution
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.attribution">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.cli
+
+        <ul>
+          <li><a href="api/cli.html#module-gedcomtools.gedcomx.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.conclusion
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.conclusion">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.conversion
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.conversion">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.coverage
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.coverage">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.date
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.date">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.document
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.document">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.event
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.event">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.evidence_reference
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.evidence_reference">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.exceptions
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.exceptions">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.extensible
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.extensible">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.fact
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.fact">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.family
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.family">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.gedcomx
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.gedcomx">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.gender
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.gender">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.group
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.group">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.header
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.header">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.identifier
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.identifier">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.mutations
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.mutations">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.name
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.name">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.note
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.note">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.online_account
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.online_account">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    gedcomtools.gedcomx.person
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.person">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.place_description
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.place_description">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.place_reference
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.place_reference">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.qualifier
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.qualifier">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.relationship
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.relationship">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.resource
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.resource">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.schemas
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.schemas">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.serialization
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.serialization">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.source_citation
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_citation">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.source_description
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_description">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.source_reference
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_reference">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.subject
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.subject">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.textvalue
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.textvalue">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.uri
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.uri">module</a>
+</li>
+        </ul></li>
+        <li>
+    gedcomtools.gedcomx.zip
+
+        <ul>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.zip">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError">GedcomValidationError (class in gedcomtools.gedcom7.gedcom7)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX">GedcomX (class in gedcomtools.gedcomx.gedcomx)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomXDateParseError">GedcomXDateParseError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomXError">GedcomXError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXEventOrFact">GedcomXEventOrFact (class in gedcomtools.gedcomx.mutations)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXObject">GedcomXObject (class in gedcomtools.gedcomx.mutations)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXRelationshipBuilder">GedcomXRelationshipBuilder (class in gedcomtools.gedcomx.mutations)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXSourceOrDocument">GedcomXSourceOrDocument (class in gedcomtools.gedcomx.mutations)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip">GedcomZip (class in gedcomtools.gedcomx.zip)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.Gender">Gender (class in gedcomtools.gedcomx.gender)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.GenderChange">GenderChange (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType">GenderType (class in gedcomtools.gedcomx.gender)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.GenerationNumber">GenerationNumber (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Geographic">Geographic (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.get">get() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_all_extras">get_all_extras() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_all_names">get_all_names() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_ancestor">get_ancestor() (gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_birth_data">get_birth_data() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_birth_year">get_birth_year() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_burial">get_burial() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_burial_data">get_burial_data() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_cardinality">get_cardinality() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_census">get_census() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_census_data">get_census_data() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_child_elements">get_child_elements() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_children">get_children() (gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_detail">get_children_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_of">get_children_of() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_class_fields">get_class_fields() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_context_enum_values">get_context_enum_values() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_death_data">get_death_data() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_death_year">get_death_year() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.get_element_dictionary">get_element_dictionary() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_enum_values">get_enum_values() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_extras">get_extras() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family">get_family() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family_detail">get_family_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_gender">get_gender() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_individual">get_individual() (gedcomtools.gedcom5.elements.Element method)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual">(gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual_detail">get_individual_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_label">get_label() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_last_change_date">get_last_change_date() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media">get_media() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media_detail">get_media_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_multi_line_value">get_multi_line_value() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_name">get_name() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_occupation">get_occupation() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_parent_element">get_parent_element() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents">get_parents() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents_detail">get_parents_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_path">get_path() (gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_payload_type">get_payload_type() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.get_person_by_id">get_person_by_id() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository">get_repository() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository_detail">get_repository_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.get_root_child_elements">get_root_child_elements() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note">get_shared_note() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note_detail">get_shared_note_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source">get_source() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source_detail">get_source_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_spec">get_spec() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses">get_spouses() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses_detail">get_spouses_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter">get_submitter() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter_detail">get_submitter_detail() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.FamilyRecord.get_tag">get_tag() (gedcomtools.gedcom5.elements.FamilyRecord method)</a>
+
+        <ul>
+          <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.FileElement.get_tag">(gedcomtools.gedcom5.elements.FileElement method)</a>
+</li>
+          <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_tag">(gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_tag">(in module gedcomtools.gedcom7.specification)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.get_tag_for_uri">get_tag_for_uri() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_toplevel">get_toplevel() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.get_uri">get_uri() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.get_uri_for_tag">get_uri_for_tag() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_value">get_value() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.get_warnings">get_warnings() (gedcomtools.gedcom7.writer.Gedcom7Writer method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType.Given">Given (gedcomtools.gedcomx.name.NamePartType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.given_match">given_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.given_name_match">given_name_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Graduation">Graduation (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.Group">Group (class in gedcomtools.gedcomx.group)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.GroupRole">GroupRole (class in gedcomtools.gedcomx.group)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.GroupRoleType">GroupRoleType (class in gedcomtools.gedcomx.group)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.GuardianParent">GuardianParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.guess">guess() (gedcomtools.gedcomx.event.EventType static method)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.guess">(gedcomtools.gedcomx.fact.FactType static method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack">GxoObjectStack (class in gedcomtools.gedcomx.conversion)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__apid">handle__apid() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__crea">handle__crea() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__link">handle__link() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__meta">handle__meta() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__milt">handle__milt() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__url">handle__url() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle__wlnk">handle__wlnk() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_addr">handle_addr() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adop">handle_adop() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr1">handle_adr1() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr2">handle_adr2() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr3">handle_adr3() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr4">handle_adr4() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr5">handle_adr5() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_adr6">handle_adr6() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_auth">handle_auth() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_bapm">handle_bapm() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_birt">handle_birt() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_buri">handle_buri() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_caln">handle_caln() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_chan">handle_chan() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_chil">handle_chil() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_chr">handle_chr() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_city">handle_city() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_conc">handle_conc() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_cont">handle_cont() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_crea">handle_crea() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_ctry">handle_ctry() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_data">handle_data() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_date">handle_date() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_deat">handle_deat() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_email">handle_email() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_even">handle_even() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_exid">handle_exid() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fam">handle_fam() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_famc">handle_famc() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fams">handle_fams() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fax">handle_fax() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_file">handle_file() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_form">handle_form() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fsid">handle_fsid() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_givn">handle_givn() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_head">handle_head() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_husb">handle_husb() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_immi">handle_immi() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_indi">handle_indi() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_lati">handle_lati() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_long">handle_long() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_map">handle_map() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_marr">handle_marr() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_name">handle_name() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_note">handle_note() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_nsfx">handle_nsfx() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_obje">handle_obje() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_occu">handle_occu() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_page">handle_page() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_pevent">handle_pevent() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_phon">handle_phon() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_plac">handle_plac() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_post">handle_post() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_prob">handle_prob() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_publ">handle_publ() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_refn">handle_refn() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_repo">handle_repo() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_resi">handle_resi() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_rin">handle_rin() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_sex">handle_sex() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_sour">handle_sour() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_stae">handle_stae() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_subm">handle_subm() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_surn">handle_surn() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_text">handle_text() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_titl">handle_titl() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_tran">handle_tran() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_type">handle_type() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_uid">handle_uid() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_wife">handle_wife() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_www">handle_www() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.has_duplicates">has_duplicates() (gedcomtools.gedcomx.conversion.GedcomConverter static method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.header.Header">Header (class in gedcomtools.gedcomx.header)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.header">header (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.HeaderRecord">HeaderRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Heimat">Heimat (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.High">High (gedcomtools.gedcomx.conclusion.ConfidenceLevel attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.id_index">id_index (gedcomtools.gedcomx.gedcomx.GedcomX property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.Identifier">Identifier (class in gedcomtools.gedcomx.identifier)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.address.Address.identifier">identifier (gedcomtools.gedcomx.address.Address attribute)</a>, <a href="api/gedcomx.html#id1">[1]</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.attribution.Attribution.identifier">(gedcomtools.gedcomx.attribution.Attribution attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.identifier">(gedcomtools.gedcomx.conclusion.Conclusion attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.coverage.Coverage.identifier">(gedcomtools.gedcomx.coverage.Coverage attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.Date.identifier">(gedcomtools.gedcomx.date.Date attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.Document.identifier">(gedcomtools.gedcomx.document.Document attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.Event.identifier">(gedcomtools.gedcomx.event.Event attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRole.identifier">(gedcomtools.gedcomx.event.EventRole attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.evidence_reference.EvidenceReference.identifier">(gedcomtools.gedcomx.evidence_reference.EvidenceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.Fact.identifier">(gedcomtools.gedcomx.fact.Fact attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.Gender.identifier">(gedcomtools.gedcomx.gender.Gender attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.Group.identifier">(gedcomtools.gedcomx.group.Group attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.GroupRole.identifier">(gedcomtools.gedcomx.group.GroupRole attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.Identifier.identifier">(gedcomtools.gedcomx.identifier.Identifier attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.identifier">(gedcomtools.gedcomx.name.Name attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameForm.identifier">(gedcomtools.gedcomx.name.NameForm attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePart.identifier">(gedcomtools.gedcomx.name.NamePart attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.note.Note.identifier">(gedcomtools.gedcomx.note.Note attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.online_account.OnlineAccount.identifier">(gedcomtools.gedcomx.online_account.OnlineAccount attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.identifier">(gedcomtools.gedcomx.person.Person attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.identifier">(gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_reference.PlaceReference.identifier">(gedcomtools.gedcomx.place_reference.PlaceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.qualifier.Qualifier.identifier">(gedcomtools.gedcomx.qualifier.Qualifier attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.Relationship.identifier">(gedcomtools.gedcomx.relationship.Relationship attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_citation.SourceCitation.identifier">(gedcomtools.gedcomx.source_citation.SourceCitation attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.identifier">(gedcomtools.gedcomx.source_description.SourceDescription attribute)</a>, <a href="api/gedcomx.html#id0">[1]</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.identifier">(gedcomtools.gedcomx.source_reference.SourceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.subject.Subject.identifier">(gedcomtools.gedcomx.subject.Subject attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.textvalue.TextValue.identifier">(gedcomtools.gedcomx.textvalue.TextValue attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList">IdentifierList (class in gedcomtools.gedcomx.identifier)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.identifiers">identifiers (gedcomtools.gedcomx.identifier.IdentifierList attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType">IdentifierType (class in gedcomtools.gedcomx.identifier)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.ignored_tags">ignored_tags (gedcomtools.gedcomx.conversion.GedcomConverter property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Immigration">Immigration (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Immigration">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.extensible.import_plugins">import_plugins() (in module gedcomtools.gedcomx.extensible)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Imprisonment">Imprisonment (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individual_details">individual_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord">IndividualRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.individuals">individuals (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individuals">individuals() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Inquest">Inquest (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType.Intersex">Intersex (gedcomtools.gedcomx.gender.GenderType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.is_allowed_child">is_allowed_child() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_child">is_child() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_deceased">is_deceased() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.is_known_tag">is_known_tag() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.is_known_uri">is_known_uri() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.ObjectRecord.is_object">is_object() (gedcomtools.gedcom5.elements.ObjectRecord method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_private">is_private() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel">is_toplevel() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel_obj">is_toplevel_obj() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.items">items() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.items">(gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.items_desc">items_desc() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.iter_pairs">iter_pairs() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="J" class="genindex-section">
+  <h2>J</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.json">json (gedcomtools.gedcomx.gedcomx.GedcomX property)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.json">(gedcomtools.gedcomx.schemas.Schema property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.jurisdiction">jurisdiction (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="K" class="genindex-section">
+  <h2>K</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.keys">keys() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference">KnownSourceReference (class in gedcomtools.gedcomx.source_reference)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.LandTransaction">LandTransaction (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.LandTransaction">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Language">Language (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.latitude">latitude (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.level">level (gedcomtools.gedcom5.elements.Element property)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.level">(gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError.line_num">line_num (gedcomtools.gedcom7.gedcom7.GedcomValidationError attribute)</a>, <a href="api/gedcom7.html#id2">[1]</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.line_num">(gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Living">Living (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.loadfile">loadfile() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.longitude">longitude (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.Low">Low (gedcomtools.gedcomx.conclusion.ConfidenceLevel attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Maiden">Maiden (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/cli.html#gedcomtools.gedcom7.g7cli.main">main() (in module gedcomtools.gedcom7.g7cli)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.make_hashable">make_hashable() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.make_uid">make_uid() (in module gedcomtools.gedcomx.identifier)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType.Male">Male (gedcomtools.gedcomx.gender.GenderType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MaritalStatus">MaritalStatus (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Marriage">Marriage (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Marriage">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MarriageBanns">MarriageBanns (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MarriageContract">MarriageContract (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MarriageLicense">MarriageLicense (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MarriageNotice">MarriageNotice (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.MarriageSettlment">MarriageSettlment (gedcomtools.gedcomx.event.EventType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.MarriedName">MarriedName (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Matronymic">Matronymic (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_details">media_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_objects">media_objects() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Medical">Medical (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.Medium">Medium (gedcomtools.gedcomx.conclusion.ConfidenceLevel attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError.message">message (gedcomtools.gedcom7.gedcom7.GedcomValidationError attribute)</a>, <a href="api/gedcom7.html#id1">[1]</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Middle">Middle (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.MilitaryAward">MilitaryAward (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MilitaryAward">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.MilitaryDischarge">MilitaryDischarge (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MilitaryDischarge">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MilitaryDraftRegistration">MilitaryDraftRegistration (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MilitaryInduction">MilitaryInduction (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MilitaryService">MilitaryService (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Mission">Mission (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Mission">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li>
     module
 
-      <ul>
-        <li><a href="ComponentLevel.html#module-gedcomx.address">gedcomx.address</a>
+        <ul>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.elements">gedcomtools.gedcom5.elements</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.agent">gedcomx.agent</a>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.helpers">gedcomtools.gedcom5.helpers</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.attribution">gedcomx.attribution</a>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.parser">gedcomtools.gedcom5.parser</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.conclusion">gedcomx.conclusion</a>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.source">gedcomtools.gedcom5.source</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Coverage">gedcomx.Coverage</a>
+          <li><a href="api/gedcom5.html#module-gedcomtools.gedcom5.tags">gedcomtools.gedcom5.tags</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Date">gedcomx.Date</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.exceptions">gedcomtools.gedcom7.exceptions</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.document">gedcomx.document</a>
+          <li><a href="api/cli.html#module-gedcomtools.gedcom7.g7cli">gedcomtools.gedcom7.g7cli</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.Event">gedcomx.Event</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.g7interop">gedcomtools.gedcom7.g7interop</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.EventRole">gedcomx.EventRole</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.gedcom7">gedcomtools.gedcom7.gedcom7</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.EvidenceReference">gedcomx.EvidenceReference</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.specification">gedcomtools.gedcom7.specification</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Fact">gedcomx.Fact</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.structure">gedcomtools.gedcom7.structure</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Gender">gedcomx.Gender</a>
+          <li><a href="api/gedcom7.html#module-gedcomtools.gedcom7.writer">gedcomtools.gedcom7.writer</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.GroupRole">gedcomx.GroupRole</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.address">gedcomtools.gedcomx.address</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.identifier">gedcomx.identifier</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.agent">gedcomtools.gedcomx.agent</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Name">gedcomx.Name</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.attribution">gedcomtools.gedcomx.attribution</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Note">gedcomx.Note</a>
+          <li><a href="api/cli.html#module-gedcomtools.gedcomx.cli">gedcomtools.gedcomx.cli</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.OnlineAccount">gedcomx.OnlineAccount</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.conclusion">gedcomtools.gedcomx.conclusion</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.Person">gedcomx.Person</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.conversion">gedcomtools.gedcomx.conversion</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.PlaceDescription">gedcomx.PlaceDescription</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.coverage">gedcomtools.gedcomx.coverage</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.PlaceReference">gedcomx.PlaceReference</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.date">gedcomtools.gedcomx.date</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Qualifier">gedcomx.Qualifier</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.document">gedcomtools.gedcomx.document</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.Relationship">gedcomx.Relationship</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.event">gedcomtools.gedcomx.event</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.SourceCitation">gedcomx.SourceCitation</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.evidence_reference">gedcomtools.gedcomx.evidence_reference</a>
 </li>
-        <li><a href="TopLevel.html#module-gedcomx.SourceDescription">gedcomx.SourceDescription</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.exceptions">gedcomtools.gedcomx.exceptions</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.SourceReference">gedcomx.SourceReference</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.extensible">gedcomtools.gedcomx.extensible</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.Subject">gedcomx.Subject</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.fact">gedcomtools.gedcomx.fact</a>
 </li>
-        <li><a href="ComponentLevel.html#module-gedcomx.textvalue">gedcomx.textvalue</a>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.family">gedcomtools.gedcomx.family</a>
 </li>
-      </ul></li>
-  </ul></td>
-</tr></table>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.gedcomx">gedcomtools.gedcomx.gedcomx</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.gender">gedcomtools.gedcomx.gender</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.group">gedcomtools.gedcomx.group</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.header">gedcomtools.gedcomx.header</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.identifier">gedcomtools.gedcomx.identifier</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.mutations">gedcomtools.gedcomx.mutations</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.name">gedcomtools.gedcomx.name</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.note">gedcomtools.gedcomx.note</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.online_account">gedcomtools.gedcomx.online_account</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.person">gedcomtools.gedcomx.person</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.place_description">gedcomtools.gedcomx.place_description</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.place_reference">gedcomtools.gedcomx.place_reference</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.qualifier">gedcomtools.gedcomx.qualifier</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.relationship">gedcomtools.gedcomx.relationship</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.resource">gedcomtools.gedcomx.resource</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.schemas">gedcomtools.gedcomx.schemas</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.serialization">gedcomtools.gedcomx.serialization</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_citation">gedcomtools.gedcomx.source_citation</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_description">gedcomtools.gedcomx.source_description</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.source_reference">gedcomtools.gedcomx.source_reference</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.subject">gedcomtools.gedcomx.subject</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.textvalue">gedcomtools.gedcomx.textvalue</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.uri">gedcomtools.gedcomx.uri</a>
+</li>
+          <li><a href="api/gedcomx.html#module-gedcomtools.gedcomx.zip">gedcomtools.gedcomx.zip</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.MoveFrom">MoveFrom (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="N">N</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.Name.nameForms">nameForms (in module gedcomx.Name)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MoveFrom">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.names">names (in module gedcomx.PlaceDescription)</a>
-</li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.MoveTo">MoveTo (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="O">O</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.PlaceReference.original">original (in module gedcomx.PlaceReference)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MoveTo">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.Other">Other (IdentifierType attribute)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.MultipleBirth">MultipleBirth (gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+    </ul></td>
+  </tr></table>
+</section>
 
-<h2 id="P">P</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.Persistent">Persistent (IdentifierType attribute)</a>
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name">Name (class in gedcomtools.gedcomx.name)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.place">place (in module gedcomx.PlaceDescription)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.name">name (gedcomtools.gedcomx.person.Person property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.document.TextType.plain">plain (TextType attribute)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameForm">NameForm (class in gedcomtools.gedcomx.name)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierType.Primary">Primary (IdentifierType attribute)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.nameForms">nameForms (gedcomtools.gedcomx.name.Name attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePart">NamePart (class in gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier">NamePartQualifier (class in gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType">NamePartType (class in gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.names">names (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType">NameType (class in gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.Narrative_for_Embedding">Narrative_for_Embedding (gedcomtools.gedcomx.person.Person property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.NationalId">NationalId (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Nationality">Nationality (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Naturalization">Naturalization (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-<h2 id="S">S</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.spatialDescription">spatialDescription (in module gedcomx.PlaceDescription)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Naturalization">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.new_child_element">new_child_element() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.Nickname">Nickname (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.NonConsensual">NonConsensual (gedcomtools.gedcomx.fact.FactQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.normalize_all">normalize_all() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.normalize_tag">normalize_tag() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.normalize_uri">normalize_uri() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.note.Note">Note (class in gedcomtools.gedcomx.note)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_attempt">note_attempt() (gedcomtools.gedcomx.serialization.ResolveStats method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_failure">note_failure() (gedcomtools.gedcomx.serialization.ResolveStats method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_resolver_time">note_resolver_time() (gedcomtools.gedcomx.serialization.ResolveStats method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_success">note_success() (gedcomtools.gedcomx.serialization.ResolveStats method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.NumberOfChildren">NumberOfChildren (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.NumberOfMarriages">NumberOfMarriages (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
-<h2 id="T">T</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.PlaceDescription.temporalDescription">temporalDescription (in module gedcomx.PlaceDescription)</a>
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Obituary">Obituary (gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.document.TextType">TextType (class in gedcomx.document)</a>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.ObjectRecord">ObjectRecord (class in gedcomtools.gedcom5.elements)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.textvalue.TextValue">TextValue (class in gedcomx.textvalue)</a>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.objects">objects (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.document.DocumentType.Transcription">Transcription (DocumentType attribute)</a>
+        <li><a href="api/cli.html#gedcomtools.gedcomx.cli.objects_to_schema_table">objects_to_schema_table() (in module gedcomtools.gedcomx.cli)</a>
 </li>
-      <li><a href="TopLevel.html#gedcomx.document.DocumentType.Translation">Translation (DocumentType attribute)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Occupation">Occupation (gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.Name.type">type (in module gedcomx.Name)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Occupational">Occupational (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType.Official">Official (gedcomtools.gedcomx.event.EventRoleType attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.OfficialPosition">OfficialPosition (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.online_account.OnlineAccount">OnlineAccount (class in gedcomtools.gedcomx.online_account)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Ordination">Ordination (gedcomtools.gedcomx.event.EventType attribute)</a>
 
-      <ul>
-        <li><a href="TopLevel.html#gedcomx.PlaceDescription.type">(in module gedcomx.PlaceDescription)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Ordination">(gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="U">U</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.unique_list">unique_list() (IdentifierList method)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_reference.PlaceReference.original">original (gedcomtools.gedcomx.place_reference.PlaceReference attribute)</a>
 </li>
-  </ul></td>
-</tr></table>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.Other">Other (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
 
-<h2 id="V">V</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ComponentLevel.html#gedcomx.address.Address.value">value (Address property)</a>
-
-      <ul>
-        <li><a href="ComponentLevel.html#gedcomx.Qualifier.value">(in module gedcomx.Qualifier)</a>
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.Other">(gedcomtools.gedcomx.name.NameType attribute)</a>
 </li>
-      </ul></li>
-      <li><a href="ComponentLevel.html#gedcomx.identifier.IdentifierList.values">values() (IdentifierList method)</a>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference.Page">Page (gedcomtools.gedcomx.source_reference.KnownSourceReference attribute)</a>
 </li>
-      <li><a href="ComponentLevel.html#gedcomx.address.Address.version">version (Address attribute)</a>
-
-      <ul>
-        <li><a href="ComponentLevel.html#gedcomx.attribution.Attribution.version">(Attribution attribute)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Pardon">Pardon (gedcomtools.gedcomx.fact.FactType attribute)</a>
 </li>
-        <li><a href="ComponentLevel.html#gedcomx.conclusion.Conclusion.version">(Conclusion attribute)</a>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.parent">parent (gedcomtools.gedcom5.elements.Element property)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.parent">(gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
 </li>
-        <li><a href="TopLevel.html#gedcomx.document.Document.version">(Document attribute)</a>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.parent">parent() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
 </li>
-        <li><a href="ComponentLevel.html#gedcomx.identifier.Identifier.version">(Identifier attribute)</a>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.RelationshipType.ParentChild">ParentChild (gedcomtools.gedcomx.relationship.RelationshipType attribute)</a>
 </li>
-        <li><a href="ComponentLevel.html#gedcomx.textvalue.TextValue.version">(TextValue attribute)</a>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.parse">parse() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
 </li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="X">X</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="TopLevel.html#gedcomx.document.TextType.xhtml">xhtml (TextType attribute)</a>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.parse_file">parse_file() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
 </li>
-  </ul></td>
-</tr></table>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.parse_gedcom5x_record">parse_gedcom5x_record() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_gedcom_line">parse_gedcom_line() (gedcomtools.gedcom7.gedcom7.Gedcom7 static method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_lines">parse_lines() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_string">parse_string() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.parse_to_gedcomx_date">parse_to_gedcomx_date() (in module gedcomtools.gedcomx.date)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType.Participant">Participant (gedcomtools.gedcomx.event.EventRoleType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Particle">Particle (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Patronymic">Patronymic (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.payload">payload (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.payload_is_pointer">payload_is_pointer (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.Persistent">Persistent (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person">Person (class in gedcomtools.gedcomx.person)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.Person">(gedcomtools.gedcomx.source_description.ResourceType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.personal_events">personal_events (gedcomtools.gedcomx.conversion.GedcomConverter attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.PhysicalArtifact">PhysicalArtifact (gedcomtools.gedcomx.source_description.ResourceType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.PhysicalDescription">PhysicalDescription (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.place">place (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription">PlaceDescription (class in gedcomtools.gedcomx.place_description)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_reference.PlaceReference">PlaceReference (class in gedcomtools.gedcomx.place_reference)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.TextType.plain">plain (gedcomtools.gedcomx.document.TextType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.pointer_target">pointer_target (gedcomtools.gedcom7.structure.GedcomStructure property)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.pop">pop() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Postnom">Postnom (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType.Prefix">Prefix (gedcomtools.gedcomx.name.NamePartType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierType.Primary">Primary (gedcomtools.gedcomx.identifier.IdentifierType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Primary">(gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType.Principal">Principal (gedcomtools.gedcomx.event.EventRoleType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.print_gedcom">print_gedcom() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Probate">Probate (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Property">Property (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.publisher">publisher (gedcomtools.gedcomx.source_description.SourceDescription property)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Q" class="genindex-section">
+  <h2>Q</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.qualifier.Qualifier">Qualifier (class in gedcomtools.gedcomx.qualifier)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.Fact.qualifiers">qualifiers (gedcomtools.gedcomx.fact.Fact property)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.QuickName">QuickName (class in gedcomtools.gedcomx.name)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.QuickPerson">QuickPerson (class in gedcomtools.gedcomx.person)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Race">Race (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType.Record">Record (gedcomtools.gedcomx.source_description.ResourceType attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.records">records (gedcomtools.gedcom7.gedcom7.Gedcom7 attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference.RectangleRegion">RectangleRegion (gedcomtools.gedcomx.source_reference.KnownSourceReference attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_class">register_class() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.register_extension_tag">register_extension_tag() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_extra">register_extra() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.g7interop.register_tag_uri">register_tag_uri() (in module gedcomtools.gedcom7.g7interop)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.Relationship">Relationship (class in gedcomtools.gedcomx.relationship)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.RelationshipType">RelationshipType (class in gedcomtools.gedcomx.relationship)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.Religion">Religion (gedcomtools.gedcomx.fact.FactQualifier attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Religion">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Religious">Religious (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameType.ReligiousName">ReligiousName (gedcomtools.gedcomx.name.NameType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.remove">remove() (gedcomtools.gedcomx.gedcomx.TypeCollection method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.repositories">repositories (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repositories">repositories() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repository_details">repository_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.RepositoryRecord">RepositoryRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.reset">reset() (gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Residence">Residence (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.resolve_references_recursive">resolve_references_recursive() (gedcomtools.gedcomx.serialization.Serialization class method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.resolved_fail">resolved_fail (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.resolved_ok">resolved_ok (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.resolver_time_ms">resolver_time_ms (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats">ResolveStats (class in gedcomtools.gedcomx.serialization)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.resource.Resource">Resource (class in gedcomtools.gedcomx.resource)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType">ResourceType (class in gedcomtools.gedcomx.source_description)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventType.Retirement">Retirement (gedcomtools.gedcomx.event.EventType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Retirement">(gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.RootElement">RootElement (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.RootName">RootName (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/cli.html#gedcomtools.gedcom7.g7cli.Shell.run">run() (gedcomtools.gedcom7.g7cli.Shell method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.save_gedcom">save_gedcom() (gedcomtools.gedcom5.parser.Gedcom5x method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema">Schema (class in gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_class">schema_class() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property">schema_property() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property_plugin">schema_property_plugin() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_to_jsonable">schema_to_jsonable() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Secondary">Secondary (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Separation">Separation (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization">Serialization (class in gedcomtools.gedcomx.serialization)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.serialize">serialize() (gedcomtools.gedcom7.writer.Gedcom7Writer method)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.serialize">(gedcomtools.gedcomx.serialization.Serialization static method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_husband">set_husband() (gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GxoObjectStack.set_level">set_level() (gedcomtools.gedcomx.conversion.GxoObjectStack method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_marr_date">set_marr_date() (gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_marr_plac">set_marr_plac() (gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_multi_line_value">set_multi_line_value() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_parent_element">set_parent_element() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_resource_class">set_resource_class() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_toplevel">set_toplevel() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_uri_class">set_uri_class() (gedcomtools.gedcomx.schemas.Schema method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_value">set_value() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_wife">set_wife() (gedcomtools.gedcomx.family.FamilyParser method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError.severity">severity (gedcomtools.gedcom7.gedcom7.GedcomValidationError attribute)</a>, <a href="api/gedcom7.html#id4">[1]</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_note_details">shared_note_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_notes">shared_notes() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.shares_name">shares_name() (gedcomtools.gedcomx.agent.Agent method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/cli.html#gedcomtools.gedcom7.g7cli.Shell">Shell (class in gedcomtools.gedcom7.g7cli)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.simple">simple() (gedcomtools.gedcomx.name.Name static method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.SociologicalParent">SociologicalParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id">source_by_id() (gedcomtools.gedcomx.gedcomx.GedcomX method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.source_details">source_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_citation.SourceCitation">SourceCitation (class in gedcomtools.gedcomx.source_citation)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription">SourceDescription (class in gedcomtools.gedcomx.source_description)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.SourceRecord">SourceRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference">SourceReference (class in gedcomtools.gedcomx.source_reference)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.sources">sources (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.sources">sources() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.spatialDescription">spatialDescription (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.uri.URI.split">split() (gedcomtools.gedcomx.uri.URI method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.StepParent">StepParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Stillbirth">Stillbirth (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.sub_record">sub_record() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.sub_records">sub_records() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.subject.Subject">Subject (class in gedcomtools.gedcomx.subject)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitter_details">submitter_details() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.SubmitterRecord">SubmitterRecord (class in gedcomtools.gedcom5.elements)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.submitters">submitters (gedcomtools.gedcom5.parser.Gedcom5x property)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitters">submitters() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType.Suffix">Suffix (gedcomtools.gedcomx.name.NamePartType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType.Surname">Surname (gedcomtools.gedcomx.name.NamePartType attribute)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.surname_match">surname_match() (gedcomtools.gedcom5.elements.IndividualRecord method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.SurrogateParent">SurrogateParent (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.tag">tag (gedcomtools.gedcom5.elements.Element property)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError.tag">(gedcomtools.gedcom7.gedcom7.GedcomValidationError attribute)</a>, <a href="api/gedcom7.html#id3">[1]</a>
+</li>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.tag">(gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.exceptions.TagConversionError">TagConversionError</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.TaxAssessment">TaxAssessment (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.temporalDescription">temporalDescription (gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.TextType">TextType (class in gedcomtools.gedcomx.document)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.textvalue.TextValue">TextValue (class in gedcomtools.gedcomx.textvalue)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference.TimeRegion">TimeRegion (gedcomtools.gedcomx.source_reference.KnownSourceReference attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier.Title">Title (gedcomtools.gedcomx.name.NamePartQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.to_dict">to_dict() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.to_dict">(gedcomtools.gedcom7.structure.GedcomStructure method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.to_gedcom_string">to_gedcom_string() (gedcomtools.gedcom5.elements.Element method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.specification.top_level_tags">top_level_tags() (in module gedcomtools.gedcom7.specification)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.total_refs">total_refs (gedcomtools.gedcomx.serialization.ResolveStats attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType.Transcription">Transcription (gedcomtools.gedcomx.document.DocumentType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.DocumentType.Translation">Translation (gedcomtools.gedcomx.document.DocumentType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactQualifier.Transport">Transport (gedcomtools.gedcomx.fact.FactQualifier attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Tribe">Tribe (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.type">type (gedcomtools.gedcomx.name.Name attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.type">(gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.type_name_type">type_name_type (gedcomtools.gedcomx.conversion.GedcomConverter attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.schemas.type_repr">type_repr() (in module gedcomtools.gedcomx.schemas)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection">TypeCollection (class in gedcomtools.gedcomx.gedcomx)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.unique">unique() (gedcomtools.gedcomx.conversion.GedcomConverter method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.unique_list">unique_list() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Unknown">Unknown (gedcomtools.gedcomx.fact.FactType attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.GenderType.Unknown">(gedcomtools.gedcomx.gender.GenderType attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.uri.URI">URI (class in gedcomtools.gedcomx.uri)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.uri">uri (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.resource.Resource.uri">(gedcomtools.gedcomx.resource.Resource property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.validate">validate() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+</li>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.value">value (gedcomtools.gedcom5.elements.Element property)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.value">(gedcomtools.gedcom7.structure.GedcomStructure property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.address.Address.value">(gedcomtools.gedcomx.address.Address property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.qualifier.Qualifier.value">(gedcomtools.gedcomx.qualifier.Qualifier attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.resource.Resource.value">(gedcomtools.gedcomx.resource.Resource property)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.uri.URI.value">(gedcomtools.gedcomx.uri.URI property)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.IdentifierList.values">values() (gedcomtools.gedcomx.identifier.IdentifierList method)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.version">version (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+
+        <ul>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.address.Address.version">(gedcomtools.gedcomx.address.Address attribute)</a>, <a href="api/gedcomx.html#id2">[1]</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.attribution.Attribution.version">(gedcomtools.gedcomx.attribution.Attribution attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.version">(gedcomtools.gedcomx.conclusion.Conclusion attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.coverage.Coverage.version">(gedcomtools.gedcomx.coverage.Coverage attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.date.Date.version">(gedcomtools.gedcomx.date.Date attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.Document.version">(gedcomtools.gedcomx.document.Document attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.Event.version">(gedcomtools.gedcomx.event.Event attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRole.version">(gedcomtools.gedcomx.event.EventRole attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.evidence_reference.EvidenceReference.version">(gedcomtools.gedcomx.evidence_reference.EvidenceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.Fact.version">(gedcomtools.gedcomx.fact.Fact attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.version">(gedcomtools.gedcomx.gedcomx.GedcomX attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.gender.Gender.version">(gedcomtools.gedcomx.gender.Gender attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.Group.version">(gedcomtools.gedcomx.group.Group attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.group.GroupRole.version">(gedcomtools.gedcomx.group.GroupRole attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.identifier.Identifier.version">(gedcomtools.gedcomx.identifier.Identifier attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.Name.version">(gedcomtools.gedcomx.name.Name attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NameForm.version">(gedcomtools.gedcomx.name.NameForm attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.name.NamePart.version">(gedcomtools.gedcomx.name.NamePart attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.note.Note.version">(gedcomtools.gedcomx.note.Note attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.online_account.OnlineAccount.version">(gedcomtools.gedcomx.online_account.OnlineAccount attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.person.Person.version">(gedcomtools.gedcomx.person.Person attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_description.PlaceDescription.version">(gedcomtools.gedcomx.place_description.PlaceDescription attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.place_reference.PlaceReference.version">(gedcomtools.gedcomx.place_reference.PlaceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.qualifier.Qualifier.version">(gedcomtools.gedcomx.qualifier.Qualifier attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.relationship.Relationship.version">(gedcomtools.gedcomx.relationship.Relationship attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_citation.SourceCitation.version">(gedcomtools.gedcomx.source_citation.SourceCitation attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.version">(gedcomtools.gedcomx.source_description.SourceDescription attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.version">(gedcomtools.gedcomx.source_reference.SourceReference attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.subject.Subject.version">(gedcomtools.gedcomx.subject.Subject attribute)</a>
+</li>
+          <li><a href="api/gedcomx.html#gedcomtools.gedcomx.textvalue.TextValue.version">(gedcomtools.gedcomx.textvalue.TextValue attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Visit">Visit (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Will">Will (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.event.EventRoleType.Witness">Witness (gedcomtools.gedcomx.event.EventRoleType attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.write">write() (gedcomtools.gedcom7.gedcom7.Gedcom7 method)</a>
+
+        <ul>
+          <li><a href="api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.write">(gedcomtools.gedcom7.writer.Gedcom7Writer method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/cli.html#gedcomtools.gedcomx.cli.write_jsonl">write_jsonl() (in module gedcomtools.gedcomx.cli)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="X" class="genindex-section">
+  <h2>X</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.document.TextType.xhtml">xhtml (gedcomtools.gedcomx.document.TextType attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcom5.html#gedcomtools.gedcom5.elements.Element.xref">xref (gedcomtools.gedcom5.elements.Element property)</a>
+</li>
+        <li><a href="api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.xref_id">xref_id (gedcomtools.gedcom7.structure.GedcomStructure attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Y" class="genindex-section">
+  <h2>Y</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gedcomx.html#gedcomtools.gedcomx.fact.FactType.Yahrzeit">Yahrzeit (gedcomtools.gedcomx.fact.FactType attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
 
 
-
-           </div>
-          </div>
-          <footer>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2025, David J. Cartwright.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
+        </article>
       </div>
-    </section>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</div><script src="_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
 </html>

@@ -27,7 +27,7 @@ from ..logging_hub import hub, logging
 from .note import Note
 from .resource import Resource
 from .source_reference import SourceReference
-from. uri import URI
+from .uri import URI
 """
 ======================================================================
 Logging
@@ -73,6 +73,11 @@ class Subject(Conclusion):
                   
         
     def add_identifier(self, identifier_to_add: Identifier):
+        """Add an Identifier to the subject's IdentifierList if not already present.
+
+        Raises:
+            ValueError: If the argument is not a valid Identifier instance.
+        """
         if identifier_to_add and isinstance(identifier_to_add,Identifier):
             if not self.identifiers.contains(identifier_to_add):
                 self.identifiers.append(identifier_to_add)

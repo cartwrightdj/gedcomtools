@@ -228,7 +228,6 @@ def _parse_simple_to_gx(s: str) -> str:
 
     dt = _parse_to_datetime(s)
     if dt is None:
-        return None
         raise GedcomXDateParseError(f"Could not parse date: {raw!r}")
 
     year = dt.year

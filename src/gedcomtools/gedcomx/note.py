@@ -40,13 +40,17 @@ class Note:
         self.attribution = attribution  
 
     def append(self, text_to_add: str):
+        """Append text to the note, concatenating with any existing text.
+
+        Raises:
+            ValueError: If text_to_add is not a non-empty string.
+        """
         if text_to_add and isinstance(text_to_add, str):
             if self.text:
                 self.text = self.text + text_to_add
             else:
                 self.text = text_to_add
         else:
-            return #TODO
             raise ValueError("The text to add must be a non-empty string.")
     
     # ---- hashing & equality ----

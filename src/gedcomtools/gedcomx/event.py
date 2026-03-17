@@ -190,6 +190,14 @@ class EventType(Enum):
 
     @staticmethod
     def guess(description):
+        """Guess an EventType from a free-text description using keyword matching.
+
+        Args:
+            description: A free-text string describing the event type.
+
+        Returns:
+            The matching EventType, or None if no keyword is found.
+        """
         keywords_to_event_type = {
             "adoption": EventType.Adoption,
             "christening": EventType.Christening,

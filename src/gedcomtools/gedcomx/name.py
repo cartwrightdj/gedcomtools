@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 from typing import List,Optional, Union
 
@@ -253,32 +254,50 @@ class Name(Conclusion):
     version = 'http://gedcomx.org/conceptual-model/v1'
 
     @staticmethod
-    def simple(text: str):
-        """
-        Takes a string and returns a GedcomX Name Object
-        """
-        if text:
-            text = text.replace("/","")
-            parts = text.rsplit(' ', 1)
-        
-            # Assign val1 and val2 based on the split
-            given = parts[0] if len(parts) > 1 else ""
-            surname = parts[1] if len(parts) > 1 else parts[0]
-            
-            # Remove any '/' characters from both val1 and val2
-            #given = given.replace('/', '')
-            #surname = surname.replace('/', '')
+    def simple(text: str) -> 'Name':
+        """Create a Name from a string, populating fullText and structured parts.
 
-            parts =[]
-            if given: parts.append(NamePart(type = NamePartType.Given, value=given)) 
-            if surname: parts.append(NamePart(type = NamePartType.Surname, value=surname))
+        Supports GEDCOM slash notation where the surname is enclosed in slashes:
+            ``"John /Smith/"``        → Given="John", Surname="Smith"
+            ``"John /Smith/ Jr."``   → Given="John", Surname="Smith", Suffix="Jr."
+            ``"/Smith/"``            → Surname="Smith" only
+            ``"John Robert /van der Berg/"`` → Given="John Robert", Surname="van der Berg"
 
-            name_form = NameForm(fullText=text)
-            name = Name(type=NameType.BirthName,nameForms=[name_form])
-            
+        Without slashes the last whitespace-delimited token is treated as the
+        surname when more than one token is present; a single token becomes a
+        Given-name part.
+        """
+        if not text:
+            return Name()
+
+        name_parts: list[NamePart] = []
+
+        slash_match = re.search(r'/([^/]*)/', text)
+        if slash_match:
+            surname_raw = slash_match.group(1).strip()
+            before = text[:slash_match.start()].strip()
+            after  = text[slash_match.end():].strip()
+
+            if before:
+                name_parts.append(NamePart(type=NamePartType.Given,   value=before))
+            if surname_raw:
+                name_parts.append(NamePart(type=NamePartType.Surname, value=surname_raw))
+            if after:
+                name_parts.append(NamePart(type=NamePartType.Suffix,  value=after))
+
+            # fullText: strip slashes and normalise whitespace
+            full_text = re.sub(r'\s+', ' ', text.replace('/', '')).strip()
         else:
-            name = Name()
-        return name
+            full_text = text.strip()
+            tokens = full_text.split()
+            if len(tokens) >= 2:
+                name_parts.append(NamePart(type=NamePartType.Given,   value=' '.join(tokens[:-1])))
+                name_parts.append(NamePart(type=NamePartType.Surname, value=tokens[-1]))
+            elif tokens:
+                name_parts.append(NamePart(type=NamePartType.Given,   value=tokens[0]))
+
+        name_form = NameForm(fullText=full_text, parts=name_parts)
+        return Name(type=NameType.BirthName, nameForms=[name_form])
 
     def __init__(self, id: Optional[str] = None,
                  lang: Optional[str] = None,

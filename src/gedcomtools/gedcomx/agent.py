@@ -108,6 +108,11 @@ class Agent:
             raise ValueError() #TODO
 
     def add_address(self, address_to_add: Address):
+        """Add an Address to the agent, skipping exact duplicates.
+
+        Raises:
+            ValueError: If the argument is not an Address instance.
+        """
         if address_to_add and isinstance(address_to_add, Address):
             for current_address in self.addresses:
                 if address_to_add == current_address:
@@ -117,18 +122,28 @@ class Agent:
             raise ValueError(f"address must be of type Address, not {type(address_to_add)}")
         
     def add_name(self, name_to_add: TextValue):
+        """Add a name (TextValue or str) to the agent, skipping duplicates.
+
+        Raises:
+            ValueError: If the argument is not a str or TextValue, or the value is empty.
+        """
         if isinstance(name_to_add,str): name_to_add = TextValue(value=name_to_add)
         if name_to_add and isinstance(name_to_add,TextValue):
             for current_name in self.names:
                 if name_to_add == current_name:
-                    assert False
+                    return
             if name_to_add.value is None or name_to_add == '':
-                assert False
+                raise ValueError("name value must not be empty")
             self.names.append(name_to_add)
         else:
             raise ValueError(f'name must be of type str or TextValue, recived {type(name_to_add)}')
     
     def add_note(self, note_to_add):
+        """Append a Note to the agent's note list.
+
+        Raises:
+            ValueError: If the argument is not a Note instance.
+        """
         from .note import Note
         if note_to_add and isinstance(note_to_add,Note):
             self.xnotes.append(note_to_add)
@@ -136,6 +151,7 @@ class Agent:
             raise ValueError(f'note must be of type Note, recived {type(note_to_add)}')
     
     def add_identifier(self, identifier_to_add: Identifier):
+        """Append an Identifier to the agent's identifier list."""
         self.identifiers.append(identifier_to_add)
     
     def __str__(self):
@@ -150,19 +166,8 @@ class Agent:
         return f"Agent(id={self.id}, name='{primary_name}'{homepage_str})"
 
     def __eq__(self, other):
-        """
-        Determine equality between two Agent instances.
-
-        Args:
-            other (Agent): The other object to compare against.
-
-        Returns:
-            bool: True if both objects represent the same agent, False otherwise.
-        """
-        '''
         if not isinstance(other, Agent):
             return NotImplemented
-        
         return (
             self.id == other.id and
             self.identifiers == other.identifiers and
@@ -177,11 +182,11 @@ class Agent:
             self.attribution == other.attribution and
             self.uri == other.uri
         )
-        '''
-        #TODO clean this up
-        self_names = {n.value for n in self.names if hasattr(n, "value")}
-        other_names = {n.value for n in other.names if hasattr(n, "value")}
-        if self_names & other_names:  # intersection not empty
-            return True
 
-        return False
+    def shares_name(self, other: "Agent") -> bool:
+        """Return True if this agent and other share at least one name value."""
+        if not isinstance(other, Agent):
+            return False
+        self_names  = {n.value for n in self.names  if hasattr(n, "value") and n.value}
+        other_names = {n.value for n in other.names if hasattr(n, "value") and n.value}
+        return bool(self_names & other_names)

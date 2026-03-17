@@ -86,26 +86,33 @@ class GxoObjectStack:
         return level in self._data
 
     def get(self, level: int, default: Any = None) -> Any:
+        """Return the object at the given level, or default if not present."""
         return self._data.get(level, default)
 
     def items(self):
+        """Return (level, object) pairs for all entries in the stack."""
         return self._data.items()
 
     def clear(self) -> None:
+        """Remove all entries from the stack."""
         self._data.clear()
 
     # ---- ergonomic helpers ----
     def parent(self, record: Element) -> Any:
+        """Return the object at the level directly above the given record."""
         return self._data[record.level - 1]
 
     def ancestor(self, record: Element, up: int) -> Any:
+        """Return the object ``up`` levels above the given record."""
         return self._data[record.level - up]
 
     def set_level(self, level: int, value: Any) -> Any:
+        """Set the object at a given level and return it."""
         self._data[level] = value
         return value
 
     def items_desc(self) -> List[tuple[int, Any]]:
+        """Return (level, object) pairs sorted from highest level to lowest."""
         return sorted(self._data.items(), key=lambda kv: kv[0], reverse=True)
 
     def __repr__(self) -> str:
@@ -139,10 +146,12 @@ class GedcomConverter:
 
     @property
     def ignored_tags(self):
+        """Return a dict of unhandled tag counts, or None if all tags were handled."""
         return self.missing_handler_count if self.missing_handler_count else None
 
     @staticmethod
     def clean_str(text: str | None) -> str:
+        """Strip whitespace and remove HTML tags from a string; returns '' for None."""
         if text is None:
             return ""
         t = text.strip()
@@ -191,6 +200,15 @@ class GedcomConverter:
     # ------------------------------------------------------------------
 
     def parse_gedcom5x_record(self, record: Element) -> None:
+        """Dispatch a single GEDCOM Element to its registered handler and recurse into subrecords.
+
+        Args:
+            record: The GEDCOM Element to process.
+
+        Raises:
+            AssertionError: If record is None.
+            ConversionErrorDump: On unhandled exceptions during conversion.
+        """
         if record is None:
             raise AssertionError("record is None")
 
@@ -249,6 +267,7 @@ class GedcomConverter:
 
     @staticmethod
     def format_counts_table(counts: Mapping[Any, int]) -> str:
+        """Format a counts mapping as a multi-column text table sorted by count descending."""
         items = [(str(k), int(v)) for k, v in counts.items()]
         if not items:
             return "(empty)"
@@ -284,10 +303,12 @@ class GedcomConverter:
 
     @staticmethod
     def has_duplicates(seq) -> bool:
+        """Return True if the sequence contains any duplicate values."""
         return len(seq) != len(set(seq))
 
     @staticmethod
     def find_duplicates(seq):
+        """Return a list of values that appear more than once in seq, preserving order."""
         seen, dups = set(), []
         for x in seq:
             if x in seen and x not in dups:
@@ -296,6 +317,12 @@ class GedcomConverter:
         return dups
 
     def unique(self, seq: Iterable[T], key: Optional[Callable[[T], K]] = None) -> List[T]:
+        """Return a deduplicated list preserving first-occurrence order.
+
+        Args:
+            seq: Input iterable.
+            key: Optional callable to extract a comparison key from each element.
+        """
         seen: set[K] = set()
         out: List[T] = []
         for item in seq:
@@ -310,6 +337,20 @@ class GedcomConverter:
     # ------------------------------------------------------------------
 
     def Gedcom5x_GedcomX(self, gedcom5x: Gedcom5x) -> GedcomX:
+        """Convert a parsed Gedcom5x object to a GedcomX genealogy.
+
+        Primes id maps from GEDCOM cross-references, then walks every top-level
+        record through the tag dispatch table to populate the GedcomX object.
+
+        Args:
+            gedcom5x: A fully parsed Gedcom5x instance.
+
+        Returns:
+            The populated GedcomX genealogy.
+
+        Raises:
+            ValueError: If gedcom5x is falsy.
+        """
         if not gedcom5x:
             raise ValueError("gedcom5x is falsy")
 
@@ -1362,7 +1403,7 @@ class GedcomConverter:
             self.object_map[record.level-1].type = IdentifierType.Other # type: ignore
         
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1]._set_type(record.value)
+            self.object_map[record.level-1]._set_resource_type(record.value)
             self.object_map[record.level] = self.object_map[record.level-1]
             
             

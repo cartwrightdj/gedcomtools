@@ -820,10 +820,10 @@ def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
 import inspect
 
 class ExtrasAwareMeta(type):
-    """
-    Intercepts cls(*args, **kwargs) and ensures registered extras are accepted:
-      - Only pass constructor-known kwargs into __init__
-      - Allowed extras (from SCHEMA) are attached after construction
+    """Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.
+
+    - Only passes constructor-known kwargs into ``__init__``.
+    - Allowed extras (from SCHEMA) are attached after construction.
     """
     def __call__(cls, *args, **kwargs):
         # what extras are allowed for this class?

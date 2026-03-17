@@ -154,6 +154,7 @@ class FactType(Enum):
 
     @classmethod
     def from_value(cls, value: str):
+        """Return the FactType member whose value matches, or FactType.Unknown."""
         for member in cls:
             if member.value == value:
                 return member
@@ -264,6 +265,14 @@ class FactType(Enum):
     
     @staticmethod
     def guess(description):
+        """Guess a FactType from a free-text description using fuzzy keyword matching.
+
+        Args:
+            description: A free-text string describing the fact type.
+
+        Returns:
+            The best-matching FactType, or None if no match is found.
+        """
         keywords_to_fact_type = {
             # Person Fact Types
             "adoption": FactType.Adoption,
@@ -436,12 +445,14 @@ class Fact(Conclusion):
     
     @property
     def qualifiers(self) -> List[FactQualifier]:
+        """Return the list of FactQualifier objects for this fact."""
         return self._qualifiers # type: ignore
 
     @qualifiers.setter
     def qualifiers(self, value: List[FactQualifier]):
+        """Extend the qualifiers list; value must be a list of FactQualifier objects."""
         if (not isinstance(value, list)) or (not all(isinstance(item, FactQualifier) for item in value)):
-            raise ValueError("sources must be a list of GedcomRecord objects.")
+            raise ValueError("qualifiers must be a list of FactQualifier objects.")
         self._qualifiers.extend(value)
 
     def __str__(self):

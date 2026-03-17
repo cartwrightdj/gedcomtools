@@ -16,3 +16,4 @@ build/
 *.toml
 Makefile
 make.bat
+STATUS.md

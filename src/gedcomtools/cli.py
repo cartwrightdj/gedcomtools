@@ -154,6 +154,14 @@ _CONVERSIONS = {
 # -----------------------------------------------------------------------
 
 def cmd_convert(args) -> int:
+    """Execute the ``convert`` subcommand: detect source type and run the appropriate converter.
+
+    Args:
+        args: Parsed argparse namespace with ``source``, ``dest``, and ``dest_type``.
+
+    Returns:
+        An integer exit code (0 = success).
+    """
     source_path = Path(args.source)
     dest_path = Path(args.dest)
     dest_type = args.dest_type.lower()
@@ -190,6 +198,7 @@ def cmd_convert(args) -> int:
 # -----------------------------------------------------------------------
 
 def main() -> None:
+    """Entry point for the ``gedcomtools`` CLI; parses arguments and dispatches subcommands."""
     parser = argparse.ArgumentParser(
         prog="gedcomtools",
         description="Gedcom Tools CLI",

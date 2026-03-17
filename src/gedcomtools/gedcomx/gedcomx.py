@@ -142,19 +142,30 @@ class TypeCollection(Generic[T]):
 
     # --- lookups ---
     def by_id(self, id_: Any) -> T | None:
+        """Return the item with the given id, or None if not found."""
         return self._id_index.get(id_)
 
     def by_uri(self, uri: Union[URI, str]) -> T | None:
+        """Return the item whose URI matches, or None if not found."""
         key = uri.value if isinstance(uri, URI) else str(uri)  # type: ignore
         return self._uri_index.get(key)
 
     def by_name(self, sname: str | None) -> list[T] | None:
+        """Return items whose name matches sname (stripped), or None if not found."""
         if not sname:
             return None
         return self._name_index.get(sname.strip(), None)
 
     # --- mutation ---
     def append(self, item: T) -> None:
+        """Append an item to the collection and update all secondary indexes.
+
+        Args:
+            item: The item to add; must be an instance of ``item_type``.
+
+        Raises:
+            TypeError: If ``item`` is not an instance of ``item_type``.
+        """
         if not isinstance(item, self.item_type):
             raise TypeError(f"Expected {self.item_type.__name__}, got {type(item).__name__} {item}")
 
@@ -170,10 +181,16 @@ class TypeCollection(Generic[T]):
         self._update_indexes(item)
 
     def extend(self, items: Iterable[T]) -> None:
+        """Append each item from an iterable to the collection."""
         for it in items:
             self.append(it)
 
     def remove(self, item: T) -> None:
+        """Remove an item from the collection and update all secondary indexes.
+
+        Raises:
+            ValueError: If the item is not present in the collection.
+        """
         if item not in self._items:
             raise ValueError("Item not found in the collection.")
         self._items.remove(item)
@@ -181,6 +198,7 @@ class TypeCollection(Generic[T]):
 
     # --- convenience / serialization ---
     def __call__(self, **kwargs) -> list[T]:
+        """Return a list of items whose attributes match all given keyword arguments."""
         out: list[T] = []
         for item in self._items:
             for k, v in kwargs.items():
@@ -256,6 +274,7 @@ class GedcomX:
 
     @property
     def contents(self):
+        """Return a dict with item counts for each top-level collection."""
         return {
             "source_descriptions": len(self.sourceDescriptions),
             "persons": len(self.persons),
@@ -267,7 +286,16 @@ class GedcomX:
             "groups": len(self.groups),
         }
             
-    def add(self,gedcomx_type_object):
+    def add(self, gedcomx_type_object):
+        """Dispatch a GedcomX top-level object to its appropriate ``add_*`` method.
+
+        Args:
+            gedcomx_type_object: A Document, Person, SourceDescription, Agent,
+                PlaceDescription, Event, or Relationship instance.
+
+        Raises:
+            ValueError: If the object type is not a recognised top-level type.
+        """
         if gedcomx_type_object:
             if isinstance(gedcomx_type_object,Document):
                 self.add_document(gedcomx_type_object)
@@ -286,9 +314,17 @@ class GedcomX:
             else:
                 raise ValueError(f"I do not know how to add an Object of type {type(gedcomx_type_object)}")
         else:
-            Warning("Tried to add a None type to the Geneology")
+            log.warning("Tried to add a None type to the GedcomX")
 
-    def add_source_description(self,sourceDescription: SourceDescription):
+    def add_source_description(self, sourceDescription: SourceDescription):
+        """Add a SourceDescription to the genealogy.
+
+        Args:
+            sourceDescription: The SourceDescription to add; must have an id.
+
+        Raises:
+            ValueError: If the argument is not a SourceDescription or has no id.
+        """
         if sourceDescription and isinstance(sourceDescription,SourceDescription):
             if sourceDescription.id is None:
                 raise ValueError("SourceDescription must have an id before being added")
@@ -331,7 +367,18 @@ class GedcomX:
         else:
             raise ValueError(f'person must be a Person Object not type: {type(person)}')
         
-    def add_relationship(self,relationship: Relationship):
+    def add_relationship(self, relationship: Relationship):
+        """Add a Relationship to the genealogy.
+
+        Also registers any embedded Person objects and updates the internal
+        relationship table so each person can quickly retrieve its relationships.
+
+        Args:
+            relationship: The Relationship to add.
+
+        Raises:
+            ValueError: If the argument is not a valid Relationship.
+        """
         if relationship and isinstance(relationship,Relationship):
             if isinstance(relationship.person1,Resource) and isinstance(relationship.person2,Resource):
                 self.relationships.append(relationship)
@@ -366,13 +413,25 @@ class GedcomX:
         else:
             raise ValueError()
     
-    def add_place_description(self,placeDescription: PlaceDescription):
+    def add_place_description(self, placeDescription: PlaceDescription):
+        """Add a PlaceDescription to the genealogy."""
         if placeDescription and isinstance(placeDescription,PlaceDescription):
             if placeDescription.id is None:
-                Warning("PlaceDescription has no id")
+                log.warning("PlaceDescription has no id")
             self.places.append(placeDescription)
 
-    def add_agent(self,agent: Agent):
+    def add_agent(self, agent: Agent):
+        """Add an Agent to the genealogy, skipping duplicates by id.
+
+        Args:
+            agent: The Agent to add.
+
+        Returns:
+            False if the agent's id already exists; None otherwise.
+
+        Raises:
+            ValueError: If the argument is not an Agent.
+        """
         if isinstance(agent,Agent) and agent is not None:
             if self.agents.by_id(agent.id) is not None:
                 log.debug("Skipped duplicate agent id={}", agent.id)
@@ -383,21 +442,31 @@ class GedcomX:
         else:
             raise ValueError()
     
-    def add_event(self,event_to_add: Event):
-        if event_to_add and isinstance(event_to_add,Event):
-            if event_to_add.id is None: event_to_add.id = make_uid()
+    def add_event(self, event_to_add: Event):
+        """Add an Event to this GedcomX genealogy.
+
+        Automatically assigns a uid if the event has no id.
+        Duplicate events (by equality) are silently ignored.
+
+        Args:
+            event_to_add: The Event object to add.
+
+        Raises:
+            ValueError: If event_to_add is None or not an Event instance.
+        """
+        if event_to_add and isinstance(event_to_add, Event):
+            if event_to_add.id is None:
+                event_to_add.id = make_uid()
             for current_event in self.events:
                 if event_to_add == current_event:
-                    print("DUPLICATE EVENT")
-                    from .serialization import Serialization
-                    print(Serialization.serialize(event_to_add))
-                    print(Serialization.serialize(current_event))
+                    log.debug("Skipping duplicate event: %s", event_to_add.id)
                     return
             self.events.append(event_to_add)
         else:
-            raise ValueError
+            raise ValueError(f"event_to_add must be an Event instance, got {type(event_to_add).__name__}")
 
-    def extend(self,gedcomx: 'GedcomX'):
+    def extend(self, gedcomx: 'GedcomX'):
+        """Merge all top-level objects from another GedcomX instance into this one."""
         if gedcomx is not None:
             for person in gedcomx.persons:
                 self.add_person(person)
@@ -415,19 +484,22 @@ class GedcomX:
                 self.add_place_description(place)
 
     @lru_cache(maxsize=65536)
-    def get_person_by_id(self,id: str):
+    def get_person_by_id(self, id: str):
+        """Return the first Person whose id matches, or None if not found."""
         filtered = [person for person in self.persons if getattr(person, 'id') == id]
         if filtered: return filtered[0]
         return None
      
     @lru_cache(maxsize=65536)
-    def source_by_id(self,id: str):
+    def source_by_id(self, id: str):
+        """Return the first SourceDescription whose id matches, or None if not found."""
         filtered = [source for source in self.sourceDescriptions if getattr(source, 'id') == id]
         if filtered: return filtered[0]
-        return None        
+        return None
 
     @property
     def id_index(self) -> Dict[Any,Union[SourceDescription,Person,Relationship,Agent,Event,Document,PlaceDescription,Group]]:
+        """Return a combined id→object mapping across all top-level collections."""
         combined = {**self.sourceDescriptions._id_index,
                     **self.persons._id_index,
                     **self.relationships._id_index,

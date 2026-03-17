@@ -95,6 +95,11 @@ class Person(Extensible,Subject):
         self._relationships = []
           
     def add_fact(self, fact_to_add: Fact) -> bool:
+        """Add a Fact to the person, skipping exact duplicates.
+
+        Returns:
+            True if the fact was added, False if it was a duplicate or invalid.
+        """
         if fact_to_add and isinstance(fact_to_add,Fact):
             for current_fact in self.facts:
                 if fact_to_add == current_fact:
@@ -104,10 +109,11 @@ class Person(Extensible,Subject):
         return False
 
     def add_name(self, name_to_add: Name) -> bool:
-        if len(self.names) > 5: 
-            for name in self.names:
-                print(name)
-            raise
+        """Add a Name to the person, skipping exact duplicates.
+
+        Returns:
+            True if the name was added, False if it was a duplicate or invalid.
+        """
         if name_to_add and isinstance(name_to_add, Name):
             for current_name in self.names:
                 if name_to_add == current_name:
@@ -124,20 +130,28 @@ class Person(Extensible,Subject):
             raise ValueError()
     
     def display(self):
+        """Return a display summary dict with basic person information."""
+        try:
+            name_text = self.names[0].nameForms[0].fullText
+        except (IndexError, AttributeError):
+            name_text = None
         display = {
-        "ascendancyNumber": "1",
-        "deathDate": "from 2001 to 2005",
-        "descendancyNumber": "1",
-        "gender": self.gender.type if self.gender else 'Unknown',
-        "lifespan": "-2005",
-        "name": self.names[0].nameForms[0].fullText
-            }
-        
+            "ascendancyNumber": "1",
+            "deathDate": "from 2001 to 2005",
+            "descendancyNumber": "1",
+            "gender": self.gender.type if self.gender else 'Unknown',
+            "lifespan": "-2005",
+            "name": name_text,
+        }
         return display
-    
+
     @property
-    def name(self) -> str:
-        return self.names[0].nameForms[0].fullText
+    def name(self) -> str | None:
+        """Return the fullText of the first name form, or None if unavailable."""
+        try:
+            return self.names[0].nameForms[0].fullText
+        except (IndexError, AttributeError):
+            return None
 
     @classmethod
     def from_familysearch(cls, pid: str, token: str, *, base_url: Optional[str] = None):

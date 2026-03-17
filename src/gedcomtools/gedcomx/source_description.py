@@ -176,11 +176,12 @@ class SourceDescription:
     
     @property
     def publisher(self) -> Union[Resource, Agent, None]:
+        """Return the publisher (Resource or Agent) for this source."""
         return self._publisher
-    
+
     @publisher.setter
-    def publisher(self,
-                  value: Union[Resource, Agent]):
+    def publisher(self, value: Union[Resource, Agent]):
+        """Set the publisher; must be a Resource, Agent, or None."""
         if value is None:
             self._publisher = None
         elif isinstance(value,Resource):
@@ -191,6 +192,7 @@ class SourceDescription:
             raise ValueError(f"'publisher' must be of type 'URI' or 'Agent', type: {type(value)} was provided")
     
     def add_description(self, desccription_to_add: TextValue):
+        """Add a TextValue description to the source, skipping duplicates."""
         if desccription_to_add and isinstance(desccription_to_add,TextValue):
             for current_description in self.descriptions:
                 if desccription_to_add == current_description:
@@ -198,10 +200,12 @@ class SourceDescription:
             self.descriptions.append(desccription_to_add)
 
     def add_identifier(self, identifier_to_add: Identifier):
+        """Append an Identifier to the source's identifier list."""
         if identifier_to_add and isinstance(identifier_to_add,Identifier):
             self.identifiers.append(identifier_to_add)
     
-    def add_note(self,note_to_add: Note):
+    def add_note(self, note_to_add: Note):
+        """Add a Note to the source, skipping duplicates and notes with no text."""
         if note_to_add is not None and note_to_add.text is not None and note_to_add.text != '':
             if note_to_add and isinstance(note_to_add,Note):
                 for existing in self.notes:
@@ -211,6 +215,7 @@ class SourceDescription:
             return      
     
     def add_source_reference(self, source_to_add: SourceReference):
+        """Add a SourceReference to the source, skipping duplicates."""
         if source_to_add and isinstance(object,SourceReference):
             for current_source in self.sources:
                 if current_source == source_to_add:
@@ -218,6 +223,11 @@ class SourceDescription:
             self.sources.append(source_to_add)
 
     def add_title(self, title_to_add: TextValue):
+        """Add a title (TextValue or str) to the source, skipping duplicates.
+
+        Raises:
+            ValueError: If the argument cannot be converted to a TextValue.
+        """
         if isinstance(title_to_add,str): title_to_add = TextValue(value=title_to_add)
         if title_to_add and isinstance(title_to_add, TextValue):
             for current_title in self.titles:
