@@ -40,7 +40,6 @@ from .person import Person
 from .place_description import PlaceDescription
 from .relationship import Relationship, RelationshipType
 from .resource import Resource
-from .schemas import extensible
 from .source_description import ResourceType, SourceDescription
 from .textvalue import TextValue
 from .uri import URI
@@ -210,7 +209,6 @@ class TypeCollection(Generic[T]):
 
 
 
-@extensible()
 class GedcomX:
     """
     Main GedcomX Object representing a Genealogy. Stores collections of Top Level Gedcom-X Types.
@@ -514,9 +512,87 @@ class GedcomX:
         return combined
 
     @property
-    def _as_dict(self) -> dict[str, Any]:
+    def _serializer(self) -> Optional[dict]:
+        """Return a JSON-compatible dict for this GedcomX instance."""
         from .serialization import Serialization
-        return Serialization.serialize(self)
+        result: dict[str, Any] = {}
+        if self.id:
+            result["id"] = self.id
+        if self.description:
+            result["description"] = self.description
+        if self.attribution:
+            attr = Serialization.serialize(self.attribution)
+            if attr:
+                result["attribution"] = attr
+        _collections = (
+            ("persons", self.persons),
+            ("relationships", self.relationships),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("agents", self.agents),
+            ("events", self.events),
+            ("documents", self.documents),
+            ("places", self.places),
+            ("groups", self.groups),
+        )
+        for name, col in _collections:
+            if len(col) > 0:
+                items = [Serialization.serialize(item) for item in col]
+                items = [i for i in items if i is not None]
+                if items:
+                    result[name] = items
+        return result if result else None
+
+    @property
+    def _as_dict(self) -> dict[str, Any]:
+        return self._serializer or {}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "GedcomX":
+        """Deserialize a GedcomX instance from a JSON-compatible dict."""
+        gx = cls(
+            id=data.get("id"),
+            description=data.get("description"),
+        )
+        for pd in data.get("persons", []):
+            try:
+                gx.add_person(Person.model_validate(pd))
+            except Exception:
+                pass
+        for ad in data.get("agents", []):
+            try:
+                gx.add_agent(Agent.model_validate(ad))
+            except Exception:
+                pass
+        from .relationship import Relationship
+        for rd in data.get("relationships", []):
+            try:
+                gx.add_relationship(Relationship.model_validate(rd))
+            except Exception:
+                pass
+        for sd in data.get("sourceDescriptions", []):
+            try:
+                gx.add_source_description(SourceDescription.model_validate(sd))
+            except Exception:
+                pass
+        from .event import Event
+        for ed in data.get("events", []):
+            try:
+                gx.add_event(Event.model_validate(ed))
+            except Exception:
+                pass
+        from .document import Document
+        for dd in data.get("documents", []):
+            try:
+                gx.add_document(Document.model_validate(dd))
+            except Exception:
+                pass
+        from .place_description import PlaceDescription
+        for pld in data.get("places", []):
+            try:
+                gx.add_place_description(PlaceDescription.model_validate(pld))
+            except Exception:
+                pass
+        return gx
         
     @property
     def json(self) -> bytes:

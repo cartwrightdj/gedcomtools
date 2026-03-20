@@ -60,7 +60,28 @@ from .place_reference import PlaceReference
 from .qualifier import Qualifier
 from .relationship import Relationship, RelationshipType
 from .resource import Resource
-from .schemas  import SCHEMA
+from .gx_base import GedcomXModel as _GXModel
+
+
+def _get_class_fields(cls) -> dict:
+    """Return {field_name: annotation} for pydantic GedcomXModel subclasses."""
+    if isinstance(cls, type) and issubclass(cls, _GXModel):
+        return {k: v.annotation for k, v in cls.model_fields.items()}
+    return {}
+
+
+class _SchemaBridge:
+    """Minimal SCHEMA compatibility shim using pydantic model_fields."""
+
+    @staticmethod
+    def get_class_fields(name_or_cls) -> dict | None:
+        if isinstance(name_or_cls, type):
+            f = _get_class_fields(name_or_cls)
+            return f if f else None
+        return None
+
+
+SCHEMA = _SchemaBridge()
 from .source_description import SourceDescription, ResourceType, SourceCitation, Coverage
 from .source_reference import SourceReference
 from .textvalue import TextValue
@@ -141,20 +162,21 @@ class Serialization:
                 if isinstance(obj, enum.Enum):
                     return Serialization.serialize(obj.value)
 
+                # Pydantic models: use model_dump for serialization
+                if isinstance(obj, _GXModel):
+                    result = obj.model_dump(exclude_none=True, mode="json")
+                    return result if result else None
+
                 type_as_dict = {}
-                fields = SCHEMA.get_class_fields(type(obj).__name__)
+                fields = SCHEMA.get_class_fields(type(obj))
                 if fields:
                     for field_name, type_ in fields.items():
                         if hasattr(obj, field_name):
                             if (v := getattr(obj, field_name)) is not None:
                                 if type_ == Resource or type_ == 'Resource':
-                                    if type_ == 'Resource':
-                                        log.error("SCHEMA field '%s' has unresolved string type 'Resource' on %s", field_name, type(obj).__name__)
                                     res = Resource._of_object(target=v)
                                     type_as_dict[field_name] = Serialization.serialize(res.value)
                                 elif type_ == URI or type_ == 'URI':
-                                    if type_ == 'URI':
-                                        log.error("SCHEMA field '%s' has unresolved string type 'URI' on %s", field_name, type(obj).__name__)
                                     uri = URI(target=v)
                                     type_as_dict[field_name] = uri.value
                                 elif (sv := Serialization.serialize(v)) is not None:
@@ -177,7 +199,7 @@ class Serialization:
         def _serialize(value):
             if isinstance(value, (str, int, float, bool, type(None))):
                 return value
-            if (fields := SCHEMA.get_class_fields(type(value).__name__)) is not None:
+            if (fields := SCHEMA.get_class_fields(type(value))) is not None:
                 # Expect your objects expose a snapshot via to_dict
                 return Serialization.serialize(value)
             if isinstance(value, dict):
@@ -317,7 +339,7 @@ class Serialization:
                 ]
 
             # Model objects registered in SCHEMA: walk their fields
-            fields = SCHEMA.get_class_fields(type(x).__name__) or {}
+            fields = SCHEMA.get_class_fields(type(x)) or {}
             if fields:
                 for fname in fields.keys():
                     if not hasattr(x, fname):
@@ -369,7 +391,22 @@ class Serialization:
         """
         with hub.use(deserial_log):
             t0 = perf_counter()
-            class_fields = SCHEMA.get_class_fields(class_type.__name__)
+
+            # Pydantic models: delegate to model_validate
+            if isinstance(class_type, type) and issubclass(class_type, _GXModel):
+                inst = class_type.model_validate(data)
+                log.debug("deserialize[%s]: pydantic model_validate %.3f ms",
+                          class_type.__name__, (perf_counter() - t0) * 1000)
+                return inst
+
+            # Plain classes with a from_dict classmethod (e.g. GedcomX)
+            if isinstance(data, dict) and hasattr(class_type, "from_dict"):
+                inst = class_type.from_dict(data)
+                log.debug("deserialize[%s]: from_dict %.3f ms",
+                          class_type.__name__, (perf_counter() - t0) * 1000)
+                return inst
+
+            class_fields = SCHEMA.get_class_fields(class_type) or {}
 
             result: dict[str, Any] = {}
             pending: list[tuple[str, Any]] = []
@@ -537,7 +574,7 @@ class Serialization:
 
         # Objects via registry
         if isinstance(T, type) and isinstance(value, dict):
-            fields = SCHEMA.get_class_fields(T.__name__) or {}
+            fields = SCHEMA.get_class_fields(T) or {}
             if fields:
                 kwargs = {}
                 for fname, ftype in fields.items():
@@ -618,7 +655,7 @@ class Serialization:
                 return node
 
             # Your model objects (registered in SCHEMA)
-            fields = SCHEMA.get_class_fields(type(node).__name__) or {}
+            fields = SCHEMA.get_class_fields(type(node)) or {}
             if fields:
                 # Apply any queued per-instance setters first (lazy references)
                 try:

@@ -34,6 +34,12 @@ class _ExtEnumMeta(type):
     def __contains__(cls, item: object) -> bool:
         return item in cls._members.values()
 
+    def __instancecheck__(cls, instance: object) -> bool:
+        # Allow isinstance(IdentifierType.Primary, IdentifierType) to return True
+        if isinstance(instance, _EnumItem) and instance.owner is cls:
+            return True
+        return type.__instancecheck__(cls, instance)
+
     # Color('RED') / Color(2) / Color(item)
     def __call__(cls, arg: Any, /, *, by: Literal["auto","name","value"]="auto") -> _EnumItem:
         if isinstance(arg, _EnumItem):

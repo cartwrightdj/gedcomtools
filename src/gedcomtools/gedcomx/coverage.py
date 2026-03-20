@@ -1,41 +1,14 @@
-from typing import Optional
-"""
-======================================================================
- Project: Gedcom-X
- File:    coverage.py
- Author:  David J. Cartwright
- Purpose: 
+from __future__ import annotations
+from typing import ClassVar, Optional
 
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json_ refactor 
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
 from .date import Date
+from .gx_base import GedcomXModel
 from .place_reference import PlaceReference
-from .schemas import extensible
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible()
-class Coverage:
-    identifier = 'http://gedcomx.org/v1/Coverage'
-    version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self,spatial: Optional[PlaceReference], temporal: Optional[Date]) -> None:
-        self.spatial = spatial
-        self.temporal = temporal    
-    
-    # ...existing code...
+class Coverage(GedcomXModel):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/Coverage"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    spatial: Optional[PlaceReference] = None
+    temporal: Optional[Date] = None

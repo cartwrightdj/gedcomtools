@@ -1,192 +1,116 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
-if TYPE_CHECKING:
-    from .person import Person
-"""
-======================================================================
- Project: Gedcom-X
- File:    agent.py
- Author:  David J. Cartwright
- Purpose: 
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json_ refactor
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
+from pydantic import Field, PrivateAttr
 
-"""
-======================================================================
-GEDCOM Module Type Imports
-======================================================================
-"""
 from .address import Address
-from .identifier import Identifier, IdentifierList
+from .gx_base import GedcomXModel
+from .identifier import Identifier, IdentifierList, make_uid
 from .online_account import OnlineAccount
 from .resource import Resource
-from .schemas import extensible
 from .textvalue import TextValue
 from .uri import URI
-from .identifier import make_uid
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible(toplevel=True)
-class Agent:
-    """A GedcomX Agent Data Type.
+if TYPE_CHECKING:
+    from .attribution import Attribution
+    from .note import Note
+    from .person import Person
 
-    Represents an agent entity such as a person, organization, or software 
-    responsible for creating or modifying genealogical data, as defined in 
-    the GedcomX conceptual model.
 
-    Static Methods:
-    
+class Agent(GedcomXModel):
+    """A GedcomX Agent — a person, organisation, or software that created/modified data."""
 
-    Args:
-        id (str, optional): A unique identifier for this agent. If not provided, 
-            one may be generated automatically using `default_id_generator()`.
-        identifiers (IdentifierList, optional): A list of alternate identifiers for this agent.
-        names (List[TextValue], optional): Names associated with the agent. Defaults to an empty list.
-        homepage (URI, optional): A link to the agent's homepage or primary website.
-        openid (URI, optional): The OpenID identifier for the agent.
-        accounts (List[OnlineAccount], optional): Online accounts associated with the agent.
-            Defaults to an empty list.
-        emails (List[URI], optional): Email addresses associated with the agent.
-            Defaults to an empty list.
-        phones (List[Resource], optional): Phone numbers associated with the agent.
-            Defaults to an empty list.
-        addresses (List[Address], optional): Postal addresses associated with the agent.
-            Defaults to an empty list.
-        person (Person, optional): A reference to the person represented 
-            by the agent. Accepts a `Person` object or a `Resource` reference. 
-            Declared as `object` to avoid circular imports.
-        attribution (Attribution, optional): Attribution information related to the agent.
-        uri (Resource, optional): A URI reference for this agent.
-    """
-        
-    def __init__(self, id: Optional[str] = None,
-                    identifiers: Optional[IdentifierList] = None, 
-                    names: Optional[List[TextValue]] = None,
-                    homepage: Optional[URI] = None,
-                    openid: Optional[URI] = None,
-                    accounts: Optional[List[OnlineAccount]] = None,
-                    emails: Optional[List[URI]] = None,
-                    phones: Optional[List[URI]] = None,
-                    addresses: Optional[List[Address]] = None, 
-                    person: Optional[Union[Resource,Person]] = None, # should be of Type 'Person', 'object' to avoid circular imports
-                    attribution: Optional[object] = None, # Added for compatibility with GEDCOM5/7 Imports
-                    ): 
-        
-        
-        self.id = id if id else make_uid()
-        self.identifiers = identifiers or IdentifierList()
-        self.names = names if names else []
-        self.homepage = homepage or None
-        self.openid = openid or None
-        self.accounts = accounts or []
-        self.emails = emails or []
-        self.phones = phones or []
-        self.addresses = addresses if addresses else []
-        self.person = person
-        self.xnotes = []
-        self.attribution = attribution or None
-        self._uri = URI(fragment=self.id) if self.id else None
-  
-    def _append_to_name(self, text_to_append: str):
+    # Internal URI (not serialized)
+    _uri: Optional[URI] = PrivateAttr(default=None)
+
+    id: str = Field(default_factory=make_uid)
+    identifiers: IdentifierList = Field(default_factory=IdentifierList)
+    names: List[TextValue] = Field(default_factory=list)
+    homepage: Optional[URI] = None
+    openid: Optional[URI] = None
+    accounts: List[OnlineAccount] = Field(default_factory=list)
+    emails: List[URI] = Field(default_factory=list)
+    phones: List[URI] = Field(default_factory=list)
+    addresses: List[Address] = Field(default_factory=list)
+    person: Optional[Any] = None        # Person | Resource (avoids circular import)
+    attribution: Optional[Any] = None   # Attribution
+    xnotes: List[Any] = Field(default_factory=list)
+
+    def model_post_init(self, __context: object) -> None:
+        self._uri = URI(fragment=self.id)
+
+    # ------------------------------------------------------------------
+    # Mutation helpers
+    # ------------------------------------------------------------------
+
+    def _append_to_name(self, text_to_append: str) -> None:
         if self.names and self.names[0] and self.names[0].value:
             self.names[0].value = self.names[0].value + text_to_append
         elif self.names and self.names[0]:
             self.names[0].value = text_to_append
         else:
-            raise ValueError() #TODO
+            raise ValueError("Agent has no names to append to")
 
-    def add_address(self, address_to_add: Address):
-        """Add an Address to the agent, skipping exact duplicates.
-
-        Raises:
-            ValueError: If the argument is not an Address instance.
-        """
-        if address_to_add and isinstance(address_to_add, Address):
-            for current_address in self.addresses:
-                if address_to_add == current_address:
-                    return False
-            self.addresses.append(address_to_add)
-        else:
+    def add_address(self, address_to_add: Address) -> None:
+        if not isinstance(address_to_add, Address):
             raise ValueError(f"address must be of type Address, not {type(address_to_add)}")
-        
-    def add_name(self, name_to_add: TextValue):
-        """Add a name (TextValue or str) to the agent, skipping duplicates.
+        for current in self.addresses:
+            if address_to_add == current:
+                return
+        self.addresses.append(address_to_add)
 
-        Raises:
-            ValueError: If the argument is not a str or TextValue, or the value is empty.
-        """
-        if isinstance(name_to_add,str): name_to_add = TextValue(value=name_to_add)
-        if name_to_add and isinstance(name_to_add,TextValue):
-            for current_name in self.names:
-                if name_to_add == current_name:
-                    return
-            if name_to_add.value is None or name_to_add == '':
-                raise ValueError("name value must not be empty")
-            self.names.append(name_to_add)
-        else:
-            raise ValueError(f'name must be of type str or TextValue, recived {type(name_to_add)}')
-    
-    def add_note(self, note_to_add):
-        """Append a Note to the agent's note list.
+    def add_name(self, name_to_add: Union[TextValue, str]) -> None:
+        if isinstance(name_to_add, str):
+            name_to_add = TextValue(value=name_to_add)
+        if not isinstance(name_to_add, TextValue):
+            raise ValueError(f"name must be str or TextValue, got {type(name_to_add)}")
+        if name_to_add.value is None or name_to_add.value == "":
+            raise ValueError("name value must not be empty")
+        for current in self.names:
+            if name_to_add == current:
+                return
+        self.names.append(name_to_add)
 
-        Raises:
-            ValueError: If the argument is not a Note instance.
-        """
+    def add_note(self, note_to_add: Any) -> None:
         from .note import Note
-        if note_to_add and isinstance(note_to_add,Note):
-            self.xnotes.append(note_to_add)
-        else:
-            raise ValueError(f'note must be of type Note, recived {type(note_to_add)}')
-    
-    def add_identifier(self, identifier_to_add: Identifier):
-        """Append an Identifier to the agent's identifier list."""
-        self.identifiers.append(identifier_to_add)
-    
-    def __str__(self):
-        """
-        Return a human-readable string representation of the Agent.
+        if not isinstance(note_to_add, Note):
+            raise ValueError(f"note must be of type Note, got {type(note_to_add)}")
+        self.xnotes.append(note_to_add)
 
-        Returns:
-            str: A concise description including ID, primary name (if any), and type of agent.
-        """
+    def add_identifier(self, identifier_to_add: Identifier) -> None:
+        self.identifiers.append(identifier_to_add)
+
+    # ------------------------------------------------------------------
+    # Dunder methods
+    # ------------------------------------------------------------------
+
+    def __str__(self) -> str:
         primary_name = self.names[0].value if self.names else "Unnamed Agent"
         homepage_str = f", homepage={self.homepage}" if self.homepage else ""
         return f"Agent(id={self.id}, name='{primary_name}'{homepage_str})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Agent):
             return NotImplemented
         return (
-            self.id == other.id and
-            self.identifiers == other.identifiers and
-            self.names == other.names and
-            self.homepage == other.homepage and
-            self.openid == other.openid and
-            self.accounts == other.accounts and
-            self.emails == other.emails and
-            self.phones == other.phones and
-            self.addresses == other.addresses and
-            self.person == other.person and
-            self.attribution == other.attribution and
-            self.uri == other.uri
+            self.id == other.id
+            and self.identifiers == other.identifiers
+            and self.names == other.names
+            and self.homepage == other.homepage
+            and self.openid == other.openid
+            and self.accounts == other.accounts
+            and self.emails == other.emails
+            and self.phones == other.phones
+            and self.addresses == other.addresses
+            and self.person == other.person
+            and self.attribution == other.attribution
+            and self._uri == other._uri
         )
 
     def shares_name(self, other: "Agent") -> bool:
-        """Return True if this agent and other share at least one name value."""
         if not isinstance(other, Agent):
             return False
-        self_names  = {n.value for n in self.names  if hasattr(n, "value") and n.value}
+        self_names = {n.value for n in self.names if hasattr(n, "value") and n.value}
         other_names = {n.value for n in other.names if hasattr(n, "value") and n.value}
         return bool(self_names & other_names)

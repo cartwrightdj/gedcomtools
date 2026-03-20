@@ -780,7 +780,13 @@ class GedcomConverter:
                         self.object_map[record.level] = gxobject
 
                     elif isinstance(self.object_map[record.level-1], SourceDescription):
-                        gxobject = Event(type=fact_type,sources=[self.object_map[record.level-1]])
+                        sd = self.object_map[record.level-1]
+                        source_ref = SourceReference(description=sd)
+                        try:
+                            event_type = EventType(fact_type.value)
+                        except ValueError:
+                            event_type = None
+                        gxobject = Event(type=event_type, sources=[source_ref])
                         self.gedcomx.add_event(gxobject)
                         self.object_map[record.level] = gxobject
                     else:
