@@ -1,38 +1,18 @@
-"""
-======================================================================
- Project: Gedcom-X
- File:    source_citation.py
- Author:  David J. Cartwright
- Purpose: 
+from __future__ import annotations
+from typing import ClassVar, Optional
 
- Created: 2025-07-25
- Updated:
-   - 2025-09-09 added schema_class
- 
-   
-======================================================================
-"""
+from .gx_base import GedcomXModel
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .schemas import extensible
-from typing import Optional
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible()
-class SourceCitation:
-    identifier = 'http://gedcomx.org/v1/SourceCitation'
-    version = 'http://gedcomx.org/conceptual-model/v1'
-    
-    def __init__(self, lang: Optional[str], value: str) -> None:
-        self.lang = lang if lang else 'en'
-        self.value = value
-    
+class SourceCitation(GedcomXModel):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/SourceCitation"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    lang: Optional[str] = "en"
+    value: str = ""
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang, check_nonempty
+        check_lang(result, "lang", self.lang)
+        check_nonempty(result, "value", self.value)

@@ -10,7 +10,7 @@
 
 ======================================================================
 """
-from .schemas import SCHEMA
+from .gx_base import GedcomXModel
 from .extensible import Extensible, import_plugins
 
 r = import_plugins(
@@ -37,7 +37,6 @@ from .event import Event
 from .event import EventType
 from .event import EventRole
 
-from. extensible import _ExtraField
 from .fact import Fact
 from .fact import FactQualifier
 from .fact import FactType
@@ -65,12 +64,8 @@ from .zip import GedcomZip
 from .textvalue import TextValue
 
 from .resource import Resource
-SCHEMA.set_resource_class(Resource)
 from .uri import URI
-SCHEMA.set_uri_class(URI)
+from .validation import ValidationIssue, ValidationResult
 
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
-#from ..xxxtranslation import g7toXtable
-
-SCHEMA.normalize_all()
 

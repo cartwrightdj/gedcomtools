@@ -1,28 +1,10 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, List, Optional
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    Event.py
- Author:  David J. Cartwright
- Purpose: Python Object representation of GedcomX Event Type, EventType, EventRole, EventRoleType Types
+from pydantic import Field
 
- Created: 2025-08-25
- Updated:
-   - 2025-08-31: fixed mutible [] in init, replaced List[Identifer] with IdentifierList
-   - 2025-09-03: _from_json_ refactor
-   - 2025-09-04: changed _as_dict_ to std dict creation and removed call to serailization
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Type Imports
-======================================================================
-"""
 from .attribution import Attribution
 from .conclusion import ConfidenceLevel, Conclusion
 from .date import Date
@@ -31,61 +13,51 @@ from .identifier import IdentifierList
 from .note import Note
 from .place_reference import PlaceReference
 from .resource import Resource
-from .schemas import extensible
 from .source_reference import SourceReference
 from .subject import Subject
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible()
+
 class EventRoleType(Enum):
     Principal = "http://gedcomx.org/Principal"
     Participant = "http://gedcomx.org/Participant"
     Official = "http://gedcomx.org/Official"
     Witness = "http://gedcomx.org/Witness"
-    
+
     @property
     def description(self):
         descriptions = {
-            EventRoleType.Principal: "The person is the principal person of the event. For example, the principal of a birth event is the person that was born.",
+            EventRoleType.Principal: "The person is the principal person of the event.",
             EventRoleType.Participant: "A participant in the event.",
             EventRoleType.Official: "A person officiating the event.",
-            EventRoleType.Witness: "A witness of the event."
+            EventRoleType.Witness: "A witness of the event.",
         }
         return descriptions.get(self, "No description available.")
 
-@extensible()
-class EventRole(Conclusion):
-    identifier = 'http://gedcomx.org/v1/EventRole'
-    version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self,
-                 id: Optional[str] = None,
-                 lang: Optional[str] = None,
-                 sources: Optional[List[SourceReference]] = None,
-                 analysis: Optional[Resource] = None,
-                 notes: Optional[List[Note]] = None,
-                 confidence: Optional[ConfidenceLevel] = None,
-                 attribution: Optional[Attribution] = None,
-                 person: Optional[Resource] = None,
-                 type: Optional[EventRoleType] = None,
-                 details: Optional[str] = None) -> None:
-        super().__init__(id, lang, sources, analysis, notes, confidence, attribution)
-        self.person = person
-        self.type = type
-        self.details = details
-        
+class EventRole(Conclusion):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/EventRole"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    person: Optional[Any] = None
+    type: Optional[EventRoleType] = None
+    details: Optional[str] = None
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.type is not None and not isinstance(self.type, EventRoleType):
+            result.error("type", f"Expected EventRoleType, got {type(self.type).__name__}: {self.type!r}")
+        if self.person is None:
+            result.warn("person", "EventRole has no person")
+        else:
+            from .person import Person
+            check_instance(result, "person", self.person, Person, Resource)
+
     def __str__(self) -> str:
         parts = []
         if self.type is not None:
-            # assume enums expose .name
             parts.append(f"type={getattr(self.type, 'name', str(self.type))}")
         if self.person is not None:
-            # assume classes have meaningful __str__
             parts.append(f"person={self.person}")
         if self.details:
             parts.append(f"details={self.details!r}")
@@ -94,7 +66,6 @@ class EventRole(Conclusion):
         return f"EventRole({', '.join(parts)})" if parts else "EventRole()"
 
     def __repr__(self) -> str:
-        # assume enums expose .name and .value
         if self.type is not None:
             tcls = self.type.__class__.__name__
             tname = getattr(self.type, "name", str(self.type))
@@ -110,7 +81,8 @@ class EventRole(Conclusion):
             f"person={self.person!r}, "
             f"details={self.details!r})"
         )
-    
+
+
 class EventType(Enum):
     Adoption = "http://gedcomx.org/Adoption"
     AdultChristening = "http://gedcomx.org/AdultChristening"
@@ -146,8 +118,8 @@ class EventType(Enum):
     Naturalization = "http://gedcomx.org/Naturalization"
     Ordination = "http://gedcomx.org/Ordination"
     Retirement = "http://gedcomx.org/Retirement"
-    MarriageSettlment = 'https://gedcom.io/terms/v7/MARS'
-    
+    MarriageSettlment = "https://gedcom.io/terms/v7/MARS"
+
     @property
     def description(self):
         descriptions = {
@@ -158,17 +130,17 @@ class EventType(Enum):
             EventType.BarMitzvah: "A bar mitzvah event.",
             EventType.BatMitzvah: "A bat mitzvah event.",
             EventType.Birth: "A birth event.",
-            EventType.Blessing: "An official blessing event, such as at the hands of a clergy member or at another religious rite.",
+            EventType.Blessing: "An official blessing event.",
             EventType.Burial: "A burial event.",
             EventType.Census: "A census event.",
-            EventType.Christening: "A christening event at birth. Note: use AdultChristening for a christening event as an adult.",
+            EventType.Christening: "A christening event at birth.",
             EventType.Circumcision: "A circumcision event.",
-            EventType.Confirmation: "A confirmation event (or other rite of initiation) in a church or religion.",
+            EventType.Confirmation: "A confirmation event.",
             EventType.Cremation: "A cremation event after death.",
             EventType.Death: "A death event.",
             EventType.Divorce: "A divorce event.",
             EventType.DivorceFiling: "A divorce filing event.",
-            EventType.Education: "An education or educational achievement event (e.g., diploma, graduation, scholarship, etc.).",
+            EventType.Education: "An education or educational achievement event.",
             EventType.Engagement: "An engagement to be married event.",
             EventType.Emigration: "An emigration event.",
             EventType.Excommunication: "An excommunication event from a church.",
@@ -180,24 +152,16 @@ class EventType(Enum):
             EventType.MilitaryAward: "A military award event.",
             EventType.MilitaryDischarge: "A military discharge event.",
             EventType.Mission: "A mission event.",
-            EventType.MoveFrom: "An event of a move (i.e., change of residence) from a location.",
-            EventType.MoveTo: "An event of a move (i.e., change of residence) to a location.",
-            EventType.Naturalization: "A naturalization event (i.e., acquisition of citizenship and nationality).",
+            EventType.MoveFrom: "An event of a move from a location.",
+            EventType.MoveTo: "An event of a move to a location.",
+            EventType.Naturalization: "A naturalization event.",
             EventType.Ordination: "An ordination event.",
-            EventType.Retirement: "A retirement event."
+            EventType.Retirement: "A retirement event.",
         }
         return descriptions.get(self, "No description available.")
 
     @staticmethod
     def guess(description):
-        """Guess an EventType from a free-text description using keyword matching.
-
-        Args:
-            description: A free-text string describing the event type.
-
-        Returns:
-            The matching EventType, or None if no keyword is found.
-        """
         keywords_to_event_type = {
             "adoption": EventType.Adoption,
             "christening": EventType.Christening,
@@ -234,41 +198,30 @@ class EventType(Enum):
             "ordination": EventType.Ordination,
             "retirement": EventType.Retirement,
         }
-
         description_lower = description.lower()
-
         for keyword, event_type in keywords_to_event_type.items():
             if keyword in description_lower:
                 return event_type
+        return None
 
-        return None  # Default to UNKNOWN if no match is found
 
-@extensible(toplevel=True)
 class Event(Subject):
-    identifier = 'http://gedcomx.org/v1/Event'
-    version = 'http://gedcomx.org/conceptual-model/v1'
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/Event"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    def __init__(self,
-                 id: Optional[str] = None,
-                 lang: Optional[str] = None,
-                 sources: Optional[List[SourceReference]] = None,
-                 analysis: Optional[Resource] = None,
-                 notes: Optional[List[Note]] = None,
-                 confidence: Optional[ConfidenceLevel] = None,
-                 attribution: Optional[Attribution] = None,
-                 extracted: Optional[bool] = False,
-                 evidence: Optional[List[EvidenceReference]] = None,
-                 media: Optional[List[SourceReference]] = None,
-                 #identifiers: Optional[List[Identifier]] = [],
-                 identifiers: Optional[IdentifierList] = None,
-                 type: Optional[EventType] = None,
-                 date: Optional[Date] = None,
-                 place: Optional[PlaceReference] = None,
-                 roles: Optional[List[EventRole]] = None) -> None:
-        super().__init__(id, lang, sources, analysis, notes, confidence, attribution, extracted, evidence, media, identifiers)
+    type: Optional[EventType] = None
+    date: Optional[Date] = None
+    place: Optional[PlaceReference] = None
+    roles: List[EventRole] = Field(default_factory=list)
 
-        self.type = type if type and isinstance(type, EventType) else None
-        self.date = date if date and isinstance(date, Date) else None               
-        self.place = place if place and isinstance(place, PlaceReference) else None
-        self.roles = roles if roles and isinstance(roles, list) else []
-    
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.type is not None and not isinstance(self.type, EventType):
+            result.error("type", f"Expected EventType, got {type(self.type).__name__}: {self.type!r}")
+        if self.date is None and self.place is None:
+            result.warn("", "Event has neither date nor place")
+        check_instance(result, "date", self.date, Date)
+        check_instance(result, "place", self.place, PlaceReference)
+        for i, role in enumerate(self.roles):
+            check_instance(result, f"roles[{i}]", role, EventRole)

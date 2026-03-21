@@ -1,57 +1,25 @@
 from __future__ import annotations
-import warnings
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
-if TYPE_CHECKING:
-    from .document import Document
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
+from pydantic import Field, PrivateAttr
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    SourceDescription.py
- Author:  David J. Cartwright
- Purpose: 
-
- Created: 2025-07-25
- Updated:
-   - 2025-08-31: _as_dict_ refactored to ignore empty fields, changed id creation to make_uid()
-    - 2025-09-01: filename PEP8 standard, imports changed accordingly
-    - 2025-09-09: added schema_class
- 
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
 from .agent import Agent
 from .attribution import Attribution
 from .coverage import Coverage
 from .date import Date
-from .identifier import Identifier, IdentifierList
-from .identifier import make_uid
-from ..glog import get_logger
+from .gx_base import GedcomXModel
+from .identifier import Identifier, IdentifierList, make_uid
 from .note import Note
 from .resource import Resource
-from .schemas import extensible
 from .source_citation import SourceCitation
 from .source_reference import SourceReference
 from .textvalue import TextValue
 from .uri import URI
-"""
-======================================================================
-Logging
-======================================================================
-"""
-log = get_logger(__name__)
-serial_log = "gedcomx.serialization"
-deserial_log = "gedcomx.deserialization"
-#=====================================================================
+
+if TYPE_CHECKING:
+    from .document import Document
 
 
 class ResourceType(Enum):
@@ -59,181 +27,113 @@ class ResourceType(Enum):
     PhysicalArtifact = "http://gedcomx.org/PhysicalArtifact"
     DigitalArtifact = "http://gedcomx.org/DigitalArtifact"
     Record = "http://gedcomx.org/Record"
-    Person = "http://gedcomx.org/Person"    
-    
+    Person = "http://gedcomx.org/Person"
+
     @property
-    def description(self):
+    def description(self) -> str:
         descriptions = {
-            ResourceType.Collection: "A collection of genealogical resources. A collection may contain physical artifacts (such as a collection of books in a library), records (such as the 1940 U.S. Census), or digital artifacts (such as an online genealogical application).",
+            ResourceType.Collection: "A collection of genealogical resources.",
             ResourceType.PhysicalArtifact: "A physical artifact, such as a book.",
-            ResourceType.DigitalArtifact: "A digital artifact, such as a digital image of a birth certificate or other record.",
-            ResourceType.Record: "A historical record, such as a census record or a vital record."
+            ResourceType.DigitalArtifact: "A digital artifact, such as a digital image.",
+            ResourceType.Record: "A historical record.",
         }
         return descriptions.get(self, "No description available.")
 
-@extensible(toplevel=True)    
-class SourceDescription:
-    """Description of a genealogical information source.
 
-    See: http://gedcomx.org/v1/SourceDescription
+class SourceDescription(GedcomXModel):
+    """Description of a genealogical information source."""
 
-    Args:
-        id (str | None): Unique identifier for this `SourceDescription`.
-        resourceType (ResourceType | None): Type/category of the resource being
-            described (e.g., digital artifact, physical artifact).
-        citations (list[SourceCitation] | None): Citations that reference or
-            justify this source description.
-        mediaType (str | None): IANA media (MIME) type of the resource
-            (e.g., ``"application/pdf"``).
-        about (URI | None): Canonical URI that the description is about.
-        mediator (Resource | None): The mediator resource (if any) involved in
-            providing access to the source.
-        publisher (Resource | Agent | None): Publisher of the resource.
-        authors (list[Resource] | None): Authors/creators of the resource.
-        sources (list[SourceReference] | None): Other sources this description
-            derives from or references.
-        analysis (Resource | None): Analysis document associated with the
-            resource (often a `Document`; kept generic to avoid circular imports).
-        componentOf (SourceReference | None): Reference to a parent/containing
-            source (this is a component/child of that source).
-        titles (list[TextValue] | None): One or more titles for the resource.
-        notes (list[Note] | None): Human-authored notes about the resource.
-        attribution (Attribution | None): Attribution metadata for who supplied
-            or curated this description.
-        rights (list[Resource] | None): Rights statements or licenses.
-        coverage (list[Coverage] | None): Spatial/temporal coverage of the
-            source’s content.
-        descriptions (list[TextValue] | None): Short textual summaries or
-            descriptions.
-        identifiers (IdentifierList | None): Alternative identifiers for the
-            resource (DOI, ARK, call numbers, etc.).
-        created (Date | None): Creation date of the resource.
-        modified (Date | None): Last modified date of the resource.
-        published (Date | None): Publication/release date of the resource.
-        repository (Agent | None): Repository or agency that holds the resource.
-        max_note_count (int): Maximum number of notes to retain/emit. Defaults to 20.
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/SourceDescription"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    Raises:
-        ValueError: If `id` is not a valid UUID.
+    _uri: Optional[URI] = PrivateAttr(default=None)
+    _place_holder: bool = PrivateAttr(default=False)
 
-    Attributes:
-        identifier (str): Gedcom-X specification identifier for this type.
-    """
+    id: str = Field(default_factory=make_uid)
+    resourceType: Optional[ResourceType] = None
+    citations: List[SourceCitation] = Field(default_factory=list)
+    mediaType: Optional[str] = None
+    about: Optional[URI] = None
+    mediator: Optional[Union[Resource, Agent]] = None
+    publisher: Optional[Union[Resource, Agent]] = None
+    authors: List[Resource] = Field(default_factory=list)
+    sources: List[SourceReference] = Field(default_factory=list)
+    analysis: Optional[Any] = None          # Resource | Document
+    componentOf: Optional[SourceReference] = None
+    titles: List[TextValue] = Field(default_factory=list)
+    notes: List[Note] = Field(default_factory=list)
+    attribution: Optional[Attribution] = None
+    rights: List[Resource] = Field(default_factory=list)
+    coverage: List[Coverage] = Field(default_factory=list)
+    descriptions: List[TextValue] = Field(default_factory=list)
+    identifiers: IdentifierList = Field(default_factory=IdentifierList)
+    created: Optional[Union[Date, str]] = None
+    modified: Optional[Union[Date, str]] = None
+    published: Optional[Union[Date, str]] = None
+    repository: Optional[Union[Resource, Agent]] = None
 
-    identifier = "http://gedcomx.org/v1/SourceDescription"
-    version = 'http://gedcomx.org/conceptual-model/v1'
-    
-    def __init__(self, id: Optional[str] = None,
-                 resourceType: Optional[ResourceType] = None,
-                 citations: Optional[List[SourceCitation]] = None,
-                 mediaType: Optional[str] = None,
-                 about: Optional[URI] = None,
-                 mediator: Optional[Union[Resource,Agent]] = None,
-                 publisher: Optional[Union[Resource,Agent]] = None,
-                 authors: Optional[List[Resource]] = None,
-                 sources: Optional[List[SourceReference]] = None,
-                 analysis: Optional[Union[Resource,Document]] = None,  
-                 componentOf: Optional[SourceReference] = None,
-                 titles: Optional[List[TextValue]] = None,
-                 notes: Optional[List[Note]] = None,
-                 attribution: Optional[Attribution] = None,
-                 rights: Optional[List[Resource]] = None,
-                 coverage: Optional[List[Coverage]] = None,
-                 descriptions: Optional[List[TextValue]] = None,
-                 identifiers: Optional[IdentifierList] = None,
-                 created: Optional[Date] = None,
-                 modified: Optional[Date] = None,
-                 published: Optional[Date] = None,
-                 repository: Optional[Union[Resource,Agent]] = None,
-                 ):
-        
-        
-        self.id = id if id else make_uid()
-        self.resourceType = resourceType
-        self.citations = citations or []
-        self.mediaType = mediaType
-        self.about = about
-        self.mediator = mediator
-        self._publisher = publisher 
-        self.authors = authors or []
-        self.sources = sources or []
-        self.analysis = analysis
-        self.componentOf = componentOf
-        self.titles = titles or []
-        self.notes = notes or []
-        self.attribution = attribution
-        self.rights = rights or []
-        self.coverage = coverage or []
-        self.descriptions = descriptions or []
-        self.identifiers = identifiers or IdentifierList()
-        self.created = created
-        self.modified = modified
-        self.published = published
-        self.repository = repository
-  
-        self._uri = URI(fragment=id) if id else None #TODO Should i take care of this in the collections?
- 
-    
-    @property
-    def publisher(self) -> Union[Resource, Agent, None]:
-        """Return the publisher (Resource or Agent) for this source."""
-        return self._publisher
+    def model_post_init(self, __context: object) -> None:
+        self._uri = URI(fragment=self.id)
 
-    @publisher.setter
-    def publisher(self, value: Union[Resource, Agent]):
-        """Set the publisher; must be a Resource, Agent, or None."""
-        if value is None:
-            self._publisher = None
-        elif isinstance(value,Resource):
-            self._publisher = value
-        elif isinstance(value,Agent):
-            self._publisher = value
-        else:
-            raise ValueError(f"'publisher' must be of type 'URI' or 'Agent', type: {type(value)} was provided")
-    
-    def add_description(self, desccription_to_add: TextValue):
-        """Add a TextValue description to the source, skipping duplicates."""
-        if desccription_to_add and isinstance(desccription_to_add,TextValue):
-            for current_description in self.descriptions:
-                if desccription_to_add == current_description:
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_mime
+        if not self.titles:
+            result.warn("titles", "SourceDescription has no titles")
+        if self.resourceType is not None and not isinstance(self.resourceType, ResourceType):
+            result.error("resourceType", f"Expected ResourceType, got {type(self.resourceType).__name__}: {self.resourceType!r}")
+        if self.mediaType is not None:
+            check_mime(result, "mediaType", self.mediaType)
+        check_instance(result, "about", self.about, URI)
+        if not self.citations:
+            result.warn("citations", "SourceDescription has no citations")
+        for i, c in enumerate(self.citations):
+            check_instance(result, f"citations[{i}]", c, SourceCitation)
+        check_instance(result, "mediator", self.mediator, Resource, Agent)
+        check_instance(result, "publisher", self.publisher, Resource, Agent)
+        check_instance(result, "repository", self.repository, Resource, Agent)
+        for i, a in enumerate(self.authors):
+            check_instance(result, f"authors[{i}]", a, Resource)
+        check_instance(result, "attribution", self.attribution, Attribution)
+        if self.analysis is not None:
+            from .document import Document
+            check_instance(result, "analysis", self.analysis, Resource, Document)
+
+    def add_description(self, description_to_add: TextValue) -> None:
+        if description_to_add and isinstance(description_to_add, TextValue):
+            for current in self.descriptions:
+                if description_to_add == current:
                     return
-            self.descriptions.append(desccription_to_add)
+            self.descriptions.append(description_to_add)
 
-    def add_identifier(self, identifier_to_add: Identifier):
-        """Append an Identifier to the source's identifier list."""
-        if identifier_to_add and isinstance(identifier_to_add,Identifier):
+    def add_identifier(self, identifier_to_add: Identifier) -> None:
+        if identifier_to_add and isinstance(identifier_to_add, Identifier):
             self.identifiers.append(identifier_to_add)
-    
-    def add_note(self, note_to_add: Note):
-        """Add a Note to the source, skipping duplicates and notes with no text."""
-        if note_to_add is not None and note_to_add.text is not None and note_to_add.text != '':
-            if note_to_add and isinstance(note_to_add,Note):
-                for existing in self.notes:
-                    if note_to_add == existing:
-                        return False
-                self.notes.append(note_to_add)
-            return      
-    
-    def add_source_reference(self, source_to_add: SourceReference):
-        """Add a SourceReference to the source, skipping duplicates."""
-        if source_to_add and isinstance(object,SourceReference):
-            for current_source in self.sources:
-                if current_source == source_to_add:
+
+    def add_note(self, note_to_add: Note) -> None:
+        if note_to_add is None or note_to_add.text is None or note_to_add.text == "":
+            return
+        if not isinstance(note_to_add, Note):
+            return
+        for existing in self.notes:
+            if note_to_add == existing:
+                return
+        self.notes.append(note_to_add)
+
+    def add_source_reference(self, source_to_add: SourceReference) -> None:
+        if source_to_add and isinstance(source_to_add, SourceReference):
+            for current in self.sources:
+                if current == source_to_add:
                     return
             self.sources.append(source_to_add)
 
-    def add_title(self, title_to_add: TextValue):
-        """Add a title (TextValue or str) to the source, skipping duplicates.
-
-        Raises:
-            ValueError: If the argument cannot be converted to a TextValue.
-        """
-        if isinstance(title_to_add,str): title_to_add = TextValue(value=title_to_add)
+    def add_title(self, title_to_add: Union[TextValue, str]) -> None:
+        if isinstance(title_to_add, str):
+            title_to_add = TextValue(value=title_to_add)
         if title_to_add and isinstance(title_to_add, TextValue):
-            for current_title in self.titles:
-                if title_to_add == current_title:
-                    return False
+            for current in self.titles:
+                if title_to_add == current:
+                    return
             self.titles.append(title_to_add)
         else:
             raise ValueError(f"Cannot add title of type {type(title_to_add)}")
-            

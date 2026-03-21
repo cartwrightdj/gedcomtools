@@ -250,7 +250,7 @@ def _maybe_as_dict(obj: Any) -> Any:
             return obj.model_dump()
         except Exception:
             pass
-    if is_dataclass(obj):
+    if is_dataclass(obj) and not isinstance(obj, type):
         try:
             return asdict(obj)
         except Exception:
@@ -904,7 +904,7 @@ class Shell:
         rebuilding handlers/run_dir safely. This command will set env vars for convenience and
         explain what to do. (If you want true runtime switching, I can extend LoggingManager.)
         """
-        #mgr = getattr(self, "mgr", None)
+        mgr = getattr(self, "mgr", None)
         if mgr is None:
             print("Logging is not configured (no manager).")
             return
@@ -1558,7 +1558,7 @@ class Shell:
         schema json [ClassName]
         """
         if not args or args[0] in ("help", "-h", "--help"):
-            print(self._cmd_schema.__doc__.strip())
+            print((self._cmd_schema.__doc__ or "").strip())
             return
 
         sub, *rest = args
@@ -1999,6 +1999,9 @@ class Shell:
                 argo_graph_files_folder = Path(args[1])
                 argo_graph_files_folder.mkdir(parents=True, exist_ok=True)
                 print('Writing Argo Graph Files')
+                if self.root is None:
+                    print("No data loaded.")
+                    return
                 file_specs = make_arango_graph_files(self.root)
                 persons_file = argo_graph_files_folder / 'persons.jsonl'
                 with persons_file.open("w", encoding="utf-8") as f:

@@ -45,7 +45,29 @@ Base GEDCOM element
 from sys import version_info
 from gedcomtools.gedcom5.helpers import deprecated
 
-from .tags import *
+from .tags import (
+    GEDCOM_TAG_BIRTH,
+    GEDCOM_TAG_BURIAL,
+    GEDCOM_TAG_CENSUS,
+    GEDCOM_TAG_CHANGE,
+    GEDCOM_TAG_CONCATENATION,
+    GEDCOM_TAG_CONTINUED,
+    GEDCOM_TAG_DATE,
+    GEDCOM_TAG_DEATH,
+    GEDCOM_TAG_FAMILY,
+    GEDCOM_TAG_FAMILY_CHILD,
+    GEDCOM_TAG_FILE,
+    GEDCOM_TAG_GIVEN_NAME,
+    GEDCOM_TAG_INDIVIDUAL,
+    GEDCOM_TAG_NAME,
+    GEDCOM_TAG_OBJECT,
+    GEDCOM_TAG_OCCUPATION,
+    GEDCOM_TAG_PLACE,
+    GEDCOM_TAG_PRIVATE,
+    GEDCOM_TAG_SEX,
+    GEDCOM_TAG_SOURCE,
+    GEDCOM_TAG_SURNAME,
+)
 
 class Element(object):
     """GEDCOM element

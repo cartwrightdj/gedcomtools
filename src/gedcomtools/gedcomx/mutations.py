@@ -195,8 +195,7 @@ fact_event_table = {
         # no Event
     },
     "MARS":{
-        "Fact":EventType.MarriageSettlment
-
+        "Event": EventType.MarriageSettlment
     },
     "SEPA": {
         "Fact": FactType.Separation,
@@ -234,7 +233,6 @@ class GedcomXSourceOrDocument(GedcomXObject):
 
 class GedcomXEventOrFact(GedcomXObject):
     def __new__(cls,record: Gedcom5xRecord, object_stack: dict | None = None) -> object:
-        super().__init__(record)
         if record.tag in fact_event_table.keys():
 
             if 'Fact' in fact_event_table[record.tag].keys():
@@ -244,7 +242,9 @@ class GedcomXEventOrFact(GedcomXObject):
                 obj = Event(type=fact_event_table[record.tag]['Event'])
                 return obj
             else:
-                raise ValueError
+                raise ValueError(
+                    f"tag '{record.tag}' found in map but has neither 'Fact' nor 'Event' key"
+                )
         else:
             raise ValueError(f"{record.tag} not found in map")
 

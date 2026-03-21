@@ -1,41 +1,27 @@
-from typing import Optional, TYPE_CHECKING
-"""
-======================================================================
- Project: Gedcom-X
- File:    evidence_reference.py
- Author:  David J. Cartwright
- Purpose: 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, Union
 
- Created: 2025-08-25
- Updated:
-    - 2025-09-09: added schema_class
-   
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Type Imports
-======================================================================
-"""
 from .attribution import Attribution
+from .gx_base import GedcomXModel
 from .resource import Resource
-from .schemas import extensible
+
 if TYPE_CHECKING:
     from .subject import Subject
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible()
-class EvidenceReference:
-    identifier = 'http://gedcomx.org/v1/EvidenceReference'
-    version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self, resource: "Resource | Subject", attribution: Optional[Attribution] = None) -> None:
-        self.resource = resource
-        self.attribution = attribution
+class EvidenceReference(GedcomXModel):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/EvidenceReference"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    resource: Optional[Any] = None       # Resource | Subject
+    attribution: Optional[Attribution] = None
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.resource is None:
+            result.warn("resource", "EvidenceReference has no resource")
+        else:
+            from .subject import Subject
+            check_instance(result, "resource", self.resource, Resource, Subject)
+        check_instance(result, "attribution", self.attribution, Attribution)

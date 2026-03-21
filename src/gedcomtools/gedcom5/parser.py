@@ -119,7 +119,17 @@ from .elements import (
     IndividualRecord, ObjectRecord, RepositoryRecord,
     RootElement, SourceRecord, SubmitterRecord,
 )
-from .tags import *
+from .tags import (
+    GEDCOM_TAG_CONCATENATION,
+    GEDCOM_TAG_FAMILY,
+    GEDCOM_TAG_FILE,
+    GEDCOM_TAG_HEADER,
+    GEDCOM_TAG_INDIVIDUAL,
+    GEDCOM_TAG_OBJECT,
+    GEDCOM_TAG_REPOSITORY,
+    GEDCOM_TAG_SOURCE,
+    GEDCOM_TAG_SUBMITTER,
+)
 
 
 def _normalize_xref(xref: str) -> str:

@@ -60,7 +60,28 @@ from .place_reference import PlaceReference
 from .qualifier import Qualifier
 from .relationship import Relationship, RelationshipType
 from .resource import Resource
-from .schemas  import SCHEMA
+from .gx_base import GedcomXModel as _GXModel
+
+
+def _get_class_fields(cls) -> dict:
+    """Return {field_name: annotation} for pydantic GedcomXModel subclasses."""
+    if isinstance(cls, type) and issubclass(cls, _GXModel):
+        return {k: v.annotation for k, v in cls.model_fields.items()}
+    return {}
+
+
+class _SchemaBridge:
+    """Minimal SCHEMA compatibility shim using pydantic model_fields."""
+
+    @staticmethod
+    def get_class_fields(name_or_cls) -> dict | None:
+        if isinstance(name_or_cls, type):
+            f = _get_class_fields(name_or_cls)
+            return f if f else None
+        return None
+
+
+SCHEMA = _SchemaBridge()
 from .source_description import SourceDescription, ResourceType, SourceCitation, Coverage
 from .source_reference import SourceReference
 from .textvalue import TextValue
@@ -141,29 +162,30 @@ class Serialization:
                 if isinstance(obj, enum.Enum):
                     return Serialization.serialize(obj.value)
 
+                # Pydantic models: use model_dump for serialization
+                if isinstance(obj, _GXModel):
+                    result = obj.model_dump(exclude_none=True, mode="json")
+                    return result if result else None
+
                 type_as_dict = {}
-                fields = SCHEMA.get_class_fields(type(obj).__name__)
+                fields = SCHEMA.get_class_fields(type(obj))
                 if fields:
                     for field_name, type_ in fields.items():
                         if hasattr(obj, field_name):
                             if (v := getattr(obj, field_name)) is not None:
                                 if type_ == Resource or type_ == 'Resource':
-                                    if type_ == 'Resource':
-                                        log.error("SCHEMA field '%s' has unresolved string type 'Resource' on %s", field_name, type(obj).__name__)
                                     res = Resource._of_object(target=v)
                                     type_as_dict[field_name] = Serialization.serialize(res.value)
                                 elif type_ == URI or type_ == 'URI':
-                                    if type_ == 'URI':
-                                        log.error("SCHEMA field '%s' has unresolved string type 'URI' on %s", field_name, type(obj).__name__)
-                                    uri = URI(target=v)
+                                    uri = URI.model_validate({"target": v})
                                     type_as_dict[field_name] = uri.value
                                 elif (sv := Serialization.serialize(v)) is not None:
                                     type_as_dict[field_name] = sv
                         else:
-                            log.warning("%s missing expected field '%s'", type(obj).__name__, field_name)
+                            log.warning("{} missing expected field '{}'", type(obj).__name__, field_name)
                     return type_as_dict if type_as_dict != {} else None
                 else:
-                    log.error("No SCHEMA fields found for %s", type(obj).__name__)
+                    log.error("No SCHEMA fields found for {}", type(obj).__name__)
         return None
 
     @staticmethod
@@ -177,7 +199,7 @@ class Serialization:
         def _serialize(value):
             if isinstance(value, (str, int, float, bool, type(None))):
                 return value
-            if (fields := SCHEMA.get_class_fields(type(value).__name__)) is not None:
+            if (fields := SCHEMA.get_class_fields(type(value))) is not None:
                 # Expect your objects expose a snapshot via to_dict
                 return Serialization.serialize(value)
             if isinstance(value, dict):
@@ -259,7 +281,7 @@ class Serialization:
                 if cache_hit:
                     return _cache[key]
 
-                log.debug("looking up: %s from %s at %s", key, ref_type, "/".join(_path))
+                log.debug("looking up: {} from {} at {}", key, ref_type, "/".join(_path))
 
                 t0 = perf_counter()
                 try:
@@ -317,7 +339,7 @@ class Serialization:
                 ]
 
             # Model objects registered in SCHEMA: walk their fields
-            fields = SCHEMA.get_class_fields(type(x).__name__) or {}
+            fields = SCHEMA.get_class_fields(type(x)) or {}
             if fields:
                 for fname in fields.keys():
                     if not hasattr(x, fname):
@@ -329,7 +351,7 @@ class Serialization:
                         try:
                             setattr(x, fname, new)
                         except Exception:
-                            log.debug("'%s' field '%s' did not resolve", type(x).__name__, fname)
+                            log.debug("'{}' field '{}' did not resolve", type(x).__name__, fname)
                 return x
 
             # Anything else: leave as-is
@@ -338,7 +360,7 @@ class Serialization:
     @classmethod
     def apply_resource_resolutions(cls, inst: Any, resolver: Callable[[Any], Any]) -> None:
         """Resolve any queued attribute setters stored on the instance."""
-        setters: List[Callable[[Any], None]] = getattr(inst, "_resource_setters", [])
+        setters: List[Callable[[Any, Any], None]] = getattr(inst, "_resource_setters", [])
         for set_fn in setters:
             set_fn(inst, resolver)
         # Optional: clear after applying
@@ -369,7 +391,22 @@ class Serialization:
         """
         with hub.use(deserial_log):
             t0 = perf_counter()
-            class_fields = SCHEMA.get_class_fields(class_type.__name__)
+
+            # Pydantic models: delegate to model_validate
+            if isinstance(class_type, type) and issubclass(class_type, _GXModel):
+                inst = class_type.model_validate(data)
+                log.debug("deserialize[{}]: pydantic model_validate %.3f ms",
+                          class_type.__name__, (perf_counter() - t0) * 1000)
+                return inst
+
+            # Plain classes with a from_dict classmethod (e.g. GedcomX)
+            if isinstance(data, dict) and hasattr(class_type, "from_dict"):
+                inst = class_type.from_dict(data)
+                log.debug("deserialize[{}]: from_dict %.3f ms",
+                          class_type.__name__, (perf_counter() - t0) * 1000)
+                return inst
+
+            class_fields = SCHEMA.get_class_fields(class_type) or {}
 
             result: dict[str, Any] = {}
             pending: list[tuple[str, Any]] = []
@@ -385,7 +422,7 @@ class Serialization:
                 try:
                     val = _coerce(raw, typ)
                 except Exception:
-                    log.exception("deserialize[%s]: coercion failed for field '%s' raw=%r",
+                    log.exception("deserialize[{}]: coercion failed for field '{}' raw={!r}",
                                 class_type.__name__, name, raw)
                     raise
                 result[name] = val
@@ -396,7 +433,7 @@ class Serialization:
             try:
                 inst = class_type(**result)
             except TypeError:
-                log.exception("deserialize[%s]: __init__ failed with kwargs=%s",
+                log.exception("deserialize[{}]: __init__ failed with kwargs={}",
                             class_type.__name__, list(result.keys()))
                 raise
 
@@ -407,7 +444,7 @@ class Serialization:
                         resolved = cls._resolve_structure(raw, resolver)  # deep-resolve Resources
                         setattr(inst, attr, resolved)
                     except Exception:
-                        log.exception("deserialize[%s]: resolver failed for '%s'", class_type.__name__, attr)
+                        log.exception("deserialize[{}]: resolver failed for '{}'", class_type.__name__, attr)
                         raise
 
             # queue setters as callables for later resolution
@@ -423,7 +460,7 @@ class Serialization:
                     fns.append(_make())
                 inst._resource_setters = [*existing, *fns]
 
-            log.debug("deserialize[%s]: %.3f ms (resolved=%s, queued=%s)",
+            log.debug("deserialize[{}]: %.3f ms (resolved={}, queued={})",
                     class_type.__name__, (perf_counter() - t0) * 1000,
                     int(bool(resolver)) * len(pending), len(getattr(inst, "_resource_setters", [])))
             return inst
@@ -438,7 +475,7 @@ class Serialization:
             try:
                 return U(value)
             except Exception:
-                log.exception("coerce: failed to cast %s to %s", value, getattr(U, "__name__", U))
+                log.exception("coerce: failed to cast {} to {}", value, getattr(U, "__name__", U))
                 return value
 
         # Unwrap typing once
@@ -452,13 +489,13 @@ class Serialization:
                 try:
                     return Resource(resourceId=value)
                 except Exception:
-                    log.exception("coerce: str->Resource failed for %r", value)
+                    log.exception("coerce: str->Resource failed for {!r}", value)
                     return value
             if T is URI:
                 try:
                     return URI.from_url(value)
                 except Exception:
-                    log.exception("coerce: str->URI failed for %r", value)
+                    log.exception("coerce: str->URI failed for {!r}", value)
                     return value
             return value
 
@@ -467,7 +504,7 @@ class Serialization:
             try:
                 return Resource(resource=value.get("resource"), resourceId=value.get("resourceId"))
             except Exception:
-                log.exception("coerce: dict->Resource failed for %r", value)
+                log.exception("coerce: dict->Resource failed for {!r}", value)
                 return value
 
         # IdentifierList
@@ -475,14 +512,14 @@ class Serialization:
             try:
                 return IdentifierList.from_json(value)
             except Exception:
-                log.exception("coerce: IdentifierList.from_json failed for %r", value)
+                log.exception("coerce: IdentifierList.from_json failed for {!r}", value)
                 return value
 
         # Containers
         if cls._is_typecollection_annot(T):
             elem_t = cls._typecollection_elem_type(T)
             if not isinstance(value, (list, tuple, set, TypeCollection)) and value is not None:
-                log.warning("coerce: TypeCollection expected list-like, got %s", type(value).__name__)
+                log.warning("coerce: TypeCollection expected list-like, got {}", type(value).__name__)
                 return value
             try:
                 src_iter = [] if value is None else (list(value) if not isinstance(value, list) else value)
@@ -492,7 +529,7 @@ class Serialization:
                 coll.extend(items)
                 return coll
             except Exception:
-                log.exception("coerce: TypeCollection failed for %r elem_t=%r", value, elem_t)
+                log.exception("coerce: TypeCollection failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
         if cls._is_list_like(T):
@@ -500,7 +537,7 @@ class Serialization:
             try:
                 return [cls._coerce_value(v, elem_t) for v in (value or [])]
             except Exception:
-                log.exception("coerce: list failed for %r elem_t=%r", value, elem_t)
+                log.exception("coerce: list failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
         if cls._is_set_like(T):
@@ -508,7 +545,7 @@ class Serialization:
             try:
                 return {cls._coerce_value(v, elem_t) for v in (value or [])}
             except Exception:
-                log.exception("coerce: set failed for %r elem_t=%r", value, elem_t)
+                log.exception("coerce: set failed for {!r} elem_t={!r}", value, elem_t)
                 return value
 
         if cls._is_tuple_like(T):
@@ -520,7 +557,7 @@ class Serialization:
                     return tuple(cls._coerce_value(v, elem_t) for v in (value or ()))
                 return tuple(cls._coerce_value(v, t) for v, t in zip(value, args))
             except Exception:
-                log.exception("coerce: tuple failed for %r args=%r", value, args)
+                log.exception("coerce: tuple failed for {!r} args={!r}", value, args)
                 return value
 
         if cls._is_dict_like(T):
@@ -532,12 +569,12 @@ class Serialization:
                     for k, v in (value or {}).items()
                 }
             except Exception:
-                log.exception("coerce: dict failed for %r k_t=%r v_t=%r", value, k_t, v_t)
+                log.exception("coerce: dict failed for {!r} k_t={!r} v_t={!r}", value, k_t, v_t)
                 return value
 
         # Objects via registry
         if isinstance(T, type) and isinstance(value, dict):
-            fields = SCHEMA.get_class_fields(T.__name__) or {}
+            fields = SCHEMA.get_class_fields(T) or {}
             if fields:
                 kwargs = {}
                 for fname, ftype in fields.items():
@@ -546,11 +583,11 @@ class Serialization:
                         try:
                             kwargs[fname] = cls._coerce_value(value[fname], resolved)
                         except Exception:
-                            log.exception("coerce: %s.%s field coercion failed", T.__name__, fname)
+                            log.exception("coerce: {}.{} field coercion failed", T.__name__, fname)
                 try:
                     return T(**kwargs)
                 except TypeError as e:
-                    log.error("coerce: instantiate %s failed kwargs=%s: %s", T.__name__, list(kwargs.keys()), e)
+                    log.error("coerce: instantiate {} failed kwargs={}: {}", T.__name__, list(kwargs.keys()), e)
                     return kwargs
 
         # Already correct type?
@@ -560,7 +597,7 @@ class Serialization:
         except TypeError:
             pass
 
-        log.warning("coerce: fallback — returning original value=%r (type=%s)", value, type(value).__name__)
+        log.warning("coerce: fallback — returning original value={!r} (type={})", value, type(value).__name__)
         return value
 
     @classmethod
@@ -618,13 +655,13 @@ class Serialization:
                 return node
 
             # Your model objects (registered in SCHEMA)
-            fields = SCHEMA.get_class_fields(type(node).__name__) or {}
+            fields = SCHEMA.get_class_fields(type(node)) or {}
             if fields:
                 # Apply any queued per-instance setters first (lazy references)
                 try:
                     cls.apply_resource_resolutions(node, resolve_resource)
                 except Exception:
-                    log.exception("resolve_references_recursive: apply_resource_resolutions failed for %r", node)
+                    log.exception("resolve_references_recursive: apply_resource_resolutions failed for {!r}", node)
                 # Walk fields according to SCHEMA
                 for fname in fields.keys():
                     try:
@@ -634,7 +671,7 @@ class Serialization:
                             if new is not cur:
                                 setattr(node, fname, new)
                     except Exception:
-                        log.exception("resolve_references_recursive: failed visiting %s.%s", type(node).__name__, fname)
+                        log.exception("resolve_references_recursive: failed visiting {}.{}", type(node).__name__, fname)
                 return node
 
             # Everything else: leave as-is

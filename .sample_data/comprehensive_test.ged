@@ -1,0 +1,299 @@
+0 HEAD
+1 GEDC
+2 VERS 5.5.5
+2 FORM LINEAGE-LINKED
+3 VERS 5.5.5
+1 CHAR UTF-8
+1 SOUR TestApp
+2 NAME Comprehensive Test Generator
+2 VERS 1.0.0
+2 CORP Test Corp
+3 ADDR 100 Test Avenue
+4 ADR1 100 Test Avenue
+4 ADR2 Suite 200
+4 CITY Testville
+4 STAE TX
+4 POST 78701
+4 CTRY United States
+3 WWW www.testcorp.example.com
+1 DATE 1 Jan 2020
+2 TIME 12:00:00
+1 FILE comprehensive_test.ged
+1 LANG English
+1 SUBM @U1@
+0 @U1@ SUBM
+1 NAME Eleanor /Thornton/
+1 ADDR 42 Maple Street
+2 ADR1 42 Maple Street
+2 ADR2 Apt 3B
+2 ADR3 Building North
+2 ADR4 Block 7
+2 ADR5 District 4
+2 ADR6 Zone A
+2 CITY Riverdale
+2 STAE NY
+2 POST 10471
+2 CTRY United States
+1 PHON +1 (718) 555-0100
+1 EMAIL eleanor.thornton@example.com
+1 FAX +1 (718) 555-0101
+1 WWW www.thornton-genealogy.example.com
+1 NOTE Genealogy research notes for the Thornton project.
+2 CONC Additional note content appended via CONC.
+2 CONT Continued on next line.
+2 CONT
+1 UID SUBM-UID-001
+1 REFN SUBM-REF-001
+1 CHAN
+2 DATE 15 Mar 2020
+0 @R1@ REPO
+1 NAME Riverdale Historical Society
+1 ADDR 1 Heritage Square
+2 ADR1 1 Heritage Square
+2 CITY Riverdale
+2 STAE NY
+2 POST 10471
+2 CTRY United States
+1 PHON +1 (718) 555-0200
+1 EMAIL archives@rhs.example.com
+1 WWW www.rhs.example.com
+0 @S1@ SOUR
+1 TITL Birth and Death Records of Riverdale County 1850-1920
+1 AUTH Thornton, Eleanor M.
+1 PUBL Riverdale Historical Press
+2 DATE 1995
+1 DATE 12 Jun 1995
+1 TEXT Transcription of original register entries from Riverdale County clerk.
+1 REPO @R1@
+2 CALN Mss.Collection.42
+1 NOTE Primary source for Hargrove family vital records.
+2 CONT Compiled from microfilm reels 14-22.
+2 CONC Additional source details via CONC.
+1 _APID 12345:67890
+1 _CREA 1 Jan 1995
+1 _META Metadata note attached to source.
+1 RIN 11111
+1 REFN SREF-001
+1 CHAN
+2 DATE 1 Jun 1995
+0 @S2@ SOUR
+1 TITL Riverdale Gazette Death Notices 1900-1950
+1 AUTH Gazette Archival Staff
+1 PUBL Riverdale Gazette
+1 FILE newspaper_archive/rg_deaths.pdf
+2 FORM pdf
+3 TYPE document
+2 TITL Riverdale Gazette Death Notices
+2 _URL http://archive.example.com/rg/deaths
+1 NOTE Newspaper archives scanned and indexed.
+1 EVEN Death,Birth
+2 DATE FROM 1900 TO 1950
+2 PLAC Riverdale, New York, USA
+0 @M1@ OBJE
+1 FILE photos/hargrove_portrait.jpg
+2 FORM jpg
+3 TYPE image
+2 TITL Portrait of the Hargrove Family circa 1890
+1 DATE ABT 1890
+1 PLAC Riverdale, New York, USA
+1 NOTE Black and white photograph found in family estate.
+2 CONT Donated to the historical society in 1987.
+1 RIN 22222
+1 _META Source metadata for multimedia object.
+0 @M2@ OBJE
+1 FILE audio/oral_history_hargrove.mp3
+2 FORM mp3
+3 TYPE audio
+2 TITL Oral History Recording - Hargrove Family
+0 @I1@ INDI
+1 NAME James Cornelius /Hargrove/ Jr.
+2 GIVN James Cornelius
+2 SURN Hargrove
+2 NSFX Jr.
+2 TYPE Birth Name
+1 NAME Jamie /Hargrove/
+2 GIVN Jamie
+2 SURN Hargrove
+2 TYPE Nickname
+1 SEX M
+1 BIRT
+2 DATE 14 Feb 1862
+2 PLAC Riverdale, Bronx County, New York, USA
+3 MAP
+4 LATI N40.896
+4 LONG W73.912
+1 DEAT
+2 DATE 3 Nov 1931
+2 PLAC White Plains, Westchester County, New York, USA
+1 BURI
+2 DATE 7 Nov 1931
+2 PLAC Oak Hill Cemetery, Riverdale, New York, USA
+1 BAPM
+2 DATE 5 Mar 1862
+2 PLAC St. Michael's Church, Riverdale, New York, USA
+1 CHR
+2 DATE 5 Mar 1862
+2 PLAC St. Michael's Church, Riverdale, New York, USA
+1 ADOP
+2 DATE 1 Jan 1880
+2 PLAC Riverdale, New York, USA
+1 IMMI
+2 DATE ABT 1880
+2 PLAC Port of New York, New York, USA
+1 OCCU Merchant
+2 DATE FROM 1885 TO 1920
+2 PLAC Riverdale, New York, USA
+1 _MILT
+2 DATE 1898
+2 PLAC Cuba
+1 PROB
+2 DATE 20 Nov 1931
+2 PLAC White Plains, New York, USA
+1 RESI
+2 DATE FROM 1890 TO 1931
+2 PLAC 42 Maple Street, Riverdale, New York
+1 EVEN Occupation,Immigration
+2 DATE 1898
+2 PLAC New York, USA
+1 EVEN
+2 TYPE Graduation
+2 DATE 12 Jun 1880
+2 PLAC Riverdale Academy, Riverdale, New York, USA
+1 BARM
+2 DATE 14 Feb 1876
+2 PLAC Riverdale, New York, USA
+1 CONF
+2 DATE 20 Apr 1878
+2 PLAC St. Michael's Church, Riverdale, New York, USA
+1 CENS
+2 DATE 1 Jun 1880
+2 PLAC Riverdale, New York, USA
+1 WILL
+2 DATE 1 Oct 1930
+2 PLAC White Plains, New York, USA
+1 GRAD
+2 DATE 12 Jun 1880
+2 PLAC Riverdale Academy, Riverdale, New York, USA
+1 NOTE James was a prominent merchant and community leader.
+2 CONT He served on the city council from 1900 to 1910.
+2 CONT
+2 CONT A second paragraph about his civic work.
+2 CONC More details about his civic contributions.
+1 SOUR @S1@
+2 PAGE Vol. 3, p. 47, entry 12
+2 _LINK http://rhs.example.com/records/hargrove_james
+2 _APID 12345:00047
+2 DATA
+3 DATE 14 Feb 1862
+3 TEXT Entry reads: James C. Hargrove, born 14 February 1862 to William and Agnes Hargrove.
+3 WWW http://archive.example.com/rhs/vol3
+1 SOUR @S2@
+2 PAGE Obituary column, p. 4
+2 NOTE Source note for Gazette citation.
+1 OBJE @M1@
+1 EXID EXT-HARGROVE-001
+1 FSID FSID-2W4R-XMP1
+1 REFN REF-001
+2 TYPE Family Number
+1 UID UID-HARGROVE-I1-001
+1 CHAN
+2 DATE 10 Jan 1998
+1 FAMS @F1@
+1 FAMC @F2@
+0 @I2@ INDI
+1 NAME Margaret Rose /Whitfield/
+2 GIVN Margaret Rose
+2 SURN Whitfield
+1 SEX F
+1 BIRT
+2 DATE 22 Sep 1865
+2 PLAC Yonkers, Westchester County, New York, USA
+1 DEAT
+2 DATE 14 Jul 1940
+2 PLAC Riverdale, Bronx County, New York, USA
+1 OCCU Schoolteacher
+1 NOTE Margaret taught at Riverdale Elementary for 30 years.
+1 SOUR @S1@
+2 PAGE Vol. 5, p. 103
+2 _APID 12345:00103
+1 CHAN
+2 DATE 5 Feb 1998
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME William Edward /Hargrove/
+2 GIVN William Edward
+2 SURN Hargrove
+1 SEX M
+1 BIRT
+2 DATE 18 Apr 1893
+2 PLAC Riverdale, New York, USA
+1 DEAT
+2 DATE 6 Jun 1944
+2 PLAC Normandy, France
+1 _MILT
+2 DATE 1917
+2 PLAC France
+1 NOTE KIA in World War II.
+1 FAMC @F1@
+0 @I4@ INDI
+1 NAME Clara Louise /Hargrove/
+2 GIVN Clara Louise
+2 SURN Hargrove
+2 NSFX PhD
+1 SEX F
+1 BIRT
+2 DATE 3 Dec 1895
+2 PLAC Riverdale, New York, USA
+1 OCCU Physician
+1 RESI
+2 DATE FROM 1920 TO 1960
+2 PLAC Boston, Massachusetts, USA
+1 NOTE Clara became the first female physician in Riverdale County.
+1 FAMC @F1@
+0 @I5@ INDI
+1 NAME Frederick Arthur /Hargrove/
+2 GIVN Frederick Arthur
+2 SURN Hargrove
+1 SEX M
+1 BIRT
+2 DATE 7 Jul 1831
+2 PLAC Albany, New York, USA
+1 DEAT
+2 DATE 29 Jan 1901
+2 PLAC Riverdale, New York, USA
+1 FAMS @F2@
+0 @I6@ INDI
+1 NAME Agnes Catherine /O'Brien/
+2 GIVN Agnes Catherine
+2 SURN O'Brien
+1 SEX F
+1 BIRT
+2 DATE 11 Nov 1838
+2 PLAC Cork, Ireland
+1 DEAT
+2 DATE 4 Apr 1910
+2 PLAC Riverdale, New York, USA
+1 IMMI
+2 DATE ABT 1855
+2 PLAC Port of New York, New York, USA
+1 FAMS @F2@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 CHIL @I4@
+1 MARR
+2 DATE 12 Jun 1888
+2 PLAC St. Michael's Church, Riverdale, New York, USA
+1 NOTE Married in a ceremony attended by over 200 guests.
+2 CONT Reception held at the Riverdale Grand Hotel.
+1 SOUR @S1@
+2 PAGE Marriage Register Vol. 2, p. 88
+0 @F2@ FAM
+1 HUSB @I5@
+1 WIFE @I6@
+1 CHIL @I1@
+1 MARR
+2 DATE 14 Apr 1860
+2 PLAC Albany, New York, USA
+0 TRLR

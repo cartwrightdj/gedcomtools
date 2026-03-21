@@ -1,113 +1,133 @@
 from __future__ import annotations
-from typing import List, Optional, Dict, Any, Union
-from collections.abc import Iterator
+
 import secrets
 import string
+from collections.abc import Iterator
+from typing import Any, ClassVar, Dict, List, Optional
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    identifier.py
- Author:  David J. Cartwright
- Purpose: 
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json_ refactor 
-   - 2025-09-04: fixe identifier and identifieList json deserialization
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .extensible_enum import _EnumItem
-from .resource import Resource
-from .schemas import extensible, SCHEMA
+from .extensible_enum import ExtensibleEnum, _EnumItem
+from .gx_base import GedcomXModel
 from .uri import URI
-from .extensible_enum import ExtensibleEnum
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
+
+
+# ---------------------------------------------------------------------------
+# make_uid
+# ---------------------------------------------------------------------------
 
 def make_uid(length: int = 10, alphabet: str = string.ascii_letters + string.digits) -> str:
-    """
-    Generate a cryptographically secure alphanumeric UID.
-
-    Args:
-        length: Number of characters to generate (must be > 0).
-        alphabet: Characters to choose from (default: A-Za-z0-9).
-
-    Returns:
-        A random string of `length` characters from `alphabet`.
-    """
+    """Cryptographically-secure alphanumeric UID."""
     if length <= 0:
         raise ValueError("length must be > 0")
-    return ''.join(secrets.choice(alphabet) for _ in range(length)).upper()
+    return "".join(secrets.choice(alphabet) for _ in range(length)).upper()
+
+
+# ---------------------------------------------------------------------------
+# IdentifierType
+# ---------------------------------------------------------------------------
 
 class IdentifierType(ExtensibleEnum):
     pass
 
-"""Enumeration of identifier types."""
+
 IdentifierType.register("Primary", "http://gedcomx.org/Primary")
-IdentifierType.register("Authority", "http://gedcomx.org/Authority")            
+IdentifierType.register("Authority", "http://gedcomx.org/Authority")
 IdentifierType.register("Deprecated", "http://gedcomx.org/Deprecated")
 IdentifierType.register("Persistent", "http://gedcomx.org/Persistent")
-#IdentifierType.register("External", "https://gedcom.io/terms/v7/EXID")
 IdentifierType.External = "https://gedcom.io/terms/v7/EXID"
 IdentifierType.register("Other", "user provided")
-IdentifierType.register("ChildAndParentsRelationship","http://familysearch.org/v1/ChildAndParentsRelationship")
+IdentifierType.register("ChildAndParentsRelationship", "http://familysearch.org/v1/ChildAndParentsRelationship")
 IdentifierType.register("FamilySearchId", "https://gedcom.io/terms/v5/FSID")
 
-@extensible()    
-class Identifier:
-    identifier = 'http://gedcomx.org/v1/Identifier'
-    version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self, value: Optional[List[URI]], type: Optional[IdentifierType] = IdentifierType.Primary) -> None: # type: ignore
-        if not isinstance(value,list):
-            value = [value] if value else []
-        self.type = type
-        self.values = value if value else []
-    
-@extensible()
+# ---------------------------------------------------------------------------
+# Identifier (pydantic model)
+# ---------------------------------------------------------------------------
+
+class Identifier(GedcomXModel):
+    identifier_spec: ClassVar[str] = "http://gedcomx.org/v1/Identifier"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    type: Optional[IdentifierType] = None
+    values: List[URI] = []
+
+    def model_post_init(self, __context: object) -> None:
+        # Normalise: value kwarg → values list
+        raw = (self.model_extra or {}).get("value")
+        if raw is not None and not self.values:
+            if isinstance(raw, list):
+                object.__setattr__(self, "values", raw)
+            elif raw is not None:
+                object.__setattr__(self, "values", [raw])
+        if self.type is None:
+            object.__setattr__(self, "type", IdentifierType.Primary)  # type: ignore[attr-defined]
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        if not self.values:
+            result.error("values", "Identifier must have at least one value")
+        for i, v in enumerate(self.values):
+            if not isinstance(v, URI):
+                result.error(f"values[{i}]", f"Expected URI, got {type(v).__name__}")
+
+
+# ---------------------------------------------------------------------------
+# IdentifierList  (NOT a pydantic model — dict-like container)
+# Provides __get_pydantic_core_schema__ for use in pydantic field types.
+# ---------------------------------------------------------------------------
+
 class IdentifierList:
-    def __init__(self,
-                 identifiers: Optional[dict[str, list[URI]]] = None, **kargs) -> None:
-        # maps identifier-type (e.g., str or IdentifierType.value) -> list of values
-        self.identifiers: dict[str, list[URI]] = identifiers if identifiers else {}
-        for arg in kargs.keys():
-            self.add_identifier(Identifier(type=arg,values=kargs[arg]))
+    """Maps identifier-type URI → list of URI values."""
 
-    # -------------------- hashing/uniqueness helpers --------------------
-    def make_hashable(self, obj):
-        """Convert any object into a hashable representation."""
+    def __init__(
+        self,
+        identifiers: Optional[Dict[str, List[URI]]] = None,
+        **kwargs: Any,
+    ) -> None:
+        self.identifiers: Dict[str, List[URI]] = identifiers if identifiers else {}
+        for arg, val in kwargs.items():
+            self.add_identifier(Identifier(type=IdentifierType(arg), values=val))  # type: ignore[arg-type]
+
+    # ---- pydantic integration -------------------------------------------
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type: Any, handler: Any) -> Any:
+        from pydantic_core import core_schema
+
+        def validate(v: Any) -> "IdentifierList":
+            if isinstance(v, cls):
+                return v
+            if isinstance(v, dict):
+                return cls(identifiers=v)
+            return cls()
+
+        return core_schema.no_info_plain_validator_function(
+            validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda v: v._serializer or {},
+                info_arg=False,
+            ),
+        )
+
+    # ---- hashing helpers -----------------------------------------------
+
+    def make_hashable(self, obj: Any) -> Any:
+        if isinstance(obj, URI):
+            return str(obj)  # urlunsplit — same result as model_dump(mode="json") but free
         if isinstance(obj, dict):
             return tuple(sorted((k, self.make_hashable(v)) for k, v in obj.items()))
-        elif isinstance(obj, (list, set, tuple)):
+        if isinstance(obj, (list, set, tuple)):
             return tuple(self.make_hashable(i) for i in obj)
-        elif isinstance(obj, URI):
-            from .serialization import Serialization
-            return Serialization.serialize(obj)
-        elif hasattr(obj, "__dict__"):
-            from .serialization import Serialization
-            d = Serialization.serialize(obj)
+        if hasattr(obj, "model_dump"):
+            d = obj.model_dump(exclude_none=True, mode="json")
             if isinstance(d, dict):
                 return tuple(sorted((k, self.make_hashable(v)) for k, v in d.items()))
-            return d
-        else:
-            return obj
+            return self.make_hashable(d)
+        if hasattr(obj, "__dict__"):
+            return tuple(sorted((k, self.make_hashable(v)) for k, v in vars(obj).items()))
+        return obj
 
-    def unique_list(self, items):
-        """Return a list without duplicates, preserving order."""
-        seen = set()
+    def unique_list(self, items: list) -> list:
+        seen: set = set()
         result = []
         for item in items:
             h = self.make_hashable(item)
@@ -116,143 +136,103 @@ class IdentifierList:
                 result.append(item)
         return result
 
-    # -------------------- public mutation API --------------------
-    def append(self, identifier: "Identifier"):
-        """Add an Identifier to the list; alias for add_identifier.
+    # ---- public mutation API -------------------------------------------
 
-        Raises:
-            ValueError: If the argument is not an Identifier instance.
-        """
+    def append(self, identifier: Identifier) -> None:
         if isinstance(identifier, Identifier):
             self.add_identifier(identifier)
         else:
             raise ValueError("append expects an Identifier instance")
-    
-    def add_identifier(self, identifier: "Identifier"):
-        """Add/merge an Identifier (which may contain multiple values)."""
+
+    def add_identifier(self, identifier: Identifier) -> None:
         if not (identifier and isinstance(identifier, Identifier) and identifier.type):
             raise ValueError("The 'identifier' must be a valid Identifier instance with a type.")
-        if not isinstance(identifier.type,_EnumItem):
-            raise ValueError
+        if not isinstance(identifier.type, _EnumItem):
+            raise ValueError("identifier.type must be an _EnumItem")
         key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)
         existing = self.identifiers.get(key, [])
-        merged = self.unique_list(list(existing) + list(identifier.values))
-        self.identifiers[key] = merged
+        self.identifiers[key] = self.unique_list(existing + identifier.values)
 
-    # -------------------- queries --------------------
-    def contains(self, identifier: "Identifier") -> bool:
-        """Return True if any of the identifier's values are present under that type."""
+    # ---- queries -------------------------------------------------------
+
+    def contains(self, identifier: Identifier) -> bool:
         if not (identifier and isinstance(identifier, Identifier) and identifier.type):
             return False
-        key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)
+        key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)  # type: ignore[attr-defined]
         if key not in self.identifiers:
             return False
         pool = self.identifiers[key]
-        # treat values as a list on the incoming Identifier
         for v in getattr(identifier, "values", []):
             if any(self.make_hashable(v) == self.make_hashable(p) for p in pool):
                 return True
         return False
 
-    # -------------------- mapping-like dunder methods --------------------
+    # ---- mapping-like interface ----------------------------------------
+
     def __iter__(self) -> Iterator[str]:
-        """Iterate over identifier *types* (keys)."""
         return iter(self.identifiers)
 
     def __len__(self) -> int:
-        """Number of identifier types (keys)."""
         return len(self.identifiers)
 
-    def __contains__(self, key) -> bool:
-        """Check if a type key exists (accepts str or enum with .value)."""
+    def __contains__(self, key: Any) -> bool:
         k = key.value if hasattr(key, "value") else str(key)
         return k in self.identifiers
 
-    def __getitem__(self, key):
-        """Lookup values by type key (accepts str or enum with .value)."""
+    def __getitem__(self, key: Any) -> List[URI]:
         k = key.value if hasattr(key, "value") else str(key)
         return self.identifiers[k]
 
-    # (optional) enable assignment via mapping syntax
-    def __setitem__(self, key, values):
-        """Set/replace the list of values for a type key."""
+    def __setitem__(self, key: Any, values: Any) -> None:
         k = key.value if hasattr(key, "value") else str(key)
         vals = values if isinstance(values, list) else [values]
         self.identifiers[k] = self.unique_list(vals)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: Any) -> None:
         k = key.value if hasattr(key, "value") else str(key)
         del self.identifiers[k]
 
-    # -------------------- dict-style convenience --------------------
     def keys(self):
-        """Return the identifier type keys."""
         return self.identifiers.keys()
 
     def values(self):
-        """Return the lists of URI values for each type."""
         return self.identifiers.values()
 
     def items(self):
-        """Return (type_key, values_list) pairs."""
         return self.identifiers.items()
 
-    def iter_pairs(self) -> Iterator[tuple[str, object]]:
-        """Flattened iterator over (type_key, value) pairs."""
+    def iter_pairs(self) -> Iterator[tuple]:
         for k, vals in self.identifiers.items():
             for v in vals:
                 yield (k, v)
-    
-    @classmethod
-    def from_json(cls, data, context=None):
-        """Deserialize an IdentifierList from a JSON dict mapping type URIs to value lists.
 
-        Args:
-            data: A dict of ``{type_uri: [value, ...]}`` pairs.
-            context: Unused; present for interface consistency.
-
-        Returns:
-            An IdentifierList populated from the dict.
-
-        Raises:
-            ValueError: If ``data`` is not a dict.
-        """
-        if isinstance(data, dict):
-            identifier_list = IdentifierList()
-            for key, vals in data.items():
-                vals = [URI(value=v) for v in vals]
-                identifier_list.add_identifier(
-                    Identifier(value=vals, type=IdentifierType(key))
-                )
-            return identifier_list if identifier_list != [] else None
-        else:
-            raise ValueError("Data must be a dict of identifiers.")
+    # ---- serialization -------------------------------------------------
 
     @property
-    def _serializer(self):
-        from .serialization import Serialization
-        type_as_dict = {}
-        for k in self.identifiers.keys():
-            type_as_dict[k] = [Serialization.serialize(i) for i in self.identifiers[k]]
-        return type_as_dict if type_as_dict != {} else None
+    def _serializer(self) -> Optional[Dict[str, list]]:
+        out: Dict[str, list] = {}
+        for k, uris in self.identifiers.items():
+            out[k] = [
+                u.model_dump(exclude_none=True) if hasattr(u, "model_dump") else str(u)
+                for u in uris
+            ]
+        return out if out else None
+
+    @classmethod
+    def from_json(cls, data: Any, context: Any = None) -> "IdentifierList":
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dict of identifiers.")
+        identifier_list = cls()
+        for key, vals in data.items():
+            uris = [URI.model_validate({"value": v}) if isinstance(v, str) else v for v in vals]
+            identifier_list.add_identifier(
+                Identifier(values=uris, type=IdentifierType(key))  # type: ignore[arg-type]
+            )
+        return identifier_list
 
     def __repr__(self) -> str:
-        keys = ', '.join(self.identifiers.keys())
+        keys = ", ".join(self.identifiers.keys())
         return f"IdentifierList({len(self.identifiers)} types: [{keys}])"
 
     def __str__(self) -> str:
-        return ', '.join(self.identifiers.keys()) or "IdentifierList(empty)"
-
-SCHEMA.field_type_table['IdentifierList'] = {
-    "http://gedcomx.org/Primary":List[URI],
-    "http://gedcomx.org/Authority":List[URI],            
-    "http://gedcomx.org/Deprecated":List[URI],
-    "http://gedcomx.org/Persistent":List[URI],
-    "https://gedcom.io/terms/v7/EXID":List[URI],
-    "user provided":List[URI],
-    "http://familysearch.org/v1/ChildAndParentsRelationship":List[URI],
-    "https://gedcom.io/terms/v5/FSID":List[URI],
-}
-
-
-
+        return ", ".join(self.identifiers.keys()) or "IdentifierList(empty)"

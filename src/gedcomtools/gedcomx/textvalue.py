@@ -1,60 +1,37 @@
-from typing import Any, Optional, Dict
+from __future__ import annotations
+from typing import ClassVar, Optional
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    textvalue.py
- Author:  David J. Cartwright
- Purpose: 
+from .gx_base import GedcomXModel
 
- Created: 2025-08-25
- Updated:
-   - 2025-09-03 _from_json_ refactor
-   - 2025-09-04 added _str_ and _repr_ dunders
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .schemas import extensible
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
+class TextValue(GedcomXModel):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/TextValue"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-@extensible()
-class TextValue:
-    identifier = 'http://gedcomx.org/v1/TextValue'
-    version = 'http://gedcomx.org/conceptual-model/v1'
+    value: Optional[str] = None
+    lang: Optional[str] = None
 
-    def __init__(self, value: Optional[str] = None, lang: Optional[str] = None) -> None:
-        self.lang = lang
-        self.value = value
-        
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang
+        if self.value is None:
+            result.warn("value", "TextValue has no value")
+        elif not self.value.strip():
+            result.warn("value", "TextValue.value is blank")
+        check_lang(result, "lang", self.lang)
 
-    
-    def _append_to_value(self, value_to_append):
+    def _append_to_value(self, value_to_append: str) -> None:
         if not isinstance(value_to_append, str):
             raise ValueError(f"Cannot append object of type {type(value_to_append)}.")
-        if self.value is None: self.value = value_to_append
-        else: self.value += ' ' + value_to_append
-    
-    def __str__(self):
+        if self.value is None:
+            self.value = value_to_append
+        else:
+            self.value += " " + value_to_append
+
+    def __str__(self) -> str:
         return f"{self.value} ({self.lang})"
-    
-    # --- identity & hashing -------------------------------------------------
+
     def _key(self) -> tuple[str, str]:
-        # Normalize for equality/hash:
-        # - treat missing lang as ""
-        # - casefold lang to compare 'EN' == 'en'
-        # - strip value to ignore surrounding whitespace
         return ((self.lang or "").casefold(), (self.value or "").strip())
 
     def __eq__(self, other: object) -> bool:
@@ -62,11 +39,9 @@ class TextValue:
             return NotImplemented
         return self._key() == other._key()
 
-    
-    
-    # ...existing code...
+    def __hash__(self) -> int:
+        return hash(self._key())
 
     def __repr__(self) -> str:
-        # Debug-friendly: unambiguous constructor-style representation
         cls = self.__class__.__name__
         return f"{cls}(value={self.value!r}, lang={self.lang!r})"

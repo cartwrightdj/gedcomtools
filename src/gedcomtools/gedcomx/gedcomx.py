@@ -1,10 +1,7 @@
-DEBUG = True
-
 import random
 import string
 import orjson
 
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
 
 """
@@ -40,10 +37,10 @@ from .person import Person
 from .place_description import PlaceDescription
 from .relationship import Relationship, RelationshipType
 from .resource import Resource
-from .schemas import extensible
 from .source_description import ResourceType, SourceDescription
 from .textvalue import TextValue
 from .uri import URI
+from .validation import ValidationResult
 #=====================================================================
 
 log = get_logger(__name__)
@@ -63,7 +60,7 @@ class TypeCollection(Generic[T]):
         self.item_type: type[T] = item_type
         self._items: list[T] = []
         self._id_index: dict[Any, T] = {}
-        self._name_index: dict[str, list[T]] = {}
+        self._name_index: dict[str, dict[int, T]] = {}  # object id → item
         self._uri_index: dict[str, T] = {}
         self._uri = URI(path=f"/{item_type.__name__}s/")
 
@@ -119,7 +116,7 @@ class TypeCollection(Generic[T]):
             for nm in names:
                 name_value = nm.value if isinstance(nm, TextValue) else getattr(nm, "value", None)
                 if isinstance(name_value, str) and name_value:
-                    self._name_index.setdefault(name_value, []).append(item)
+                    self._name_index.setdefault(name_value, {})[id(item)] = item
 
     def _remove_from_indexes(self, item: T) -> None:
         if hasattr(item, "id"):
@@ -134,10 +131,10 @@ class TypeCollection(Generic[T]):
             for nm in names:
                 name_value = nm.value if isinstance(nm, TextValue) else getattr(nm, "value", None)
                 if isinstance(name_value, str):
-                    lst = self._name_index.get(name_value)
-                    if lst and item in lst:
-                        lst.remove(item)
-                        if not lst:
+                    d = self._name_index.get(name_value)
+                    if d:
+                        d.pop(id(item), None)
+                        if not d:
                             self._name_index.pop(name_value, None)
 
     # --- lookups ---
@@ -147,14 +144,15 @@ class TypeCollection(Generic[T]):
 
     def by_uri(self, uri: Union[URI, str]) -> T | None:
         """Return the item whose URI matches, or None if not found."""
-        key = uri.value if isinstance(uri, URI) else str(uri)  # type: ignore
-        return self._uri_index.get(key)
+        key = (uri.value or "") if isinstance(uri, URI) else str(uri)
+        return self._uri_index.get(key) if key else None
 
     def by_name(self, sname: str | None) -> list[T] | None:
         """Return items whose name matches sname (stripped), or None if not found."""
         if not sname:
             return None
-        return self._name_index.get(sname.strip(), None)
+        d = self._name_index.get(sname.strip())
+        return list(d.values()) if d else None
 
     # --- mutation ---
     def append(self, item: T) -> None:
@@ -210,7 +208,6 @@ class TypeCollection(Generic[T]):
 
 
 
-@extensible()
 class GedcomX:
     """
     Main GedcomX Object representing a Genealogy. Stores collections of Top Level Gedcom-X Types.
@@ -387,7 +384,7 @@ class GedcomX:
 
                 if relationship.person1:
                     if relationship.person1.id is None:
-                        relationship.person1.id = self.make_id()
+                        relationship.person1.id = make_uid()
                     if not self.persons.by_id(relationship.person1.id):
                         self.persons.append(relationship.person1)
                     if relationship.person1.id not in self.__relationship_table:
@@ -399,7 +396,7 @@ class GedcomX:
                 
                 if relationship.person2:
                     if relationship.person2.id is None:
-                        relationship.person2.id = self.make_id() #TODO
+                        relationship.person2.id = make_uid()
                     if not self.persons.by_id(relationship.person2.id):
                         self.persons.append(relationship.person2)
                     if relationship.person2.id not in self.__relationship_table:
@@ -410,9 +407,15 @@ class GedcomX:
                     pass
 
                 self.relationships.append(relationship)
+            else:
+                # person1/person2 may be dicts (e.g. after JSON round-trip) or
+                # other valid types — store the relationship as-is.
+                self.relationships.append(relationship)
         else:
-            raise ValueError()
-    
+            raise ValueError(
+                f"relationship must be a Relationship instance, got {type(relationship).__name__}"
+            )
+
     def add_place_description(self, placeDescription: PlaceDescription):
         """Add a PlaceDescription to the genealogy."""
         if placeDescription and isinstance(placeDescription,PlaceDescription):
@@ -440,8 +443,10 @@ class GedcomX:
                 self.agents.append(agent)
                 log.debug("Added agent id={}", agent.id)
         else:
-            raise ValueError()
-    
+            raise ValueError(
+                f"agent must be an Agent instance, got {type(agent).__name__}"
+            )
+
     def add_event(self, event_to_add: Event):
         """Add an Event to this GedcomX genealogy.
 
@@ -459,7 +464,7 @@ class GedcomX:
                 event_to_add.id = make_uid()
             for current_event in self.events:
                 if event_to_add == current_event:
-                    log.debug("Skipping duplicate event: %s", event_to_add.id)
+                    log.debug("Skipping duplicate event: {}", event_to_add.id)
                     return
             self.events.append(event_to_add)
         else:
@@ -483,19 +488,53 @@ class GedcomX:
             for place in gedcomx.places:
                 self.add_place_description(place)
 
-    @lru_cache(maxsize=65536)
     def get_person_by_id(self, id: str):
-        """Return the first Person whose id matches, or None if not found."""
-        filtered = [person for person in self.persons if getattr(person, 'id') == id]
-        if filtered: return filtered[0]
-        return None
-     
-    @lru_cache(maxsize=65536)
+        """Return the Person with the given id, or None if not found."""
+        return self.persons.by_id(id)
+
     def source_by_id(self, id: str):
-        """Return the first SourceDescription whose id matches, or None if not found."""
-        filtered = [source for source in self.sourceDescriptions if getattr(source, 'id') == id]
-        if filtered: return filtered[0]
-        return None
+        """Return the SourceDescription with the given id, or None if not found."""
+        return self.sourceDescriptions.by_id(id)
+
+    def validate(self) -> ValidationResult:
+        """Validate this GedcomX document.
+
+        Recursively validates every object in every collection, then performs
+        cross-collection checks (e.g. relationship person references resolve).
+
+        Returns:
+            ValidationResult with accumulated errors and warnings.
+        """
+        result = ValidationResult()
+        visited: set = set()
+        collections = [
+            ("persons", self.persons),
+            ("relationships", self.relationships),
+            ("agents", self.agents),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("places", self.places),
+            ("events", self.events),
+            ("documents", self.documents),
+            ("groups", self.groups),
+        ]
+        for cname, coll in collections:
+            for i, obj in enumerate(coll):
+                result.merge(obj.validate(visited), prefix=f"{cname}[{i}]")
+
+        # Cross-collection: relationship persons must exist
+        person_ids = {p.id for p in self.persons}
+        for i, rel in enumerate(self.relationships):
+            for pnum, pfield in (("person1", rel.person1), ("person2", rel.person2)):
+                if pfield is None:
+                    continue
+                ref_id = getattr(pfield, "id", None) or getattr(pfield, "resourceId", None)
+                if ref_id and ref_id not in person_ids:
+                    result.error(
+                        f"relationships[{i}].{pnum}",
+                        f"Referenced person id {ref_id!r} not found in persons collection",
+                    )
+
+        return result
 
     @property
     def id_index(self) -> Dict[Any,Union[SourceDescription,Person,Relationship,Agent,Event,Document,PlaceDescription,Group]]:
@@ -514,9 +553,86 @@ class GedcomX:
         return combined
 
     @property
-    def _as_dict(self) -> dict[str, Any]:
+    def _serializer(self) -> Optional[dict]:
+        """Return a JSON-compatible dict for this GedcomX instance."""
         from .serialization import Serialization
-        return Serialization.serialize(self)
+        result: dict[str, Any] = {}
+        if self.id:
+            result["id"] = self.id
+        if self.description:
+            result["description"] = self.description
+        if self.attribution:
+            attr = Serialization.serialize(self.attribution)
+            if attr:
+                result["attribution"] = attr
+        _collections = (
+            ("persons", self.persons),
+            ("relationships", self.relationships),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("agents", self.agents),
+            ("events", self.events),
+            ("documents", self.documents),
+            ("places", self.places),
+            ("groups", self.groups),
+        )
+        for name, col in _collections:
+            if len(col) > 0:
+                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
+                if items:
+                    result[name] = items
+        return result if result else None
+
+    @property
+    def _as_dict(self) -> dict[str, Any]:
+        return self._serializer or {}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "GedcomX":
+        """Deserialize a GedcomX instance from a JSON-compatible dict."""
+        gx = cls(
+            id=data.get("id"),
+            description=data.get("description"),
+        )
+        for pd in data.get("persons", []):
+            try:
+                gx.add_person(Person.model_validate(pd))
+            except Exception as e:
+                log.warning("Skipping invalid person record: {}", e)
+        for ad in data.get("agents", []):
+            try:
+                gx.add_agent(Agent.model_validate(ad))
+            except Exception as e:
+                log.warning("Skipping invalid agent record: {}", e)
+        from .relationship import Relationship
+        for rd in data.get("relationships", []):
+            try:
+                gx.add_relationship(Relationship.model_validate(rd))
+            except Exception as e:
+                log.warning("Skipping invalid relationship record: {}", e)
+        for sd in data.get("sourceDescriptions", []):
+            try:
+                gx.add_source_description(SourceDescription.model_validate(sd))
+            except Exception as e:
+                log.warning("Skipping invalid sourceDescription record: {}", e)
+        from .event import Event
+        for ed in data.get("events", []):
+            try:
+                gx.add_event(Event.model_validate(ed))
+            except Exception as e:
+                log.warning("Skipping invalid event record: {}", e)
+        from .document import Document
+        for dd in data.get("documents", []):
+            try:
+                gx.add_document(Document.model_validate(dd))
+            except Exception as e:
+                log.warning("Skipping invalid document record: {}", e)
+        from .place_description import PlaceDescription
+        for pld in data.get("places", []):
+            try:
+                gx.add_place_description(PlaceDescription.model_validate(pld))
+            except Exception as e:
+                log.warning("Skipping invalid place record: {}", e)
+        return gx
         
     @property
     def json(self) -> bytes:
@@ -528,17 +644,15 @@ class GedcomX:
         """
         return orjson.dumps(self._as_dict,option= orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
 
-    @lru_cache(maxsize=65536)
-    def _resolve(self,resource_reference: Union[URI,Resource]):
+    def _resolve(self, resource_reference: Union[URI, Resource]):
         #TODO indept URI search, URI index in collections
         if resource_reference:
             if isinstance(resource_reference, Resource):
-                ref_id = resource_reference.resource
-                ref_id = ref_id.partition("#")[2] if ref_id else None
+                _res = resource_reference.resource
+                ref_id = _res.fragment if _res else None
                 ref = self.id_index.get(ref_id, None)
             elif isinstance(resource_reference, URI):
-                ref_id = resource_reference.value
-                ref_id = ref_id.partition("#")[2] if ref_id else None
+                ref_id = resource_reference.fragment
                 ref = self.id_index.get(ref_id, None)
             else:
                 raise TypeError()

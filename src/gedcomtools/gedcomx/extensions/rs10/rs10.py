@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional, List
+from typing import Any, Callable, Optional, List
 
 from dataclasses import dataclass, field, fields, MISSING, make_dataclass
 
@@ -40,6 +40,9 @@ Logging
 log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.deserialization"
+
+# Callable[[Optional[URI]], bool] — resolves whether a URI points to a Person
+ResolveIsPerson = Callable[["URI"], bool]
 #=====================================================================
 
 
@@ -175,8 +178,6 @@ class DisplayProperties():
     birthDate: str | None = None
 
 
-@extensible()
-@dataclass
 class FamilyLinks(Extensible):
     """
     Family membership references.
@@ -190,7 +191,7 @@ class FamilyLinks(Extensible):
     parent2: Optional[URI] = None
     children: Optional[List[URI]] = None
 
-    def validate(self, is_person: Optional[ResolveIsPerson] = None) -> None:
+    def validate_links(self, is_person: Optional[ResolveIsPerson] = None) -> None:
         """
         Validate constraints using the provided `is_person` resolver.
         If no resolver is provided, this function does a no-op.

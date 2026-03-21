@@ -1,37 +1,19 @@
-from typing import Optional
-"""
-======================================================================
- Project: Gedcom-X
- File:    online_account.py
- Author:  David J. Cartwright
- Purpose: 
+from __future__ import annotations
+from typing import ClassVar
 
- Created: 2025-08-25
- Updated:
-   - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+from .gx_base import GedcomXModel
 from .resource import Resource
-from .schemas import extensible
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
 
-@extensible()
-class OnlineAccount:
-    identifier = 'http://gedcomx.org/v1/OnlineAccount'
-    version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self, serviceHomepage: Resource, accountName: str) -> None:
-        self.serviceHomepage = serviceHomepage
-        self.accountName = accountName
+class OnlineAccount(GedcomXModel):
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/OnlineAccount"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    serviceHomepage: Resource
+    accountName: str
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_nonempty
+        check_instance(result, "serviceHomepage", self.serviceHomepage, Resource)
+        check_nonempty(result, "accountName", self.accountName, "error")

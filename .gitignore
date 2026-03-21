@@ -1,7 +1,7 @@
 *.json
 *.log
 .pypirc
-*Cartwright*.ged
+DJC.ged
 x_*.py
 x_*.json
 logs/
@@ -16,3 +16,8 @@ build/
 Makefile
 make.bat
 STATUS.md
+
+# Private/sensitive genealogy files
+.sample_data/current_family_tree.ged
+.sample_data/DJC.ged
+".sample_data/_DJC_ Nunda Cartwright Family.ged"

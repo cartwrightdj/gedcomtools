@@ -1,98 +1,65 @@
-from typing import List, Optional
-"""
-======================================================================
- Project: Gedcom-X
- File:    group.py
- Author:  David J. Cartwright
- Purpose: 
+from __future__ import annotations
 
- Created: 2025-08-25
- Updated:
-   - 2025-09-01: Updating basic structure, identify TODO s 
-   - 2025-09-09: added schema_class
-   - 2025-09-17: cahnged '.identifiers' to IdentifierList
+from typing import Any, ClassVar, List, Optional
 
-   
-======================================================================
-"""
+from pydantic import Field
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
 from .attribution import Attribution
 from .conclusion import Conclusion, ConfidenceLevel
-from .document import Document
 from .date import Date
 from .evidence_reference import EvidenceReference
+from .extensible_enum import ExtensibleEnum
 from .identifier import IdentifierList
 from .note import Note
 from .place_reference import PlaceReference
-from .source_reference import SourceReference
 from .resource import Resource
-from .textvalue import TextValue
-from .extensible_enum import ExtensibleEnum
-from .schemas import extensible
+from .source_reference import SourceReference
 from .subject import Subject
-"""
-======================================================================
-Logging
-======================================================================
-"""
-#=====================================================================
+from .textvalue import TextValue
+
 
 class GroupRoleType(ExtensibleEnum):
     pass
 
 
-@extensible()
 class GroupRole(Conclusion):
-    identifier = 'http://gedcomx.org/v1/GroupRole'
-    version = 'http://gedcomx.org/conceptual-model/v1'
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/GroupRole"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    def __init__(self,
-                 id: Optional[str] = None,
-                 lang: Optional[str] = None,
-                 sources: Optional[List[SourceReference]] = None,
-                 analysis: Optional[Resource] = None,
-                 notes: Optional[List[Note]] = None,
-                 confidence: Optional[ConfidenceLevel] = None,
-                 attribution: Optional[Attribution] = None,
-                 person: Optional[Resource] = None,
-                 type: Optional[GroupRoleType] = None,
-                 date: Optional[Date] = None,
-                 details: Optional[str] = None) -> None:
-        super().__init__(id, lang, sources, analysis, notes, confidence, attribution)
-        self.person = person
-        self.type = type
-        self.date = date
-        self.details = details
+    person: Optional[Any] = None
+    type: Optional[Any] = None  # GroupRoleType
+    date: Optional[Date] = None
+    details: Optional[str] = None
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.person is None:
+            result.warn("person", "GroupRole has no person")
+        else:
+            from .resource import Resource
+            from .person import Person
+            check_instance(result, "person", self.person, Person, Resource)
+        check_instance(result, "date", self.date, Date)
 
 
-@extensible(toplevel=True)
 class Group(Subject):
-    identifier = 'http://gedcomx.org/v1/Group'
-    version = 'http://gedcomx.org/conceptual-model/v1'
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/Group"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    def __init__(self,
-                 id: Optional[str] = None,
-                 lang: Optional[str] = None,
-                 sources: Optional[List[SourceReference]] = None,
-                 analysis: Optional[Document | Resource] = None,
-                 notes: Optional[List[Note]] = None,
-                 confidence: Optional[ConfidenceLevel] = None,
-                 attribution: Optional[Attribution] = None,
-                 extracted: Optional[bool] = None,
-                 evidence: Optional[List[EvidenceReference]] = None,
-                 media: Optional[List[SourceReference]] = None,
-                 identifiers: Optional[IdentifierList] = None,
-                 names: Optional[List[TextValue]] = None,
-                 date: Optional[Date] = None,
-                 place: Optional[PlaceReference] = None,
-                 roles: Optional[List[GroupRole]] = None) -> None:
-        super().__init__(id, lang, sources, analysis, notes, confidence, attribution, extracted, evidence, media, identifiers)
-        self.names = names if names else []
-        self.date = date
-        self.place = place
-        self.roles = roles if roles else []
+    names: List[TextValue] = Field(default_factory=list)
+    date: Optional[Date] = None
+    place: Optional[Any] = None  # PlaceReference
+    roles: List[GroupRole] = Field(default_factory=list)
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if not self.names:
+            result.warn("names", "Group has no names")
+        check_instance(result, "date", self.date, Date)
+        if self.place is not None:
+            from .place_reference import PlaceReference
+            check_instance(result, "place", self.place, PlaceReference)
+        for i, role in enumerate(self.roles):
+            check_instance(result, f"roles[{i}]", role, GroupRole)

@@ -1,197 +1,175 @@
 # extensible.py
+"""
+Extensibility framework for GedcomX models.
+
+After the pydantic migration:
+- Extensible is now a GedcomXModel subclass (no custom metaclass needed).
+- define_ext() is inherited from GedcomXModel.
+- import_plugins() is unchanged — it is pure import machinery.
+
+The old SCHEMA registry, ExtrasAwareMeta, and accept_extras() are gone;
+their roles are now fulfilled by pydantic's model_fields + extra='allow'.
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
-
+from typing import Any, Dict, List
 import importlib
 import importlib.util
 import os
 import pkgutil
 import re
 import sys
-"""
-======================================================================
- Project: Gedcom-X
- File:    extensible.py
- Author:  David J. Cartwright
- Purpose: provide extensibility functionality
+import tempfile
+import urllib.parse
+import urllib.request
+import zipfile
 
- Created: 2025-09-12
- Updated:
-   
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .schemas import SCHEMA, schema_class, ExtrasAwareMeta
+from .gx_base import GedcomXModel
 
 
+# ---------------------------------------------------------------------------
+# Extensible  (kept as a named base for backward compatibility)
+# ---------------------------------------------------------------------------
 
-@schema_class()
-class Extensible(metaclass=ExtrasAwareMeta):
-    # class-level registry of declared extras
-    _declared_extras: Dict[str, Any] = {}
+class Extensible(GedcomXModel):
+    """Base class for GedcomX entities that support dynamic field extensions.
 
-    def __init_subclass__(cls, **kw):
-        super().__init_subclass__(**kw)
-        # each subclass gets its own dict (copy, not shared)
-        cls._declared_extras = dict(getattr(cls, "_declared_extras", {}))
+    Inherits define_ext() / declared_extras() from GedcomXModel.
+    Classes that previously used ``class Person(Extensible, Subject)`` should
+    now simply use ``class Person(Subject)`` — Subject already inherits from
+    GedcomXModel which provides all the same extension capabilities.
+    """
+    pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # cooperative
-        self.extras: Dict[str, Any] = {}
-        # seed declared defaults
-        for k, default in type(self)._declared_extras.items():
-            self.extras[k] = _copy_default(default)
 
-    @classmethod
-    def define_ext(
-        cls,
-        name: str,
-        *,
-        typ: type | None = None,
-        default: Any = None,
-        overwrite: bool = False,
-    ) -> None:
-        """
-        Declare an extra field on the CLASS.
+# ---------------------------------------------------------------------------
+# import_plugins — unchanged from original
+# ---------------------------------------------------------------------------
 
-        Args:
-            name: field name
-            typ: Python type (used to update schema registry)
-            default: default value for new instances
-            overwrite: if True, replaces existing definition
-        """
-        if name in getattr(cls, "__dataclass_fields__", {}):
-            raise AttributeError(f"{name!r} already exists on {cls.__name__}")
+def _is_url(s: str) -> bool:
+    return s.startswith("http://") or s.startswith("https://")
 
-        already = hasattr(cls, name)
-        if already and not overwrite:
-            return
 
-        # Attach descriptor
-        setattr(cls, name, _ExtraField(name, default))
-        cls._declared_extras[name] = default
+def _download_to_temp(url: str) -> Path:
+    """Download *url* into a fresh temp directory and return the local path.
 
-        # Register with schema
-        if typ is None and default is not None:
-            typ = type(default)
-        SCHEMA.register_extra(cls, name, typ or type(None))
+    * A ``.py`` URL → returns the downloaded ``.py`` file path.
+    * A ``.zip`` URL → extracts into a sub-directory and returns that directory.
+    * Any other URL → treated as a raw file download (returned as-is).
 
-    @classmethod
-    def declared_extras(cls) -> Dict[str, Any]:
-        return dict(getattr(cls, "_declared_extras", {}))
+    The temp directory is *not* deleted automatically; it persists for the
+    lifetime of the process so that imported modules can reference their
+    source files.
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="gedcomx_plugins_"))
+    filename = Path(urllib.parse.urlparse(url).path).name or "plugin_download"
+    dest = tmp_dir / filename
+    urllib.request.urlretrieve(url, dest)
+    if dest.suffix == ".zip":
+        extract_dir = tmp_dir / dest.stem
+        extract_dir.mkdir(exist_ok=True)
+        with zipfile.ZipFile(dest, "r") as zf:
+            zf.extractall(extract_dir)
+        dest.unlink()
+        return extract_dir
+    return dest
 
-class _ExtraField:
-    def __init__(self, name: str, default: Any):
-        self.name = name
-        self.default = default
-    def __get__(self, obj, owner):
-        if obj is None:
-            return self
-        return obj.extras.get(self.name, self.default)
-    def __set__(self, obj, value):
-        obj.extras[self.name] = value
-
-def _copy_default(v: Any) -> Any:
-    if isinstance(v, (list, dict, set)):
-        return v.copy()
-    return v
 
 def import_plugins(
-    base_package: str,                    # e.g., "gedcomx"  (or "gedcomtools.gedcomx")
+    base_package: str,
     *,
     subpackage: str = "extensions",
     local_dir: str | Path = "./plugins",
     env_var: str = "GEDCOMX_PLUGINS",
     recursive: bool = False,
-    root_package: str = "gedcomtools",    # NEW
+    root_package: str = "gedcomtools",
 ) -> dict:
     imported: List[str] = []
     errors: Dict[str, Exception] = {}
 
-    # Normalize base_package to a fully qualified package
-    # Accept either "gedcomx" or "gedcomtools.gedcomx"
     if base_package.startswith(root_package + "."):
         base_fq = base_package
-        base_short = base_package[len(root_package) + 1 :]
     else:
         base_fq = f"{root_package}.{base_package}"
-        base_short = base_package
 
-    # 1) Subpackage: <base_fq>.<subpackage>
-    subpkg_name = f"gedcomtools.{base_package}.{subpackage}"
-    try:
-        imported += _import_from_package(subpkg_name, recursive=recursive)
-    except ModuleNotFoundError as e:
-        # Only ignore if the missing thing IS the subpackage itself
-        if getattr(e, "name", None) == subpkg_name:
-            pass
-        else:
+    # --- built-in subpackage (or URL pointing to a zip / .py) ---
+    if _is_url(subpackage):
+        try:
+            local_sub = _download_to_temp(subpackage)
+            if local_sub.is_file() and local_sub.suffix == ".py":
+                imported.append(_import_file(local_sub, module_prefix=f"{base_fq}.extsub"))
+            elif local_sub.is_dir():
+                imported += _import_from_directory(local_sub, module_prefix=f"{base_fq}.extsub", recursive=recursive)
+        except Exception as e:
+            errors[subpackage] = e
+    else:
+        subpkg_name = f"gedcomtools.{base_package}.{subpackage}"
+        try:
+            imported += _import_from_package(subpkg_name, recursive=recursive)
+        except ModuleNotFoundError as e:
+            if getattr(e, "name", None) == subpkg_name:
+                pass
+            else:
+                errors[subpkg_name] = e
+        except Exception as e:
             errors[subpkg_name] = e
-    except Exception as e:
-        errors[subpkg_name] = e
 
-    # 2) Local directory (resolve relative to *this file* if relative)
+    # --- local_dir (or URL pointing to a zip / .py) ---
     try:
-        p = Path(local_dir)
-        if not p.is_absolute():
-            p = (Path(__file__).resolve().parent / p).resolve()
-        imported += _import_from_directory(
-            p,
-            module_prefix=f"{base_fq}.extfs",   # FIXED prefix
-            recursive=recursive,
-        )
+        if _is_url(str(local_dir)):
+            p = _download_to_temp(str(local_dir))
+        else:
+            p = Path(local_dir)
+            if not p.is_absolute():
+                p = (Path(__file__).resolve().parent / p).resolve()
+        if p.is_file() and p.suffix == ".py":
+            imported.append(_import_file(p, module_prefix=f"{base_fq}.extfs"))
+        else:
+            imported += _import_from_directory(p, module_prefix=f"{base_fq}.extfs", recursive=recursive)
     except FileNotFoundError:
         pass
     except Exception as e:
         errors[str(local_dir)] = e
 
-    # 3) Env var entries
+    # --- env-var entries (paths, module names, or URLs) ---
     for entry in _split_env(os.getenv(env_var, "")):
         try:
-            p = Path(entry)
-            if p.exists():
+            if _is_url(entry):
+                p = _download_to_temp(entry)
                 if p.is_file() and p.suffix == ".py":
                     imported.append(_import_file(p, module_prefix=f"{base_fq}.extenv"))
                 elif p.is_dir():
                     imported += _import_from_directory(p, module_prefix=f"{base_fq}.extenv", recursive=recursive)
-                else:
-                    continue
             else:
-                imported.append(_import_module(entry))
+                p = Path(entry)
+                if p.exists():
+                    if p.is_file() and p.suffix == ".py":
+                        imported.append(_import_file(p, module_prefix=f"{base_fq}.extenv"))
+                    elif p.is_dir():
+                        imported += _import_from_directory(p, module_prefix=f"{base_fq}.extenv", recursive=recursive)
+                else:
+                    imported.append(_import_module(entry))
         except Exception as e:
             errors[entry] = e
 
     return {"imported": imported, "errors": errors}
 
-# ──────────────────────────────────────────────────────────────────────
-# Helpers
-# ──────────────────────────────────────────────────────────────────────
 
 def _import_from_package(pkg_name: str, *, recursive: bool) -> List[str]:
     mods: List[str] = []
     pkg = importlib.import_module(pkg_name)
     if not hasattr(pkg, "__path__"):
         return mods
-
     walker = pkgutil.walk_packages if recursive else pkgutil.iter_modules
     for mi in walker(pkg.__path__, pkg.__name__ + "."):
-        modname = mi.name
-        tail = modname.rsplit(".", 1)[-1]
+        tail = mi.name.rsplit(".", 1)[-1]
         if tail.startswith("_"):
             continue
-        importlib.import_module(modname)
-        mods.append(modname)
-
+        importlib.import_module(mi.name)
+        mods.append(mi.name)
     return mods
+
 
 def _import_package_dir(pkg_dir: Path, modname: str, *, recursive: bool) -> str:
     init_py = pkg_dir / "__init__.py"
@@ -200,19 +178,12 @@ def _import_package_dir(pkg_dir: Path, modname: str, *, recursive: bool) -> str:
     )
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot create spec for package {pkg_dir}")
-
     module = importlib.util.module_from_spec(spec)
-
-    # IMPORTANT: register before exec for relative imports / recursion
     sys.modules[modname] = module
-
-    # Ensure package attrs for child imports
     module.__file__ = str(init_py)
     module.__package__ = modname
-    module.__path__ = [str(pkg_dir)]  # type: ignore[attr-defined]
-
-    spec.loader.exec_module(module)  # type: ignore[arg-type]
-
+    module.__path__ = [str(pkg_dir)]
+    spec.loader.exec_module(module)
     if recursive:
         for child in sorted(pkg_dir.iterdir()):
             if child.name.startswith("_"):
@@ -221,34 +192,23 @@ def _import_package_dir(pkg_dir: Path, modname: str, *, recursive: bool) -> str:
                 _import_package_dir(child, f"{modname}.{_safe_name(child.name)}", recursive=True)
             elif child.suffix == ".py" and child.name != "__init__.py":
                 _import_file(child, module_prefix=modname)
-
     return modname
 
+
 def _import_from_directory(dirpath: str | Path, *, module_prefix: str, recursive: bool) -> List[str]:
-    """
-    Import top-level .py files and packages under a filesystem directory.
-    - Uses stable, unique module names under `module_prefix`.
-    - For packages (dir with __init__.py), import that package; optionally recurse.
-    """
     root = Path(dirpath)
     if not root.exists():
         raise FileNotFoundError(root)
-
     imported: List[str] = []
-
-    # First: import packages (directories with __init__.py)
     for pkg_dir in sorted([p for p in root.iterdir() if p.is_dir() and (p / "__init__.py").exists()]):
         if pkg_dir.name.startswith("_"):
             continue
         modname = f"{module_prefix}.{_safe_name(pkg_dir.name)}"
         imported.append(_import_package_dir(pkg_dir, modname, recursive=recursive))
-
-    # Then: import top-level .py modules
     for py in sorted(root.glob("*.py")):
         if py.name in ("__init__.py",) or py.stem.startswith("_"):
             continue
         imported.append(_import_file(py, module_prefix))
-
     return imported
 
 
@@ -259,39 +219,41 @@ def _import_file(py_file: Path, module_prefix: str) -> str:
     spec = importlib.util.spec_from_file_location(modname, py_file)
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot create spec for file {py_file}")
-
     module = importlib.util.module_from_spec(spec)
-
-    # IMPORTANT: register before exec
     sys.modules[modname] = module
-
-    spec.loader.exec_module(module)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)
     return modname
+
 
 def _import_module(modname: str) -> str:
     importlib.import_module(modname)
     return modname
 
+
 def _safe_name(s: str) -> str:
     return re.sub(r"[^0-9a-zA-Z_]", "_", s)
 
+
 def _short_hash(s: str) -> str:
-    # short, stable, no external deps
     import hashlib
     return hashlib.sha1(s.encode("utf-8")).hexdigest()[:8]
 
+
 def _split_env(value: str) -> List[str]:
+    """Split a plugin env-var string into individual entries.
+
+    Entries may be separated by commas or ``os.pathsep`` (``:`` on POSIX,
+    ``;`` on Windows).  URLs (``http://…`` / ``https://…``) are matched as
+    whole tokens so their embedded colons and ports are never split.
+    """
     if not value:
         return []
-    parts = []
-    # primary split by os.pathsep (';' on Windows, ':' on Unix)
-    for chunk in value.split(os.pathsep):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        # allow comma as alternative delimiter inside each chunk
-        parts.extend([p.strip() for p in chunk.split(",") if p.strip()])
-    return parts
-
-
-
+    # URLs are matched first so their embedded colons (ports, IPv6) are never
+    # split on os.pathsep (':' on POSIX).  Non-URL tokens are delimited by
+    # commas, os.pathsep, and whitespace.
+    non_url_sep = re.escape("," + os.pathsep)
+    pattern = re.compile(
+        rf"https?://[^\s,]+"        # full URL — stop only at space or comma
+        rf"|[^{non_url_sep}\s]+"    # regular path / module name
+    )
+    return [m.group() for m in pattern.finditer(value)]

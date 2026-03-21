@@ -11,4 +11,4 @@
 ======================================================================
 """
 from .test import TestClass
-from .argo_graph import argo_description_get
+from .argo_graph import ext_description_get

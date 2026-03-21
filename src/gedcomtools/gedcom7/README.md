@@ -13,6 +13,7 @@ GEDCOM 7 parser, validator, serializer, and interactive CLI for the
 | `structure.py` | In-memory tree node (`GedcomStructure`) |
 | `validator.py` | Multi-phase structural and semantic validator |
 | `writer.py` | Serializer — `GedcomStructure` trees → GEDCOM 7 text |
+| `models.py` | High-level dataclasses (`IndividualDetail`, `FamilyDetail`, …) |
 | `specification.py` | Tag rules, payload types, cardinality, and enumerations |
 | `g7interop.py` | Tag ↔ URI mapping and extension tag registration |
 | `exceptions.py` | Exception hierarchy (`GedcomError`, `GedcomParseError`, …) |
@@ -159,7 +160,7 @@ for issue in issues:
 | 10 | Pointer target resolution — dangling pointer detection | error |
 | 11 | `@VOID@` sentinel — allowed only on spec-defined pointer slots | warning |
 | 12 | Bidirectional links — `INDI.FAMC` ↔ `FAM.CHIL`, `INDI.FAMS` ↔ `FAM.HUSB/WIFE` | error |
-| 13 | Orphaned records — SOUR/REPO/OBJE/SNOTE defined but never cited | warning |
+| 13 | Orphaned records — SOUR/REPO/OBJE/SNOTE/SUBM defined but never cited | warning |
 | 14 | TRAN context — `TRAN` requires `LANG`; `FILE.TRAN` requires `FORM`; `NAME.TRAN` and `PLAC.TRAN` child restrictions | warning |
 | 15 | Extension tag declaration — `HEAD.SCHMA.TAG` (bypassed with `--lenient`) | error |
 | 16 | C0 control characters — NUL is an error; other C0 are warnings | error / warning |
@@ -266,6 +267,94 @@ re-reads from disk.
 
 ---
 
+## High-level Models
+
+`models.py` provides read-only snapshot dataclasses built from parsed
+`GedcomStructure` trees. Construct them with the factory functions:
+
+```python
+from gedcomtools.gedcom7 import Gedcom7
+from gedcomtools.gedcom7.models import (
+    individual_detail, family_detail, source_detail,
+    repository_detail, media_detail, shared_note_detail, submitter_detail,
+)
+
+g = Gedcom7("family.ged")
+
+# Individual
+p = individual_detail(g["INDI"][0])
+print(p.full_name)        # "Alice Smith" (slashes stripped)
+print(p.birth_year)       # 1900
+print(p.death_year)       # 1975
+print(p.age_at_death)     # 75
+print(p.is_living)        # False
+print(p.sex)              # "F"
+print(p.occupation)       # "Carpenter"
+
+# Name translations (NAME.TRAN)
+for tran in p.name.translations:
+    print(f"[{tran.lang}] {tran.display}")
+
+# Place translations (PLAC.TRAN)
+if p.birth:
+    print(p.birth.place)                       # "Springfield"
+    print(p.birth.place_translations.get("de")) # "Springfeld"
+
+# Family
+f = family_detail(g["FAM"][0])
+print(f.husband_xref, f.wife_xref)
+print(f.marriage_year, f.num_children)
+```
+
+### Detail classes
+
+| Class | Factory | Key fields |
+|---|---|---|
+| `IndividualDetail` | `individual_detail(node)` | `names`, `sex`, `birth`, `death`, `burial`, `occupation`, `restriction`, `last_changed` |
+| `FamilyDetail` | `family_detail(node)` | `husband_xref`, `wife_xref`, `children_xrefs`, `marriage`, `divorce` |
+| `SourceDetail` | `source_detail(node)` | `title`, `author`, `publication`, `abbreviation`, `repository_refs` |
+| `RepositoryDetail` | `repository_detail(node)` | `name`, `address`, `phone`, `email`, `website` |
+| `MediaDetail` | `media_detail(node)` | `files` (list of `(path, form)` tuples), `title` |
+| `SharedNoteDetail` | `shared_note_detail(node)` | `text`, `mime`, `language`, `source_citations` |
+| `SubmitterDetail` | `submitter_detail(node)` | `name`, `address`, `phone`, `email`, `language` |
+
+### EventDetail properties
+
+| Property | Description |
+|---|---|
+| `year` | Four-digit year extracted from date string; handles `ABT`, `BEF`, dual-year `1800/01`, `INT` dates |
+| `qualifier` | Date qualifier prefix: `ABT`, `BEF`, `AFT`, `CAL`, `EST`, `FROM`, `TO`, `BET`, `INT` |
+| `age_years` | Year component extracted from AGE string (`"45y 3m"` → `45`) |
+| `place_translations` | `Dict[str, str]` — BCP-47 lang → translated place name from `PLAC.TRAN` nodes |
+
+### NameDetail fields
+
+| Field | Description |
+|---|---|
+| `full` | Raw NAME payload including GEDCOM surname slashes |
+| `display` | Clean name with slashes removed |
+| `given`, `surname` | GIVN / SURN substructure values |
+| `prefix`, `suffix` | NPFX / NSFX (name prefix / suffix) |
+| `nickname` | NICK substructure value |
+| `surname_prefix` | SPFX (de, van, von, …) |
+| `name_type` | TYPE substructure value |
+| `lang` | Language tag (set on translation entries) |
+| `translations` | `List[NameDetail]` built from `NAME.TRAN` nodes, each with `lang` set |
+
+### Write-back
+
+Detail objects obtained through `Gedcom7.get_individual()` / `get_family()`
+(or by passing `_save_fn`) support in-place editing:
+
+```python
+p = g.get_individual("@I1@")
+p.occupation = "Blacksmith"
+p.save()
+g.write("updated.ged")
+```
+
+---
+
 ## Public API summary
 
 ```python
@@ -282,6 +371,26 @@ from gedcomtools.gedcom7 import (
     is_known_tag,
     is_known_uri,
     register_tag_uri,
+    get_label,
+    # High-level model detail classes
+    IndividualDetail,
+    FamilyDetail,
+    SourceDetail,
+    RepositoryDetail,
+    MediaDetail,
+    SharedNoteDetail,
+    SubmitterDetail,
+    EventDetail,
+    NameDetail,
+    SourceCitation,
+    # Factory functions
+    individual_detail,
+    family_detail,
+    source_detail,
+    repository_detail,
+    media_detail,
+    shared_note_detail,
+    submitter_detail,
 )
 ```
 
@@ -297,6 +406,7 @@ gedcom7/
 ├── specification.py     Tag rules and enumerations
 ├── validator.py         18-phase validator
 ├── writer.py            GEDCOM 7 serializer
+├── models.py            High-level detail dataclasses + factory functions
 ├── g7interop.py         Tag/URI mapping
 ├── exceptions.py        Exception hierarchy
 ├── g7cli.py             Interactive shell

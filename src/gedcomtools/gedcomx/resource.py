@@ -1,122 +1,80 @@
-from typing import Optional, Union
+from __future__ import annotations
+from typing import Any, ClassVar, Optional, Union
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    Resource.py
- Author:  David J. Cartwright
- Purpose: References TopLevel Types for Serialization
+from pydantic import PrivateAttr, model_serializer
 
- Created: 2025-08-25
- Updated:
-   - 2025-08-31: working on target=Resource and deserialization issues
-   - 2025-09-03: _from_json_ refactor, arguments changed
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-
-from .uri import URI
 from ..glog import get_logger
-from .schemas import extensible, SCHEMA
+from .gx_base import GedcomXModel
+from .uri import URI
+
 log = get_logger(__name__)
-serial_log = "gedcomx.serialization"
-#=====================================================================
 
 
-@extensible()    
-class Resource:
-    """
-    Class used to track and resolve URIs and references between datastores.
+class Resource(GedcomXModel):
+    """Tracks and resolves URIs / references between data stores."""
 
-    Parameters
-    ----------
-    
-    Raises
-    ------
-    ValueError
-        If `id` is not a valid UUID.
-    """
-    # TODO, Deal with a resouce being passed, as it may be unresolved.
-    #def __init__(self,resource: Union[URI, None] = None,resourceId: str | None = None, target: object = None) -> None:
-    def __init__(self,resource: Union[URI, None] = None) -> None:
-        
-        #if (resource is None) and (target is None): #TODO
-        #    raise ValueError('Resource object must point to something.')
+    resource: Optional[URI] = None
+    resourceId: Optional[str] = None
 
-        self.resource = resource
-        self.__id = None
-        self.__type = None
-        self.__resolved = False
-        self.__remote: bool | None = None    # is the resource pointed to persitent on a remote datastore?
-        self.__resourceId = None
-        self.__target = None
+    # Internal state — not serialized
+    _resolved: bool = PrivateAttr(default=False)
+    _remote: Optional[bool] = PrivateAttr(default=None)
+    _target: Optional[Any] = PrivateAttr(default=None)
 
-        '''
-        if target:
-            if isinstance(target,Resource):
-                self.resource = target.resource
-                self.resourceId = target.resourceId
-                self.target = target.target
-            elif isinstance(target,URI):
-                if hub.log_enabled: log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value} ")
-                assert False
-            else:
-                if hub.log_enabled: log.debug(f"Target of type: {type(target)}")
-                if hasattr(target,'uri'):
-                    self.resource = target.uri
-                else:
-                    self.resourceId = URI(fragment=target.id)
-                    self.resourceId = target.id
-            if hub.log_enabled: log.debug(f"Resource '{self.value} ")
-        '''
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_nonempty
+        if self.resource is None and not self.resourceId:
+            result.warn("", "Resource has neither resource URI nor resourceId")
+        check_instance(result, "resource", self.resource, URI)
+        if self.resourceId is not None:
+            check_nonempty(result, "resourceId", self.resourceId)
+
+    @model_serializer
+    def _serialize(self) -> dict:
+        out: dict = {}
+        if self.resource is not None:
+            out["resource"] = str(self.resource)
+        if self.resourceId is not None:
+            out["resourceId"] = self.resourceId
+        return out
 
     @property
-    def uri(self):
+    def uri(self) -> Optional[URI]:
         return self.resource
-    
+
     @property
-    def value(self):
-        res_dict = {}
-        if self.resource: res_dict['resource'] = self.resource
-        #if self.resourceId: res_dict['resourceId'] = self.resourceId
-        return res_dict if res_dict != {} else None
-    
-    @property
-    def _target(self):
-        return self.__target
-    
-    @_target.setter
-    def _target(self,target):
-        self.__target = target
+    def value(self) -> Optional[dict]:
+        res: dict = {}
+        if self.resource:
+            res["resource"] = self.resource
+        return res if res else None
 
     @classmethod
-    def _of_object(cls, target):
-        if isinstance(target,Resource):
+    def _of_object(cls, target: Any) -> "Resource":
+        if isinstance(target, Resource):
             resource = target.resource
-            target = target._target
         elif isinstance(target, URI):
-            log.debug(f"Making a 'Resource' from '{type(target).__name__}': {target.value}")
-            raise NotImplementedError("Resource._of_object() does not yet handle URI targets")
+            resource = target
         else:
-            log.debug(f"Target of type: {type(target)}")
-            if hasattr(target, '_uri'):
+            log.debug("Target of type: {}", type(target))
+            if hasattr(target, "_uri"):
                 resource = target._uri
             else:
                 resource = URI(fragment=target.id)
-        log.debug(f"Resource '{resource}")
+        log.debug("Resource '{}'", resource)
         return Resource(resource=resource)
 
     def __repr__(self) -> str:
-        return f"Resource(resource={self.resource}, resourceId={self.__resourceId}, target={self.__target})"
-    
-    def __str__(self) -> str:
-        return f"resource={self.resource}{f', resourceId={self.__resourceId}' if self.__resourceId else ''} {f', target={self.__target}' if self.__target else ''}"
-    
-#SCHEMA.set_resource_class(Resource)
+        return (
+            f"Resource(resource={self.resource}, "
+            f"resourceId={self.resourceId}, target={self._target})"
+        )
 
+    def __str__(self) -> str:
+        parts = [f"resource={self.resource}"]
+        if self.resourceId:
+            parts.append(f"resourceId={self.resourceId}")
+        if self._target:
+            parts.append(f"target={self._target}")
+        return ", ".join(parts)

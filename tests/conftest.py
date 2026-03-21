@@ -12,6 +12,7 @@ GED_SMALL   = SAMPLE_DATA / "Sui_Dynasty.ged"
 GED_MEDIUM  = SAMPLE_DATA / "allged.ged"
 GED_LARGE   = SAMPLE_DATA / "Royal92-Famous+European+Royalty+Gedcom.ged"
 GED_DJC     = SAMPLE_DATA / "_DJC_ Nunda Cartwright Family.ged"
+GED_COMPREHENSIVE = SAMPLE_DATA / "comprehensive_test.ged"
 
 GX_TINY     = SAMPLE_DATA / "full.gedcomx"
 GX_SMALL    = SAMPLE_DATA / "blakesley_gedcomx_sample.json"
@@ -41,6 +42,11 @@ def ged_medium():
 @pytest.fixture(scope="session")
 def ged_large():
     return GED_LARGE
+
+
+@pytest.fixture(scope="session")
+def ged_comprehensive():
+    return GED_COMPREHENSIVE
 
 
 @pytest.fixture(scope="session")

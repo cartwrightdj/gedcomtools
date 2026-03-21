@@ -184,7 +184,11 @@ class Schema:
         *,
         overwrite: bool = False,
     ) -> None:
-        """Register a single extra field (normalized) and propagate to subclasses."""
+        """Register a single extra field (normalized) and propagate to subclasses.
+
+        For pydantic GedcomXModel subclasses, also calls ``define_ext()`` so the
+        field becomes a proper model field (not just an ``extra``-captured value).
+        """
         cname = self._cls_name(cls)
         self.field_type_table.setdefault(cname, {})
         nt = self._normalize_field_type(typ)
@@ -197,6 +201,10 @@ class Schema:
         # propagate to current subclasses
         for sub in self._subclasses.get(cname, set()):
             self._propagate_extra_down(sub, name, nt, overwrite=overwrite)
+
+        # For pydantic models, also wire up as a proper model field.
+        if isinstance(cls, type) and hasattr(cls, "define_ext"):
+            cls.define_ext(name, typ=typ if isinstance(typ, type) else None, overwrite=overwrite)
 
     def normalize_all(self) -> None:
         """Re-run normalization across all registered fields."""
@@ -403,7 +411,7 @@ class Schema:
             return reduce(operator.or_, args)  # e.g., A | B | C
         except TypeError:
             from typing import Union as _TypingUnion
-            return _TypingUnion.__getitem__(args)  # typing.Union[A, B, C]
+            return _TypingUnion.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
 
     def _rebuild_param(self, origin: Any, sub: tuple[Any, ...], *, fallback: Any) -> Any:
         try:
@@ -782,7 +790,7 @@ def accept_extras(*, stash_attr: str = "_extras",
         @classmethod
         def __init_subclass__(subcls, **kw):
             if prev_func:
-                prev_func(**kw)  # call original
+                prev_func(**kw)  # type: ignore[call-arg]  # call original
             _wrap_init(subcls)   # wrap subclass' __init__ too
 
         klass.__init_subclass__ = __init_subclass__  # propagate to future subclasses
@@ -826,7 +834,7 @@ class ExtrasAwareMeta(type):
     def __call__(cls, *args, **kwargs):
         # what extras are allowed for this class?
         allow_fn = getattr(cls, "__extras_allow__", None)
-        allowed = set(allow_fn(cls)) if callable(allow_fn) else set(SCHEMA.get_all_extras(cls).keys())
+        allowed = set(allow_fn(cls)) if callable(allow_fn) else set(SCHEMA.get_all_extras(cls).keys())  # type: ignore[arg-type]
 
         # inspect the CURRENT __init__ (dataclass/custom OK)
         try:
