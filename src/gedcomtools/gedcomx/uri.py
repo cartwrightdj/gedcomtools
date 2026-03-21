@@ -45,6 +45,7 @@ class URI(GedcomXModel):
             # Positional or non-dict — treat as a value string
             return cls._parse_value_string(str(data))
 
+        data = dict(data)  # don't mutate the caller's dict
         target = data.pop("target", None)
         value = data.pop("value", None)
 

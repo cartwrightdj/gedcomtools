@@ -182,7 +182,7 @@ class Fact(Conclusion):
     def qualifiers(self, value: List[FactQualifier]) -> None:
         if not isinstance(value, list) or not all(isinstance(i, FactQualifier) for i in value):
             raise ValueError("qualifiers must be a list of FactQualifier objects.")
-        self._qualifiers.extend(value)
+        self._qualifiers = list(value)
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

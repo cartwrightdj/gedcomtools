@@ -68,5 +68,4 @@ from .uri import URI
 from .validation import ValidationIssue, ValidationResult
 
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
-#from ..xxxtranslation import g7toXtable
 

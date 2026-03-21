@@ -2,7 +2,6 @@ import random
 import string
 import orjson
 
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
 
 """
@@ -61,7 +60,7 @@ class TypeCollection(Generic[T]):
         self.item_type: type[T] = item_type
         self._items: list[T] = []
         self._id_index: dict[Any, T] = {}
-        self._name_index: dict[str, list[T]] = {}
+        self._name_index: dict[str, dict[int, T]] = {}  # object id → item
         self._uri_index: dict[str, T] = {}
         self._uri = URI(path=f"/{item_type.__name__}s/")
 
@@ -117,7 +116,7 @@ class TypeCollection(Generic[T]):
             for nm in names:
                 name_value = nm.value if isinstance(nm, TextValue) else getattr(nm, "value", None)
                 if isinstance(name_value, str) and name_value:
-                    self._name_index.setdefault(name_value, []).append(item)
+                    self._name_index.setdefault(name_value, {})[id(item)] = item
 
     def _remove_from_indexes(self, item: T) -> None:
         if hasattr(item, "id"):
@@ -132,10 +131,10 @@ class TypeCollection(Generic[T]):
             for nm in names:
                 name_value = nm.value if isinstance(nm, TextValue) else getattr(nm, "value", None)
                 if isinstance(name_value, str):
-                    lst = self._name_index.get(name_value)
-                    if lst and item in lst:
-                        lst.remove(item)
-                        if not lst:
+                    d = self._name_index.get(name_value)
+                    if d:
+                        d.pop(id(item), None)
+                        if not d:
                             self._name_index.pop(name_value, None)
 
     # --- lookups ---
@@ -152,7 +151,8 @@ class TypeCollection(Generic[T]):
         """Return items whose name matches sname (stripped), or None if not found."""
         if not sname:
             return None
-        return self._name_index.get(sname.strip(), None)
+        d = self._name_index.get(sname.strip())
+        return list(d.values()) if d else None
 
     # --- mutation ---
     def append(self, item: T) -> None:
@@ -407,9 +407,15 @@ class GedcomX:
                     pass
 
                 self.relationships.append(relationship)
+            else:
+                # person1/person2 may be dicts (e.g. after JSON round-trip) or
+                # other valid types — store the relationship as-is.
+                self.relationships.append(relationship)
         else:
-            raise ValueError()
-    
+            raise ValueError(
+                f"relationship must be a Relationship instance, got {type(relationship).__name__}"
+            )
+
     def add_place_description(self, placeDescription: PlaceDescription):
         """Add a PlaceDescription to the genealogy."""
         if placeDescription and isinstance(placeDescription,PlaceDescription):
@@ -437,8 +443,10 @@ class GedcomX:
                 self.agents.append(agent)
                 log.debug("Added agent id={}", agent.id)
         else:
-            raise ValueError()
-    
+            raise ValueError(
+                f"agent must be an Agent instance, got {type(agent).__name__}"
+            )
+
     def add_event(self, event_to_add: Event):
         """Add an Event to this GedcomX genealogy.
 
@@ -480,19 +488,13 @@ class GedcomX:
             for place in gedcomx.places:
                 self.add_place_description(place)
 
-    @lru_cache(maxsize=65536)
     def get_person_by_id(self, id: str):
-        """Return the first Person whose id matches, or None if not found."""
-        filtered = [person for person in self.persons if getattr(person, 'id') == id]
-        if filtered: return filtered[0]
-        return None
-     
-    @lru_cache(maxsize=65536)
+        """Return the Person with the given id, or None if not found."""
+        return self.persons.by_id(id)
+
     def source_by_id(self, id: str):
-        """Return the first SourceDescription whose id matches, or None if not found."""
-        filtered = [source for source in self.sourceDescriptions if getattr(source, 'id') == id]
-        if filtered: return filtered[0]
-        return None
+        """Return the SourceDescription with the given id, or None if not found."""
+        return self.sourceDescriptions.by_id(id)
 
     def validate(self) -> ValidationResult:
         """Validate this GedcomX document.
@@ -575,8 +577,7 @@ class GedcomX:
         )
         for name, col in _collections:
             if len(col) > 0:
-                items = [Serialization.serialize(item) for item in col]
-                items = [i for i in items if i is not None]
+                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
                 if items:
                     result[name] = items
         return result if result else None
@@ -595,42 +596,42 @@ class GedcomX:
         for pd in data.get("persons", []):
             try:
                 gx.add_person(Person.model_validate(pd))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid person record: {}", e)
         for ad in data.get("agents", []):
             try:
                 gx.add_agent(Agent.model_validate(ad))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid agent record: {}", e)
         from .relationship import Relationship
         for rd in data.get("relationships", []):
             try:
                 gx.add_relationship(Relationship.model_validate(rd))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid relationship record: {}", e)
         for sd in data.get("sourceDescriptions", []):
             try:
                 gx.add_source_description(SourceDescription.model_validate(sd))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid sourceDescription record: {}", e)
         from .event import Event
         for ed in data.get("events", []):
             try:
                 gx.add_event(Event.model_validate(ed))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid event record: {}", e)
         from .document import Document
         for dd in data.get("documents", []):
             try:
                 gx.add_document(Document.model_validate(dd))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid document record: {}", e)
         from .place_description import PlaceDescription
         for pld in data.get("places", []):
             try:
                 gx.add_place_description(PlaceDescription.model_validate(pld))
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Skipping invalid place record: {}", e)
         return gx
         
     @property
@@ -643,8 +644,7 @@ class GedcomX:
         """
         return orjson.dumps(self._as_dict,option= orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
 
-    @lru_cache(maxsize=65536)
-    def _resolve(self,resource_reference: Union[URI,Resource]):
+    def _resolve(self, resource_reference: Union[URI, Resource]):
         #TODO indept URI search, URI index in collections
         if resource_reference:
             if isinstance(resource_reference, Resource):

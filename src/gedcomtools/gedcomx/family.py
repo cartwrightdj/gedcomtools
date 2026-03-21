@@ -70,7 +70,8 @@ class FamilyParser:
     def set_husband(self, husband: Optional[Person]):
         """Assign the husband (person1) of the couple relationship and register it in the genealogy."""
         if husband is not None:
-            if self.parent1 is not None: raise ValueError
+            if self.parent1 is not None:
+                raise ValueError("set_husband called twice: person1 is already set on this couple relationship")
             self.couple.person1 = husband
             self.couple.person1.add_fact(self.marr_fact)
             if not self.couple_added:
@@ -82,7 +83,8 @@ class FamilyParser:
     def set_wife(self, wife: Optional[Person]):
         """Assign the wife (person2) of the couple relationship and register it in the genealogy."""
         if wife is not None:
-            if self.parent2 is not None: raise ValueError
+            if self.parent2 is not None:
+                raise ValueError("set_wife called twice: person2 is already set on this couple relationship")
             self.couple.person2 = wife
             self.couple.person2.add_fact(self.marr_fact)
             if not self.couple_added:

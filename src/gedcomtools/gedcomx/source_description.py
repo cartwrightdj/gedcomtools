@@ -67,9 +67,9 @@ class SourceDescription(GedcomXModel):
     coverage: List[Coverage] = Field(default_factory=list)
     descriptions: List[TextValue] = Field(default_factory=list)
     identifiers: IdentifierList = Field(default_factory=IdentifierList)
-    created: Optional[Date] = None
-    modified: Optional[Date] = None
-    published: Optional[Date] = None
+    created: Optional[Union[Date, str]] = None
+    modified: Optional[Union[Date, str]] = None
+    published: Optional[Union[Date, str]] = None
     repository: Optional[Union[Resource, Agent]] = None
 
     def model_post_init(self, __context: object) -> None:

@@ -111,6 +111,8 @@ class IdentifierList:
     # ---- hashing helpers -----------------------------------------------
 
     def make_hashable(self, obj: Any) -> Any:
+        if isinstance(obj, URI):
+            return str(obj)  # urlunsplit — same result as model_dump(mode="json") but free
         if isinstance(obj, dict):
             return tuple(sorted((k, self.make_hashable(v)) for k, v in obj.items()))
         if isinstance(obj, (list, set, tuple)):
@@ -119,7 +121,7 @@ class IdentifierList:
             d = obj.model_dump(exclude_none=True, mode="json")
             if isinstance(d, dict):
                 return tuple(sorted((k, self.make_hashable(v)) for k, v in d.items()))
-            return self.make_hashable(d)  # e.g. URI serializes to a string in json mode
+            return self.make_hashable(d)
         if hasattr(obj, "__dict__"):
             return tuple(sorted((k, self.make_hashable(v)) for k, v in vars(obj).items()))
         return obj
@@ -149,7 +151,7 @@ class IdentifierList:
             raise ValueError("identifier.type must be an _EnumItem")
         key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)
         existing = self.identifiers.get(key, [])
-        self.identifiers[key] = self.unique_list(list(existing) + list(identifier.values))
+        self.identifiers[key] = self.unique_list(existing + identifier.values)
 
     # ---- queries -------------------------------------------------------
 

@@ -55,8 +55,7 @@ class Resource(GedcomXModel):
         if isinstance(target, Resource):
             resource = target.resource
         elif isinstance(target, URI):
-            log.debug("Making a 'Resource' from '{}': {}", type(target).__name__, target.value)
-            raise NotImplementedError("Resource._of_object() does not yet handle URI targets")
+            resource = target
         else:
             log.debug("Target of type: {}", type(target))
             if hasattr(target, "_uri"):

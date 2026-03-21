@@ -25,8 +25,8 @@ class PlaceDescription(Subject):
     type: Optional[str] = None  # TODO: replace with enumeration
     place: Optional[URI] = None
     jurisdiction: Optional[Any] = None  # Resource | PlaceDescription
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    latitude: Optional[Union[float, str]] = None
+    longitude: Optional[Union[float, str]] = None
     temporalDescription: Optional[Date] = None
     spatialDescription: Optional[Any] = None  # PlaceReference
 

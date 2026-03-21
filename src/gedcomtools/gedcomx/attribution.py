@@ -15,21 +15,21 @@ class Attribution(GedcomXModel):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     contributor: Optional[Union[Agent, Resource]] = None
-    modified: Optional[datetime] = None
+    modified: Optional[Union[datetime, str]] = None
     changeMessage: Optional[str] = None
     changeMessageResource: Optional[str] = None
     creator: Optional[Union[Agent, Resource]] = None
-    created: Optional[datetime] = None
+    created: Optional[Union[datetime, str]] = None
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
         from .validation import check_instance, check_nonempty
         check_instance(result, "contributor", self.contributor, Agent, Resource)
         check_instance(result, "creator", self.creator, Agent, Resource)
-        if self.modified is not None and not isinstance(self.modified, datetime):
-            result.warn("modified", f"Expected datetime, got {type(self.modified).__name__}")
-        if self.created is not None and not isinstance(self.created, datetime):
-            result.warn("created", f"Expected datetime, got {type(self.created).__name__}")
+        if self.modified is not None and not isinstance(self.modified, (datetime, str)):
+            result.warn("modified", f"Expected datetime or str, got {type(self.modified).__name__}")
+        if self.created is not None and not isinstance(self.created, (datetime, str)):
+            result.warn("created", f"Expected datetime or str, got {type(self.created).__name__}")
         if self.changeMessage is not None:
             check_nonempty(result, "changeMessage", self.changeMessage)
         if self.changeMessageResource is not None:

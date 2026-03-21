@@ -927,7 +927,14 @@ class GedcomConverter:
             self.object_map[record.level] = container
 
         elif record.parent is not None and record.parent.tag == 'TRAN':
-            pass #TODO
+            # FORM under TRAN specifies the script/encoding of the transliteration
+            # (e.g. "gedcom/standard", "gedcom/zh-Hant"). No GedcomX equivalent;
+            # store as a note on the NameForm or TextValue if present.
+            parent = self.object_map.get(record.level - 1)
+            if isinstance(parent, NameForm) and record.value:
+                parent.fullText = (parent.fullText or "") + f" [{record.value}]"
+            else:
+                log.debug("handle_form[TRAN]: ignoring FORM={!r} under TRAN for {}", record.value, type(parent).__name__ if parent else "None")
         else:
             self.convert_exception_dump(record=record)
 
@@ -1415,7 +1422,44 @@ class GedcomConverter:
            #log.debug(self.convert_exception_dump(record=record))
 
     def handle_tran(self, record: Element):
-        pass
+        """Handle TRAN (Translation/Transliteration) tags.
+
+        GEDCOM 5.5.1 uses TRAN to provide alternate language/script forms of
+        text-bearing records.  GedcomX represents these as additional NameForms
+        (for Name records) or additional Notes/TextValues (for text records).
+        The LANG child tag is processed by handle_lang, which sets the lang
+        attribute on whatever this method stores in the object_map.
+        """
+        parent = self.object_map.get(record.level - 1)
+        if isinstance(parent, Name):
+            # Additional transliteration/translation of a name
+            name_form = NameForm(fullText=record.value or "")
+            parent.nameForms.append(name_form)
+            self.object_map[record.level] = name_form
+        elif isinstance(parent, Note):
+            # Translation of a note — store as a sibling Note with lang set by LANG child
+            gxobject = Note(text=self.clean_str(record.value or ""))
+            # Add to the same container as the original note (go up one more level)
+            grandparent = self.object_map.get(record.level - 2)
+            if grandparent is not None and hasattr(grandparent, "add_note"):
+                grandparent.add_note(gxobject)
+            self.object_map[record.level] = gxobject
+        elif isinstance(parent, TextValue):
+            # Translation of a title or description
+            gxobject = TextValue(value=self.clean_str(record.value or ""))
+            self.object_map[record.level] = gxobject
+        else:
+            log.debug("handle_tran: unhandled parent type {} for {}", type(parent).__name__ if parent else "None", record.describe())
+
+    def handle_lang(self, record: Element):
+        """Set the lang attribute on the current object (child of TRAN/FONE)."""
+        parent = self.object_map.get(record.level - 1)
+        if parent is None:
+            return
+        if hasattr(parent, "lang"):
+            parent.lang = record.value
+        else:
+            log.debug("handle_lang: parent {} has no lang attribute", type(parent).__name__)
 
     def handle_type(self, record: Element):
         # peek to see if event or fact

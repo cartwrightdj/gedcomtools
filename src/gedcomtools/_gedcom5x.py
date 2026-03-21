@@ -393,16 +393,17 @@ class Gedcom5x():
             name_width = max(len(name) for name, _ in pairs)
             value_width = max(len(str(value)) for _, value in pairs)
 
-            # Print the header
-            print(f'GEDCOM {self.version} Import Results')
             header = f"{'Type'.ljust(name_width)} | {'Count'.ljust(value_width)}"
-            print('-' * len(header))
-            print(header)
-            print('-' * len(header))
-
-            # Print each pair in the table
+            separator = '-' * len(header)
+            lines = [
+                f"GEDCOM {self.version} Import Results",
+                separator,
+                header,
+                separator,
+            ]
             for name, value in pairs:
-                print(f"{name.ljust(name_width)} | {str(value).ljust(value_width)}")
+                lines.append(f"{name.ljust(name_width)} | {str(value).ljust(value_width)}")
+            log.info("\n".join(lines))
                 
         imports_stats = {
             'Top Level Records': len(self.records),
@@ -475,7 +476,7 @@ class Gedcom5x():
         Raises
         ------
         NotImplementedError
-         writing to legacy GEDCOM file is not currently implimented.
+         writing to legacy GEDCOM file is not currently implemented.
         """
         raise NotImplementedError("Writing of GEDCOM files is not implemented.")  
 
@@ -504,13 +505,11 @@ class Gedcom5x():
         extension = '.ged'
 
         if not os.path.exists(file_path):
-            print(f"File does not exist: {file_path}")
-            raise FileNotFoundError
+            raise FileNotFoundError(f"File does not exist: {file_path}")
         elif not file_path.lower().endswith(extension.lower()):
-            print(f"File does not have the correct extension: {file_path}")
-            raise Exception("File does not appear to be a GEDCOM")
-        
-        print("Reading from GEDCOM file")
+            raise ValueError(f"File does not have a .ged extension: {file_path}")
+
+        log.debug("Reading from GEDCOM file: {}", file_path)
         with open(file_path, 'r', encoding='utf-8') as file:
             lines = [line.strip() for line in file]
 
@@ -611,6 +610,6 @@ class Gedcom5x():
                     record.xref = record.value
                     self._snotes.append(record)
         else:
-            raise ValueError()
+            raise ValueError("Input must be a non-empty list of Gedcom5xRecord objects")
 
 
