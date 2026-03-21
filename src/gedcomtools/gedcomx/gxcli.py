@@ -86,22 +86,36 @@ def _set_all_handler_levels(logger: logging.Logger, level: int) -> None:
         h.setLevel(level)
 
 # ── Colors ───────────────────────────────────────────────────────────────────
+# On Windows, raw ANSI escape codes require either colorama or Windows 10+
+# Virtual Terminal Processing. When colorama is available it wraps stdout so
+# that all escape sequences work on every Windows version.  When it is not
+# available and we are on Windows, we disable colour entirely so the terminal
+# is not littered with literal escape characters.
 try:
     from colorama import Fore, Style, init as _colorama_init
 
     _colorama_init()
     _RED, _RESET = Fore.RED, Style.RESET_ALL
+    _ANSI_SUPPORTED = True
 except Exception:
-    _RED, _RESET = "\033[31m", "\033[0m"
+    _ANSI_SUPPORTED = not sys.platform.startswith("win")
+    if _ANSI_SUPPORTED:
+        _RED, _RESET = "\033[31m", "\033[0m"
+    else:
+        _RED, _RESET = "", ""
 
-ANSI = {
-    "red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "cyan": "\x1b[36m",
-    "dim": "\x1b[2m",
-    "reset": "\x1b[0m",
-}
+ANSI: dict[str, str]
+if _ANSI_SUPPORTED:
+    ANSI = {
+        "red": "\x1b[31m",
+        "green": "\x1b[32m",
+        "yellow": "\x1b[33m",
+        "cyan": "\x1b[36m",
+        "dim": "\x1b[2m",
+        "reset": "\x1b[0m",
+    }
+else:
+    ANSI = {k: "" for k in ("red", "green", "yellow", "cyan", "dim", "reset")}
 
 # ── Status flags ─────────────────────────────────────────────────────────────
 NO_DATA = 0xB0

@@ -523,7 +523,9 @@ def _download_to_temp(url: str) -> Path:
         with zipfile.ZipFile(dest, "r") as zf:
             for member in zf.infolist():
                 member_path = (extract_dir / member.filename).resolve()
-                if not str(member_path).startswith(str(resolved_extract)):
+                try:
+                    member_path.relative_to(resolved_extract)
+                except ValueError:
                     raise ValueError(
                         f"Zip slip detected in plugin archive: {member.filename!r}"
                     )

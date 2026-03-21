@@ -367,7 +367,7 @@ class LoggingHub:
             kwargs["retention"] = retention
 
         if cfg.path:
-            os.makedirs(os.path.dirname(os.path.abspath(cfg.path)), exist_ok=True)
+            Path(cfg.path).resolve().parent.mkdir(parents=True, exist_ok=True)
             sid = _logger.add(cfg.path, **kwargs)
         else:
             del kwargs["filter"]
