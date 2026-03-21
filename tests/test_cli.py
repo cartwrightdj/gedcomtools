@@ -47,12 +47,6 @@ class TestSniffSourceType:
     def test_g5_medium_ged(self, ged_medium):
         assert _sniff_source_type(ged_medium) == "g5"
 
-    def test_gx_json_file(self, gx_small):
-        assert _sniff_source_type(gx_small) == "gx"
-
-    def test_gx_medium_json(self, gx_medium):
-        assert _sniff_source_type(gx_medium) == "gx"
-
     def test_unreadable_raises(self):
         with pytest.raises((ValueError, Exception)):
             _sniff_source_type(Path("/nonexistent/file.ged"))

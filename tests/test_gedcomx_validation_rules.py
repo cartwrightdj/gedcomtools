@@ -110,7 +110,7 @@ def _validate_all(items: list, model: type[BaseModel]) -> list[str]:
 # Fixture: converted GedcomX serialized to dict
 # ---------------------------------------------------------------------------
 
-SAMPLE = Path(__file__).parent.parent / ".sample_data" / "555SAMPLE.GED"
+SAMPLE = Path(__file__).parent.parent / ".sample_data" / "gedcom5" / "gedcom5_sample.ged"
 
 
 @pytest.fixture(scope="module")

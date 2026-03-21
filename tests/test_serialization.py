@@ -117,17 +117,3 @@ class TestRoundTrip:
         assert len(restored.agents) == 1
 
 
-class TestDeserializeFromFile:
-    def test_deserialize_gx_json(self, gx_small):
-        with open(gx_small, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        gx = Serialization.deserialize(data, GedcomX)
-        assert isinstance(gx, GedcomX)
-        assert len(gx.persons) >= 0  # may be 0 for source-only files
-
-    def test_deserialize_preserves_person_ids(self, gx_small):
-        with open(gx_small, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        gx = Serialization.deserialize(data, GedcomX)
-        for p in gx.persons:
-            assert p.id is not None

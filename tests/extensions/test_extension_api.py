@@ -134,19 +134,25 @@ class TestModelExtra:
 # ---------------------------------------------------------------------------
 
 class TestImportPlugins:
+    def _make_registry(self):
+        from gedcomtools.gedcomx.extensible import PluginRegistry, TrustLevel
+        reg = PluginRegistry()
+        reg.set_trust_level(TrustLevel.BUILTIN)
+        return reg
+
     def test_loads_without_errors(self):
         from gedcomtools.gedcomx.extensible import import_plugins
-        result = import_plugins("gedcomx")
+        result = import_plugins("gedcomx", registry=self._make_registry())
         assert result["errors"] == {}, f"Plugin load errors: {result['errors']}"
 
     def test_rs10_imported(self):
         from gedcomtools.gedcomx.extensible import import_plugins
-        result = import_plugins("gedcomx")
+        result = import_plugins("gedcomx", registry=self._make_registry())
         assert any("rs10" in m for m in result["imported"])
 
     def test_test_extension_imported(self):
         from gedcomtools.gedcomx.extensible import import_plugins
-        result = import_plugins("gedcomx")
+        result = import_plugins("gedcomx", registry=self._make_registry())
         assert any("test" in m for m in result["imported"])
 
 
@@ -231,11 +237,11 @@ class TestUrlLoading:
         assert (local / "myplugin.py").exists()
 
     def test_import_plugins_local_dir_url(self, tmp_path):
-        """import_plugins accepts a URL for local_dir, downloads and loads the plugin."""
+        """import_plugins accepts a URL for local_dir when TrustLevel.ALL is set."""
         import http.server
         import threading
         import zipfile as zf
-        from gedcomtools.gedcomx.extensible import import_plugins
+        from gedcomtools.gedcomx.extensible import import_plugins, PluginRegistry, TrustLevel
 
         # Build a minimal extension zip: a package with an __init__.py
         pkg_dir = tmp_path / "url_ext"
@@ -244,6 +250,9 @@ class TestUrlLoading:
         zip_path = tmp_path / "url_ext.zip"
         with zf.ZipFile(zip_path, "w") as z:
             z.write(pkg_dir / "__init__.py", "url_ext/__init__.py")
+
+        reg = PluginRegistry()
+        reg.set_trust_level(TrustLevel.ALL)
 
         server = http.server.HTTPServer(("127.0.0.1", 0), http.server.SimpleHTTPRequestHandler)
         port = server.server_address[1]
@@ -256,6 +265,7 @@ class TestUrlLoading:
                 result = import_plugins(
                     "gedcomx",
                     local_dir=f"http://127.0.0.1:{port}/url_ext.zip",
+                    registry=reg,
                 )
             finally:
                 os.chdir(old_cwd)
@@ -265,13 +275,16 @@ class TestUrlLoading:
         assert result["errors"] == {}
 
     def test_import_plugins_env_var_url(self, tmp_path, monkeypatch):
-        """import_plugins loads a .py plugin from a URL set in the env var."""
+        """import_plugins loads a .py plugin from a URL set in the env var when TrustLevel.ALL."""
         import http.server
         import threading
-        from gedcomtools.gedcomx.extensible import import_plugins
+        from gedcomtools.gedcomx.extensible import import_plugins, PluginRegistry, TrustLevel
 
         plugin_src = tmp_path / "envplugin.py"
         plugin_src.write_text("ENV_PLUGIN_LOADED = True\n")
+
+        reg = PluginRegistry()
+        reg.set_trust_level(TrustLevel.ALL)
 
         server = http.server.HTTPServer(("127.0.0.1", 0), http.server.SimpleHTTPRequestHandler)
         port = server.server_address[1]
@@ -283,7 +296,7 @@ class TestUrlLoading:
             try:
                 url = f"http://127.0.0.1:{port}/envplugin.py"
                 monkeypatch.setenv("GEDCOMX_PLUGINS", url)
-                result = import_plugins("gedcomx")
+                result = import_plugins("gedcomx", registry=reg)
             finally:
                 os.chdir(old_cwd)
         finally:

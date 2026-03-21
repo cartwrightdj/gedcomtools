@@ -11,14 +11,17 @@
 ======================================================================
 """
 from .gx_base import GedcomXModel
-from .extensible import Extensible, import_plugins
-
-r = import_plugins(
-    "gedcomx",
-    subpackage="extensions",
-    local_dir="./plugins",
-    env_var="GEDCOMX_PLUGINS",
-    recursive=False,
+from .extensible import (
+    Extensible,
+    import_plugins,
+    plugin_registry,
+    set_trust_level,
+    TrustLevel,
+    PluginRegistry,
+    PluginEntry,
+    PluginStatus,
+    PluginBlockedError,
+    RegistryLockedError,
 )
 
 from .subject import Subject

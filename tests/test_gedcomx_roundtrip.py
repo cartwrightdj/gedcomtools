@@ -15,20 +15,20 @@ from gedcomtools.gedcomx.conversion import GedcomConverter
 from gedcomtools.gedcomx.gedcomx import GedcomX
 from gedcomtools.gedcomx.serialization import Serialization, ResolveStats
 
-SAMPLE_DIR = Path(__file__).parent.parent / ".sample_data"
+GEDCOM5_DIR = Path(__file__).parent.parent / ".sample_data" / "gedcom5"
 
 
 @pytest.fixture(scope="module")
 def tiny_gx():
     p = Gedcom5x()
-    p.parse_file(str(SAMPLE_DIR / "555SAMPLE.GED"))
+    p.parse_file(str(GEDCOM5_DIR / "gedcom5_sample.ged"))
     return GedcomConverter().Gedcom5x_GedcomX(p)
 
 
 @pytest.fixture(scope="module")
 def small_gx():
     p = Gedcom5x()
-    p.parse_file(str(SAMPLE_DIR / "Sui_Dynasty.ged"))
+    p.parse_file(str(GEDCOM5_DIR / "gedcom5_sui_dynasty.ged"))
     return GedcomConverter().Gedcom5x_GedcomX(p)
 
 

@@ -19,7 +19,7 @@ from gedcomtools.gedcomx.conversion import GedcomConverter
 from gedcomtools.gedcomx.gedcomx import GedcomX
 from gedcomtools.gedcomx.zip import GedcomZip
 
-SAMPLE = Path(__file__).parent.parent / ".sample_data" / "555SAMPLE.GED"
+SAMPLE = Path(__file__).parent.parent / ".sample_data" / "gedcom5" / "gedcom5_sample.ged"
 
 
 @pytest.fixture(scope="module")

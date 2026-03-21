@@ -3,7 +3,7 @@ Tests against the official GEDCOM 5.5.5 sample files.
 
 Two test strategies:
 
-1. **Local** — all .GED files pre-downloaded to ``.sample_data/`` are parsed
+1. **Local** — all .GED files pre-downloaded to ``.sample_data/gedcom5/`` are parsed
    and validated.  These run offline and are always exercised.
 
 2. **URL sample** — a selection of files from https://www.gedcom.org/samples/
@@ -28,37 +28,38 @@ from gedcomtools.gedcom5.gedcom5 import Gedcom5
 # Paths and constants
 # ---------------------------------------------------------------------------
 
-SAMPLE_DIR = Path(__file__).parent.parent.parent / ".sample_data"
+SAMPLE_DIR = Path(__file__).parent.parent.parent / ".sample_data" / "gedcom5"
 
 BASE_URL = "https://www.gedcom.org/samples"
 
-# Official GEDCOM 5.5.5 sample files from gedcom.org
-# Only 555SAMPLE.GED is publicly hosted at https://www.gedcom.org/samples/
+# Official GEDCOM 5.5.5 sample files from gedcom.org (original filenames)
 URL_SAMPLES = [
     "555SAMPLE.GED",
 ]
 
-# All local 555 sample files (including UTF-16 variants)
+# All local 555 sample files (including UTF-16 variants) — new descriptive names
 LOCAL_SAMPLES = [
-    "555SAMPLE.GED",
-    "555MINIMAL.GED",
-    "555REMARR.GED",
-    "555SSMARR.GED",
-    "555SAMPLE16BE.GED",
-    "555SAMPLE16LE.GED",
+    "gedcom5_sample.ged",
+    "gedcom5_minimal.ged",
+    "gedcom5_remarriage.ged",
+    "gedcom5_same_sex_marriage.ged",
+    "gedcom5_sample_utf16be.ged",
+    "gedcom5_sample_utf16le.ged",
 ]
 
 # Files that are UTF-16 encoded (need special handling)
-UTF16_FILES = {"555SAMPLE16BE.GED", "555SAMPLE16LE.GED"}
+UTF16_FILES = {"gedcom5_sample_utf16be.ged", "gedcom5_sample_utf16le.ged"}
 
-# Expected individual / family counts for known files
+# Expected individual / family counts for known local files
 EXPECTED_COUNTS = {
-    "555SAMPLE.GED":    {"individuals": 3, "families": 2},
-    "555MINIMAL.GED":   {"individuals": 0, "families": 0},
-    "555REMARR.GED":    {"individuals": 3, "families": 3},
-    "555SSMARR.GED":    {"individuals": 2, "families": 1},
-    "555SAMPLE16BE.GED": {"individuals": 3, "families": 2},
-    "555SAMPLE16LE.GED": {"individuals": 3, "families": 2},
+    "gedcom5_sample.ged":            {"individuals": 3, "families": 2},
+    "gedcom5_minimal.ged":           {"individuals": 0, "families": 0},
+    "gedcom5_remarriage.ged":        {"individuals": 3, "families": 3},
+    "gedcom5_same_sex_marriage.ged": {"individuals": 2, "families": 1},
+    "gedcom5_sample_utf16be.ged":    {"individuals": 3, "families": 2},
+    "gedcom5_sample_utf16le.ged":    {"individuals": 3, "families": 2},
+    # URL tests use the original gedcom.org filenames
+    "555SAMPLE.GED":                 {"individuals": 3, "families": 2},
 }
 
 
@@ -128,7 +129,6 @@ def test_local_version_555(filename):
     if not path.exists():
         pytest.skip(f"Pre-downloaded file not found: {path}")
     p = _load_local(filename)
-    # Version is stored in the HEAD record
     header = p.header
     assert header, f"{filename}: no header records found"
 
@@ -210,7 +210,6 @@ def test_local_element_dictionary(filename):
     p = _load_local(filename)
     d = p.get_element_dictionary()
     assert isinstance(d, dict)
-    # MINIMAL has no individuals/families but should still return a dict
     assert d is not None
 
 
@@ -234,58 +233,57 @@ def test_local_root_child_elements(filename):
 # ---------------------------------------------------------------------------
 
 def test_remarriage_has_three_families():
-    """555REMARR.GED exercises remarriage: 3 individuals, 3 families."""
-    path = SAMPLE_DIR / "555REMARR.GED"
+    """gedcom5_remarriage.ged exercises remarriage: 3 individuals, 3 families."""
+    path = SAMPLE_DIR / "gedcom5_remarriage.ged"
     if not path.exists():
-        pytest.skip("555REMARR.GED not found")
-    p = _load_local("555REMARR.GED")
+        pytest.skip("gedcom5_remarriage.ged not found")
+    p = _load_local("gedcom5_remarriage.ged")
     assert len(p.families) == 3, f"Expected 3 families (remarriage), got {len(p.families)}"
     assert len(p.individuals) == 3
 
 
 def test_same_sex_marriage_has_one_family():
-    """555SSMARR.GED exercises same-sex marriage: 2 individuals, 1 family."""
-    path = SAMPLE_DIR / "555SSMARR.GED"
+    """gedcom5_same_sex_marriage.ged: 2 individuals, 1 family."""
+    path = SAMPLE_DIR / "gedcom5_same_sex_marriage.ged"
     if not path.exists():
-        pytest.skip("555SSMARR.GED not found")
-    p = _load_local("555SSMARR.GED")
+        pytest.skip("gedcom5_same_sex_marriage.ged not found")
+    p = _load_local("gedcom5_same_sex_marriage.ged")
     assert len(p.families) == 1
     assert len(p.individuals) == 2
 
 
 def test_utf16_be_matches_utf8():
-    """555SAMPLE16BE.GED (UTF-16 BE) produces the same record counts as 555SAMPLE.GED."""
-    be_path = SAMPLE_DIR / "555SAMPLE16BE.GED"
-    utf8_path = SAMPLE_DIR / "555SAMPLE.GED"
+    """gedcom5_sample_utf16be.ged (UTF-16 BE) produces the same record counts as gedcom5_sample.ged."""
+    be_path = SAMPLE_DIR / "gedcom5_sample_utf16be.ged"
+    utf8_path = SAMPLE_DIR / "gedcom5_sample.ged"
     if not be_path.exists() or not utf8_path.exists():
         pytest.skip("UTF-16 BE or UTF-8 sample not found")
-    p_be = _load_local("555SAMPLE16BE.GED")
-    p_utf8 = _load_local("555SAMPLE.GED")
+    p_be = _load_local("gedcom5_sample_utf16be.ged")
+    p_utf8 = _load_local("gedcom5_sample.ged")
     assert len(p_be.individuals) == len(p_utf8.individuals)
     assert len(p_be.families) == len(p_utf8.families)
 
 
 def test_utf16_le_matches_utf8():
-    """555SAMPLE16LE.GED (UTF-16 LE) produces the same record counts as 555SAMPLE.GED."""
-    le_path = SAMPLE_DIR / "555SAMPLE16LE.GED"
-    utf8_path = SAMPLE_DIR / "555SAMPLE.GED"
+    """gedcom5_sample_utf16le.ged (UTF-16 LE) produces the same record counts as gedcom5_sample.ged."""
+    le_path = SAMPLE_DIR / "gedcom5_sample_utf16le.ged"
+    utf8_path = SAMPLE_DIR / "gedcom5_sample.ged"
     if not le_path.exists() or not utf8_path.exists():
         pytest.skip("UTF-16 LE or UTF-8 sample not found")
-    p_le = _load_local("555SAMPLE16LE.GED")
-    p_utf8 = _load_local("555SAMPLE.GED")
+    p_le = _load_local("gedcom5_sample_utf16le.ged")
+    p_utf8 = _load_local("gedcom5_sample.ged")
     assert len(p_le.individuals) == len(p_utf8.individuals)
     assert len(p_le.families) == len(p_utf8.families)
 
 
 def test_sample_individual_details():
-    """555SAMPLE.GED — the Gedcom5 facade returns full IndividualDetail objects."""
-    path = SAMPLE_DIR / "555SAMPLE.GED"
+    """gedcom5_sample.ged — the Gedcom5 facade returns full IndividualDetail objects."""
+    path = SAMPLE_DIR / "gedcom5_sample.ged"
     if not path.exists():
-        pytest.skip("555SAMPLE.GED not found")
+        pytest.skip("gedcom5_sample.ged not found")
     g = Gedcom5(str(path))
     details = list(g.individual_details())
     assert len(details) == 3
-    # First individual has a birth event
     d = details[0]
     assert d.xref is not None
     assert d.names, "Expected at least one name"
@@ -293,10 +291,10 @@ def test_sample_individual_details():
 
 
 def test_sample_family_details():
-    """555SAMPLE.GED — the Gedcom5 facade returns FamilyDetail objects."""
-    path = SAMPLE_DIR / "555SAMPLE.GED"
+    """gedcom5_sample.ged — the Gedcom5 facade returns FamilyDetail objects."""
+    path = SAMPLE_DIR / "gedcom5_sample.ged"
     if not path.exists():
-        pytest.skip("555SAMPLE.GED not found")
+        pytest.skip("gedcom5_sample.ged not found")
     g = Gedcom5(str(path))
     details = list(g.family_details())
     assert len(details) == 2
@@ -305,10 +303,10 @@ def test_sample_family_details():
 
 
 def test_sample_source_details():
-    """555SAMPLE.GED — the Gedcom5 facade returns SourceDetail objects."""
-    path = SAMPLE_DIR / "555SAMPLE.GED"
+    """gedcom5_sample.ged — the Gedcom5 facade returns SourceDetail objects."""
+    path = SAMPLE_DIR / "gedcom5_sample.ged"
     if not path.exists():
-        pytest.skip("555SAMPLE.GED not found")
+        pytest.skip("gedcom5_sample.ged not found")
     g = Gedcom5(str(path))
     details = list(g.source_details())
     assert len(details) >= 1
@@ -354,7 +352,6 @@ def test_url_gedcom5_facade(filename, network):
     url = f"{BASE_URL}/{filename}"
     with urllib.request.urlopen(url, timeout=30) as resp:
         data = resp.read()
-    # Write to a temp file so Gedcom5 can loadfile
     import tempfile, os
     with tempfile.NamedTemporaryFile(suffix=".ged", delete=False) as tmp:
         tmp.write(data)
