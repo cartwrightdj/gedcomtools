@@ -43,7 +43,9 @@ the download is rejected if the digest does not match.
 """
 from __future__ import annotations
 
+import atexit
 import hashlib
+import shutil
 from dataclasses import dataclass
 from enum import IntEnum, Enum
 from pathlib import Path
@@ -473,6 +475,25 @@ def _is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
+_DOWNLOAD_TIMEOUT = 30  # seconds
+
+# Tracks temp directories created by _download_to_temp for atexit cleanup.
+_plugin_tmp_dirs: List[Path] = []
+
+
+def _cleanup_plugin_tmp_dirs() -> None:
+    """Remove all plugin temp directories created during this process."""
+    for d in _plugin_tmp_dirs:
+        try:
+            shutil.rmtree(d, ignore_errors=True)
+        except Exception:
+            pass
+    _plugin_tmp_dirs.clear()
+
+
+atexit.register(_cleanup_plugin_tmp_dirs)
+
+
 def _download_to_temp(url: str) -> Path:
     """Download *url* into a fresh temp directory and return the local path.
 
@@ -483,16 +504,30 @@ def _download_to_temp(url: str) -> Path:
     The temp directory is *not* deleted automatically; it persists for the
     lifetime of the process so that imported modules can reference their
     source files.
+
+    Raises ``urllib.error.URLError`` if the download exceeds ``_DOWNLOAD_TIMEOUT``
+    seconds or the host is unreachable.
     """
     tmp_dir = Path(tempfile.mkdtemp(prefix="gedcomx_plugins_"))
+    _plugin_tmp_dirs.append(tmp_dir)
     filename = Path(urllib.parse.urlparse(url).path).name or "plugin_download"
     dest = tmp_dir / filename
-    urllib.request.urlretrieve(url, dest)
+
+    with urllib.request.urlopen(url, timeout=_DOWNLOAD_TIMEOUT) as resp:
+        dest.write_bytes(resp.read())
+
     if dest.suffix == ".zip":
         extract_dir = tmp_dir / dest.stem
         extract_dir.mkdir(exist_ok=True)
+        resolved_extract = extract_dir.resolve()
         with zipfile.ZipFile(dest, "r") as zf:
-            zf.extractall(extract_dir)
+            for member in zf.infolist():
+                member_path = (extract_dir / member.filename).resolve()
+                if not str(member_path).startswith(str(resolved_extract)):
+                    raise ValueError(
+                        f"Zip slip detected in plugin archive: {member.filename!r}"
+                    )
+                zf.extract(member, extract_dir)
         dest.unlink()
         return extract_dir
     return dest

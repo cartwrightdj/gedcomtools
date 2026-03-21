@@ -995,8 +995,16 @@ class Shell:
             if onoff in ("on", "enable", "1", "true", "yes"):
                 os.environ["LOG_FILES"] = "1"
                 if len(args) >= 3:
-                    os.environ["LOG_DIR"] = args[2]
-                    print(f"LOG_FILES=1, LOG_DIR={args[2]}")
+                    raw_dir = args[2]
+                    if len(raw_dir) > 512:
+                        print("! Invalid LOG_DIR: path too long (max 512 chars).")
+                        return
+                    log_dir = Path(raw_dir).resolve()
+                    if not log_dir.parent.exists():
+                        print(f"! Invalid LOG_DIR: parent directory does not exist: {log_dir.parent}")
+                        return
+                    os.environ["LOG_DIR"] = str(log_dir)
+                    print(f"LOG_FILES=1, LOG_DIR={log_dir}")
                 else:
                     print("LOG_FILES=1")
                 print("Note: file logging will take effect next run (or after re-calling setup_logging).")
@@ -1936,14 +1944,17 @@ class Shell:
                     print(f"{cls.__name__}.{name} = {value!r}  (property)")
                 continue
 
-            if hasattr(obj, name):
-                try:
-                    cur_val = getattr(obj, name)
-                except Exception:
-                    cur_val = None
-                if cur_val is not None and not is_primitive(cur_val):
-                    print(f"! {cls.__name__}.{name} currently holds {type(cur_val).__name__}, refusing to overwrite.")
-                    continue
+            if not hasattr(obj, name):
+                print(f"! {cls.__name__} has no attribute {name!r}; refusing to create new attributes.")
+                continue
+
+            try:
+                cur_val = getattr(obj, name)
+            except Exception:
+                cur_val = None
+            if cur_val is not None and not is_primitive(cur_val):
+                print(f"! {cls.__name__}.{name} currently holds {type(cur_val).__name__}, refusing to overwrite.")
+                continue
 
             try:
                 setattr(obj, name, value)

@@ -58,11 +58,13 @@ class GedcomZip:
         Initialize a zipfile.
 
         If `path` is provided:
-            - Ensure directory exists or can be created
-            - Use that path as the zip location
-            - If any error occurs, fall back to a safe temp file
+            - The path is resolved to an absolute path to prevent traversal attacks.
+            - The parent directory is created only if it is a direct child of an
+              existing directory (no recursive ``parents=True`` on untrusted input).
+            - Raises ``ValueError`` for paths that contain ``..`` components.
+            - Raises ``OSError`` if the directory cannot be created.
         If `path` is None:
-            - Always create a zip in the system temp directory
+            - Creates a zip in the system temp directory.
 
         Result:
             self.path  -> Path to the zip file
@@ -84,15 +86,24 @@ class GedcomZip:
 
         p = Path(path)
 
-        try:
-            # Ensure directory exists
-            if not p.parent.exists():
-                p.parent.mkdir(parents=True, exist_ok=True)
-            # ZipFile(..., "w") will create/truncate this path
-            return p
-        except Exception:
-            # Fall back safely to temp
-            return self._create_temp_zip_path()
+        # Reject any path containing ".." components before resolving
+        if ".." in p.parts:
+            raise ValueError(
+                f"Path traversal detected in zip path: {path!r}. "
+                "Use an absolute path or a path without '..' components."
+            )
+
+        # Resolve to absolute to catch symlink-based traversal
+        p = p.resolve()
+
+        # Create the immediate parent directory if it doesn't exist.
+        # We intentionally do NOT use parents=True to avoid creating an
+        # arbitrary directory tree from untrusted input.
+        parent = p.parent
+        if not parent.exists():
+            parent.mkdir(exist_ok=True)
+
+        return p
 
     def _create_temp_zip_path(self) -> Path:
         fd, temp_path = tempfile.mkstemp(suffix=".zip", prefix="gedcomx_")
@@ -104,41 +115,31 @@ class GedcomZip:
     # ────────────────────────────────────────────────
     def add_object_as_resource(self, obj: object) -> str | None:
         """
-        If `obj` is a top-level schema object, serialize it and
-        store it as JSON inside the zip.
+        Serialize *obj* and store it as a JSON entry inside the zip.
 
-        Returns the internal archive name (arcname) on success,
-        or None if the object is not a top-level type.
+        - If *obj* is a ``GedcomX`` instance it is written as ``tree.json``
+          and the method returns immediately — no second serialization pass.
+        - For any other registered top-level type, the entry is named after
+          the object's ``id`` or class name.
+        - Returns the internal archive name on success, or ``None`` if *obj*
+          is not a recognised top-level type.
         """
-        if isinstance(obj,GedcomX):
-            arcname = f"tree.json"
-            
+        if isinstance(obj, GedcomX):
+            arcname = "tree.json"
             self.zip.writestr(arcname, obj.json)
+            return arcname
 
-        if not hasattr(SCHEMA, "is_toplevel_obj"):
-            # fallback: treat as top-level if its class name is registered as toplevel
-            if not SCHEMA.is_toplevel(obj.__class__):
-                return None
-        else:
-            if not SCHEMA.is_toplevel_obj(obj):
-                return None
+        if not SCHEMA.is_toplevel(obj.__class__):
+            return None
 
         class_name = obj.__class__.__name__.lower() + "s"
         data = {class_name: Serialization.serialize(obj)}
 
-        # Prefer a URI-based filename, but sanitize it
         uri = getattr(obj, "_uri", None) or getattr(obj, "id", None) or class_name
         safe_uri = str(uri).replace("/", "_").replace("\\", "_")
         arcname = f"{safe_uri}.json"
 
-        # Add resource to zip as JSON
         self.zip.writestr(arcname, json.dumps(data, ensure_ascii=False, indent=2))
-
-        # Optional debug:
-        print("ZIP path:", self.path)
-        print("Wrote entry:", arcname)
-        #print("Data:", data)
-
         return arcname
 
     def close(self) -> None:
@@ -147,7 +148,6 @@ class GedcomZip:
         Safe to call multiple times.
         """
         if getattr(self, "zip", None) is not None:
-            # zipfile.ZipFile uses .fp to track open/closed
             if self.zip.fp is not None:
                 self.zip.close()
 

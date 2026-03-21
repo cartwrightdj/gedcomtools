@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, ClassVar, List, Optional
-from urllib.parse import urljoin
 
 from pydantic import Field, PrivateAttr
 
@@ -97,30 +96,6 @@ class Person(Subject):
             return self.names[0].nameForms[0].fullText
         except (IndexError, AttributeError):
             return None
-
-    @classmethod
-    def from_familysearch(
-        cls,
-        pid: str,
-        token: str,
-        *,
-        base_url: Optional[str] = None,
-    ) -> "Person":
-        import requests
-        default_base = "https://apibeta.familysearch.org/platform/"
-        base = (base_url or default_base).rstrip("/") + "/"
-        url = urljoin(base, f"tree/persons/{pid}")
-        headers = {"Accept": "application/json", "Authorization": f"Bearer {token}"}
-        resp = requests.get(url, headers=headers, timeout=(5, 30))
-        resp.raise_for_status()
-        payload = resp.json()
-        persons = payload.get("persons") or []
-        person_json = next(
-            (p for p in persons if p.get("id") == pid), None
-        ) or (persons[0] if persons else None)
-        if not person_json:
-            raise ValueError(f"FamilySearch returned no person for PID {pid}")
-        return cls.model_validate(person_json)
 
 
 class QuickPerson:

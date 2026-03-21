@@ -110,6 +110,8 @@ def _load_gx(path: Path):
         import json
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected a JSON object at root of {path}, got {type(data).__name__}")
     return Serialization.deserialize(data=data, class_type=GedcomX)
 
 
