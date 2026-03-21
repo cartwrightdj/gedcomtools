@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, ClassVar, List, Optional, Union
 
-from pydantic import Field, PrivateAttr, field_validator
+from pydantic import Field, PrivateAttr
 
 from .attribution import Attribution
 from .conclusion import Conclusion, ConfidenceLevel
@@ -170,7 +170,7 @@ class Fact(Conclusion):
     def model_post_init(self, __context: object) -> None:
         super().model_post_init(__context)
         # Preserve qualifiers passed at construction
-        raw = self.model_extra.get("qualifiers")
+        raw = (self.model_extra or {}).get("qualifiers")
         if raw and isinstance(raw, list):
             self._qualifiers = list(raw)
 
@@ -183,6 +183,16 @@ class Fact(Conclusion):
         if not isinstance(value, list) or not all(isinstance(i, FactQualifier) for i in value):
             raise ValueError("qualifiers must be a list of FactQualifier objects.")
         self._qualifiers.extend(value)
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_nonempty
+        if self.type is not None and not isinstance(self.type, FactType):
+            result.error("type", f"Expected FactType, got {type(self.type).__name__}: {self.type!r}")
+        check_instance(result, "date", self.date, Date)
+        check_instance(result, "place", self.place, PlaceReference)
+        if self.value is not None:
+            check_nonempty(result, "value", self.value)
 
     def __str__(self) -> str:
         return f"{self.type.value if self.type else ''} {self.value or ''}"

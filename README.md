@@ -19,17 +19,20 @@ Designed for historical records processing, genealogy research, and archival dat
 ## Features
 
 - ✅ GEDCOM 5.x parser (`gedcom5`)
-- ✅ GEDCOM 7 parser, validator, and serializer (`gedcom7`)
-- 🔧 GEDCOM X object model (`gedcomx`) — in progress
-- 🔧 Converter (GEDCOM 5.x → GEDCOM X) — in progress
+- ✅ GEDCOM 7 parser, 18-phase validator, serializer, and high-level models (`gedcom7`)
+- ✅ GEDCOM X pydantic object model (`gedcomx`) — complete, 0 type errors
+- ✅ GEDCOM X per-property validation (`validate()` on every model)
+- ✅ Converter (GEDCOM 5.x → GEDCOM X)
 - ✅ CLI tools (`gxcli`, `g7cli`, `validate7`)
-- ✅ Structured logging (`loggingkit`)
+- ✅ Structured logging (`loggingkit`) with `GEDCOMTOOLS_DEBUG` env var support
 - ✅ Sub-loggers (conversion, parser, io, etc.)
 - ✅ Runtime log inspection
 - ✅ Extensible schema system
 - ✅ Source, person, family, relationship modeling
-- ✅ Place and event normalization
+- ✅ Place and event normalization with multi-language translation support
 - ✅ Metadata and attribution handling
+- 🔧 GEDCOM 5.x → GEDCOM 7 converter — planned
+- 🔧 GEDCOM X → GEDCOM 7 converter — planned
 - 🔧 Graph database export (ArangoDB) — in progress
 
 ---
@@ -111,18 +114,43 @@ for issue in issues:
 g.write("family_out.ged")
 ```
 
-### Convert GEDCOM 5.x → GEDCOM X _(in progress)_
-
-The GEDCOM X object model and converter are under active development.
-The core object model (persons, families, relationships, sources, events,
-places, names, facts) is implemented. Conversion and CLI tooling are still
-being worked on.
+### Convert GEDCOM 5.x → GEDCOM X
 
 ```python
 from gedcomtools.gedcomx import GedcomX, GedcomConverter
 
 converter = GedcomConverter()
 gx = converter.Gedcom5x_GedcomX(ged)
+```
+
+### Validate a GEDCOM X object graph
+
+Every model supports recursive validation with type and completeness checks:
+
+```python
+result = gx.validate()
+for issue in result.errors:
+    print(f"[error] {issue.path}: {issue.message}")
+for issue in result.warnings:
+    print(f"[warn]  {issue.path}: {issue.message}")
+```
+
+### Access GEDCOM 7 high-level models
+
+```python
+from gedcomtools.gedcom7 import Gedcom7
+from gedcomtools.gedcom7.models import individual_detail
+
+g = Gedcom7("family.ged")
+for indi_node in g["INDI"]:
+    p = individual_detail(indi_node)
+    print(p.full_name, p.birth_year, p.death_year)
+    # Access place translations (PLAC.TRAN)
+    if p.birth and p.birth.place_translations:
+        print(p.birth.place_translations.get("de"))
+    # Access name translations (NAME.TRAN)
+    for tran in (p.name.translations if p.name else []):
+        print(f"  [{tran.lang}] {tran.display}")
 ```
 
 ---
@@ -201,7 +229,7 @@ log.info("Starting conversion")
 - [ ] GEDCOM X → GEDCOM 7 converter
 - [ ] JSON-LD export
 - [ ] RAG pipeline integration
-- [ ] Full test suite
+- [ ] Graph database export (ArangoDB)
 
 ---
 

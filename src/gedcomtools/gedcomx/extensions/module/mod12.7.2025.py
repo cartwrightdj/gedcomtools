@@ -23,16 +23,10 @@ from dataclasses import dataclass, field, fields, MISSING, make_dataclass
 GEDCOM Module Types
 ======================================================================
 """
-from gedcomtools.conclusion import Conclusion
-from gedcomtools.name import Name
-from ...exceptions import GedcomClassAttributeError
-from ...glog import get_logger
-from ...schemas import extensible, SCHEMA
-from gedcomtools.extensible import Extensible
-from ...uri import URI
-from gedcomtools.resource import Resource
-from gedcomtools.document import Document
-from gedcomtools.textvalue import TextValue
+from ....glog import get_logger
+from ...schemas import SCHEMA
+from ...document import Document
+from ...textvalue import TextValue
 """
 ======================================================================
 Logging

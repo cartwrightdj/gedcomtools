@@ -15,6 +15,16 @@ class Note(GedcomXModel):
     text: Optional[str] = None
     attribution: Optional[Attribution] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang, check_instance
+        check_lang(result, "lang", self.lang)
+        if self.text is None:
+            result.warn("text", "Note has no text")
+        elif not self.text.strip():
+            result.warn("text", "Note.text is blank")
+        check_instance(result, "attribution", self.attribution, Attribution)
+
     def append(self, text_to_add: str) -> None:
         if text_to_add and isinstance(text_to_add, str):
             self.text = (self.text + text_to_add) if self.text else text_to_add

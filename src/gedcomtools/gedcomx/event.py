@@ -42,6 +42,17 @@ class EventRole(Conclusion):
     type: Optional[EventRoleType] = None
     details: Optional[str] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.type is not None and not isinstance(self.type, EventRoleType):
+            result.error("type", f"Expected EventRoleType, got {type(self.type).__name__}: {self.type!r}")
+        if self.person is None:
+            result.warn("person", "EventRole has no person")
+        else:
+            from .person import Person
+            check_instance(result, "person", self.person, Person, Resource)
+
     def __str__(self) -> str:
         parts = []
         if self.type is not None:
@@ -202,3 +213,15 @@ class Event(Subject):
     date: Optional[Date] = None
     place: Optional[PlaceReference] = None
     roles: List[EventRole] = Field(default_factory=list)
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.type is not None and not isinstance(self.type, EventType):
+            result.error("type", f"Expected EventType, got {type(self.type).__name__}: {self.type!r}")
+        if self.date is None and self.place is None:
+            result.warn("", "Event has neither date nor place")
+        check_instance(result, "date", self.date, Date)
+        check_instance(result, "place", self.place, PlaceReference)
+        for i, role in enumerate(self.roles):
+            check_instance(result, f"roles[{i}]", role, EventRole)

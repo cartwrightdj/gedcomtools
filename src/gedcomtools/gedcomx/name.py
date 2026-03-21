@@ -61,6 +61,16 @@ class NamePart(GedcomXModel):
     value: Optional[str] = None
     qualifiers: List[NamePartQualifier] = Field(default_factory=list)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        if self.type is not None and not isinstance(self.type, NamePartType):
+            result.error("type", f"Expected NamePartType, got {type(self.type).__name__}: {self.type!r}")
+        if not self.value:
+            result.warn("value", "NamePart has no value")
+        for i, q in enumerate(self.qualifiers):
+            if not isinstance(q, NamePartQualifier):
+                result.error(f"qualifiers[{i}]", f"Expected NamePartQualifier, got {type(q).__name__}")
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, NamePart):
             return NotImplemented
@@ -86,6 +96,16 @@ class NameForm(GedcomXModel):
     fullText: Optional[str] = None
     parts: List[NamePart] = Field(default_factory=list)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang
+        check_lang(result, "lang", self.lang)
+        if not self.fullText and not self.parts:
+            result.warn("", "NameForm has no fullText and no parts")
+        for i, p in enumerate(self.parts):
+            if not isinstance(p, NamePart):
+                result.error(f"parts[{i}]", f"Expected NamePart, got {type(p).__name__}")
+
 
 class Name(Conclusion):
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Name"
@@ -94,6 +114,17 @@ class Name(Conclusion):
     type: Optional[NameType] = None
     nameForms: List[NameForm] = Field(default_factory=list)
     date: Optional[Date] = None
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if not self.nameForms:
+            result.warn("nameForms", "Name has no nameForms")
+        if self.type is not None and not isinstance(self.type, NameType):
+            result.error("type", f"Expected NameType, got {type(self.type).__name__}: {self.type!r}")
+        check_instance(result, "date", self.date, Date)
+        for i, nf in enumerate(self.nameForms):
+            check_instance(result, f"nameForms[{i}]", nf, NameForm)
 
     @staticmethod
     def simple(text: str) -> "Name":

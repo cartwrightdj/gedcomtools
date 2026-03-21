@@ -21,6 +21,15 @@ class Resource(GedcomXModel):
     _remote: Optional[bool] = PrivateAttr(default=None)
     _target: Optional[Any] = PrivateAttr(default=None)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_nonempty
+        if self.resource is None and not self.resourceId:
+            result.warn("", "Resource has neither resource URI nor resourceId")
+        check_instance(result, "resource", self.resource, URI)
+        if self.resourceId is not None:
+            check_nonempty(result, "resourceId", self.resourceId)
+
     @model_serializer
     def _serialize(self) -> dict:
         out: dict = {}

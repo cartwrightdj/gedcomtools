@@ -47,7 +47,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .structure import GedcomStructure
 
@@ -81,13 +81,23 @@ class EventDetail:
     sources: List[SourceCitation] = field(default_factory=list)
     shared_note_refs: List[str] = field(default_factory=list)
     media_refs: List[str] = field(default_factory=list)
+    place_translations: Dict[str, str] = field(default_factory=dict)
 
     @property
     def year(self) -> Optional[int]:
-        """Extract the four-digit year from the date string, or ``None``."""
+        """Extract the four-digit year from the date string, or ``None``.
+
+        Handles dual-year notation (e.g. ``"1800/01"``) by returning the
+        primary year.  Prefers a four-digit match over a three-digit one.
+        """
         if not self.date:
             return None
-        m = re.search(r"\b(\d{3,4})\b", self.date)
+        # Prefer a 4-digit year (with optional /YY dual-year suffix)
+        m = re.search(r"(\d{4})(?:/\d{2})?", self.date)
+        if m:
+            return int(m.group(1))
+        # Fall back to 3-digit year (rare, very old dates)
+        m = re.search(r"\b(\d{3})\b", self.date)
         return int(m.group(1)) if m else None
 
     @property
@@ -134,6 +144,8 @@ class NameDetail:
     nickname: Optional[str] = None
     surname_prefix: Optional[str] = None
     name_type: Optional[str] = None
+    lang: Optional[str] = None
+    translations: List["NameDetail"] = field(default_factory=list)
 
     @property
     def display(self) -> str:
@@ -600,6 +612,16 @@ def _extract_event(node: Optional[GedcomStructure]) -> Optional[EventDetail]:
     """Build an EventDetail from an event structure node."""
     if node is None:
         return None
+
+    # Collect PLAC.TRAN translations: {lang: translated_place_name}
+    place_translations: Dict[str, str] = {}
+    plac_node = node.first_child("PLAC")
+    if plac_node:
+        for tran in plac_node.get_children("TRAN"):
+            lang = _payload(tran, "LANG")
+            if lang and tran.payload:
+                place_translations[lang] = tran.payload
+
     return EventDetail(
         date=_payload(node, "DATE"),
         place=_payload(node, "PLAC"),
@@ -611,11 +633,25 @@ def _extract_event(node: Optional[GedcomStructure]) -> Optional[EventDetail]:
         sources=_source_citations(node),
         shared_note_refs=_shared_note_refs(node),
         media_refs=_pointers(node, "OBJE"),
+        place_translations=place_translations,
     )
 
 
 def _extract_name(node: GedcomStructure) -> NameDetail:
     """Build a NameDetail from a NAME structure node."""
+    translations = [
+        NameDetail(
+            full=tran.payload or "",
+            given=_payload(tran, "GIVN"),
+            surname=_payload(tran, "SURN"),
+            prefix=_payload(tran, "NPFX"),
+            suffix=_payload(tran, "NSFX"),
+            nickname=_payload(tran, "NICK"),
+            surname_prefix=_payload(tran, "SPFX"),
+            lang=_payload(tran, "LANG"),
+        )
+        for tran in node.get_children("TRAN")
+    ]
     return NameDetail(
         full=node.payload,
         given=_payload(node, "GIVN"),
@@ -625,6 +661,7 @@ def _extract_name(node: GedcomStructure) -> NameDetail:
         nickname=_payload(node, "NICK"),
         surname_prefix=_payload(node, "SPFX"),
         name_type=_payload(node, "TYPE"),
+        translations=translations,
     )
 
 
@@ -954,6 +991,13 @@ def _save_repository_g7(detail: "RepositoryDetail", node: GedcomStructure) -> No
 
 
 def _save_media_g7(detail: "MediaDetail", node: GedcomStructure) -> None:
+    # Rebuild FILE children from the files list
+    for child in list(node.get_children("FILE")):
+        node.children.remove(child)
+    for path, form in detail.files:
+        file_node = GedcomStructure(level=node.level + 1, tag="FILE", payload=path, parent=node)
+        if form:
+            GedcomStructure(level=file_node.level + 1, tag="FORM", payload=form, parent=file_node)
     _g7_set(node, "TITL", detail.title)
 
 

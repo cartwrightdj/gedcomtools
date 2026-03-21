@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
-from pydantic import Field, PrivateAttr, model_validator
+from pydantic import Field, PrivateAttr
 
 from .attribution import Attribution
 from .gx_base import GedcomXModel
@@ -25,6 +25,7 @@ class ConfidenceLevel(Qualifier):
     High: ClassVar[str] = "http://gedcomx.org/High"
     Medium: ClassVar[str] = "http://gedcomx.org/Medium"
     Low: ClassVar[str] = "http://gedcomx.org/Low"
+    _name_required: ClassVar[bool] = False
 
     _NAME_TO_URI: ClassVar[dict] = {
         "high": "http://gedcomx.org/High",
@@ -66,8 +67,7 @@ class ConfidenceLevel(Qualifier):
             self.Medium: "The contributor has a medium degree of confidence that the assertion is true.",
             self.Low: "The contributor has a low degree of confidence that the assertion is true.",
         }
-        key = getattr(self, "value", self)
-        return descriptions.get(key, "No description available.")
+        return descriptions.get(self.value or "", "No description available.")
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +116,26 @@ class Conclusion(GedcomXModel):
             if source_to_add == current:
                 return
         self.sources.append(source_to_add)
+
+    def _validate_self(self, result: Any) -> None:
+        from .validation import check_lang, check_instance
+        # id must be a non-empty string
+        if not self.id or not str(self.id).strip():
+            result.error("id", "id must not be empty")
+        # lang: BCP-47 format
+        check_lang(result, "lang", self.lang)
+        # analysis: Resource or Document
+        if self.analysis is not None:
+            from .document import Document
+            check_instance(result, "analysis", self.analysis, Resource, Document)
+        # attribution type
+        check_instance(result, "attribution", self.attribution, Attribution)
+        # confidence
+        if self.confidence is not None:
+            if not isinstance(self.confidence, ConfidenceLevel):
+                result.error("confidence", f"Expected ConfidenceLevel, got {type(self.confidence).__name__}")
+            elif self.confidence.value not in (ConfidenceLevel.High, ConfidenceLevel.Medium, ConfidenceLevel.Low):
+                result.warn("confidence", f"Unrecognised confidence value: {self.confidence.value!r}")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):

@@ -26,6 +26,21 @@ class Subject(Conclusion):
     media: List[SourceReference] = Field(default_factory=list)
     identifiers: IdentifierList = Field(default_factory=IdentifierList)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        # extracted must be bool if set
+        if self.extracted is not None and not isinstance(self.extracted, bool):
+            result.error("extracted", f"Expected bool, got {type(self.extracted).__name__}")
+        # identifiers must be IdentifierList
+        check_instance(result, "identifiers", self.identifiers, IdentifierList)
+        # evidence items
+        for i, ev in enumerate(self.evidence):
+            check_instance(result, f"evidence[{i}]", ev, EvidenceReference)
+        # media items
+        for i, m in enumerate(self.media):
+            check_instance(result, f"media[{i}]", m, SourceReference)
+
     def add_identifier(self, identifier_to_add: Identifier) -> None:
         if not isinstance(identifier_to_add, Identifier):
             raise ValueError("add_identifier requires an Identifier instance")

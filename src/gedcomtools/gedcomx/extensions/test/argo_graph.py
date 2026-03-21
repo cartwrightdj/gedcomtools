@@ -19,6 +19,7 @@
 ======================================================================
 GEDCOM Module Types
 ======================================================================="""
+from typing import Any
 from ...schemas import SCHEMA, schema_property_plugin, apply_schema_property, bind_schema_property
 from gedcomtools.gedcomx.person import Person
 
@@ -57,7 +58,7 @@ def ext_description_get(self) -> dict:
     # -------------------
     for fact in getattr(self, "facts", []):
         try:
-            fact_entry = {
+            fact_entry: dict[str, Any] = {
                 "type": None,
                 "date": None,
                 "place": None

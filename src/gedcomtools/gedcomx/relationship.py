@@ -44,6 +44,23 @@ class Relationship(Subject):
     person2: Optional[Any] = None       # Person | Resource
     facts: List[Fact] = Field(default_factory=list)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        from .person import Person
+        if self.type is not None and not isinstance(self.type, RelationshipType):
+            result.error("type", f"Expected RelationshipType, got {type(self.type).__name__}: {self.type!r}")
+        if self.person1 is None:
+            result.warn("person1", "Relationship has no person1")
+        else:
+            check_instance(result, "person1", self.person1, Person, Resource)
+        if self.person2 is None:
+            result.warn("person2", "Relationship has no person2")
+        else:
+            check_instance(result, "person2", self.person2, Person, Resource)
+        for i, f_ in enumerate(self.facts):
+            check_instance(result, f"facts[{i}]", f_, Fact)
+
     def add_fact(self, fact: Fact) -> None:
         if fact is not None and isinstance(fact, Fact):
             for existing in self.facts:

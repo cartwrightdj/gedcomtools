@@ -11,3 +11,9 @@ class OnlineAccount(GedcomXModel):
 
     serviceHomepage: Resource
     accountName: str
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_nonempty
+        check_instance(result, "serviceHomepage", self.serviceHomepage, Resource)
+        check_nonempty(result, "accountName", self.accountName, "error")

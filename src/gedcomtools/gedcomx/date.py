@@ -47,6 +47,15 @@ class Date(GedcomXModel):
     formal: Optional[str] = None
     normalized: Optional[Any] = None  # DateNormalization
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_gedcomx_date, check_nonempty
+        if not self.original and not self.formal:
+            result.warn("", "Date has neither original nor formal value")
+        if self.original is not None:
+            check_nonempty(result, "original", self.original)
+        check_gedcomx_date(result, "formal", self.formal)
+
     @model_validator(mode="after")
     def _parse_formal(self) -> "Date":
         if self.formal is None and self.original:

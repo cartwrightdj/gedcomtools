@@ -17,3 +17,13 @@ class PlaceReference(GedcomXModel):
 
     original: Optional[str] = None
     description: Optional[Any] = None   # Resource | URI | PlaceDescription
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.original is None and self.description is None:
+            result.warn("", "PlaceReference has neither original nor description")
+        if self.description is not None:
+            from .place_description import PlaceDescription
+            check_instance(result, "description", self.description,
+                           Resource, URI, PlaceDescription)

@@ -47,6 +47,7 @@ class SourceDescription(GedcomXModel):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     _uri: Optional[URI] = PrivateAttr(default=None)
+    _place_holder: bool = PrivateAttr(default=False)
 
     id: str = Field(default_factory=make_uid)
     resourceType: Optional[ResourceType] = None
@@ -73,6 +74,30 @@ class SourceDescription(GedcomXModel):
 
     def model_post_init(self, __context: object) -> None:
         self._uri = URI(fragment=self.id)
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance, check_mime
+        if not self.titles:
+            result.warn("titles", "SourceDescription has no titles")
+        if self.resourceType is not None and not isinstance(self.resourceType, ResourceType):
+            result.error("resourceType", f"Expected ResourceType, got {type(self.resourceType).__name__}: {self.resourceType!r}")
+        if self.mediaType is not None:
+            check_mime(result, "mediaType", self.mediaType)
+        check_instance(result, "about", self.about, URI)
+        if not self.citations:
+            result.warn("citations", "SourceDescription has no citations")
+        for i, c in enumerate(self.citations):
+            check_instance(result, f"citations[{i}]", c, SourceCitation)
+        check_instance(result, "mediator", self.mediator, Resource, Agent)
+        check_instance(result, "publisher", self.publisher, Resource, Agent)
+        check_instance(result, "repository", self.repository, Resource, Agent)
+        for i, a in enumerate(self.authors):
+            check_instance(result, f"authors[{i}]", a, Resource)
+        check_instance(result, "attribution", self.attribution, Attribution)
+        if self.analysis is not None:
+            from .document import Document
+            check_instance(result, "analysis", self.analysis, Resource, Document)
 
     def add_description(self, description_to_add: TextValue) -> None:
         if description_to_add and isinstance(description_to_add, TextValue):

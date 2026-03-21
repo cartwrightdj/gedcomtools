@@ -35,24 +35,26 @@ def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
         person_entry["full_name"] = person.names[0].nameForms[0].fullText
 
         try:
-            person_entry["gender"] = person.gender.type.value.split("/")[-1]
+            gender_type = person.gender.type if person.gender else None
+            person_entry["gender"] = gender_type.value.split("/")[-1] if gender_type and gender_type.value else None
         except Exception:
             person_entry["gender"] = None
 
         facts = []
         for fact in person.facts:
+            fact_type_val = fact.type.value if fact.type and fact.type.value else ""
             fact_desc = {
-                "type": fact.type.value.split("/")[-1],
-                "adbgDescription": fact.type.value.split("/")[-1],
+                "type": fact_type_val.split("/")[-1],
+                "adbgDescription": fact_type_val.split("/")[-1],
             }
 
             if fact.type == FactType.Birth and fact.date:
                 person_entry["DOB"] = fact.date.original
 
-            if fact.date:
+            if fact.date and fact.date.original is not None:
                 fact_desc["date"] = fact.date.original
-            if fact.place:
-                fact_desc["place"] = fact.place.description.id
+            if fact.place and fact.place.description is not None:
+                fact_desc["place"] = fact.place.description.id or ""
 
             facts.append(fact_desc)
 
@@ -75,7 +77,8 @@ def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
         edge["_from"] = f"knPersons/{p1}"
         edge["_to"] = f"knPersons/{p2}"
 
-        edge["type"] = rel.type.value.split("/")[-1]
+        rel_type_val = rel.type.value if rel.type and rel.type.value else ""
+        edge["type"] = rel_type_val.split("/")[-1]
         edge["adbgDescription"] = edge["type"]
 
         if rel.id:

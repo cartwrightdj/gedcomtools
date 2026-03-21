@@ -34,6 +34,11 @@ class Gender(Conclusion):
 
     type: Optional[GenderType] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        if self.type is not None and not isinstance(self.type, GenderType):
+            result.error("type", f"Expected GenderType, got {type(self.type).__name__}: {self.type!r}")
+
     def __str__(self) -> str:
         parts = []
         if self.id:

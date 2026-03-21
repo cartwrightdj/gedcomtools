@@ -29,9 +29,14 @@ class Address(GedcomXModel):
     # Raw free-form address string (used by _append; not serialized directly)
     _raw_value: Optional[str] = PrivateAttr(default=None)
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        if not self.value and not self._raw_value:
+            result.warn("", "Address has no data (all fields are None or empty)")
+
     def model_post_init(self, __context: object) -> None:
         # Preserve raw_value passed as 'value' kwarg (handled by accept_extras)
-        raw = self.model_extra.get("value")
+        raw = (self.model_extra or {}).get("value")
         if raw is not None:
             self._raw_value = raw
 

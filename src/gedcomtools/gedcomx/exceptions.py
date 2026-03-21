@@ -23,7 +23,7 @@ class GedcomXError(Exception):
 
 class GedcomClassAttributeError(GedcomXError):
     def __init__(self, *args: object) -> None:
-        msg = f"This class need more information to be created: {args}"
+        msg = f"This class needs more information to be created: {args}"
         super().__init__(msg)
 
 

@@ -15,6 +15,7 @@
 GEDCOM Module Types
 ======================================================================
 """
+from typing import Optional
 from ..gedcom5.elements import Element
 from .gedcomx import GedcomX, Person, Relationship, RelationshipType
 from .fact import Fact, FactType
@@ -25,18 +26,18 @@ from .textvalue import TextValue
 class FamilyParser:
     def __init__(self,gx: GedcomX) -> None:
         self.gedcomx: GedcomX = gx
-        self.parent1: Person = None
-        self.parent2: Person = None
+        self.parent1: Optional[Person] = None
+        self.parent2: Optional[Person] = None
         self.children: list[Person] = []
         self.last_event_fact = None
         self.couple: Relationship = Relationship(type=RelationshipType.Couple)
         self.couple_added: bool = False
-        self.marr_fact: Fact = None
+        self.marr_fact: Fact = Fact(type=FactType.Marriage)
 
     def reset(self):
         """Reset all family members and the couple relationship for the next FAM record."""
-        self.parent1: Person = None
-        self.parent2: Person = None
+        self.parent1: Optional[Person] = None
+        self.parent2: Optional[Person] = None
         self.children: list[Person] = []
         self.couple: Relationship = Relationship(type=RelationshipType.Couple)
         self.couple_added: bool = False
@@ -58,14 +59,15 @@ class FamilyParser:
     def set_marr_plac(self, record: Element):
         """Set the marriage place from a GEDCOM PLAC element, creating a PlaceDescription if needed."""
         from .place_reference import PlaceReference, PlaceDescription
-        if self.gedcomx.places.by_name(record.value):
-            self.marr_fact.place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
+        existing_places = self.gedcomx.places.by_name(record.value)
+        if existing_places:
+            self.marr_fact.place = PlaceReference(original=record.value, description=existing_places[0])
         else:
             place_des = PlaceDescription(names=[TextValue(value=record.value)])
             self.gedcomx.add_place_description(place_des)
             self.marr_fact.place = PlaceReference(original=record.value, description=place_des)
             
-    def set_husband(self, husband: Person):
+    def set_husband(self, husband: Optional[Person]):
         """Assign the husband (person1) of the couple relationship and register it in the genealogy."""
         if husband is not None:
             if self.parent1 is not None: raise ValueError
@@ -77,7 +79,7 @@ class FamilyParser:
                 self.couple_added = True
             self.parent1 = husband
     
-    def set_wife(self, wife: Person):
+    def set_wife(self, wife: Optional[Person]):
         """Assign the wife (person2) of the couple relationship and register it in the genealogy."""
         if wife is not None:
             if self.parent2 is not None: raise ValueError
@@ -89,7 +91,7 @@ class FamilyParser:
                 self.couple_added = True
             self.parent2 = wife
     
-    def add_child(self, child: Person):
+    def add_child(self, child: Optional[Person]):
         """Create ParentChild relationships between the child and each known parent."""
         if child is not None:
             if self.parent1 is not None:

@@ -10,3 +10,9 @@ class SourceCitation(GedcomXModel):
 
     lang: Optional[str] = "en"
     value: str = ""
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang, check_nonempty
+        check_lang(result, "lang", self.lang)
+        check_nonempty(result, "value", self.value)

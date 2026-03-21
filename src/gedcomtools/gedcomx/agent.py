@@ -82,6 +82,33 @@ class Agent(GedcomXModel):
         self.identifiers.append(identifier_to_add)
 
     # ------------------------------------------------------------------
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if not self.names:
+            result.warn("names", "Agent has no names")
+        for i, tv in enumerate(self.names):
+            check_instance(result, f"names[{i}]", tv, TextValue)
+        check_instance(result, "homepage", self.homepage, URI)
+        check_instance(result, "openid", self.openid, URI)
+        for i, e in enumerate(self.emails):
+            check_instance(result, f"emails[{i}]", e, URI)
+        for i, p in enumerate(self.phones):
+            check_instance(result, f"phones[{i}]", p, URI)
+        for i, acc in enumerate(self.accounts):
+            check_instance(result, f"accounts[{i}]", acc, OnlineAccount)
+        for i, addr in enumerate(self.addresses):
+            check_instance(result, f"addresses[{i}]", addr, Address)
+        if self.person is not None:
+            from .person import Person
+            check_instance(result, "person", self.person, Person, Resource)
+        if self.attribution is not None:
+            from .attribution import Attribution
+            check_instance(result, "attribution", self.attribution, Attribution)
+        for i, n in enumerate(self.xnotes):
+            from .note import Note
+            check_instance(result, f"xnotes[{i}]", n, Note)
+
     # Dunder methods
     # ------------------------------------------------------------------
 
@@ -105,6 +132,7 @@ class Agent(GedcomXModel):
             and self.addresses == other.addresses
             and self.person == other.person
             and self.attribution == other.attribution
+            and self.xnotes == other.xnotes
             and self._uri == other._uri
         )
 

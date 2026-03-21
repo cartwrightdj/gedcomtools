@@ -29,10 +29,10 @@ class _EnumItem:
 
 class _ExtEnumMeta(type):
     def __iter__(cls) -> Iterator[_EnumItem]:
-        return iter(cls._members.values())
+        return iter(cls._members.values())  # type: ignore[attr-defined]
 
     def __contains__(cls, item: object) -> bool:
-        return item in cls._members.values()
+        return item in cls._members.values()  # type: ignore[attr-defined]
 
     def __instancecheck__(cls, instance: object) -> bool:
         # Allow isinstance(IdentifierType.Primary, IdentifierType) to return True
@@ -47,12 +47,12 @@ class _ExtEnumMeta(type):
                 return arg
             raise TypeError(f"{arg!r} is not a member of {cls.__name__}")
         if by == "name":
-            return cls.get(str(arg))
+            return cls.get(str(arg))  # type: ignore[attr-defined]
         if by == "value":
-            return cls.from_value(arg)
-        if isinstance(arg, str) and arg in cls._members:
-            return cls.get(arg)
-        return cls.from_value(arg)
+            return cls.from_value(arg)  # type: ignore[attr-defined]
+        if isinstance(arg, str) and arg in cls._members:  # type: ignore[attr-defined]
+            return cls.get(arg)  # type: ignore[attr-defined]
+        return cls.from_value(arg)  # type: ignore[attr-defined]
 
     # Allow: Color.red = "r" (register member); keep normal attrs intact
     def __setattr__(cls, name: str, value: Any) -> None:
@@ -64,7 +64,7 @@ class _ExtEnumMeta(type):
         if isinstance(value, _EnumItem):
             if value.owner is not cls:
                 raise TypeError(f"Cannot assign member from {value.owner.__name__} to {cls.__name__}")
-            cls._members[name] = value
+            cls._members[name] = value  # type: ignore[attr-defined]
             return super().__setattr__(name, value)
 
         # If it's a descriptor/method/property/etc -> treat as normal attribute
@@ -73,14 +73,14 @@ class _ExtEnumMeta(type):
 
         # Otherwise treat as member registration via assignment
         # (no uppercase requirement; any valid identifier works)
-        item = cls.register(name, value)  # register will set the attribute (to _EnumItem)
+        item = cls.register(name, value)  # type: ignore[attr-defined]  # register will set the attribute (to _EnumItem)
         # Avoid double-setting here; register() already installed the attribute.
         return None
 
     # Optional: deleting a member removes it from the registry
     def __delattr__(cls, name: str) -> None:
-        if name in cls._members:
-            cls._members.pop(name, None)
+        if name in cls._members:  # type: ignore[attr-defined]
+            cls._members.pop(name, None)  # type: ignore[attr-defined]
         return super().__delattr__(name)
 
 class ExtensibleEnum(metaclass=_ExtEnumMeta):
@@ -110,7 +110,7 @@ class ExtensibleEnum(metaclass=_ExtEnumMeta):
         item = _EnumItem(owner=cls, name=name, value=value)
         cls._members[name] = item
         # Set the attribute to the member object (triggers meta.__setattr__ branch for _EnumItem)
-        super(_ExtEnumMeta, cls).__setattr__(name, item)
+        super(_ExtEnumMeta, cls).__setattr__(name, item)  # type: ignore[misc]
         return item
 
     @classmethod

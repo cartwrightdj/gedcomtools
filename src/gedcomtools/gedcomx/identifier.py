@@ -52,14 +52,22 @@ class Identifier(GedcomXModel):
 
     def model_post_init(self, __context: object) -> None:
         # Normalise: value kwarg → values list
-        raw = self.model_extra.get("value")
+        raw = (self.model_extra or {}).get("value")
         if raw is not None and not self.values:
             if isinstance(raw, list):
                 object.__setattr__(self, "values", raw)
             elif raw is not None:
                 object.__setattr__(self, "values", [raw])
         if self.type is None:
-            object.__setattr__(self, "type", IdentifierType.Primary)
+            object.__setattr__(self, "type", IdentifierType.Primary)  # type: ignore[attr-defined]
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        if not self.values:
+            result.error("values", "Identifier must have at least one value")
+        for i, v in enumerate(self.values):
+            if not isinstance(v, URI):
+                result.error(f"values[{i}]", f"Expected URI, got {type(v).__name__}")
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +85,7 @@ class IdentifierList:
     ) -> None:
         self.identifiers: Dict[str, List[URI]] = identifiers if identifiers else {}
         for arg, val in kwargs.items():
-            self.add_identifier(Identifier(type=arg, values=val))
+            self.add_identifier(Identifier(type=IdentifierType(arg), values=val))  # type: ignore[arg-type]
 
     # ---- pydantic integration -------------------------------------------
 
@@ -148,7 +156,7 @@ class IdentifierList:
     def contains(self, identifier: Identifier) -> bool:
         if not (identifier and isinstance(identifier, Identifier) and identifier.type):
             return False
-        key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)
+        key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)  # type: ignore[attr-defined]
         if key not in self.identifiers:
             return False
         pool = self.identifiers[key]
@@ -214,9 +222,9 @@ class IdentifierList:
             raise ValueError("Data must be a dict of identifiers.")
         identifier_list = cls()
         for key, vals in data.items():
-            uris = [URI(value=v) if isinstance(v, str) else v for v in vals]
+            uris = [URI.model_validate({"value": v}) if isinstance(v, str) else v for v in vals]
             identifier_list.add_identifier(
-                Identifier(values=uris, type=IdentifierType(key))
+                Identifier(values=uris, type=IdentifierType(key))  # type: ignore[arg-type]
             )
         return identifier_list
 

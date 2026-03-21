@@ -11,6 +11,15 @@ class TextValue(GedcomXModel):
     value: Optional[str] = None
     lang: Optional[str] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_lang
+        if self.value is None:
+            result.warn("value", "TextValue has no value")
+        elif not self.value.strip():
+            result.warn("value", "TextValue.value is blank")
+        check_lang(result, "lang", self.lang)
+
     def _append_to_value(self, value_to_append: str) -> None:
         if not isinstance(value_to_append, str):
             raise ValueError(f"Cannot append object of type {type(value_to_append)}.")

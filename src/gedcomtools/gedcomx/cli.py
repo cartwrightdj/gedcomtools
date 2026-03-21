@@ -151,9 +151,9 @@ def write_jsonl(
 
     if output_file.exists():
         if overwrite:
-            log.info("Overwriting existing file: %s", output_file.name)
+            log.info("Overwriting existing file: {}", output_file.name)
         elif append:
-            log.info("Appending to existing file: %s", output_file.name)
+            log.info("Appending to existing file: {}", output_file.name)
         else:
             raise FileExistsError(f"Output file already exists: {output_file}. Use overwrite=True or append=True.")
     else:
@@ -168,5 +168,5 @@ def write_jsonl(
             f.write(json.dumps(data, ensure_ascii=False) + "\n")
             count += 1
 
-    log.info("Wrote %d records to %s", count, output_file.name)
+    log.info("Wrote {} records to {}", count, output_file.name)
     return count

@@ -1,5 +1,3 @@
-DEBUG = True
-
 import random
 import string
 import orjson
@@ -43,6 +41,7 @@ from .resource import Resource
 from .source_description import ResourceType, SourceDescription
 from .textvalue import TextValue
 from .uri import URI
+from .validation import ValidationResult
 #=====================================================================
 
 log = get_logger(__name__)
@@ -146,8 +145,8 @@ class TypeCollection(Generic[T]):
 
     def by_uri(self, uri: Union[URI, str]) -> T | None:
         """Return the item whose URI matches, or None if not found."""
-        key = uri.value if isinstance(uri, URI) else str(uri)  # type: ignore
-        return self._uri_index.get(key)
+        key = (uri.value or "") if isinstance(uri, URI) else str(uri)
+        return self._uri_index.get(key) if key else None
 
     def by_name(self, sname: str | None) -> list[T] | None:
         """Return items whose name matches sname (stripped), or None if not found."""
@@ -385,7 +384,7 @@ class GedcomX:
 
                 if relationship.person1:
                     if relationship.person1.id is None:
-                        relationship.person1.id = self.make_id()
+                        relationship.person1.id = make_uid()
                     if not self.persons.by_id(relationship.person1.id):
                         self.persons.append(relationship.person1)
                     if relationship.person1.id not in self.__relationship_table:
@@ -397,7 +396,7 @@ class GedcomX:
                 
                 if relationship.person2:
                     if relationship.person2.id is None:
-                        relationship.person2.id = self.make_id() #TODO
+                        relationship.person2.id = make_uid()
                     if not self.persons.by_id(relationship.person2.id):
                         self.persons.append(relationship.person2)
                     if relationship.person2.id not in self.__relationship_table:
@@ -457,7 +456,7 @@ class GedcomX:
                 event_to_add.id = make_uid()
             for current_event in self.events:
                 if event_to_add == current_event:
-                    log.debug("Skipping duplicate event: %s", event_to_add.id)
+                    log.debug("Skipping duplicate event: {}", event_to_add.id)
                     return
             self.events.append(event_to_add)
         else:
@@ -494,6 +493,46 @@ class GedcomX:
         filtered = [source for source in self.sourceDescriptions if getattr(source, 'id') == id]
         if filtered: return filtered[0]
         return None
+
+    def validate(self) -> ValidationResult:
+        """Validate this GedcomX document.
+
+        Recursively validates every object in every collection, then performs
+        cross-collection checks (e.g. relationship person references resolve).
+
+        Returns:
+            ValidationResult with accumulated errors and warnings.
+        """
+        result = ValidationResult()
+        visited: set = set()
+        collections = [
+            ("persons", self.persons),
+            ("relationships", self.relationships),
+            ("agents", self.agents),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("places", self.places),
+            ("events", self.events),
+            ("documents", self.documents),
+            ("groups", self.groups),
+        ]
+        for cname, coll in collections:
+            for i, obj in enumerate(coll):
+                result.merge(obj.validate(visited), prefix=f"{cname}[{i}]")
+
+        # Cross-collection: relationship persons must exist
+        person_ids = {p.id for p in self.persons}
+        for i, rel in enumerate(self.relationships):
+            for pnum, pfield in (("person1", rel.person1), ("person2", rel.person2)):
+                if pfield is None:
+                    continue
+                ref_id = getattr(pfield, "id", None) or getattr(pfield, "resourceId", None)
+                if ref_id and ref_id not in person_ids:
+                    result.error(
+                        f"relationships[{i}].{pnum}",
+                        f"Referenced person id {ref_id!r} not found in persons collection",
+                    )
+
+        return result
 
     @property
     def id_index(self) -> Dict[Any,Union[SourceDescription,Person,Relationship,Agent,Event,Document,PlaceDescription,Group]]:
@@ -609,12 +648,11 @@ class GedcomX:
         #TODO indept URI search, URI index in collections
         if resource_reference:
             if isinstance(resource_reference, Resource):
-                ref_id = resource_reference.resource
-                ref_id = ref_id.partition("#")[2] if ref_id else None
+                _res = resource_reference.resource
+                ref_id = _res.fragment if _res else None
                 ref = self.id_index.get(ref_id, None)
             elif isinstance(resource_reference, URI):
-                ref_id = resource_reference.value
-                ref_id = ref_id.partition("#")[2] if ref_id else None
+                ref_id = resource_reference.fragment
                 ref = self.id_index.get(ref_id, None)
             else:
                 raise TypeError()

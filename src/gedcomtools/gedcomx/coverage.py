@@ -12,3 +12,11 @@ class Coverage(GedcomXModel):
 
     spatial: Optional[PlaceReference] = None
     temporal: Optional[Date] = None
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.spatial is None and self.temporal is None:
+            result.warn("", "Coverage has neither spatial nor temporal component")
+        check_instance(result, "spatial", self.spatial, PlaceReference)
+        check_instance(result, "temporal", self.temporal, Date)

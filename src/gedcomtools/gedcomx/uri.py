@@ -176,4 +176,4 @@ class URI(GedcomXModel):
 
     @classmethod
     def from_url(cls, url: Any) -> "URI":
-        return cls(target=url)
+        return cls.model_validate({"target": url})

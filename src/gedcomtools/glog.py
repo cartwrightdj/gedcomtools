@@ -45,8 +45,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Generator, Optional, Sequence, Union
 
+from dotenv import load_dotenv
 from loguru import logger as _logger
 from loguru import _Logger as Logger
+
+# Load .env from the project root (or CWD) so env vars are available before
+# any module-level code reads them.  override=False means real env vars win.
+load_dotenv(override=False)
 
 # Ensure format-string extras never raise KeyError on unbound loggers.
 _logger.configure(extra={"module": "", "channel": ""})
@@ -466,10 +471,16 @@ def setup_logging(
     global _manager
 
     # env overrides
+    env_debug         = _env_truthy("GEDCOMTOOLS_DEBUG")
     env_level         = os.getenv("LOG_LEVEL", "").strip().upper()
     env_console_level = os.getenv("LOG_CONSOLE_LEVEL", "").strip().upper()
     env_files         = _env_truthy("LOG_FILES")
     env_dir           = os.getenv("LOG_DIR", "").strip()
+
+    if env_debug:
+        env_level = env_level or "DEBUG"
+        env_console_level = env_console_level or "DEBUG"
+        env_files = env_files or True
 
     eff_level         = _to_level(env_level or common_level)
     eff_console_level = _to_level(env_console_level or console_level)

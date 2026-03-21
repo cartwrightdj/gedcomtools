@@ -215,7 +215,7 @@ class GedcomConverter:
         try:
             subs = record.sub_records() or []
             log.debug(
-                "Record tag=%s level=%s xref=%r value=%r subrecords=%d",
+                "Record tag={} level={} xref={!r} value={!r} subrecords={}",
                 record.tag, record.level, record.xref, record.value, len(subs),
             )
 
@@ -226,15 +226,15 @@ class GedcomConverter:
                 handler = self._dispatch.get(record.tag)
                 if handler is None:
                     self._bump_missing(record.tag)
-                    log.error("No handler for %s: %s", record.tag, record.describe())
+                    log.error("No handler for {}: {}", record.tag, record.describe())
                     return
 
-                log.info("Using %s for: %s", handler.__name__, record.describe())
+                log.info("Using {} for: {}", handler.__name__, record.describe())
                 handler(record)
 
             # Recurse (your existing behavior)
             for sub in subs:
-                log.debug("Subrecord: %s", sub.describe())
+                log.debug("Subrecord: {}", sub.describe())
                 self.parse_gedcom5x_record(sub)
 
         except ConversionErrorDump:
@@ -253,15 +253,15 @@ class GedcomConverter:
         No prints.
         """
         if note:
-            log.error("Conversion dump note: %s", note)
-        log.error("Failed at record: %s", record.describe())
+            log.error("Conversion dump note: {}", note)
+        log.error("Failed at record: TAG={} line={} level={} | {}", record.tag, record._line_num, record.level, record.describe())
 
         for level, obj in self.object_map.items_desc():
             try:
                 s = str(obj)
             except Exception:
                 s = "<str() failed>"
-            log.error("STACK level=%s type=%s repr=%r str=%s", level, type(obj).__name__, obj, s[:200])
+            log.error("STACK level={} type={} repr={!r} str={}", level, type(obj).__name__, obj, s[:200])
 
         raise ConversionErrorDump()
 
@@ -328,7 +328,7 @@ class GedcomConverter:
         for item in seq:
             k = item if key is None else key(item)  # type: ignore[assignment]
             if k not in seen:
-                seen.add(k)
+                seen.add(k)  # type: ignore[arg-type]
                 out.append(item)
         return out
 
@@ -356,18 +356,18 @@ class GedcomConverter:
 
         log.debug("Priming top-level IDs")
         for obj in gedcom5x.objects:
-            gx_obj = SourceDescription(id=obj.xref, type=ResourceType.DigitalArtifact)
+            gx_obj = SourceDescription(id=obj.xref, resourceType=ResourceType.DigitalArtifact)
             self.gedcomx.add_source_description(gx_obj)
 
         base_docs = len(self.gedcomx.documents)
-        log.debug("Primed %d SourceDescriptions from GEDCOM5 Objects", base_docs)
+        log.debug("Primed {} SourceDescriptions from GEDCOM5 Objects", base_docs)
 
         for source in gedcom5x.sources:
             gx_obj = SourceDescription(id=source.xref)
             self.gedcomx.add_source_description(gx_obj)
 
         log.debug(
-            "Primed %d SourceDescriptions from GEDCOM5 Sources",
+            "Primed {} SourceDescriptions from GEDCOM5 Sources",
             len(self.gedcomx.sourceDescriptions) - base_docs,
         )
 
@@ -410,18 +410,21 @@ class GedcomConverter:
 
         # Log missing counts (don’t print)
         if self.missing_handler_count:
-            log.warning("Unhandled tags:\n%s", self.format_counts_table(self.missing_handler_count))
+            log.warning("Unhandled tags:\n{}", self.format_counts_table(self.missing_handler_count))
 
         return self.gedcomx
 
     
     def handle__apid(self, record: Element):
-        if isinstance(self.object_map[record.level-1], SourceReference):
-            self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other, value=[URI.from_url('APID://' + record.value if record.value else '')])) # type: ignore
-        elif isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('APID://' + record.value if record.value else '')])) # type: ignore
+        if not record.value:
+            return
+        parent = self.object_map.get(record.level-1)
+        if isinstance(parent, SourceReference):
+            parent.description.add_identifier(Identifier(type=IdentifierType.Other, values=[URI.from_url('APID://' + record.value)])) # type: ignore
+        elif isinstance(parent, SourceDescription):
+            parent.add_identifier(Identifier(type=IdentifierType.Other, values=[URI.from_url('APID://' + record.value)])) # type: ignore
         else:
-            self.convert_exception_dump(record=record)
+            log.debug(f"Skipping _APID — parent {type(parent).__name__} does not accept identifiers")
 
     def handle__meta(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
@@ -454,10 +457,10 @@ class GedcomConverter:
         if isinstance(self.object_map[record.level-1], Agent):
             # TODO CHeck if URL?
             if record.value is not None and self.clean_str(record.value):
-                gxobject = Address(value=self.clean_str(record.value))
+                gxobject = Address.model_validate({"value": self.clean_str(record.value)})
             else:
                 gxobject = Address()
-            self.object_map[record.level-1].address = gxobject
+            self.object_map[record.level-1].add_address(gxobject)
             self.object_map[record.level] = gxobject
         else:
             raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
@@ -512,12 +515,13 @@ class GedcomConverter:
 
     def handle_auth(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            if record.value is not None and self.gedcomx.agents.by_name(record.value):
-                gxobject = self.gedcomx.agents.by_name(record.value)[0]
+            existing_agents = self.gedcomx.agents.by_name(record.value) if record.value else None
+            if existing_agents:
+                gxobject = existing_agents[0]
             else:
-                gxobject = Agent(names=[TextValue(record.value)])
+                gxobject = Agent(names=[TextValue(value=record.value)])
                 self.gedcomx.add_agent(gxobject)
-            
+
             self.object_map[record.level-1].author = gxobject
             
             self.object_map[record.level] = gxobject
@@ -576,9 +580,9 @@ class GedcomConverter:
 
     def handle_caln(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceReference):
-            self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
+            self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other, values=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.Other,value=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
+            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.Other, values=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
         elif isinstance(self.object_map[record.level-1], Agent):
             pass
             # TODO Why is GEDCOM so shitty? A callnumber for a repository?
@@ -589,7 +593,7 @@ class GedcomConverter:
         if isinstance(self.object_map[record.level-1], SourceDescription):
             date = record.sub_record('DATE')
             if date is not None:
-                self.object_map[record.level-1].created = Date(date.value)
+                self.object_map[record.level-1].created = Date(original=date.value)
         elif isinstance(self.object_map[record.level-1], Agent):
             if self.object_map[record.level-1].attribution is None:
                 gxobject = Attribution()
@@ -653,7 +657,8 @@ class GedcomConverter:
     def handle_cont(self, record: Element):
         if isinstance(self.object_map[record.level-1], Note):
             gxobject = str(" " + record.value if record.value else '')
-            self.object_map[record.level-1].append(gxobject)
+            if gxobject:
+                self.object_map[record.level-1].append(gxobject)
         elif isinstance(self.object_map[record.level-1], Agent):
             gxobject = str(" " + record.value if record.value else '')
         elif isinstance(self.object_map[record.level-1], Qualifier):
@@ -663,9 +668,11 @@ class GedcomConverter:
             #gxobject = TextValue(value="\n" + record.value)
             self.object_map[record.level-1]._append_to_value(record.value if record.value else '\n')
         elif isinstance(self.object_map[record.level-1], SourceReference):
-            self.object_map[record.level-1].append(record.value)
+            if record.value:
+                self.object_map[record.level-1].append(record.value)
         elif isinstance(self.object_map[record.level-1], Address):
-            self.object_map[record.level-1]._append(record.value)
+            if record.value:
+                self.object_map[record.level-1]._append(record.value)
         elif isinstance(self.object_map[record.level-1], str):
             self.object_map[record.level-1] = self.object_map[record.level-1] = record.value
         else:
@@ -727,24 +734,24 @@ class GedcomConverter:
             
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            
-            self.object_map[record.level-1].created = record.value #TODO String to timestamp
+            self.object_map[record.level-1].created = record.value
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            
-            self.object_map[record.level-1].sourceDescription.created = record.value #TODO String to timestamp
+            self.object_map[record.level-1].sourceDescription.created = record.value
         elif isinstance(self.object_map[record.level-1], Attribution):
             if record.parent is not None and record.parent.tag == 'CREA':
-                self.object_map[record.level-1].created = record.value #TODO G7
-                
+                self.object_map[record.level-1].created = record.value
             elif record.parent is not None and record.parent.tag == "CHAN":
-                self.object_map[record.level-1].modified = record.value #TODO G7
+                self.object_map[record.level-1].modified = record.value
             elif (created := self.object_map[record.level-1].created) is None:
                 self.object_map[record.level-1].created = record.value
              
                 
         elif record.parent is not None and record.parent.tag in ['CREA','CHAN']:
             pass
-        
+
+        elif isinstance(self.object_map[record.level-1], Agent):
+            # e.g. HEAD/SOUR/DATA/DATE — source publication date; no GedcomX slot, skip
+            log.debug("Skipping DATE under Agent context ({}): {}", record.parent.tag if record.parent else "?", record.value)
 
         else:
             self.convert_exception_dump(record=record)
@@ -826,8 +833,8 @@ class GedcomConverter:
 
     def handle_exid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.External,value=[URI.from_url(record.value)]) # type: ignore
-            self.object_map[record.level-1].add_identifier(gxobject)       
+            gxobject = Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)]) # type: ignore
+            self.object_map[record.level-1].add_identifier(gxobject)
             self.object_map[record.level] = gxobject
         else: raise ValueError('Record had no value')
 
@@ -859,7 +866,8 @@ class GedcomConverter:
             if id:
                 child = self.gedcomx.get_person_by_id(id)
                 self._family_parser.add_child(child)
-                log.debug(f"found child: {child}")
+                _child_name = child.names[0].nameForms[0].fullText if child and child.names and child.names[0].nameForms else None
+                log.debug("found child: id={} name={}", getattr(child, "id", None), _child_name)
                 self.object_map[record.level] = child
 
     def handle_famc(self, record: Element) -> None:
@@ -877,8 +885,11 @@ class GedcomConverter:
                 self.object_map[record.level-1].about = record.value
 
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1]._init_file()
-            self.object_map[record.level] = self.object_map[record.level-1]
+            container = self.object_map[record.level-1]
+            container.sourceDescription.resourceType = ResourceType.DigitalArtifact
+            if record.value:
+                container.sourceDescription.about = record.value
+            self.object_map[record.level] = container
             
 
 
@@ -888,23 +899,32 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)        
            
     def handle_form(self, record: Element):
-        if record.parent is not None and record.parent.tag == 'FILE' and isinstance(self.object_map[record.level-2], SourceDescription):
+        parent_obj = self.object_map.get(record.level-2)
+        if record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, SourceDescription):
             if record.value and record.value.strip() != '':
                 mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
                 if mime_type:
-                    self.object_map[record.level-2].mediaType = mime_type
+                    parent_obj.mediaType = mime_type
                 else:
-                    log.error(f"Could not determing mime type from {record.value}")
+                    log.error("Could not determine mime type from {}", record.value)
+        elif record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, DocumentParsingContainer):
+            if record.value and record.value.strip() != '':
+                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+                if mime_type:
+                    parent_obj.sourceDescription.mediaType = mime_type
+                else:
+                    log.error("Could not determine mime type from {}", record.value)
         elif isinstance(self.object_map[record.level-1], PlaceDescription):
             self.object_map[record.level-1].names.append(TextValue(value=record.value))
-        
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
-            if mime_type:
-                self.object_map[record.level-1]._set_form(mime_type)
-            else:
-                log.error(f"Could not determing mime type from {record.value}")
-            self.object_map[record.level] = self.object_map[record.level-1]
+            container = self.object_map[record.level-1]
+            if record.value and record.value.strip():
+                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+                if mime_type:
+                    container.sourceDescription.mediaType = mime_type
+                else:
+                    log.error("Could not determine mime type from {}", record.value)
+            self.object_map[record.level] = container
 
         elif record.parent is not None and record.parent.tag == 'TRAN':
             pass #TODO
@@ -913,7 +933,7 @@ class GedcomConverter:
 
     def handle_fsid(self,record: Element):
         if record.value:
-            gxobject = Identifier(type=IdentifierType.FamilySearchId,value=[URI.from_url(record.value)]) # type: ignore
+            gxobject = Identifier(type=IdentifierType.FamilySearchId, values=[URI.from_url(record.value)]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)       
             self.object_map[record.level] = gxobject
         else:
@@ -967,7 +987,7 @@ class GedcomConverter:
             
             self.object_map[record.level] = gxobject
         """
-        if record.parent.tag == 'FAM':
+        if record.parent is not None and record.parent.tag == 'FAM':
             self._family_parser.reset()
             self.object_map[record.level] = self._family_parser
             return
@@ -994,7 +1014,7 @@ class GedcomConverter:
 
     def handle__link(self,record: Element):
         if isinstance(self.object_map[record.level-1], SourceReference):
-            gxobject = Identifier([URI.from_url(record.value)],IdentifierType.External) # type: ignore
+            gxobject = Identifier(values=[URI.from_url(record.value)], type=IdentifierType.External) # type: ignore
             self.object_map[record.level-1].description.add_identifier(gxobject)
             self.object_map[record.level] = gxobject
         else:
@@ -1062,9 +1082,12 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], FamilyParser):
             gxobject = Note(text=self.clean_str(record.value))
-            self.object_map[record.level-1].add_note(gxobject)          
+            self.object_map[record.level-1].add_note(gxobject)
             self.object_map[record.level] = gxobject
-
+        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+            gxobject = Note(text=self.clean_str(record.value if record.value else ''))
+            self.object_map[record.level-1].sourceDescription.add_note(gxobject)
+            self.object_map[record.level] = gxobject
         else:
             self.convert_exception_dump(record=record)
 
@@ -1091,9 +1114,9 @@ class GedcomConverter:
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from Object {record.tag} {record.describe()}")
-                gxobject = SourceDescription(id=record.value)
+                gxobject = SourceDescription(id=record.xref if record.xref else None)
                 self.object_map[record.level-1].add_source_description(gxobject)
-                gxobject = DocumentParsingContainer(source=gxobject)     
+                gxobject = DocumentParsingContainer(source=gxobject)
             else:
                 log.debug(f"Found SourceDescription with id:{record.xref}")
                 gxobject = DocumentParsingContainer(source=gxobject)     
@@ -1115,15 +1138,16 @@ class GedcomConverter:
            
     def handle_plac(self, record: Element):
         if isinstance(self.object_map[record.level-1], Agent):
-            gxobject = Address(value=record.value)
+            gxobject = Address.model_validate({"value": record.value})
             self.object_map[record.level-1].add_address(gxobject)
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], FamilyParser):
             self.object_map[record.level-1].set_marr_date(record)
 
         elif isinstance(self.object_map[record.level-1], Event):
-            if self.gedcomx.places.by_name(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
+            existing_place = self.gedcomx.places.by_name(record.value)
+            if existing_place:
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=existing_place[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
@@ -1132,8 +1156,9 @@ class GedcomConverter:
                     self.object_map[record.level]= place_des
 
         elif isinstance(self.object_map[record.level-1], Fact):
-            if self.gedcomx.places.by_name(record.value):
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=self.gedcomx.places.by_name(record.value)[0])
+            existing_place = self.gedcomx.places.by_name(record.value)
+            if existing_place:
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=existing_place[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
@@ -1151,15 +1176,16 @@ class GedcomConverter:
             
             self.object_map[record.level] = place
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            if (place := self.gedcomx.places.by_name(record.value)) is not None:
-                self.object_map[record.level-1].sourceDescription.place = place
+            existing = self.gedcomx.places.by_name(record.value)
+            if existing:
+                place = existing[0] if isinstance(existing, list) else existing
+                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place)
                 self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
             gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
             self.object_map[record.level-1].sourceDescription.add_note(gxobject)
-            
             self.object_map[record.level] = place
         else:
             self.convert_exception_dump(record=record)
@@ -1177,10 +1203,11 @@ class GedcomConverter:
                 if (date := record['DATE']) is not None:
                     self.object_map[record.level-1].published = date
             else:
-                if record.value and self.gedcomx.agents.by_name(record.value):
-                    gxobject = self.gedcomx.agents.by_name(record.value)[0]
+                existing_agents = self.gedcomx.agents.by_name(record.value) if record.value else None
+                if existing_agents:
+                    gxobject = existing_agents[0]
                 else:
-                    gxobject = Agent(names=[TextValue(record.value)])
+                    gxobject = Agent(names=[TextValue(value=record.value)])
                     self.gedcomx.add_agent(gxobject)
                 self.object_map[record.level-1].publisher = gxobject
                 self.object_map[record.level] = gxobject
@@ -1198,21 +1225,21 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_uid(self, record: Element):
-        if isinstance(self.object_map[record.level-1], Agent):
-            gxobject = Identifier(value=[URI('UID:' + record.value)] if record.value else [URI('WARNING: NOTE had no value')],type=IdentifierType.Primary) # type: ignore
-            self.object_map[record.level-1].add_identifier(gxobject) #NOTE GC7 
+        parent_obj = self.object_map.get(record.level-1)
+        if record.value and hasattr(parent_obj, 'add_identifier'):
+            gxobject = Identifier(values=[URI.from_url('UID:' + record.value)], type=IdentifierType.Primary) # type: ignore
+            parent_obj.add_identifier(gxobject)
             self.object_map[record.level] = gxobject
         else:
             self.convert_exception_dump(record=record)
 
     def handle_refn(self, record: Element):
         if isinstance(self.object_map[record.level-1], Person) or isinstance(self.object_map[record.level-1], SourceDescription):
-            gxobject = Identifier(value=[URI.from_url('Reference Number:' + record.value)] if record.value else [],type=IdentifierType.External) # type: ignore
+            gxobject = Identifier(values=[URI.from_url('Reference Number:' + record.value)] if record.value else [], type=IdentifierType.External) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)
-            
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], Agent):
-            gxobject = Identifier(value=[URI('Reference Number:' + record.value)] if record.value else [],type=IdentifierType.External) # type: ignore
+            gxobject = Identifier(values=[URI.from_url('Reference Number:' + record.value)] if record.value else [], type=IdentifierType.External) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject) #NOTE GC7
             
             self.object_map[record.level] = gxobject
@@ -1225,12 +1252,11 @@ class GedcomConverter:
                 gxobject = self.gedcomx.agents.by_id(record.xref)
                 
             else:
-                gxobject = Agent(id=record.xref,names = [TextValue(record.value)] if record.value else [])
+                gxobject = Agent(id=record.xref, names=[TextValue(value=record.value)] if record.value else [])
                 self.gedcomx.add_agent(gxobject)            
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], SourceDescription):
-            if self.gedcomx.agents.by_id(record.value) is not None:            
-                # TODO WHere and what to add this to?
+            if self.gedcomx.agents.by_id(record.value) is not None:
                 gxobject = self.gedcomx.agents.by_id(record.value)
                 self.object_map[record.level-1].repository = gxobject
                 self.object_map[record.level] = gxobject
@@ -1253,10 +1279,10 @@ class GedcomConverter:
 
     def handle_rin(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)] if record.value else [])) # type: ignore
             self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1].sourceDescription.add_identifier(Identifier(Type=IdentifierType.External,value=record.value)) # type: ignore
+            self.object_map[record.level-1].sourceDescription.add_identifier(Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)] if record.value else [])) # type: ignore
             self.object_map[record.level-1].sourceDescription.add_note(Note(text=f"Source had RIN: of {record.value}"))
 
         else:
@@ -1281,9 +1307,9 @@ class GedcomConverter:
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from {record.tag} {record.describe()}")
-                gxobject = SourceDescription(id=record.value)
+                gxobject = SourceDescription(id=record.xref if record.xref else None)
                 self.object_map[record.level-1].add_source_description(gxobject)
-                
+
             else:
                 log.debug(f"Found SourceDescription with id:{record.xref}")
             self.object_map[record.level] = gxobject
@@ -1294,20 +1320,23 @@ class GedcomConverter:
                 add_method(gxobject)
                 self.object_map[record.level] = gxobject
             else:
+                if not record.value:
+                    log.warning(f"Skipping SOUR/OBJE/_WLNK reference with empty value at level {record.level}")
+                    return
                 log.error(f"Could not find source with id: {record.value}, Creating Place Holder Description")
                 gxobject = SourceDescription(id=record.value)
                 gxobject._place_holder = True
                 gxobject = SourceReference(descriptionId=record.value, description=gxobject)
                 self.object_map[record.level] = gxobject
 
-        elif record.tag == 'OBJE' and isinstance(self.object_map[record.level-1],SourceReference): #TODO Flesh out OBJECTs/FILES
+        elif record.tag == 'OBJE' and isinstance(self.object_map[record.level-1],SourceReference):
             if (source_description := self.gedcomx.sourceDescriptions.by_id(record.value)) is not None:
                 gxobject = SourceReference(descriptionId=record.value, description=source_description)
                 self.object_map[record.level-1].description.add_source_reference(gxobject)
                 self.object_map[record.level] = gxobject
             else:
                 self.convert_exception_dump(record=record)
-        elif isinstance(self.object_map[record.level-1],Attribution): #TODO Flesh out OBJECTs/FILES
+        elif isinstance(self.object_map[record.level-1],Attribution):
             gxobject = Agent(names=[TextValue(value=record.value)])
             
             self.gedcomx.add_agent(gxobject)
@@ -1326,8 +1355,9 @@ class GedcomConverter:
 
     def handle_subm(self, record: Element):
         if record.level == 0:
-            if record.value is not None and self.gedcomx.agents.by_id(record.value):
-                gxobject = self.gedcomx.agents.by_id(record.xref)
+            existing = self.gedcomx.agents.by_id(record.xref)
+            if existing is not None:
+                gxobject = existing
             else:
                 gxobject = Agent(id=record.xref)
                 self.gedcomx.add_agent(gxobject)
@@ -1389,39 +1419,53 @@ class GedcomConverter:
 
     def handle_type(self, record: Element):
         # peek to see if event or fact
-        if isinstance(self.object_map[record.level-1], Event):
+        parent_obj = self.object_map.get(record.level-1)
+        if record.parent is not None and record.parent.tag == 'FORM':
+            level0 = self.object_map.get(0)
+            if isinstance(level0, DocumentParsingContainer):
+                if not level0.sourceDescription.mediaType:
+                    level0.sourceDescription.mediaType = record.value
+            elif isinstance(level0, SourceDescription):
+                if not level0.mediaType:
+                    level0.mediaType = record.value
+            return
+        if isinstance(parent_obj, Event):
             if EventType.guess(record.value):
-                self.object_map[record.level-1].type = EventType.guess(record.value)                
+                parent_obj.type = EventType.guess(record.value)
             else:
-                log.warning(f"Could not determine type of event with value '{record.value}'")  
-            # add as a note anyway, guess works of text in the string    
-            self.object_map[record.level-1].add_note(Note(text=self.clean_str(record.value)))
-        elif isinstance(self.object_map[record.level-1], Fact):
-            if not self.object_map[record.level-1].type:
-                self.object_map[record.level-1].type = FactType.guess(record.value)
-        elif isinstance(self.object_map[record.level-1], Identifier):
-            
-            self.object_map[record.level-1].values.append(self.clean_str(record.value))
-            self.object_map[record.level-1].type = IdentifierType.Other # type: ignore
-        elif isinstance(self.object_map[record.level-1], Document):
-            
-            self.object_map[record.level-1].values.append(self.clean_str(record.value))
-            self.object_map[record.level-1].type = IdentifierType.Other # type: ignore
-        
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
-            self.object_map[record.level-1]._set_resource_type(record.value)
-            self.object_map[record.level] = self.object_map[record.level-1]
-            
-            
+                log.warning(f"Could not determine type of event with value '{record.value}'")
+            parent_obj.add_note(Note(text=self.clean_str(record.value)))
+        elif isinstance(parent_obj, Fact):
+            if not parent_obj.type:
+                parent_obj.type = FactType.guess(record.value)
+        elif isinstance(parent_obj, Identifier):
+            parent_obj.values.append(self.clean_str(record.value))
+            parent_obj.type = IdentifierType.Other  # type: ignore
+        elif isinstance(parent_obj, Document):
+            parent_obj.values.append(self.clean_str(record.value))
+            parent_obj.type = IdentifierType.Other  # type: ignore
+        elif isinstance(parent_obj, DocumentParsingContainer):
+            container = parent_obj
+            _rt_map = {
+                'image': ResourceType.DigitalArtifact,
+                'photo': ResourceType.DigitalArtifact,
+                'video': ResourceType.DigitalArtifact,
+                'audio': ResourceType.DigitalArtifact,
+                'document': ResourceType.PhysicalArtifact,
+                'book': ResourceType.PhysicalArtifact,
+                'record': ResourceType.Record,
+                'collection': ResourceType.Collection,
+            }
+            if record.value:
+                container.sourceDescription.resourceType = _rt_map.get(record.value.lower(), ResourceType.DigitalArtifact)
+            self.object_map[record.level] = container
 
-        elif record.parent is not None and record.parent.tag == 'FORM':
-            if not self.object_map[0].mediaType:
-                self.object_map[0].mediaType = record.value
-        elif isinstance(self.object_map[record.level-1], Name):
-            self.object_map[record.level-1].type = GedcomConverter.type_name_type.get(record.value,NameType.Other)
-
+        elif isinstance(parent_obj, Name):
+            parent_obj.type = GedcomConverter.type_name_type.get(record.value, NameType.Other)
+        elif parent_obj is None:
+            log.warning("TYPE at level {} has no parent object in stack; ignoring", record.level)
         else:
-            raise TagConversionError(record,self.object_map)
+            raise TagConversionError(record, self.object_map)
 
     def handle__url(self, record: Element):
         if isinstance(self.object_map[record.level-2], SourceDescription):
@@ -1433,7 +1477,7 @@ class GedcomConverter:
         if isinstance(self.object_map[record.level-1], Agent):
             self.object_map[record.level-1].homepage = self.clean_str(record.value)
         elif isinstance(self.object_map[record.level-2], SourceReference):
-            self.object_map[record.level-2].description.add_identifier(Identifier(value=[URI.from_url(record.value)] if record.value else []))
+            self.object_map[record.level-2].description.add_identifier(Identifier(values=[URI.from_url(record.value)] if record.value else []))
         else:
             raise ValueError(f"Could not handle 'WWW' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
 

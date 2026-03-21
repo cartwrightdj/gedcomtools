@@ -795,7 +795,9 @@ class GedcomValidator:
                 all_pointers.add(p.upper())
 
         # Check records of types that should be cited
-        CITABLE = {"SOUR", "REPO", "OBJE", "SNOTE"}
+        # SUBM is included: HEAD.SUBM will be in all_pointers if present,
+        # so truly orphaned SUBM records (no HEAD.SUBM reference) will warn.
+        CITABLE = {"SOUR", "REPO", "OBJE", "SNOTE", "SUBM"}
         for record in self.records:
             if record.tag not in CITABLE:
                 continue

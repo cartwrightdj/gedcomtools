@@ -20,6 +20,10 @@ import os
 import pkgutil
 import re
 import sys
+import tempfile
+import urllib.parse
+import urllib.request
+import zipfile
 
 from .gx_base import GedcomXModel
 
@@ -43,6 +47,35 @@ class Extensible(GedcomXModel):
 # import_plugins — unchanged from original
 # ---------------------------------------------------------------------------
 
+def _is_url(s: str) -> bool:
+    return s.startswith("http://") or s.startswith("https://")
+
+
+def _download_to_temp(url: str) -> Path:
+    """Download *url* into a fresh temp directory and return the local path.
+
+    * A ``.py`` URL → returns the downloaded ``.py`` file path.
+    * A ``.zip`` URL → extracts into a sub-directory and returns that directory.
+    * Any other URL → treated as a raw file download (returned as-is).
+
+    The temp directory is *not* deleted automatically; it persists for the
+    lifetime of the process so that imported modules can reference their
+    source files.
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="gedcomx_plugins_"))
+    filename = Path(urllib.parse.urlparse(url).path).name or "plugin_download"
+    dest = tmp_dir / filename
+    urllib.request.urlretrieve(url, dest)
+    if dest.suffix == ".zip":
+        extract_dir = tmp_dir / dest.stem
+        extract_dir.mkdir(exist_ok=True)
+        with zipfile.ZipFile(dest, "r") as zf:
+            zf.extractall(extract_dir)
+        dest.unlink()
+        return extract_dir
+    return dest
+
+
 def import_plugins(
     base_package: str,
     *,
@@ -60,37 +93,63 @@ def import_plugins(
     else:
         base_fq = f"{root_package}.{base_package}"
 
-    subpkg_name = f"gedcomtools.{base_package}.{subpackage}"
-    try:
-        imported += _import_from_package(subpkg_name, recursive=recursive)
-    except ModuleNotFoundError as e:
-        if getattr(e, "name", None) == subpkg_name:
-            pass
-        else:
+    # --- built-in subpackage (or URL pointing to a zip / .py) ---
+    if _is_url(subpackage):
+        try:
+            local_sub = _download_to_temp(subpackage)
+            if local_sub.is_file() and local_sub.suffix == ".py":
+                imported.append(_import_file(local_sub, module_prefix=f"{base_fq}.extsub"))
+            elif local_sub.is_dir():
+                imported += _import_from_directory(local_sub, module_prefix=f"{base_fq}.extsub", recursive=recursive)
+        except Exception as e:
+            errors[subpackage] = e
+    else:
+        subpkg_name = f"gedcomtools.{base_package}.{subpackage}"
+        try:
+            imported += _import_from_package(subpkg_name, recursive=recursive)
+        except ModuleNotFoundError as e:
+            if getattr(e, "name", None) == subpkg_name:
+                pass
+            else:
+                errors[subpkg_name] = e
+        except Exception as e:
             errors[subpkg_name] = e
-    except Exception as e:
-        errors[subpkg_name] = e
 
+    # --- local_dir (or URL pointing to a zip / .py) ---
     try:
-        p = Path(local_dir)
-        if not p.is_absolute():
-            p = (Path(__file__).resolve().parent / p).resolve()
-        imported += _import_from_directory(p, module_prefix=f"{base_fq}.extfs", recursive=recursive)
+        if _is_url(str(local_dir)):
+            p = _download_to_temp(str(local_dir))
+        else:
+            p = Path(local_dir)
+            if not p.is_absolute():
+                p = (Path(__file__).resolve().parent / p).resolve()
+        if p.is_file() and p.suffix == ".py":
+            imported.append(_import_file(p, module_prefix=f"{base_fq}.extfs"))
+        else:
+            imported += _import_from_directory(p, module_prefix=f"{base_fq}.extfs", recursive=recursive)
     except FileNotFoundError:
         pass
     except Exception as e:
         errors[str(local_dir)] = e
 
+    # --- env-var entries (paths, module names, or URLs) ---
     for entry in _split_env(os.getenv(env_var, "")):
         try:
-            p = Path(entry)
-            if p.exists():
+            if _is_url(entry):
+                p = _download_to_temp(entry)
                 if p.is_file() and p.suffix == ".py":
                     imported.append(_import_file(p, module_prefix=f"{base_fq}.extenv"))
                 elif p.is_dir():
                     imported += _import_from_directory(p, module_prefix=f"{base_fq}.extenv", recursive=recursive)
             else:
-                imported.append(_import_module(entry))
+                p = Path(entry)
+                if p.exists():
+                    if p.is_file() and p.suffix == ".py":
+                        imported.append(_import_file(p, module_prefix=f"{base_fq}.extenv"))
+                    elif p.is_dir():
+                        imported += _import_from_directory(p, module_prefix=f"{base_fq}.extenv", recursive=recursive)
+                else:
+                    imported.append(_import_module(entry))
         except Exception as e:
             errors[entry] = e
 
@@ -181,12 +240,20 @@ def _short_hash(s: str) -> str:
 
 
 def _split_env(value: str) -> List[str]:
+    """Split a plugin env-var string into individual entries.
+
+    Entries may be separated by commas or ``os.pathsep`` (``:`` on POSIX,
+    ``;`` on Windows).  URLs (``http://…`` / ``https://…``) are matched as
+    whole tokens so their embedded colons and ports are never split.
+    """
     if not value:
         return []
-    parts = []
-    for chunk in value.split(os.pathsep):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        parts.extend([p.strip() for p in chunk.split(",") if p.strip()])
-    return parts
+    # URLs are matched first so their embedded colons (ports, IPv6) are never
+    # split on os.pathsep (':' on POSIX).  Non-URL tokens are delimited by
+    # commas, os.pathsep, and whitespace.
+    non_url_sep = re.escape("," + os.pathsep)
+    pattern = re.compile(
+        rf"https?://[^\s,]+"        # full URL — stop only at space or comma
+        rf"|[^{non_url_sep}\s]+"    # regular path / module name
+    )
+    return [m.group() for m in pattern.finditer(value)]

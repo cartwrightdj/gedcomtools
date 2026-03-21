@@ -17,14 +17,14 @@
 GEDCOM Module Types
 ======================================================================
 """
+from typing import Optional
 from .agent import Agent
-from .identifier import Identifier
 from .textvalue import TextValue
 
 class Header():
     def __init__(self) -> None:
-        self.submiter: Agent = None
-        self.source: TextValue = None
-        self.name: TextValue = None
-        self.version: float | None = None
+        self.submiter: Optional[Agent] = None
+        self.source: Optional[TextValue] = None
+        self.name: Optional[TextValue] = None
+        self.version: Optional[float] = None
 

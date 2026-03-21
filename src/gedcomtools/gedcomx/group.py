@@ -31,6 +31,17 @@ class GroupRole(Conclusion):
     date: Optional[Date] = None
     details: Optional[str] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.person is None:
+            result.warn("person", "GroupRole has no person")
+        else:
+            from .resource import Resource
+            from .person import Person
+            check_instance(result, "person", self.person, Person, Resource)
+        check_instance(result, "date", self.date, Date)
+
 
 class Group(Subject):
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Group"
@@ -40,3 +51,15 @@ class Group(Subject):
     date: Optional[Date] = None
     place: Optional[Any] = None  # PlaceReference
     roles: List[GroupRole] = Field(default_factory=list)
+
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if not self.names:
+            result.warn("names", "Group has no names")
+        check_instance(result, "date", self.date, Date)
+        if self.place is not None:
+            from .place_reference import PlaceReference
+            check_instance(result, "place", self.place, PlaceReference)
+        for i, role in enumerate(self.roles):
+            check_instance(result, f"roles[{i}]", role, GroupRole)

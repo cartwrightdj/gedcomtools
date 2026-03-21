@@ -234,7 +234,6 @@ class GedcomXSourceOrDocument(GedcomXObject):
 
 class GedcomXEventOrFact(GedcomXObject):
     def __new__(cls,record: Gedcom5xRecord, object_stack: dict | None = None) -> object:
-        super().__init__(record)
         if record.tag in fact_event_table.keys():
 
             if 'Fact' in fact_event_table[record.tag].keys():

@@ -47,6 +47,18 @@ class Document(Conclusion):
     textType: Optional[TextType] = None
     text: Optional[str] = None
 
+    def _validate_self(self, result) -> None:
+        super()._validate_self(result)
+        from .validation import check_instance
+        if self.type is not None and not isinstance(self.type, DocumentType):
+            result.error("type", f"Expected DocumentType, got {type(self.type).__name__}: {self.type!r}")
+        if self.textType is not None and not isinstance(self.textType, TextType):
+            result.error("textType", f"Expected TextType, got {type(self.textType).__name__}: {self.textType!r}")
+        if self.extracted is not None and not isinstance(self.extracted, bool):
+            result.error("extracted", f"Expected bool, got {type(self.extracted).__name__}")
+        if self.text is None:
+            result.warn("text", "Document has no text")
+
 
 class DocumentParsingContainer:
     """Thin wrapper used during GEDCOM parsing to associate OBJE sub-records."""
