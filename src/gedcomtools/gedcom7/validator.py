@@ -803,16 +803,23 @@ class GedcomValidator:
         Note: SUBM records referenced by HEAD.SUBM are treated as cited.
         """
         # Collect all pointer values used anywhere in the tree (uppercased).
-        # Use both the payload_is_pointer flag and a regex fallback so that
-        # nodes like HEAD.SOUR whose payload looks like a pointer but was not
-        # flagged as one (e.g. because the spec marks it as text) are still
-        # treated as citations.
+        # The primary source is payload_is_pointer (set by the parser).
+        # A regex fallback is applied only to known citation tags so that
+        # nodes like HEAD.SOUR (whose payload looks like a pointer but is
+        # marked as text) are treated as citations without risking false
+        # positives from free-text payloads that happen to match @…@.
+        _CITATION_TAGS = frozenset({
+            "SOUR", "REPO", "OBJE", "SNOTE", "ASSO", "ALIA",
+            "ANCI", "DESI", "SUBM", "HUSB", "WIFE", "FAMC", "FAMS", "CHIL",
+        })
         all_pointers: set = set()
         for node in self.walk():
             p = node.payload.strip() if node.payload else ""
             if not p or p.upper() == "@VOID@":
                 continue
-            if node.payload_is_pointer or _XREF_RE.match(p):
+            if node.payload_is_pointer or (
+                node.tag in _CITATION_TAGS and _XREF_RE.match(p)
+            ):
                 all_pointers.add(p.upper())
 
         # Check records of types that should be cited

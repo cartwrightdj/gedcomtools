@@ -1,11 +1,16 @@
 """Tests for gedcom7/writer.py — Gedcom7Writer."""
 from __future__ import annotations
 
+import zipfile
+from pathlib import Path
+
 import pytest
 
 from gedcomtools.gedcom7 import Gedcom7
 from gedcomtools.gedcom7.writer import Gedcom7Writer
 from gedcomtools.gedcom7.structure import GedcomStructure
+
+SAMPLE_DIR = Path(__file__).parent.parent / ".sample_data" / "gedcom70"
 
 
 # ---------------------------------------------------------------------------
@@ -273,3 +278,81 @@ class TestWriteToFile:
         writer.write(g1.records, dest)
         g2 = Gedcom7(dest)
         assert len(g1.records) == len(g2.records)
+
+    def test_write_returns_warnings(self, tmp_path):
+        """write() should return the same warnings list as get_warnings()."""
+        dest = tmp_path / "out.ged"
+        long_payload = "A" * 300
+        text = f"0 HEAD\n1 GEDC\n2 VERS 7.0\n0 @I1@ INDI\n1 NOTE {long_payload}\n0 TRLR\n"
+        g = _parse(text)
+        writer = Gedcom7Writer()
+        returned = writer.write(g.records, dest)
+        assert returned == writer.get_warnings()
+        assert returned  # long line should produce a warning
+
+    def test_write_atomic_tmp_cleaned_on_error(self, tmp_path):
+        """Temp file should not linger after a failed write."""
+        dest = tmp_path / "nonexistent_dir" / "out.ged"
+        g = _parse(_MINIMAL)
+        writer = Gedcom7Writer()
+        with pytest.raises(FileNotFoundError):
+            writer.write(g.records, dest)
+        # No .tmp file left behind
+        assert not list(tmp_path.rglob("*.tmp"))
+
+
+# ---------------------------------------------------------------------------
+# Round-trip fidelity against official sample files
+# ---------------------------------------------------------------------------
+
+def _load_sample(path: Path) -> Gedcom7:
+    g = Gedcom7()
+    if path.suffix == ".gdz":
+        with zipfile.ZipFile(path) as zf:
+            ged_names = [n for n in zf.namelist() if n.endswith(".ged")]
+            g.parse_string(zf.read(ged_names[0]).decode("utf-8-sig"))
+    else:
+        g.loadfile(path)
+    return g
+
+
+def _official_ged_files():
+    if not SAMPLE_DIR.exists():
+        return []
+    return [p for p in SAMPLE_DIR.iterdir() if p.suffix in (".ged", ".gdz")]
+
+
+@pytest.mark.parametrize("sample_path", _official_ged_files(), ids=lambda p: p.name)
+def test_official_roundtrip(sample_path, tmp_path):
+    """Parse → write → re-parse must produce structurally identical trees."""
+    g1 = _load_sample(sample_path)
+    writer = Gedcom7Writer()
+    dest = tmp_path / "roundtrip.ged"
+    writer.write(g1.records, dest)
+    g2 = Gedcom7(dest)
+
+    # Same number of top-level records
+    assert len(g1.records) == len(g2.records), (
+        f"{sample_path.name}: record count changed after round-trip "
+        f"({len(g1.records)} → {len(g2.records)})"
+    )
+    # Same tag sequence
+    assert [r.tag for r in g1.records] == [r.tag for r in g2.records], (
+        f"{sample_path.name}: top-level tag order changed after round-trip"
+    )
+    # Same xref ids
+    assert [r.xref_id for r in g1.records] == [r.xref_id for r in g2.records], (
+        f"{sample_path.name}: xref ids changed after round-trip"
+    )
+    # Payloads of all nodes preserved (flatten both trees and compare)
+    def _payloads(g):
+        result = []
+        def walk(nodes):
+            for n in nodes:
+                result.append((n.tag, n.payload))
+                walk(n.children)
+        walk(g.records)
+        return result
+    assert _payloads(g1) == _payloads(g2), (
+        f"{sample_path.name}: node payloads differ after round-trip"
+    )

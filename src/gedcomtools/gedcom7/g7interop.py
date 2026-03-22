@@ -25,6 +25,7 @@ Sphinx Napoleon.
 
 from __future__ import annotations
 
+import warnings
 from typing import Dict, Optional
 
 
@@ -339,10 +340,27 @@ def register_tag_uri(tag: str, uri: str, *, overwrite: bool = False) -> None:
         )
 
     existing_tag = G7_URI_TO_TAG.get(normalized_uri)
-    if existing_tag is not None and existing_tag != normalized_tag and not overwrite:
-        raise ValueError(
-            f"URI {normalized_uri!r} is already mapped to {existing_tag!r}."
+    if existing_tag is not None and existing_tag != normalized_tag:
+        if not overwrite:
+            raise ValueError(
+                f"URI {normalized_uri!r} is already mapped to {existing_tag!r}."
+            )
+        # Warn only when two *standard* (non-extension) tags collide.
+        # Extension tags (underscore-prefixed) routinely claim standard URIs
+        # as declared in HEAD.SCHMA.TAG; that is intentional and expected.
+        neither_is_extension = (
+            not normalized_tag.startswith("_")
+            and not existing_tag.startswith("_")
         )
+        if neither_is_extension:
+            warnings.warn(
+                f"URI {normalized_uri!r} was mapped to standard tag "
+                f"{existing_tag!r}; overwriting with {normalized_tag!r}. "
+                "This may make get_tag_for_uri() inconsistent with "
+                "get_uri_for_tag().",
+                UserWarning,
+                stacklevel=2,
+            )
 
     G7_TAG_TO_URI[normalized_tag] = normalized_uri
     G7_URI_TO_TAG[normalized_uri] = normalized_tag

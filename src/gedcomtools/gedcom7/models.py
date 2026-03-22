@@ -134,6 +134,8 @@ class NameDetail:
         nickname:   NICK substructure value.
         surname_prefix: SPFX surname prefix (de, van, von, etc.).
         name_type:  TYPE substructure value (BIRTH, AKA, IMMIGRANT, etc.).
+        lang:       Language tag for this name (populated on TRAN entries).
+        translations: NAME.TRAN translations of this name in other languages.
     """
 
     full: str = ""
@@ -258,7 +260,10 @@ class IndividualDetail:
     @property
     def full_name(self) -> str:
         """Clean display name of the primary name entry."""
-        return self.name.display if self.name else "Unknown"
+        name = self.name
+        if name is None:
+            return "Unknown"
+        return name.display or "Unknown"
 
     @property
     def birth_year(self) -> Optional[int]:

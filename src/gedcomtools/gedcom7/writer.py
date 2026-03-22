@@ -90,8 +90,12 @@ class Gedcom7Writer:
         filepath: Union[str, Path],
         *,
         encoding: str = "utf-8",
-    ) -> None:
-        """Write *records* to a file.
+    ) -> List[str]:
+        """Write *records* to a file atomically.
+
+        Serializes to a ``.tmp`` sibling first, then renames it into place so
+        that a failed write never leaves the destination file truncated or
+        corrupted.
 
         Args:
             records: Top-level GEDCOM structures (typically HEAD … TRLR).
@@ -99,14 +103,29 @@ class Gedcom7Writer:
                 must already exist.
             encoding: File encoding.  GEDCOM 7 mandates UTF-8; only change
                 this for special debugging purposes.
+
+        Returns:
+            Line-length warnings collected during serialization (same as
+            ``get_warnings()``).  An empty list means no warnings.
+
+        Raises:
+            FileNotFoundError: If the destination directory does not exist.
         """
         dest = Path(filepath)
+        content = self.serialize(records)
+        tmp = dest.with_suffix(dest.suffix + ".tmp")
         try:
-            dest.write_text(self.serialize(records), encoding=encoding)
+            tmp.write_text(content, encoding=encoding)
+            tmp.replace(dest)
         except FileNotFoundError as exc:
+            tmp.unlink(missing_ok=True)
             raise FileNotFoundError(
                 f"Cannot write to {dest}: parent directory does not exist."
             ) from exc
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
+        return list(self._warnings)
 
     def serialize(self, records: List[GedcomStructure]) -> str:
         """Serialize *records* to a GEDCOM 7 string.
@@ -143,18 +162,30 @@ class Gedcom7Writer:
         for record in records:
             yield from self._render_node(record)
 
-    def _render_node(self, node: GedcomStructure) -> Iterator[str]:
+    _MAX_DEPTH = 100  # GEDCOM 7 structures are rarely deeper than ~10 levels
+
+    def _render_node(self, node: GedcomStructure, _depth: int = 0) -> Iterator[str]:
         """Yield rendered GEDCOM lines for *node* and all descendants.
 
         Args:
             node: Root node to render.
+            _depth: Current recursion depth (used for cycle detection).
 
         Yields:
             GEDCOM line strings without line endings.
+
+        Raises:
+            RecursionError: If nesting exceeds ``_MAX_DEPTH`` (indicates a
+                cycle in the child list).
         """
+        if _depth > self._MAX_DEPTH:
+            raise RecursionError(
+                f"GEDCOM tree depth limit ({self._MAX_DEPTH}) exceeded at "
+                f"tag {node.tag!r} — possible circular child reference."
+            )
         yield from self._format_lines(node)
         for child in node.children:
-            yield from self._render_node(child)
+            yield from self._render_node(child, _depth + 1)
 
     def _format_lines(self, node: GedcomStructure) -> Iterator[str]:
         """Format one node as one or more GEDCOM line strings.

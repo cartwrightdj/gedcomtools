@@ -63,6 +63,29 @@ for entry in plugin_registry.list():
 
 ---
 
+## Code Review Fixes (2026-03-22)
+
+Full static review of the gedcom7 package followed by fixes across seven files.
+
+| File | Fix |
+|------|-----|
+| `specification.py` | `load_rules()` validates JSON type before clearing `_CORE_RULES` — prevents corrupt module state on bad input |
+| `gedcom7.py` | `loadfile()` catches `UnicodeDecodeError` and re-raises as `GedcomParseError` with a clear UTF-8 message |
+| `gedcom7.py` | Added `@overload` stubs for `__getitem__` so type checkers infer `g[0]→GedcomStructure`, `g["INDI"]→List[...]` |
+| `writer.py` | `write()` is now atomic — serializes to `.tmp` sibling, renames into place, cleans up on failure |
+| `writer.py` | `write()` returns the warnings list so callers don't need a separate `get_warnings()` call |
+| `writer.py` | `_render_node()` raises `RecursionError` at depth 100, catching circular child references before infinite loop |
+| `structure.py` | `add_child()` raises `ValueError` if `child.level != parent.level + 1` — catches incoherent trees early |
+| `models.py` | `full_name` falls back to `"Unknown"` when a NAME node exists but has an empty payload |
+| `models.py` | `NameDetail` docstring now documents `lang` and `translations` fields |
+| `g7interop.py` | `register_tag_uri(overwrite=True)` emits a `UserWarning` when a standard-tag URI is overwritten by another standard tag; extension-tag collisions are silently allowed |
+| `validator.py` | Orphaned-record xref regex fallback scoped to known citation tags only — eliminates false positives from free-text `@…@` payloads |
+| `tests/test_gedcom7_writer.py` | Added `test_write_returns_warnings`, `test_write_atomic_tmp_cleaned_on_error`, and 25 parametrized `test_official_roundtrip` cases (parse → write → re-parse, assert identical structure) |
+
+Test count: **880 → 905 passing**.
+
+---
+
 ## GEDCOM 7 Spec Sync & Updatable Spec (2026-03-22)
 
 ### Overview

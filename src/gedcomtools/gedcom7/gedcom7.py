@@ -41,7 +41,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Iterable, List, Optional, Union
+from typing import Any, DefaultDict, Dict, Iterable, List, Optional, Union, overload
 from collections import defaultdict
 
 from .structure import GedcomStructure
@@ -141,6 +141,15 @@ class Gedcom7:
         if isinstance(key, str):
             return self._norm_tag(key) in self._tag_index
         return key in self.records
+
+    @overload
+    def __getitem__(self, key: int) -> GedcomStructure: ...
+    @overload
+    def __getitem__(self, key: slice) -> List[GedcomStructure]: ...
+    @overload
+    def __getitem__(self, key: str) -> List[GedcomStructure]: ...
+    @overload
+    def __getitem__(self, key: tuple) -> Union[GedcomStructure, List[GedcomStructure]]: ...
 
     def __getitem__(
         self,
@@ -266,8 +275,14 @@ class Gedcom7:
         except OSError as exc:
             raise GedcomParseError(f"Cannot open file {path}: {exc}") from exc
         self.filepath = path
-        with handle:
-            self.parse_lines(handle)
+        try:
+            with handle:
+                self.parse_lines(handle)
+        except UnicodeDecodeError as exc:
+            raise GedcomParseError(
+                f"File {path} is not valid UTF-8. "
+                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
+            ) from exc
 
     def parse_string(self, text: str) -> None:
         """Parse GEDCOM 7 content from a string.

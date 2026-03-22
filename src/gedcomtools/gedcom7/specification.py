@@ -823,6 +823,9 @@ def _rules_from_json(data: Dict[str, Any]) -> Dict[str, Any]:
 def load_rules(path: Optional[Path] = None) -> None:
     """Replace the active spec rules with those loaded from *path*.
 
+    The swap is atomic: ``_CORE_RULES`` is only modified once the new
+    dict has been fully constructed and validated.
+
     Args:
         path: JSON file to load.  Defaults to the bundled ``spec_rules.json``
               next to this module.
@@ -830,10 +833,17 @@ def load_rules(path: Optional[Path] = None) -> None:
     Raises:
         FileNotFoundError: if *path* does not exist.
         json.JSONDecodeError: if the file contains invalid JSON.
+        ValueError: if the file does not contain a JSON object.
     """
     p = Path(path) if path else _RULES_FILE
     with p.open(encoding="utf-8") as fh:
         data = json.load(fh)
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"{p}: spec rules file must contain a JSON object, "
+            f"got {type(data).__name__}"
+        )
+    # Build the new rules completely before touching _CORE_RULES.
     new_rules = _rules_from_json(data)
     _CORE_RULES.clear()
     _CORE_RULES.update(new_rules)
