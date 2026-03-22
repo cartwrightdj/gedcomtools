@@ -17,6 +17,7 @@ gedcomtools = "gedcomtools.cli:main"
 gxcli = "gedcomtools.gedcomx.gxcli:main"
 g7cli = "gedcomtools.gedcom7.g7cli:main"
 validate7 = "gedcomtools.gedcom7.validate7:main"
+g7spec = "gedcomtools.gedcom7.spectools:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -29,3 +30,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["gedcomtools*"]
+
+[tool.setuptools.package-data]
+"gedcomtools.gedcom7" = ["spec_rules.json"]

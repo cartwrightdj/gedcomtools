@@ -60,3 +60,88 @@ for entry in plugin_registry.list():
 - **Trust level is a ceiling** — even explicitly-allowed plugins are blocked if the trust level is below what their source type requires (e.g. a local path is blocked at `BUILTIN` level).
 - **`import_plugins()` respects trust level** — the scan-based loader returns empty at `DISABLED`, gates URL sources behind `ALL`, and gates local paths behind `LOCAL`.
 - **Test isolation** — `PluginRegistry._reset()` resets global state for tests; `import_plugins(..., registry=reg)` accepts a local registry instance to avoid touching global state.
+
+---
+
+## GEDCOM 7 Spec Sync & Updatable Spec (2026-03-22)
+
+### Overview
+Two related workstreams completed together:
+
+1. **Spec sync** — compared the module against the live gedcom.io machine-readable YAML
+   definitions and the GEDCOM 7 changelog, then fixed all real structural gaps found.
+2. **Updatable spec** — the spec rules can now be persisted to / loaded from a JSON file
+   (`spec_rules.json`) that ships with the package and can be replaced at runtime.
+
+### Spec fixes (specification.py)
+
+| Area | Change |
+|------|--------|
+| `PHON / EMAIL / FAX / WWW` cardinality | `(0, 3)` → `(0, None)` — spec permits any number |
+| `AGE` under events | Added to `_EVENT_DETAIL_SUBS` / `_EVENT_DETAIL_CARD` so it is permitted under all individual events |
+| `ASSO.ROLE` cardinality | `(0, 1)` → `(1, 1)` — ROLE is required under ASSO |
+| `NAME` part cardinalities (GIVN/SURN/NPFX/NSFX/SPFX) | `(0, 1)` → `(0, None)` — spec 7.0.9 allows multiples |
+| `CHAN` substructures | Added `SNOTE` |
+| `HEAD` substructures | Removed `FILE`; added `SNOTE`; fixed `LANG/NOTE/SUBM` cardinality to `(0, 1)` |
+| `FILE.FORM` cardinality | `(0, 1)` → `(1, 1)` — FORM is required |
+| `SLGC.FAMC` cardinality | `(0, 1)` → `(1, 1)` — FAMC is required |
+| `INDI` BIRT/DEAT cardinality | `(0, 1)` → `(0, None)` — multiple birth/death events permitted |
+| `SNOTE.LANG` cardinality | `(0, None)` → `(0, 1)` |
+
+### Validator fixes (validator.py)
+
+| Rule | Spec version | Details |
+|------|-------------|---------|
+| AGE ABNF | 7.0+ | Added support for weeks (`Nw`); now requires at least one time component |
+| ADR1/ADR2/ADR3 deprecation warning | 7.0.13 | Warns when deprecated address lines are used |
+| EXID without TYPE deprecation warning | 7.0.6 | Warns when EXID has no TYPE child |
+| `NO` context validation | 7.0.14 | Warns when `NO XYZ` is used where XYZ is not a permitted sibling |
+| Duplicate FAMC/CHIL links | 7.0.14 | Warns on duplicate FAMC per family or CHIL per individual |
+| Self-referential ALIA | 7.0.17 | Errors when an individual's ALIA points to itself |
+| SOUR→OBJE→SOUR cycle | 7.0.17 | Warns on circular source-object references |
+
+### New tooling
+
+**`check_g7spec.py`** (project root) — standalone script that fetches all 322 GEDCOM 7 term
+YAMLs from the FamilySearch/GEDCOM.io GitHub repo, caches them in `.spec_cache/`, and
+compares against `_CORE_RULES` and `G7_TAG_TO_URI`, reporting missing URIs, substructure
+mismatches, and orphan interop entries.
+
+```
+python check_g7spec.py [--cache DIR] [--no-cache] [--verbose]
+```
+
+### Updatable spec (Option C)
+
+The structural rules are now serialisable to/from JSON so the bundled spec can be swapped
+out at runtime or updated without editing Python source.
+
+#### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom7/specification.py` | Added `load_rules()`, `save_rules()`, `reset_rules()`. Loads `spec_rules.json` at import time (falls back silently to inline dict). |
+| `src/gedcomtools/gedcom7/spec_rules.json` | New — 140-tag JSON serialisation of the compiled-in rules (~100 KB). Shipped as package data. |
+| `src/gedcomtools/gedcom7/spectools.py` | New — `g7spec` CLI (`info`, `export`, `load`, `reset`). |
+| `pyproject.toml` | Added `g7spec` entry point; added `package-data` stanza for `spec_rules.json`. |
+
+#### API
+
+```python
+from gedcomtools.gedcom7.specification import load_rules, save_rules, reset_rules
+
+load_rules()                        # reload from bundled spec_rules.json
+load_rules("/path/to/custom.json")  # load a custom override
+save_rules()                        # write active rules back to spec_rules.json
+save_rules("/tmp/export.json")      # export to an arbitrary path
+reset_rules()                       # restore compiled-in defaults + regenerate JSON
+```
+
+#### CLI
+
+```
+g7spec info              # show tag list and substructure counts
+g7spec export [path]     # dump active rules to JSON (default: spec_rules.json)
+g7spec load <path>       # replace bundled spec_rules.json with a custom file
+g7spec reset             # restore compiled-in defaults
+```

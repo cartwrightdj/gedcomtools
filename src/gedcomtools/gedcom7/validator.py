@@ -19,6 +19,10 @@
                  orphaned check uses broader pointer detection to catch HEAD.SOUR refs;
                  SDATE added to _TRAN_LEGAL_PARENTS
    - 2026-03-16: import updated GedcomStructure.py → structure.py
+   - 2026-03-22: AGE regex adds week (Nw) support; SNOTE.LANG cardinality fix;
+                 self-referential ALIA/SOUR-OBJE cycle detection; NO-context
+                 validation; duplicate FAMC/CHIL detection; EXID-without-TYPE
+                 and ADR1/ADR2/ADR3 deprecation warnings (changelog 7.0.6–7.0.17)
 ======================================================================
 
 This module performs structural and semantic validation of parsed GEDCOM 7
@@ -36,6 +40,11 @@ Validation phases:
 8. orphaned record detection
 9. bidirectional pointer consistency
 10. TRAN context validation
+11. deprecated tag warnings (ADR1/ADR2/ADR3, EXID without TYPE)
+12. NO-tag context validation
+13. self-referential ALIA detection
+14. SOUR-OBJE cycle detection
+15. duplicate FAMC/CHIL link detection
 
 The docstrings are written in Google style so they render well with
 Sphinx Napoleon.
@@ -80,9 +89,15 @@ _TIME_RE = re.compile(
     r"^\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{4})?$"
 )
 
-# [< | >] any combo of Ny Nm Nd  (at least one component required)
+# [< | >] then exactly one of: Ny[Nm[Nd]] | Nm[Nd] | Nw | Nd
+# Weeks (Nw) are standalone per the GEDCOM 7 ABNF (7.0.0+).
 _AGE_RE = re.compile(
-    r"^[<>]?\s*(?:(?:\d+y\s*)?(?:\d+m\s*)?(?:\d+d\s*)?)$",
+    r"^[<>]?\s*(?:"
+    r"\d+y(?:\s+\d+m(?:\s+\d+d)?)?"   # years [months [days]]
+    r"|\d+m(?:\s+\d+d)?"               # months [days]
+    r"|\d+w"                            # weeks (standalone)
+    r"|\d+d"                            # days
+    r")$",
     re.IGNORECASE,
 )
 
@@ -101,7 +116,7 @@ _RESN_VALID = frozenset({"CONFIDENTIAL", "LOCKED", "PRIVACY"})
 _FORMAT_CHECKS: dict = {
     "DATE": (_DATE_RE, "invalid_date_format",  "DATE payload does not match GEDCOM date grammar"),
     "TIME": (_TIME_RE, "invalid_time_format",  "TIME payload does not match hh:mm[:ss[.frac]][Z|±hhmm]"),
-    "AGE":  (_AGE_RE,  "invalid_age_format",   "AGE payload does not match [<>] Ny Nm Nd"),
+    "AGE":  (_AGE_RE,  "invalid_age_format",   "AGE payload does not match [<>] Ny[Nm[Nd]] | Nm[Nd] | Nw | Nd"),
     "LATI": (_LATI_RE, "invalid_lati_format",  "LATI must be N or S followed by decimal degrees"),
     "LONG": (_LONG_RE, "invalid_long_format",  "LONG must be E or W followed by decimal degrees"),
     "LANG": (_LANG_RE, "invalid_lang_format",  "LANG must be a valid BCP 47 language tag"),
@@ -197,6 +212,9 @@ class GedcomValidator:
         self.validate_pointers()
         self.validate_bidirectional_links()
         self.validate_orphaned_records()
+        self.validate_self_referential_links()
+        self.validate_pointer_cycles()
+        self.validate_duplicate_family_links()
         return self.issues
 
     def walk(self) -> Iterable[GedcomStructure]:
@@ -360,6 +378,9 @@ class GedcomValidator:
         self.validate_enumeration(node)
         self.validate_tran_context(node)
         self.validate_void_pointer(node)
+        self.validate_deprecated_tag(node)
+        self.validate_exid_type(node)
+        self.validate_no_context(node)
 
         for child in node.children:
             self.validate_node(child)
@@ -902,3 +923,195 @@ class GedcomValidator:
                     tag=tag,
                     severity="warning",
                 )
+
+    # -------------------------------------------------------------------------
+    # Deprecation warnings (changelog 7.0.6, 7.0.13)
+    # -------------------------------------------------------------------------
+
+    _DEPRECATED_TAGS: frozenset = frozenset({"ADR1", "ADR2", "ADR3"})
+
+    def validate_deprecated_tag(self, node: GedcomStructure) -> None:
+        """Warn on deprecated GEDCOM 7 tags.
+
+        ADR1, ADR2, and ADR3 were deprecated in 7.0.13 because they convey
+        no information not already present in ADDR.
+
+        Args:
+            node: Node to validate.
+        """
+        if node.tag in self._DEPRECATED_TAGS:
+            self.add_issue(
+                "deprecated_tag",
+                f"{node.tag} is deprecated since GEDCOM 7.0.13; use ADDR instead.",
+                line_num=node.line_num,
+                tag=node.tag,
+                severity="warning",
+            )
+
+    def validate_exid_type(self, node: GedcomStructure) -> None:
+        """Warn when EXID has no TYPE substructure.
+
+        EXID without TYPE was deprecated in 7.0.6; TYPE will become {1:1}
+        in the next major release.
+
+        Args:
+            node: Node to validate.
+        """
+        if node.tag != "EXID":
+            return
+        has_type = any(child.tag == "TYPE" for child in node.children)
+        if not has_type:
+            self.add_issue(
+                "exid_missing_type",
+                "EXID without a TYPE substructure is deprecated since GEDCOM 7.0.6.",
+                line_num=node.line_num,
+                tag="EXID",
+                severity="warning",
+            )
+
+    # -------------------------------------------------------------------------
+    # NO-tag context validation (changelog 7.0.14)
+    # -------------------------------------------------------------------------
+
+    def validate_no_context(self, node: GedcomStructure) -> None:
+        """Warn when NO XYZ is used where XYZ is not permitted.
+
+        Per 7.0.14, NO XYZ should only appear where XYZ itself is a legal
+        sibling structure.
+
+        Args:
+            node: Node to validate.
+        """
+        if node.tag != "NO":
+            return
+        payload = node.payload.strip() if node.payload else ""
+        if not payload:
+            return
+        parent = node.parent
+        if parent is None:
+            return
+        allowed = set(g7specs.allowed_child_tags(parent.tag))
+        if payload.upper() not in {t.upper() for t in allowed}:
+            self.add_issue(
+                "no_tag_invalid_context",
+                f"NO {payload!r} is not meaningful here; {payload!r} is not "
+                f"a permitted substructure of {parent.tag!r}.",
+                line_num=node.line_num,
+                tag="NO",
+                severity="warning",
+            )
+
+    # -------------------------------------------------------------------------
+    # Self-referential pointer checks (changelog 7.0.17)
+    # -------------------------------------------------------------------------
+
+    def validate_self_referential_links(self) -> None:
+        """Error on self-referential ALIA pointers.
+
+        Per 7.0.17, an INDI.ALIA pointing to the same INDI is meaningless
+        and prohibited.
+        """
+        for record in self.records:
+            if record.tag != "INDI" or not record.xref_id:
+                continue
+            own_xref = record.xref_id.upper()
+            for alia in record.get_children("ALIA"):
+                if not alia.payload_is_pointer:
+                    continue
+                target = alia.payload.strip().upper()
+                if target == own_xref:
+                    self.add_issue(
+                        "self_referential_alia",
+                        f"INDI {own_xref!r} has ALIA pointing to itself, which is prohibited.",
+                        line_num=alia.line_num,
+                        tag="ALIA",
+                    )
+
+    def validate_pointer_cycles(self) -> None:
+        """Error on SOUR-OBJE pointer cycles.
+
+        Per 7.0.17, a SOUR-OBJE cycle (a source whose multimedia object
+        lists that source as its own source) is meaningless and prohibited.
+        """
+        sour_records = {
+            node.xref_id.upper(): node
+            for node in self.records
+            if node.tag == "SOUR" and node.xref_id
+        }
+        obje_records = {
+            node.xref_id.upper(): node
+            for node in self.records
+            if node.tag == "OBJE" and node.xref_id
+        }
+
+        for sour_xref, sour in sour_records.items():
+            for obje_child in sour.get_children("OBJE"):
+                if not obje_child.payload_is_pointer:
+                    continue
+                obje_xref = obje_child.payload.strip().upper()
+                if obje_xref == "@VOID@" or obje_xref not in obje_records:
+                    continue
+                obje = obje_records[obje_xref]
+                for sour_child in obje.get_children("SOUR"):
+                    if not sour_child.payload_is_pointer:
+                        continue
+                    if sour_child.payload.strip().upper() == sour_xref:
+                        self.add_issue(
+                            "sour_obje_cycle",
+                            f"SOUR {sour_xref!r} cites OBJE {obje_xref!r}, which "
+                            f"lists {sour_xref!r} as its source — meaningless cycle "
+                            f"prohibited by GEDCOM 7.0.17.",
+                            line_num=obje_child.line_num,
+                            tag="OBJE",
+                            severity="warning",
+                        )
+
+    # -------------------------------------------------------------------------
+    # Duplicate FAMC / CHIL detection (changelog 7.0.14)
+    # -------------------------------------------------------------------------
+
+    def validate_duplicate_family_links(self) -> None:
+        """Warn when an INDI has duplicate FAMC pointers or a FAM has duplicate CHIL pointers.
+
+        Per 7.0.14:
+        - A given INDI should have at most one FAMC pointing to a given FAM.
+        - A given FAM should have at most one CHIL pointing to a given INDI.
+        """
+        for record in self.records:
+            if record.tag == "INDI":
+                seen: set = set()
+                for famc in record.get_children("FAMC"):
+                    if not famc.payload_is_pointer:
+                        continue
+                    target = famc.payload.strip().upper()
+                    if target == "@VOID@":
+                        continue
+                    if target in seen:
+                        self.add_issue(
+                            "duplicate_famc",
+                            f"INDI {record.xref_id!r} has more than one FAMC pointing "
+                            f"to {target!r}; this has unclear meaning per GEDCOM 7.0.14.",
+                            line_num=famc.line_num,
+                            tag="FAMC",
+                            severity="warning",
+                        )
+                    seen.add(target)
+
+            elif record.tag == "FAM":
+                seen = set()
+                for chil in record.get_children("CHIL"):
+                    if not chil.payload_is_pointer:
+                        continue
+                    target = chil.payload.strip().upper()
+                    if target == "@VOID@":
+                        continue
+                    if target in seen:
+                        self.add_issue(
+                            "duplicate_chil",
+                            f"FAM {record.xref_id!r} has more than one CHIL pointing "
+                            f"to {target!r}; this indicates nonsensical birth order per GEDCOM 7.0.14.",
+                            line_num=chil.line_num,
+                            tag="CHIL",
+                            severity="warning",
+                        )
+                    seen.add(target)

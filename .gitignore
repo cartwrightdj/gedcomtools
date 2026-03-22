@@ -16,6 +16,7 @@ build/
 Makefile
 make.bat
 STATUS.md
+.spec_cache
 
 # Private/sensitive genealogy files
 .sample_data/current_family_tree.ged

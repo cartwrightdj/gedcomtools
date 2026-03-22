@@ -34,6 +34,8 @@ Sphinx Napoleon.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .g7interop import G7_TAG_TO_URI, get_uri_for_tag, register_tag_uri
@@ -78,15 +80,18 @@ _CONTACT_SUBS: Dict[str, str] = {
     "PHON": "PHON", "EMAIL": "EMAIL", "FAX": "FAX", "WWW": "WWW",
 }
 _CONTACT_CARD: Dict[str, tuple] = {
-    "PHON": (0, 3), "EMAIL": (0, 3), "FAX": (0, 3), "WWW": (0, 3),
+    "PHON": (0, None), "EMAIL": (0, None), "FAX": (0, None), "WWW": (0, None),
 }
 
 # Substructures shared by most individual and family events/attributes.
+# AGE is permitted under individual events/attributes (spec §INDIVIDUAL_EVENT_STRUCTURE).
+# Including it here also allows it under family events, which is over-permissive
+# but acceptable given our flat (non-context-qualified) spec design.
 _EVENT_DETAIL_SUBS: Dict[str, str] = {
     **_CONTACT_SUBS,
     "TYPE": "TYPE", "DATE": "DATE", "PLAC": "PLAC", "ADDR": "ADDR",
     "AGNC": "AGNC", "RELI": "RELI", "CAUS": "CAUS", "RESN": "RESN",
-    "SDATE": "SDATE", "ASSO": "ASSO",
+    "SDATE": "SDATE", "ASSO": "ASSO", "AGE": "AGE",
     "NOTE": "NOTE", "SNOTE": "SNOTE", "SOUR": "SOUR", "OBJE": "OBJE",
     "UID": "UID",
 }
@@ -94,7 +99,7 @@ _EVENT_DETAIL_CARD: Dict[str, tuple] = {
     **_CONTACT_CARD,
     "TYPE": (0, 1), "DATE": (0, 1), "PLAC": (0, 1), "ADDR": (0, 1),
     "AGNC": (0, 1), "RELI": (0, 1), "CAUS": (0, 1), "RESN": (0, 1),
-    "SDATE": (0, 1), "ASSO": (0, None),
+    "SDATE": (0, 1), "ASSO": (0, None), "AGE": (0, 1),
     "NOTE": (0, None), "SNOTE": (0, None), "SOUR": (0, None),
     "OBJE": (0, None), "UID": (0, None),
 }
@@ -127,14 +132,14 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
         "substructures": {
             "GEDC": "GEDC", "SCHMA": "SCHMA",
             "SOUR": "SOUR", "DEST": "DEST", "DATE": "DATE",
-            "SUBM": "SUBM", "FILE": "FILE", "COPR": "COPR",
-            "LANG": "LANG", "PLAC": "PLAC", "NOTE": "NOTE",
+            "SUBM": "SUBM", "COPR": "COPR",
+            "LANG": "LANG", "PLAC": "PLAC", "NOTE": "NOTE", "SNOTE": "SNOTE",
         },
         "cardinality": {
             "GEDC": (1, 1), "SCHMA": (0, 1),
             "SOUR": (0, 1), "DEST": (0, 1), "DATE": (0, 1),
-            "SUBM": (0, None), "FILE": (0, 1), "COPR": (0, 1),
-            "LANG": (0, None), "PLAC": (0, 1), "NOTE": (0, None),
+            "SUBM": (0, 1), "COPR": (0, 1),
+            "LANG": (0, 1), "PLAC": (0, 1), "NOTE": (0, 1), "SNOTE": (0, 1),
         },
     },
     "GEDC": {
@@ -181,9 +186,9 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
         "cardinality": {
             "NAME": (0, None), "SEX": (0, 1), "RESN": (0, 1),
             "ADOP": (0, None), "BAPM": (0, None), "BARM": (0, None), "BASM": (0, None),
-            "BLES": (0, None), "BIRT": (0, 1),   "BURI": (0, None), "CAST": (0, None),
+            "BLES": (0, None), "BIRT": (0, None), "BURI": (0, None), "CAST": (0, None),
             "CENS": (0, None), "CHR":  (0, None), "CHRA": (0, None), "CONF": (0, None),
-            "CREM": (0, None), "DEAT": (0, 1),   "DSCR": (0, None), "EDUC": (0, None),
+            "CREM": (0, None), "DEAT": (0, None), "DSCR": (0, None), "EDUC": (0, None),
             "EMIG": (0, None), "EVEN": (0, None), "FACT": (0, None), "FCOM": (0, None),
             "GRAD": (0, None), "IDNO": (0, None), "IMMI": (0, None), "NATI": (0, None),
             "NATU": (0, None), "NCHI": (0, None), "NMR":  (0, None), "OCCU": (0, None),
@@ -278,7 +283,7 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
             **_RECORD_TAIL_SUBS,
         },
         "cardinality": {
-            "MIME": (0, 1), "LANG": (0, None), "TRAN": (0, None), "SOUR": (0, None),
+            "MIME": (0, 1), "LANG": (0, 1), "TRAN": (0, None), "SOUR": (0, None),
             **_RECORD_TAIL_CARD,
         },
     },
@@ -334,8 +339,8 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
             "TRAN": "TRAN", "NOTE": "NOTE", "SNOTE": "SNOTE", "SOUR": "SOUR",
         },
         "cardinality": {
-            "TYPE": (0, 1), "GIVN": (0, 1), "SURN": (0, 1), "NPFX": (0, 1),
-            "NSFX": (0, 1), "NICK": (0, None), "SPFX": (0, 1),
+            "TYPE": (0, 1), "GIVN": (0, None), "SURN": (0, None), "NPFX": (0, None),
+            "NSFX": (0, None), "NICK": (0, None), "SPFX": (0, None),
             "TRAN": (0, None), "NOTE": (0, None), "SNOTE": (0, None), "SOUR": (0, None),
         },
     },
@@ -348,13 +353,13 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     # ── Individual events ─────────────────────────────────────────────────────
     "BIRT": {
         "payload_type": PAYLOAD_TEXT,
-        "substructures": {**_EVENT_DETAIL_SUBS, "AGE": "AGE", "FAMC": "FAMC"},
-        "cardinality":   {**_EVENT_DETAIL_CARD, "AGE": (0, 1), "FAMC": (0, 1)},
+        "substructures": {**_EVENT_DETAIL_SUBS, "FAMC": "FAMC"},
+        "cardinality":   {**_EVENT_DETAIL_CARD, "FAMC": (0, 1)},
     },
     "CHR": {
         "payload_type": PAYLOAD_TEXT,
-        "substructures": {**_EVENT_DETAIL_SUBS, "AGE": "AGE", "FAMC": "FAMC"},
-        "cardinality":   {**_EVENT_DETAIL_CARD, "AGE": (0, 1), "FAMC": (0, 1)},
+        "substructures": {**_EVENT_DETAIL_SUBS, "FAMC": "FAMC"},
+        "cardinality":   {**_EVENT_DETAIL_CARD, "FAMC": (0, 1)},
     },
     "DEAT": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
     "BURI": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
@@ -436,7 +441,7 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     "SLGC": {
         "payload_type": PAYLOAD_NONE,
         "substructures": {**_LDS_ORD_SUBS, "PLAC": "PLAC", "FAMC": "FAMC"},
-        "cardinality":   {**_LDS_ORD_CARD, "PLAC": (0, 1), "FAMC": (0, 1)},
+        "cardinality":   {**_LDS_ORD_CARD, "PLAC": (0, 1), "FAMC": (1, 1)},
     },
     "SLGS": {
         "payload_type": PAYLOAD_NONE,
@@ -519,7 +524,7 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
             "NOTE": "NOTE", "SNOTE": "SNOTE", "SOUR": "SOUR",
         },
         "cardinality": {
-            "PHRASE": (0, 1), "ROLE": (0, 1),
+            "PHRASE": (0, 1), "ROLE": (1, 1),   # ROLE required per spec
             "NOTE": (0, None), "SNOTE": (0, None), "SOUR": (0, None),
         },
     },
@@ -580,7 +585,7 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     "FILE": {
         "payload_type": PAYLOAD_TEXT,
         "substructures": {"FORM": "FORM", "MEDI": "MEDI", "TITL": "TITL", "TRAN": "TRAN"},
-        "cardinality":   {"FORM": (0, 1), "MEDI": (0, 1), "TITL": (0, 1), "TRAN": (0, None)},
+        "cardinality":   {"FORM": (1, 1), "MEDI": (0, 1), "TITL": (0, 1), "TRAN": (0, None)},
     },
     "CROP": {
         "payload_type": PAYLOAD_NONE,
@@ -610,8 +615,8 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     # ── Shared admin structures ───────────────────────────────────────────────
     "CHAN": {
         "payload_type": PAYLOAD_NONE,
-        "substructures": {"DATE": "DATE", "NOTE": "NOTE"},
-        "cardinality":   {"DATE": (1, 1), "NOTE": (0, None)},
+        "substructures": {"DATE": "DATE", "NOTE": "NOTE", "SNOTE": "SNOTE"},
+        "cardinality":   {"DATE": (1, 1), "NOTE": (0, None), "SNOTE": (0, None)},
     },
     "CREA": {
         "payload_type": PAYLOAD_NONE,
@@ -769,6 +774,108 @@ TOP_LEVEL_TAGS = {
     "SOUR",
     "SUBM",
 }
+
+# Snapshot of the inline rules — used by reset_rules() to restore defaults.
+# Built once at module load; never modified after that.
+_BUILTIN_RULES: Dict[str, Dict[str, Any]] = {
+    tag: {k: (dict(v) if isinstance(v, dict) else v) for k, v in entry.items()}
+    for tag, entry in _CORE_RULES.items()
+}
+
+# Path to the bundled override file (lives next to this module in the package).
+_RULES_FILE = Path(__file__).parent / "spec_rules.json"
+
+
+# ---------------------------------------------------------------------------
+# JSON serialisation helpers
+# ---------------------------------------------------------------------------
+
+def _rules_to_json(rules: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert *rules* to a JSON-serialisable dict (tuples → lists, sets → sorted lists)."""
+    result: Dict[str, Any] = {}
+    for tag, entry in rules.items():
+        e: Dict[str, Any] = dict(entry)
+        if isinstance(e.get("cardinality"), dict):
+            e["cardinality"] = {k: list(v) for k, v in e["cardinality"].items()}
+        if isinstance(e.get("enum_values"), (set, frozenset)):
+            e["enum_values"] = sorted(e["enum_values"])
+        result[tag] = e
+    return result
+
+
+def _rules_from_json(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a JSON-loaded dict back to the internal rules format (lists → tuples)."""
+    result: Dict[str, Any] = {}
+    for tag, entry in data.items():
+        e: Dict[str, Any] = dict(entry)
+        if isinstance(e.get("cardinality"), dict):
+            e["cardinality"] = {k: tuple(v) for k, v in e["cardinality"].items()}
+        if e.get("enum_values") is not None:
+            e["enum_values"] = set(e["enum_values"])
+        result[tag] = e
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Public rule-management API
+# ---------------------------------------------------------------------------
+
+def load_rules(path: Optional[Path] = None) -> None:
+    """Replace the active spec rules with those loaded from *path*.
+
+    Args:
+        path: JSON file to load.  Defaults to the bundled ``spec_rules.json``
+              next to this module.
+
+    Raises:
+        FileNotFoundError: if *path* does not exist.
+        json.JSONDecodeError: if the file contains invalid JSON.
+    """
+    p = Path(path) if path else _RULES_FILE
+    with p.open(encoding="utf-8") as fh:
+        data = json.load(fh)
+    new_rules = _rules_from_json(data)
+    _CORE_RULES.clear()
+    _CORE_RULES.update(new_rules)
+
+
+def save_rules(path: Optional[Path] = None) -> None:
+    """Persist the active spec rules to *path* as JSON.
+
+    Extension tags (underscore-prefixed, registered at runtime) are excluded.
+
+    Args:
+        path: Destination JSON file.  Defaults to the bundled ``spec_rules.json``
+              next to this module.
+    """
+    p = Path(path) if path else _RULES_FILE
+    data = _rules_to_json({
+        tag: entry for tag, entry in _CORE_RULES.items()
+        if not tag.startswith("_")
+    })
+    p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def reset_rules() -> None:
+    """Restore the active spec rules to the built-in defaults.
+
+    This discards any changes loaded from a JSON file and regenerates the
+    bundled ``spec_rules.json`` from the compiled-in rule set.
+    """
+    _CORE_RULES.clear()
+    _CORE_RULES.update({
+        tag: {k: (dict(v) if isinstance(v, dict) else v) for k, v in entry.items()}
+        for tag, entry in _BUILTIN_RULES.items()
+    })
+    save_rules()  # overwrite bundled JSON with fresh defaults
+
+
+# Try to load the bundled JSON override at module import time.
+# Silently skip if the file is absent or malformed — the inline dict stays active.
+try:
+    load_rules()
+except (FileNotFoundError, json.JSONDecodeError):
+    pass
 
 
 def get_spec(key: Optional[str]) -> Dict[str, Any]:
@@ -1084,4 +1191,7 @@ __all__ = [
     "get_enum_values",
     "get_context_enum_values",
     "register_extension_tag",
+    "load_rules",
+    "save_rules",
+    "reset_rules",
 ]
