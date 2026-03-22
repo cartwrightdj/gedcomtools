@@ -73,7 +73,6 @@ class Extensible(GedcomXModel):
 
     Inherits define_ext() / declared_extras() from GedcomXModel.
     """
-    pass
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +282,7 @@ class PluginRegistry:
                 )
             if local.is_file() and local.suffix == ".py":
                 return [_import_file(local, module_prefix=f"{base_fq}.extreg")]
-            elif local.is_dir():
+            if local.is_dir():
                 return _import_from_directory(
                     local, module_prefix=f"{base_fq}.extreg", recursive=recursive
                 )
@@ -295,7 +294,7 @@ class PluginRegistry:
         if p.exists():
             if p.is_file() and p.suffix == ".py":
                 return [_import_file(p, module_prefix=f"{base_fq}.extreg")]
-            elif p.is_dir():
+            if p.is_dir():
                 return _import_from_directory(
                     p, module_prefix=f"{base_fq}.extreg", recursive=recursive
                 )
@@ -525,10 +524,10 @@ def _download_to_temp(url: str) -> Path:
                 member_path = (extract_dir / member.filename).resolve()
                 try:
                     member_path.relative_to(resolved_extract)
-                except ValueError:
+                except ValueError as exc:
                     raise ValueError(
                         f"Zip slip detected in plugin archive: {member.filename!r}"
-                    )
+                    ) from exc
                 zf.extract(member, extract_dir)
         dest.unlink()
         return extract_dir

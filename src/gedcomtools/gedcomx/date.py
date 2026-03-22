@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, ClassVar, Optional
 
 from pydantic import model_validator
@@ -146,7 +146,7 @@ def _parse_simple_to_gx(s: str) -> str | None:
 
 
 def _infer_precision_from_text(s: str) -> str:
-    s_lower = s.lower().strip()
+    s.lower().strip()
     if re.match(r"^\d{4}$", s):
         return "year"
     year_only_patterns = [

@@ -1,42 +1,27 @@
 from __future__ import annotations
-from typing import Any, Callable, Optional, List
+from typing import Callable, Optional, List
 
-from dataclasses import dataclass, field, fields, MISSING, make_dataclass
+from dataclasses import dataclass
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    rsLink.py
- Author:  David J. Cartwright
- Purpose: Link type of GedcomX RS 1.0 (Extension)
- https://github.com/FamilySearch/gedcomx-rs/blob/master/specifications/rs-specification.md
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    rsLink.py
+#  Author:  David J. Cartwright
+#  Purpose: Link type of GedcomX RS 1.0 (Extension)
+#  Created: 2025-08-25
+# ======================================================================
 
- Created: 2025-08-25
- Updated:
-   - 
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# GEDCOM Module Types
 from gedcomtools.gedcomx.conclusion import Conclusion
 from gedcomtools.gedcomx.name import Name
-from ...exceptions import GedcomClassAttributeError
 from gedcomtools.glog import get_logger
 from gedcomtools.gedcomx.schemas import extensible, SCHEMA
 from gedcomtools.gedcomx.extensible import Extensible
 from gedcomtools.gedcomx.uri import URI
 from gedcomtools.gedcomx.resource import Resource
 from gedcomtools.gedcomx.person import Person
-"""
-======================================================================
-Logging
-======================================================================
-"""
+from ...exceptions import GedcomClassAttributeError
+# Logging
 log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
 deserial_log = "gedcomx.deserialization"
@@ -51,10 +36,10 @@ class rsLink:
     """A link description object. RS Extension to GedcomX by FamilySearch."""
     identifier = "http://gedcomx.org/v1/Link"
 
-    def __init__(self,
+    def __init__(self,  # pylint: disable=redefined-builtin
                  href:  Optional[URI] = None,
                  template: Optional[str] = None,
-                 type: Optional[str] = None,
+                 type: Optional[str] = None,  # pylint: disable=redefined-builtin
                  accept: Optional[str] = None,
                  allow: Optional[str] = None,
                  hreflang: Optional[str] = None,
@@ -221,7 +206,7 @@ SCHEMA.register_extra(Name,"prefered",bool)             #3.3 Whether the name is
 SCHEMA.register_extra(Person,"living",bool)
 SCHEMA.register_extra(Person,"_display",DisplayProperties)
 
-def display_properies(self):
+def display_properies(self):  # pylint: disable=unused-argument
     return DisplayProperties()
 
 SCHEMA.register_extra(Person,"display",DisplayProperties)

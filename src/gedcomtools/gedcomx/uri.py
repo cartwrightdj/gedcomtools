@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, Optional
+from typing import Any, Optional
 from urllib.parse import SplitResult, urlsplit, urlunparse, urlunsplit
 
 from pydantic import model_serializer, model_validator
-from pydantic_core import core_schema
 
 from ..glog import get_logger
 from .gx_base import GedcomXModel

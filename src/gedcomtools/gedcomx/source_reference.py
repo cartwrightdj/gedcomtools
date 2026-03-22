@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field
 
@@ -11,7 +11,7 @@ from .resource import Resource
 from .uri import URI
 
 if TYPE_CHECKING:
-    from .source_description import SourceDescription
+    pass
 
 
 class KnownSourceReference(Qualifier):

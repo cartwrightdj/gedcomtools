@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import List, Optional
 
 from .elements import (
@@ -36,7 +35,6 @@ from ..gedcom7.models import (
     MediaDetail,
     NameDetail,
     RepositoryDetail,
-    SharedNoteDetail,
     SourceCitation,
     SourceDetail,
     SubmitterDetail,

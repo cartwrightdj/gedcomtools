@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-"""
-Validation result types and shared helpers for GedcomX model validation.
-
-Used by GedcomXModel.validate() and the GedcomX.validate() container method.
-"""
+# Validation result types and shared helpers for GedcomX model validation.
+# Used by GedcomXModel.validate() and the GedcomX.validate() container method.
 
 import re
 from dataclasses import dataclass, field

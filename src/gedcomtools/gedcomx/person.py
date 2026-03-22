@@ -4,17 +4,9 @@ from typing import Any, ClassVar, List, Optional
 
 from pydantic import Field, PrivateAttr
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel
-from .date import Date
-from .evidence_reference import EvidenceReference
 from .fact import Fact, FactType
-from .gender import Gender, GenderType
-from .identifier import IdentifierList
+from .gender import Gender
 from .name import Name, QuickName
-from .note import Note
-from .resource import Resource
-from .source_reference import SourceReference
 from .subject import Subject
 
 from ..glog import get_logger

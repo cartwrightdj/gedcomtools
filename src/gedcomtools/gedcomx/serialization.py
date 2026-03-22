@@ -1,17 +1,11 @@
 from __future__ import annotations
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/serialization.py
- Author:  David J. Cartwright
- Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
-
- Created: 2025-08-25
- Updated:
-   - 2025-08-31: cleaned up imports and documentation
-
-======================================================================
-"""
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    gedcomx/serialization.py
+#  Author:  David J. Cartwright
+#  Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
+#  Created: 2025-08-25
+# ======================================================================
 
 from collections.abc import Sized
 from dataclasses import dataclass, field
@@ -20,7 +14,6 @@ from functools import lru_cache
 from time import perf_counter
 import types
 from typing import (
-    Annotated,
     Any,
     Callable,
     Dict,
@@ -33,32 +26,10 @@ from typing import (
     get_origin,
 )
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .address import Address
-from .agent import Agent
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel
-from .date import Date
-from .document import Document, DocumentType, TextType
-from .evidence_reference import EvidenceReference
-from .event import Event, EventType, EventRole, EventRoleType
-from .fact import Fact, FactType, FactQualifier
+# GEDCOM Module Types
 from .gedcomx import TypeCollection
-from .gender import Gender, GenderType
-from .identifier import IdentifierList, Identifier
+from .identifier import IdentifierList
 from ..glog import get_logger, hub
-from .name import Name, NameType, NameForm, NamePart, NamePartType, NamePartQualifier
-from .note import Note
-from .online_account import OnlineAccount
-from .person import Person
-from .place_description import PlaceDescription
-from .place_reference import PlaceReference
-from .qualifier import Qualifier
-from .relationship import Relationship, RelationshipType
 from .resource import Resource
 from .gx_base import GedcomXModel as _GXModel
 
@@ -82,9 +53,6 @@ class _SchemaBridge:
 
 
 SCHEMA = _SchemaBridge()
-from .source_description import SourceDescription, ResourceType, SourceCitation, Coverage
-from .source_reference import SourceReference
-from .textvalue import TextValue
 from .uri import URI
 #======================================================================
 
@@ -116,8 +84,10 @@ class ResolveStats:
 
     def note_attempt(self, *, ref_type: str, key: Any, path: Tuple[str, ...], cache_hit: bool) -> None:
         self.total_refs += 1
-        if cache_hit: self.cache_hits += 1
-        else:         self.cache_misses += 1
+        if cache_hit:
+            self.cache_hits += 1
+        else:
+            self.cache_misses += 1
         self._bump(self.by_ref_type, ref_type)
         self.attempts.append({"ref_type": ref_type, "key": key, "path": "/".join(path), "cache_hit": cache_hit})
 
@@ -133,7 +103,7 @@ class ResolveStats:
         self.resolver_time_ms += dt_ms
 
 class Serialization:
- 
+
     @staticmethod
     def serialize(obj):
         """Serialize a GedcomX object (or primitive) to a JSON-compatible dict/value.
@@ -153,7 +123,7 @@ class Serialization:
                     return r if r != {} else None
                 if isinstance(obj, URI):
                     return obj.value
-                if isinstance(obj, (list, tuple, set)) or isinstance(obj, TypeCollection):
+                if isinstance(obj, (list, tuple, set, TypeCollection)):
                     seq = obj if not isinstance(obj, TypeCollection) else list(obj)
                     if len(obj) == 0:
                         return None
@@ -173,19 +143,18 @@ class Serialization:
                     for field_name, type_ in fields.items():
                         if hasattr(obj, field_name):
                             if (v := getattr(obj, field_name)) is not None:
-                                if type_ == Resource or type_ == 'Resource':
+                                if type_ in (Resource, 'Resource'):
                                     res = Resource._of_object(target=v)
                                     type_as_dict[field_name] = Serialization.serialize(res.value)
-                                elif type_ == URI or type_ == 'URI':
+                                elif type_ in (URI, 'URI'):
                                     uri = URI.model_validate({"target": v})
                                     type_as_dict[field_name] = uri.value
                                 elif (sv := Serialization.serialize(v)) is not None:
                                     type_as_dict[field_name] = sv
                         else:
                             log.warning("{} missing expected field '{}'", type(obj).__name__, field_name)
-                    return type_as_dict if type_as_dict != {} else None
-                else:
-                    log.error("No SCHEMA fields found for {}", type(obj).__name__)
+                    return type_as_dict if type_as_dict else None
+                log.error("No SCHEMA fields found for {}", type(obj).__name__)
         return None
 
     @staticmethod
@@ -199,7 +168,7 @@ class Serialization:
         def _serialize(value):
             if isinstance(value, (str, int, float, bool, type(None))):
                 return value
-            if (fields := SCHEMA.get_class_fields(type(value))) is not None:
+            if (_fields := SCHEMA.get_class_fields(type(value))) is not None:
                 # Expect your objects expose a snapshot via to_dict
                 return Serialization.serialize(value)
             if isinstance(value, dict):
@@ -224,7 +193,7 @@ class Serialization:
         return {}
 
     # --- tiny helpers --------------------------------------------------------
-       
+
     @staticmethod
     def _as_concrete_class(T: Any) -> type | None:
         """If T resolves to an actual class type, return it; else None."""
@@ -367,7 +336,7 @@ class Serialization:
         inst._resource_setters = []
 
     # --- your deserialize with setters --------------------------------------
-    
+
     @classmethod
     def deserialize(
         cls,
@@ -465,7 +434,7 @@ class Serialization:
                     int(bool(resolver)) * len(pending), len(getattr(inst, "_resource_setters", [])))
             return inst
 
-  
+
     @classmethod
     def _coerce_value(cls, value: Any, Typ: Any) -> Any:
         """Coerce `value` into `Typ` using the registry (recursively)."""
@@ -480,7 +449,6 @@ class Serialization:
 
         # Unwrap typing once
         T = cls._resolve_forward(cls._unwrap(Typ))
-        origin = get_origin(T) or T
         args = get_args(T)
 
         # Strings to Resource/URI
@@ -679,10 +647,11 @@ class Serialization:
 
         return visit(root)
 
-        
+
     # -------------------------- TYPE HELPERS --------------------------
 
-    
+
+    @staticmethod
     @lru_cache(maxsize=None)
     def _unwrap(T: Any) -> Any:
         origin = get_origin(T)
@@ -692,7 +661,7 @@ class Serialization:
             args = get_args(T)
             return Serialization._unwrap(args[0]) if args else Any
         if origin in (Union, types.UnionType):
-            args = tuple(a for a in get_args(T) if a is not type(None))
+            args = tuple(a for a in get_args(T) if a is not type(None))  # pylint: disable=unidiomatic-typecheck
             return Serialization._unwrap(args[0]) if len(args) == 1 else tuple(Serialization._unwrap(a) for a in args)
         return T
 
@@ -733,7 +702,7 @@ class Serialization:
     def _is_dict_like(T: Any) -> bool:
         origin = get_origin(T) or T
         return origin in (dict, Dict)
-    
+
     @staticmethod
     def _is_typecollection_annot(T: Any) -> bool:
         """Return True iff the annotation is TypeCollection[...] or TypeCollection."""
@@ -750,5 +719,3 @@ class Serialization:
         U = Serialization._resolve_forward(Serialization._unwrap(T))
         args = get_args(U)
         return args[0] if args else Any
-
-    

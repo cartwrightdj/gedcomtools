@@ -1,31 +1,23 @@
 
 
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    desc_ext.py
- Author:  David J. Cartwright
- Purpose: Extnsion to add certain human readbale fields to complexe Gedcom-X Objects
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    desc_ext.py
+#  Author:  David J. Cartwright
+#  Purpose: Extension to add human-readable fields to complex Gedcom-X Objects
+#  Created: 2023-02-23
+# ======================================================================
 
- Created: 2023-02-23
- Updated:
-   - 2023-02-23: arango_description expanded
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================="""
+# GEDCOM Module Types
 from typing import Any
-from ...schemas import SCHEMA, schema_property_plugin, apply_schema_property, bind_schema_property
+
 from gedcomtools.gedcomx.person import Person
+from ...schemas import SCHEMA, bind_schema_property
 
 
 
-def ext_description_set(self, value) -> None:
+def ext_description_set(self, _value) -> None:  # pylint: disable=unused-argument
     pass  # computed property; incoming values are ignored
 
 def ext_description_get(self) -> dict:
@@ -182,7 +174,7 @@ bind_schema_property(
     schema=SCHEMA,
 )
 
-def ext_emb_narrative_set(self, value) -> None:
+def ext_emb_narrative_set(self, _value) -> None:  # pylint: disable=unused-argument
     pass  # computed property; incoming values are ignored
 
 

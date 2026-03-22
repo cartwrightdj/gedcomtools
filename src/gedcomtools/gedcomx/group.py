@@ -4,16 +4,9 @@ from typing import Any, ClassVar, List, Optional
 
 from pydantic import Field
 
-from .attribution import Attribution
-from .conclusion import Conclusion, ConfidenceLevel
+from .conclusion import Conclusion
 from .date import Date
-from .evidence_reference import EvidenceReference
 from .extensible_enum import ExtensibleEnum
-from .identifier import IdentifierList
-from .note import Note
-from .place_reference import PlaceReference
-from .resource import Resource
-from .source_reference import SourceReference
 from .subject import Subject
 from .textvalue import TextValue
 

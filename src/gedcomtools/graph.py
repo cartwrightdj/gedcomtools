@@ -412,7 +412,7 @@ class GedcomGraph:
                     or str(res)
                 )
                 if val:
-                    return str(val).lstrip("#").split("/")[-1] or None
+                    return str(val).lstrip("#").rsplit("/", maxsplit=1)[-1] or None
             return getattr(ref, "id", None)
 
         def _year(date_obj: Any) -> Optional[int]:

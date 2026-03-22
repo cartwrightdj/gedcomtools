@@ -3,20 +3,13 @@ from __future__ import annotations
 import difflib
 import re
 from enum import Enum
-from typing import Any, ClassVar, List, Optional, Union
+from typing import ClassVar, List, Optional
 
-from pydantic import Field, PrivateAttr
+from pydantic import PrivateAttr
 
-from .attribution import Attribution
-from .conclusion import Conclusion, ConfidenceLevel
+from .conclusion import Conclusion
 from .date import Date
-from .document import Document
-from .gx_base import GedcomXModel
-from .note import Note
 from .place_reference import PlaceReference
-from .qualifier import Qualifier
-from .resource import Resource
-from .source_reference import SourceReference
 
 
 class FactType(Enum):

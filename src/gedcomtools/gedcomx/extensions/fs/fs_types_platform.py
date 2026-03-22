@@ -27,9 +27,7 @@ from gedcomtools.gedcomx.resource import Resource
 from gedcomtools.glog import get_logger
 
 if TYPE_CHECKING:
-    from gedcomtools.gedcomx.extensions.fs.fs_types_merge import Merge, MergeAnalysis
-    from gedcomtools.gedcomx.extensions.fs.fs_types_discussion import Discussion
-    from gedcomtools.gedcomx.extensions.fs.fs_types_core import Feature
+    pass
 
 log = get_logger(__name__)
 

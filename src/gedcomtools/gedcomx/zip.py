@@ -71,7 +71,7 @@ class GedcomZip:
             self.zip   -> zipfile.ZipFile instance (write mode)
         """
         self.path: Path = self._resolve_zip_path(path)
-        self.zip: zipfile.ZipFile = zipfile.ZipFile(
+        self.zip: zipfile.ZipFile = zipfile.ZipFile(  # pylint: disable=consider-using-with
             self.path,
             mode="w",
             compression=zipfile.ZIP_DEFLATED,

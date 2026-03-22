@@ -1,43 +1,28 @@
-import random
-import string
+from typing import Any, Dict, Optional, Union, Generic, TypeVar, Iterable
+
 import orjson
 
-from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    GedcomX.py
+#  Author:  David J. Cartwright
+#  Purpose: Object for working with Gedcom-X Data
+#  Created: 2025-07-25
+# ======================================================================
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    GedcomX.py
- Author:  David J. Cartwright
- Purpose: Object for working with Gedcom-X Data
-
- Created: 2025-07-25
- Updated:
-    - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data,
-    id_index functionality, will be used for resolution of Resources
-    - 2025-09-03: _from_json_ refactor
-    - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# GEDCOM Module Types
 from .agent import Agent
 from .attribution import Attribution
 from .document import Document
 from .event import Event
 from .group import Group
 from .identifier import make_uid
-from ..glog import get_logger, hub
+from ..glog import get_logger
 from .person import Person
 from .place_description import PlaceDescription
-from .relationship import Relationship, RelationshipType
+from .relationship import Relationship, RelationshipType  # re-exported: family.py imports from here  # pylint: disable=unused-import
 from .resource import Resource
-from .source_description import ResourceType, SourceDescription
+from .source_description import SourceDescription
 from .textvalue import TextValue
 from .uri import URI
 from .validation import ValidationResult
@@ -231,9 +216,9 @@ class GedcomX:
     """
     version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self, id: Optional[str] = None,
+    def __init__(self, id: Optional[str] = None,  # pylint: disable=redefined-builtin
                  attribution: Optional[Attribution] = None,
-                 filepath: Optional[str] = None,
+                 _filepath: Optional[str] = None,
                  description: Optional[str] = None,
                  persons: Optional[TypeCollection[Person]] = None,
                  relationships: Optional[TypeCollection[Relationship]] = None,
@@ -242,26 +227,33 @@ class GedcomX:
                  places: Optional[TypeCollection[PlaceDescription]] = None,
                  events: Optional[TypeCollection[Event]] = None,
                  documents: Optional[TypeCollection[Document]] = None) -> None:
-        
+
         self.id = id
         self.attribution = attribution if attribution else None
         self._filepath = None
-        
+
         self.description = description
         self.sourceDescriptions = TypeCollection(SourceDescription)
-        if sourceDescriptions: self.sourceDescriptions.extend(sourceDescriptions)
+        if sourceDescriptions:
+            self.sourceDescriptions.extend(sourceDescriptions)
         self.persons = TypeCollection(Person)
-        if persons: self.persons.extend(persons)
+        if persons:
+            self.persons.extend(persons)
         self.relationships = TypeCollection(Relationship)
-        if relationships: self.relationships.extend(relationships)      
+        if relationships:
+            self.relationships.extend(relationships)
         self.agents = TypeCollection(Agent)
-        if agents: self.agents.extend(agents) 
+        if agents:
+            self.agents.extend(agents)
         self.events = TypeCollection(Event)
-        if events: self.events.extend(events) 
+        if events:
+            self.events.extend(events)
         self.documents = TypeCollection(Document)
-        if documents: self.documents.extend(documents)
+        if documents:
+            self.documents.extend(documents)
         self.places = TypeCollection(PlaceDescription)
-        if places: self.places.extend(places)
+        if places:
+            self.places.extend(places)
         self.groups = TypeCollection(Group)
 
         self.__relationship_table = {}
@@ -282,7 +274,7 @@ class GedcomX:
             "places": len(self.places),
             "groups": len(self.groups),
         }
-            
+
     def add(self, gedcomx_type_object):
         """Dispatch a GedcomX top-level object to its appropriate ``add_*`` method.
 
@@ -326,7 +318,6 @@ class GedcomX:
             if sourceDescription.id is None:
                 raise ValueError("SourceDescription must have an id before being added")
             self.sourceDescriptions.append(item=sourceDescription)
-            self.__lastSourceDescriptionAdded = sourceDescription
         else:
             raise ValueError(f"When adding a SourceDescription, value must be of type SourceDescription, type {type(sourceDescription)} was provided")
 
@@ -346,7 +337,7 @@ class GedcomX:
             self.documents.append(item=document)
         else:
             raise ValueError(f"document must be a 'Document'' Object not type: {type(document)}")
-      
+
     def add_person(self,person: Person):
         """Add a Person object to the Genealogy
 
@@ -363,7 +354,7 @@ class GedcomX:
             self.persons.append(item=person)
         else:
             raise ValueError(f'person must be a Person Object not type: {type(person)}')
-        
+
     def add_relationship(self, relationship: Relationship):
         """Add a Relationship to the genealogy.
 
@@ -380,7 +371,7 @@ class GedcomX:
             if isinstance(relationship.person1,Resource) and isinstance(relationship.person2,Resource):
                 self.relationships.append(relationship)
                 return
-            elif isinstance(relationship.person1,Person) and isinstance(relationship.person2,Person):
+            if isinstance(relationship.person1,Person) and isinstance(relationship.person2,Person):
 
                 if relationship.person1:
                     if relationship.person1.id is None:
@@ -393,7 +384,7 @@ class GedcomX:
                     relationship.person1._add_relationship(relationship)
                 else:
                     pass
-                
+
                 if relationship.person2:
                     if relationship.person2.id is None:
                         relationship.person2.id = make_uid()
@@ -439,13 +430,12 @@ class GedcomX:
             if self.agents.by_id(agent.id) is not None:
                 log.debug("Skipped duplicate agent id={}", agent.id)
                 return False
-            else:
-                self.agents.append(agent)
-                log.debug("Added agent id={}", agent.id)
-        else:
-            raise ValueError(
-                f"agent must be an Agent instance, got {type(agent).__name__}"
-            )
+            self.agents.append(agent)
+            log.debug("Added agent id={}", agent.id)
+            return None
+        raise ValueError(
+            f"agent must be an Agent instance, got {type(agent).__name__}"
+        )
 
     def add_event(self, event_to_add: Event):
         """Add an Event to this GedcomX genealogy.
@@ -488,13 +478,13 @@ class GedcomX:
             for place in gedcomx.places:
                 self.add_place_description(place)
 
-    def get_person_by_id(self, id: str):
+    def get_person_by_id(self, obj_id: str):
         """Return the Person with the given id, or None if not found."""
-        return self.persons.by_id(id)
+        return self.persons.by_id(obj_id)
 
-    def source_by_id(self, id: str):
+    def source_by_id(self, obj_id: str):
         """Return the SourceDescription with the given id, or None if not found."""
-        return self.sourceDescriptions.by_id(id)
+        return self.sourceDescriptions.by_id(obj_id)
 
     def validate(self) -> ValidationResult:
         """Validate this GedcomX document.
@@ -603,7 +593,7 @@ class GedcomX:
                 gx.add_agent(Agent.model_validate(ad))
             except Exception as e:
                 log.warning("Skipping invalid agent record: {}", e)
-        from .relationship import Relationship
+        from .relationship import Relationship  # pylint: disable=redefined-outer-name
         for rd in data.get("relationships", []):
             try:
                 gx.add_relationship(Relationship.model_validate(rd))
@@ -614,26 +604,26 @@ class GedcomX:
                 gx.add_source_description(SourceDescription.model_validate(sd))
             except Exception as e:
                 log.warning("Skipping invalid sourceDescription record: {}", e)
-        from .event import Event
+        from .event import Event  # pylint: disable=redefined-outer-name
         for ed in data.get("events", []):
             try:
                 gx.add_event(Event.model_validate(ed))
             except Exception as e:
                 log.warning("Skipping invalid event record: {}", e)
-        from .document import Document
+        from .document import Document  # pylint: disable=redefined-outer-name
         for dd in data.get("documents", []):
             try:
                 gx.add_document(Document.model_validate(dd))
             except Exception as e:
                 log.warning("Skipping invalid document record: {}", e)
-        from .place_description import PlaceDescription
+        from .place_description import PlaceDescription  # pylint: disable=redefined-outer-name
         for pld in data.get("places", []):
             try:
                 gx.add_place_description(PlaceDescription.model_validate(pld))
             except Exception as e:
                 log.warning("Skipping invalid place record: {}", e)
         return gx
-        
+
     @property
     def json(self) -> bytes:
         """
@@ -662,7 +652,5 @@ class GedcomX:
             else:
                 log.debug("Resolved id='{}' to {}", ref_id, type(ref).__name__)
             return ref
-        else:
-            log.debug("_resolve: reference was None")
-
-    
+        log.debug("_resolve: reference was None")
+        return None

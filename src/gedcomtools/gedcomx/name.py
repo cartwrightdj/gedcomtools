@@ -2,18 +2,13 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Any, ClassVar, List, Optional, Union
+from typing import Any, ClassVar, List, Optional
 
 from pydantic import Field
 
-from .attribution import Attribution
-from .conclusion import Conclusion, ConfidenceLevel
+from .conclusion import Conclusion
 from .date import Date
-from .document import Document
 from .gx_base import GedcomXModel
-from .note import Note
-from .resource import Resource
-from .source_reference import SourceReference
 
 
 class NameType(Enum):

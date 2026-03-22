@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, Optional
 
 from pydantic import PrivateAttr, model_serializer
 

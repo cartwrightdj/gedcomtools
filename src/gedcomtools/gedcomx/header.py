@@ -12,11 +12,7 @@
 ======================================================================
 """
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# GEDCOM Module Types
 from typing import Optional
 from .agent import Agent
 from .textvalue import TextValue
@@ -27,4 +23,3 @@ class Header():
         self.source: Optional[TextValue] = None
         self.name: Optional[TextValue] = None
         self.version: Optional[float] = None
-

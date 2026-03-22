@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from pydantic import Field, PrivateAttr
 
@@ -13,9 +13,7 @@ from .textvalue import TextValue
 from .uri import URI
 
 if TYPE_CHECKING:
-    from .attribution import Attribution
-    from .note import Note
-    from .person import Person
+    pass
 
 
 class Agent(GedcomXModel):

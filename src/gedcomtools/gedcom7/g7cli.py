@@ -54,7 +54,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from .structure import GedcomStructure
-from .gedcom7 import Gedcom7, GedcomValidationError
+from .gedcom7 import Gedcom7
 from .writer import Gedcom7Writer
 from .models import individual_detail, family_detail
 
@@ -74,12 +74,18 @@ def _ansi(code: str, text: str) -> str:
     return f"\x1b[{code}m{text}\x1b[0m"
 
 
-def _green(t: str) -> str:  return _ansi("32", t)
-def _yellow(t: str) -> str: return _ansi("33", t)
-def _cyan(t: str) -> str:   return _ansi("36", t)
-def _red(t: str) -> str:    return _ansi("31", t)
-def _bold(t: str) -> str:   return _ansi("1",  t)
-def _dim(t: str) -> str:    return _ansi("2",  t)
+def _green(t: str) -> str:
+    return _ansi("32", t)
+def _yellow(t: str) -> str:
+    return _ansi("33", t)
+def _cyan(t: str) -> str:
+    return _ansi("36", t)
+def _red(t: str) -> str:
+    return _ansi("31", t)
+def _bold(t: str) -> str:
+    return _ansi("1",  t)
+def _dim(t: str) -> str:
+    return _ansi("2",  t)
 
 
 def _clip(text: str, width: int) -> str:
@@ -278,7 +284,7 @@ class Shell:
             return
         self._do_load(args[0])
 
-    def _cmd_reload(self, args: List[str]) -> None:
+    def _cmd_reload(self, _args: List[str]) -> None:
         """reload  — re-read the current file from disk, discarding in-memory changes."""
         if self.filepath is None:
             print("! No file loaded. Use: load <path.ged>")
@@ -336,7 +342,7 @@ class Shell:
         print(f"Written to {_green(str(dest))}")
         self._dirty = False
 
-    def _cmd_validate(self, args: List[str]) -> None:
+    def _cmd_validate(self, _args: List[str]) -> None:
         """validate  — run the GEDCOM 7 validator."""
         if not self._require_file():
             return
@@ -354,7 +360,7 @@ class Shell:
         status = _red(f"{len(errors)} error(s)") if errors else _green("0 error(s)")
         print(f"\n{status}, {_yellow(str(len(warnings)))} warning(s)")
 
-    def _cmd_info(self, args: List[str]) -> None:
+    def _cmd_info(self, _args: List[str]) -> None:
         """info  — file-level summary."""
         if not self._require_file():
             return
@@ -367,7 +373,7 @@ class Shell:
         for tag, n in sorted(counts.items()):
             print(f"  {tag:<8} {n}")
 
-    def _cmd_ls(self, args: List[str]) -> None:
+    def _cmd_ls(self, _args: List[str]) -> None:
         """ls  — list children of the current node (or top-level records)."""
         if not self._require_file():
             return
@@ -437,7 +443,7 @@ class Shell:
             self._stack.append(self.cur)
         self.cur = node
 
-    def _cmd_pwd(self, args: List[str]) -> None:
+    def _cmd_pwd(self, _args: List[str]) -> None:
         """pwd  — print the current path."""
         labels = self._path_labels()
         print("g7:/" + "/".join(labels))
@@ -659,7 +665,7 @@ class Shell:
         print(f"Removed {_green(node.tag)} (was index {idx})")
         self._dirty = True
 
-    def _cmd_help(self, args: List[str]) -> None:
+    def _cmd_help(self, _args: List[str]) -> None:
         """help  — show available commands."""
         print(__doc__)
 

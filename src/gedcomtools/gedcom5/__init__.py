@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/__init__.py
- Author:  David J. Cartwright
- Purpose: Package initializer for the GEDCOM 5.x parsing module
-
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/__init__.py
+#  Author:  David J. Cartwright
+#  Purpose: Package initializer for the GEDCOM 5.x parsing module
+#  Created: 2026-01-01
+# ======================================================================
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -36,11 +31,7 @@
 #
 # Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html
 
-"""
-A Python module for parsing, analyzing, and manipulating GEDCOM files.
-
-.. include:: ./gedcom.md
-"""
+# A Python module for parsing, analyzing, and manipulating GEDCOM files.
 
 __all__ = [
     "parser",

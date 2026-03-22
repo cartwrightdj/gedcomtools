@@ -359,11 +359,6 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     "DEAT": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
     "BURI": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
     "CREM": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
-    "ADOP": {
-        "payload_type": PAYLOAD_TEXT,
-        "substructures": {**_EVENT_DETAIL_SUBS, "FAMC": "FAMC"},
-        "cardinality":   {**_EVENT_DETAIL_CARD, "FAMC": (0, 1)},
-    },
     "BAPM": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
     "BARM": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
     "BASM": {"payload_type": PAYLOAD_TEXT, "substructures": _EVENT_DETAIL_SUBS, "cardinality": _EVENT_DETAIL_CARD},
@@ -562,7 +557,6 @@ _CORE_RULES: Dict[str, Dict[str, Any]] = {
     },
 
     # ── Source data substructures ─────────────────────────────────────────────
-    "PAGE": {"payload_type": PAYLOAD_TEXT, "substructures": {}, "cardinality": {}},
     "QUAY": {
         "payload_type": PAYLOAD_ENUM,
         "enum_values": {"0", "1", "2", "3"},

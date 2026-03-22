@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from .gx_base import GedcomXModel
 from .resource import Resource
 from .uri import URI
 
 if TYPE_CHECKING:
-    from .place_description import PlaceDescription
+    pass
 
 
 class PlaceReference(GedcomXModel):

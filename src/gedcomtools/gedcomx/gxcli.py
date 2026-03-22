@@ -1,24 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    gxcli.py
- Author:  David J. Cartwright
- Purpose: cli to inspect GedcomX objects
-
- Created: 2026-02-01
- Updated:
-    - 2025-10-25 smart_getattr(obj, name): returns (value, kind) where kind ∈ {'instance','property','class_attr','missing'}
-    - 2025-10-25 Shell._cmd_getprop: robust property introspection using inspect.getattr_static
-    - 2025-10-25 Shell._cmd_props: list both instance and class-level properties/attrs with current values
-    - 2025-10-25 Shell._cmd_getattr: REPL helper to inspect any attribute with kind
-    - 2025-11-12 ls: show item IDs in preview and allow cd by id in list-like containers
-    - 2026-02-01 added loggingkit, and _cmd_log
-    - 2026-02-23 jsonl to cmd_write, if current node is an iterable, it serializes is to jsonl file
-======================================================================
-"""
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    gxcli.py
+#  Author:  David J. Cartwright
+#  Purpose: cli to inspect GedcomX objects
+#  Created: 2026-02-01
+# ======================================================================
 
 import argparse
 import ast
@@ -38,11 +27,7 @@ from typing import Any, Dict, Iterable, get_args, get_origin
 
 import orjson
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# GEDCOM Module Types
 from gedcomtools.glog import setup_logging, get_logger, LoggerSpec
 
 # Logging is initialized in main() to avoid side effects on import.
@@ -50,7 +35,7 @@ _LOG_MGR = None
 
 
 def init_logging(app_name: str = "gedcomtools"):
-    global _LOG_MGR
+    global _LOG_MGR  # pylint: disable=global-statement
     if _LOG_MGR is None:
         _LOG_MGR = setup_logging(app_name=app_name)
     return _LOG_MGR
@@ -431,8 +416,6 @@ def resolve_path(root: Any, cur: Any, path: str) -> tuple[Any, list[str]]:
 
 # ── Schema helpers ───────────────────────────────────────────────────────────
 def _typename(t: Any) -> str:
-    from typing import Any as _Any
-
     if isinstance(t, str):
         return t
     origin = get_origin(t)
@@ -447,7 +430,7 @@ def _typename(t: Any) -> str:
     if name in ("tuple", "Tuple"):
         return "Tuple[" + ", ".join(_typename(a) for a in args) + "]" if args else "Tuple"
     if name in ("dict", "Dict"):
-        k, v = (args + (_Any, _Any))[:2]
+        k, v = (args + (Any, Any))[:2]
         return f"Dict[{_typename(k)}, {_typename(v)}]"
     inner = ", ".join(_typename(a) for a in args)
     return f"{name}[{inner}]" if inner else name
@@ -504,9 +487,7 @@ def _expected_element_type_from_parent(parent: Any, field_name: str) -> Any | No
     return inner or ann
 
 def _names_match(expected: Any | None, value: Any) -> bool:
-    from typing import Any as TypingAny, get_args as _ga, get_origin as _go
-
-    if expected is None or expected is TypingAny:
+    if expected is None or expected is Any:
         return True
 
     def _head_inner_from_expected(exp: Any) -> tuple[str, str | None]:
@@ -516,18 +497,18 @@ def _names_match(expected: Any | None, value: Any) -> bool:
             if "[" in exp and exp.endswith("]"):
                 inner = exp[exp.find("[") + 1 : -1].split(",", 1)[0].split(".")[-1].strip()
             return head, inner
-        origin = _go(exp)
+        origin = get_origin(exp)
         if origin is not None:
-            head = getattr(origin, "__name__", str(origin)).split(".")[-1]
-            args = _ga(exp)
+            head = getattr(origin, "__name__", str(origin)).rsplit(".", maxsplit=1)[-1]
+            args = get_args(exp)
             inner = None
             if args:
                 a0 = args[0]
-                inner = (getattr(a0, "__name__", str(a0))).split(".")[-1]
+                inner = (getattr(a0, "__name__", str(a0))).rsplit(".", maxsplit=1)[-1]
             return head, inner
         if isinstance(exp, type):
             return exp.__name__, None
-        return str(exp).split(".")[-1], None
+        return str(exp).rsplit(".", maxsplit=1)[-1], None
 
     def _head_inner_from_value(val: Any) -> tuple[str, str | None]:
         head = type(val).__name__
@@ -661,7 +642,7 @@ class Shell:
                 print(f"! cmd error ({last.filename}:{last.lineno}): {e}")
 
     # ---- commands -----------------------------------------------------------
-    def _cmd_ver(self, args: list[str]) -> None:
+    def _cmd_ver(self, _args: list[str]) -> None:
         print(self.version)
 
     def _cmd_del(self, args: list[str]) -> None:
@@ -712,7 +693,7 @@ class Shell:
                 if idx is not None:
                     try:
                         length = len(obj)  # type: ignore[arg-type]
-                        if not (-length <= idx < length):
+                        if not -length <= idx < length:
                             print(f"! index {idx} out of range (len={length})")
                             continue
                     except Exception:
@@ -806,7 +787,7 @@ class Shell:
             "  quit | exit              leave\n"
         )
 
-    def _cmd_agenttbl(self, args: list[str]) -> None:
+    def _cmd_agenttbl(self, _args: list[str]) -> None:
         """
         agentstbl
         Show a schema table for agents (paged).
@@ -1502,7 +1483,7 @@ class Shell:
                     i = j
                 rows = collapsed
 
-            for idx, v in rows:
+            for idx, _v in rows:
                 if idx != "…":
                     expected_map[idx] = elem_tp
                     exp = (
@@ -1738,7 +1719,7 @@ class Shell:
                     sname = _typename(stype)
                     table.append([fname, sname, f"{ANSI['red']}(missing){ANSI['reset']}", f"{ANSI['red']}missing{ANSI['reset']}"])
 
-            extra_names = [k for k in runtime.keys() if k not in fields]
+            extra_names = [k for k in runtime if k not in fields]
             for k in sorted(extra_names):
                 v = runtime[k]
                 table.append(
@@ -1829,13 +1810,11 @@ class Shell:
                     raise ValueError(f"no schema info for field {field_name!r}")
                 elem_type = field_type
 
-            from typing import get_args as _ga, get_origin as _go
-
             def _strip_optional(tp: Any) -> Any:
-                origin = _go(tp)
+                origin = get_origin(tp)
                 if origin is None:
                     return tp
-                args2 = [a for a in _ga(tp) if a is not type(None)]  # noqa: E721
+                args2 = [a for a in get_args(tp) if a is not type(None)]  # noqa: E721  # pylint: disable=unidiomatic-typecheck
                 return args2[0] if args2 else tp
 
             elem_type2 = _strip_optional(elem_type)
@@ -2005,7 +1984,7 @@ class Shell:
         """
         if len(args) < 2 or args[0] not in ["gx","adbg","jsonl"]:
             print("usage: write FORMAT[gx | adbg | jsonl] PATH")
-            return
+            return None
         if args[0] == "gx":
             js = orjson.dumps(
                 Serialization.serialize(self.root),
@@ -2018,7 +1997,7 @@ class Shell:
                 path = Path(args[1].strip('"').strip("'"))
                 return write_jsonl(self.cur, Path(path))
             print("usage: write FORMAT[gx | adbg | jsonl] PATH")
-            return
+            return None
         elif args[0] == "adbg":
             if args[1]:
                 argo_graph_files_folder = Path(args[1])
@@ -2026,7 +2005,7 @@ class Shell:
                 print('Writing Argo Graph Files')
                 if self.root is None:
                     print("No data loaded.")
-                    return
+                    return None
                 file_specs = make_arango_graph_files(self.root)
                 persons_file = argo_graph_files_folder / 'persons.jsonl'
                 with persons_file.open("w", encoding="utf-8") as f:
@@ -2040,6 +2019,7 @@ class Shell:
                         print('Writing Relationship')
                         f.write(json.dumps(line))
                         f.write("\n")
+        return None
 
     def _cmd_type(self, args: list[str]) -> None:
         """

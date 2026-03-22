@@ -1,17 +1,11 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, ClassVar, List, Optional
+from typing import ClassVar, Optional
 
-from pydantic import Field
 
-from .attribution import Attribution
-from .conclusion import Conclusion, ConfidenceLevel
-from .gx_base import GedcomXModel
-from .note import Note
-from .resource import Resource
-from .source_description import SourceDescription, ResourceType
-from .source_reference import SourceReference
+from .conclusion import Conclusion
+from .source_description import SourceDescription
 
 
 class DocumentType(Enum):
@@ -49,7 +43,6 @@ class Document(Conclusion):
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
-        from .validation import check_instance
         if self.type is not None and not isinstance(self.type, DocumentType):
             result.error("type", f"Expected DocumentType, got {type(self.type).__name__}: {self.type!r}")
         if self.textType is not None and not isinstance(self.textType, TextType):

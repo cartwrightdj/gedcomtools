@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from .attribution import Attribution
 from .gx_base import GedcomXModel
 from .resource import Resource
 
 if TYPE_CHECKING:
-    from .subject import Subject
+    pass
 
 
 class EvidenceReference(GedcomXModel):

@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/helpers.py
- Author:  David J. Cartwright
- Purpose: Helper utilities for GEDCOM 5.x parsing and element handling
-
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/helpers.py
+#  Author:  David J. Cartwright
+#  Purpose: Helper utilities for GEDCOM 5.x parsing and element handling
+#  Created: 2026-01-01
+# ======================================================================
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -36,9 +31,7 @@
 #
 # Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html
 
-"""
-Helper methods.
-"""
+# Helper methods.
 
 import warnings
 import functools
@@ -53,7 +46,7 @@ def deprecated(func):
     def new_func(*args, **kwargs):
 
         warnings.simplefilter('always', DeprecationWarning)  # turn off filter
-        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+        warnings.warn(f"Call to deprecated function {func.__name__}.",
                       category=DeprecationWarning,
                       stacklevel=2)
         warnings.simplefilter('default', DeprecationWarning)  # reset filter

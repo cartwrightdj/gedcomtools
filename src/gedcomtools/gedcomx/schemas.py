@@ -1,21 +1,11 @@
 from __future__ import annotations
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/schemas.py
- Author:  David J. Cartwright
- Purpose: Central schema registry providing field type metadata for serialization and extensibility
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json_ refactor
-   - 2025-09-09: added schema_class
-   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding
-   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict
-   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA
-
-======================================================================
-"""
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    gedcomx/schemas.py
+#  Author:  David J. Cartwright
+#  Purpose: Central schema registry for field type metadata
+#  Created: 2025-08-25
+# ======================================================================
 
 import functools
 import inspect
@@ -222,7 +212,7 @@ class Schema:
     def is_toplevel(self, cls_or_name: type | str) -> bool:
         name = cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
         return name in self._toplevel
-    
+
     def is_toplevel_obj(self, obj: Any) -> bool:
         """
         Like is_toplevel, but takes an arbitrary object and checks its class.
@@ -319,7 +309,7 @@ class Schema:
             return self._strip_optional(args[0])
 
         if origin in _UNION_ORIGINS:
-            kept = tuple(a for a in args if a is not type(None))  # noqa: E721
+            kept = tuple(a for a in args if a is not type(None))  # noqa: E721  # pylint: disable=unidiomatic-typecheck
             if not kept:
                 return Any
             if len(kept) == 1:
@@ -410,8 +400,7 @@ class Schema:
         try:
             return reduce(operator.or_, args)  # e.g., A | B | C
         except TypeError:
-            from typing import Union as _TypingUnion
-            return _TypingUnion.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
+            return Union.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
 
     def _rebuild_param(self, origin: Any, sub: tuple[Any, ...], *, fallback: Any) -> Any:
         try:
@@ -750,7 +739,7 @@ def accept_extras(*, stash_attr: str = "_extras",
             def __init__(self, *args, **kwargs):
                 # Split known from extras using THIS class's signature
                 known = {}
-                for name, p in sig.parameters.items():
+                for name, _p in sig.parameters.items():
                     if name == "self":
                         continue
                     if name in kwargs:
@@ -822,8 +811,6 @@ def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
         return cls
     return deco
 
-# put this in your schemas.py (or a shared helpers module)
-import inspect
 
 class ExtrasAwareMeta(type):
     """Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.
@@ -880,7 +867,6 @@ def fact_from_even_tag(even_value):
     from .fact import FactType
     gedcom_even_to_fact = {
         # Person Fact Types
-        "ADOP": FactType.Adoption,
         "CHR": FactType.AdultChristening,
         "EVEN": FactType.Amnesty,  # and other FactTypes with no direct GEDCOM tag
         "BAPM": FactType.Baptism,
@@ -930,7 +916,7 @@ def fact_from_even_tag(even_value):
         }
     return gedcom_even_to_fact.get(even_value,None)
 
-def event_from_even_tag(even_value): 
+def event_from_even_tag(even_value):
     from .event import EventType
     gedcom_even_to_evnt = {
         # Person Fact Types
@@ -943,7 +929,7 @@ def event_from_even_tag(even_value):
         "BIRT, CHR": EventType.Birth,
         "BLES": EventType.Blessing,
         "BURI": EventType.Burial,
-        
+
         "CENS": EventType.Census,
         "CIRC": EventType.Circumcision,
         "CONF": EventType.Confirmation,
@@ -952,13 +938,13 @@ def event_from_even_tag(even_value):
         "EDUC": EventType.Education,
         "EMIG": EventType.Emigration,
         "FCOM": EventType.FirstCommunion,
-        
+
         "IMMI": EventType.Immigration,
-        
+
         "NATU": EventType.Naturalization,
-        
+
         "ORDN": EventType.Ordination,
-        
+
 
         # Couple Relationship Fact Types
         "ANUL": EventType.Annulment,
@@ -966,6 +952,6 @@ def event_from_even_tag(even_value):
         "DIVF": EventType.DivorceFiling,
         "ENGA": EventType.Engagement,
         "MARR": EventType.Marriage
-        
+
     }
     return gedcom_even_to_evnt.get(even_value,None)

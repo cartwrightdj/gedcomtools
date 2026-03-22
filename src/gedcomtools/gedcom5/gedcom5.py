@@ -249,7 +249,7 @@ class Gedcom5:
         """Always returns ``[]`` — GEDCOM 5.x has no SNOTE records."""
         return []
 
-    def get_shared_note(self, xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
+    def get_shared_note(self, _xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
         """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
         return None
 

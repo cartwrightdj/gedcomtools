@@ -1,40 +1,30 @@
 from __future__ import annotations
-"""
-======================================================================
- Project: gedcomtools
- File:    glog.py
- Author:  David J. Cartwright
- Purpose: Unified loguru-based logging for all gedcomtools modules
-
- Created: 2026-03-17
- Updated:
-
-======================================================================
-"""
-"""
-Unified logging module backed by loguru.
-
-All modules obtain a logger with::
-
-    from gedcomtools.glog import get_logger
-    log = get_logger(__name__)
-
-Entrypoint setup (call once from CLI / main)::
-
-    from gedcomtools.glog import setup_logging
-    setup_logging("gedcomtools", console=True, files=False)
-
-Channel context (route records to a named sink)::
-
-    with hub.use("serialization"):
-        log.debug("goes to the serialization sink")
-
-Environment overrides:
-    LOG_LEVEL           file + common handler level (e.g. DEBUG, INFO)
-    LOG_CONSOLE_LEVEL   console handler level
-    LOG_FILES           truthy (1/true/yes/on) enables file logging
-    LOG_DIR             overrides base_dir
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    glog.py
+#  Author:  David J. Cartwright
+#  Purpose: Unified loguru-based logging for all gedcomtools modules
+#  Created: 2026-03-17
+# ======================================================================
+# Unified logging module backed by loguru.
+#
+# All modules obtain a logger with:
+#     from gedcomtools.glog import get_logger
+#     log = get_logger(__name__)
+#
+# Entrypoint setup (call once from CLI / main):
+#     from gedcomtools.glog import setup_logging
+#     setup_logging("gedcomtools", console=True, files=False)
+#
+# Channel context (route records to a named sink):
+#     with hub.use("serialization"):
+#         log.debug("goes to the serialization sink")
+#
+# Environment overrides:
+#     LOG_LEVEL           file + common handler level (e.g. DEBUG, INFO)
+#     LOG_CONSOLE_LEVEL   console handler level
+#     LOG_FILES           truthy (1/true/yes/on) enables file logging
+#     LOG_DIR             overrides base_dir
 
 import logging as _stdlib_logging
 import os
@@ -355,12 +345,12 @@ class LoggingHub:
         channel_name = cfg.name
         lvl = _stdlib_logging.getLevelName(cfg.level)
 
-        kwargs: dict = dict(
-            format=_SINK_FMT,
-            level=lvl,
-            encoding="utf-8",
-            filter=lambda r, ch=channel_name: r["extra"].get("channel") == ch,
-        )
+        kwargs: dict = {
+            "format": _SINK_FMT,
+            "level": lvl,
+            "encoding": "utf-8",
+            "filter": lambda r, ch=channel_name: r["extra"].get("channel") == ch,
+        }
         if rotation is not None:
             kwargs["rotation"] = rotation
         if retention is not None:
@@ -468,7 +458,7 @@ def setup_logging(
     Returns:
         LoggingManager: the newly activated manager.
     """
-    global _manager
+    global _manager  # pylint: disable=global-statement
 
     # env overrides
     env_debug         = _env_truthy("GEDCOMTOOLS_DEBUG")

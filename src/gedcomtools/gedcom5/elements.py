@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/elements.py
- Author:  David J. Cartwright
- Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records
-
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/elements.py
+#  Author:  David J. Cartwright
+#  Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records
+#  Created: 2026-01-01
+# ======================================================================
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -38,9 +33,7 @@ from __future__ import annotations
 # Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html
 
 import re as regex
-"""
-Base GEDCOM element
-"""
+# Base GEDCOM element
 
 from sys import version_info
 from gedcomtools.gedcom5.helpers import deprecated
@@ -69,7 +62,7 @@ from .tags import (
     GEDCOM_TAG_SURNAME,
 )
 
-class Element(object):
+class Element:
     """GEDCOM element
 
     Each line in a GEDCOM file is an element with the format
@@ -119,14 +112,14 @@ class Element(object):
     @property
     def parent(self):
         return self.__parent
-    
+
     @property
     def level(self) -> int:
         """Returns the level of this element from within the GEDCOM file
         :rtype: int
         """
         return self.__level
-    
+
     @level.setter
     def level(self, level):
         self.__level = level
@@ -259,17 +252,18 @@ class Element(object):
 
     def __getitem__(self,item):
         return self.sub_record(item)
-    
+
     def sub_record(self, tag: str):
         for r in self.__children:
-            if r.tag == tag: return r
+            if r.tag == tag:
+                return r
         return None
-    
+
     def sub_records(self, tag: str | None = None):
         if tag is None:
             return self.__children
         return [r for r in self.__children if r.tag == tag]
-    
+
     def get_child_elements(self):
         """Returns the direct child elements of this element
         :rtype: list of Element
@@ -284,7 +278,7 @@ class Element(object):
         :type value: str
         :rtype: Element
         """
-        
+
         # Differentiate between the type of the new child element
         if tag == GEDCOM_TAG_FAMILY:
             child_element = FamilyRecord(self.level + 1, pointer, tag, value, self.__crlf)
@@ -351,7 +345,7 @@ class Element(object):
         if self.get_value() != "":
             result += ' ' + self.get_value()
 
-        
+
 
         if self.level < 0:
             result = ''
@@ -374,7 +368,7 @@ class RootElement(Element):
     """Virtual GEDCOM root element containing all logical records as children"""
 
     def __init__(self, level=-1, pointer="", tag="ROOT", value="", crlf="\n", multi_line=True):
-        super(RootElement, self).__init__(level, pointer, tag, value, crlf, multi_line)
+        super().__init__(level, pointer, tag, value, crlf, multi_line)
 
 class HeaderRecord(Element):
     pass
@@ -481,7 +475,7 @@ class IndividualRecord(Element):
         :type surname_to_match: str
         :rtype: bool
         """
-        (given_name, surname) = self.get_name()
+        (_given_name, surname) = self.get_name()
         return bool(regex.search(surname_to_match, surname, regex.IGNORECASE))
 
     @deprecated
@@ -498,7 +492,7 @@ class IndividualRecord(Element):
         :type given_name_to_match: str
         :rtype: bool
         """
-        (given_name, surname) = self.get_name()
+        (given_name, _surname) = self.get_name()
         return bool(regex.search(given_name_to_match, given_name, regex.IGNORECASE))
 
     def get_gender(self):
@@ -831,7 +825,7 @@ class IndividualRecord(Element):
             parts.append(f"Occupation: {occupation}")
 
         return "; ".join(parts)
-    
+
 class ObjectRecord(Element):
 
     def is_object(self):
@@ -845,4 +839,3 @@ class RepositoryRecord(Element):
 
 class SourceRecord(Element):
     pass
-

@@ -10,11 +10,11 @@
 
 ======================================================================
 """
-from typing import Dict, Any
+from typing import Dict
 
+from gedcomtools.glog import get_logger
 from .gedcomx import GedcomX
 from .fact import FactType
-from gedcomtools.glog import setup_logging, get_logger, LoggerSpec
 log = get_logger(__name__)
 
 def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:

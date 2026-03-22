@@ -66,13 +66,12 @@ def _sniff_source_type(path: Path) -> str:
                         vers = line.split(None, 2)[2] if len(line.split(None, 2)) > 2 else ""
                         if vers.startswith("7"):
                             return "g7"
-                        else:
-                            return "g5"
+                        return "g5"
                     # Stop after HEAD block (level 0 record other than HEAD means no VERS found)
                     if line.startswith("0 ") and "HEAD" not in line:
                         break
         except OSError as e:
-            raise ValueError(f"Cannot read file: {e}")
+            raise ValueError(f"Cannot read file: {e}") from e
         # No VERS found — fall back on extension, assume G5
         if suffix in (".ged", ".gedcom"):
             return "g5"
@@ -103,11 +102,11 @@ def _load_gx(path: Path):
     from gedcomtools.gedcomx.gedcomx import GedcomX
     from gedcomtools.gedcomx.serialization import Serialization
     try:
-        import orjson
+        import orjson  # pylint: disable=redefined-outer-name
         with open(path, "rb") as f:
             data = orjson.loads(f.read())
     except ImportError:
-        import json
+        import json  # pylint: disable=redefined-outer-name
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
     if not isinstance(data, dict):
@@ -124,7 +123,7 @@ def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print(f"Converting to GedcomX ...")
+    print("Converting to GedcomX ...")
     try:
         conv = GedcomConverter()
         gx = conv.Gedcom5x_GedcomX(g5)

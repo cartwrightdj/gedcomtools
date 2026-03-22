@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field, PrivateAttr
 
@@ -14,7 +14,7 @@ from .source_reference import SourceReference
 from .uri import URI
 
 if TYPE_CHECKING:
-    from .document import Document
+    pass
 
 
 # ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ class ConfidenceLevel(Qualifier):
     }
 
     @classmethod
-    def from_json(cls, data: Any, context: Any = None) -> Optional["ConfidenceLevel"]:
+    def from_json(cls, data: Any, _context: Any = None) -> Optional["ConfidenceLevel"]:
         if data is None:
             return None
         if isinstance(data, cls):

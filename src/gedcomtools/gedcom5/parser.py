@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/parser.py
- Author:  David J. Cartwright
- Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
-
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/parser.py
+#  Author:  David J. Cartwright
+#  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
+#  Created: 2026-01-01
+# ======================================================================
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -34,85 +29,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-GEDCOM 5.x file parser — builds a typed element tree from a .ged file.
-
-All high-level analysis lives in :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5`.
-This module is the raw parsing engine only.
-
-Changes from the original python-gedcom source
------------------------------------------------
-
-**Module / file**
-
-* Renamed from ``gedcom5x.py`` (which was itself a rename of the original
-  ``parser.py`` from python-gedcom) to ``parser.py`` inside the ``gedcom5``
-  sub-package.  The class retains the name ``Gedcom5x`` to distinguish it from
-  the high-level :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade.
-
-**Dead code removed**
-
-The following methods were present in the original but are entirely superseded
-by the :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade and were never
-called from outside it.  All have been deleted:
-
-* ``get_marriages()``
-* ``get_marriage_years()``
-* ``marriage_year_match()``
-* ``marriage_range_match()``
-* ``get_families()``
-* ``get_ancestors()``
-* ``get_parents()``
-* ``find_path_to_ancestor()``
-* ``get_family_members()``
-* ``describe_individual()``
-* ``zero_records`` (property)
-* ``records`` (property)
-* ``__build_list()`` (private helper for the above)
-* Module-level ``FAMILY_MEMBERS_TYPE_*`` constants (only used by the removed
-  methods)
-
-**Dead ``__init__`` state removed**
-
-* ``self.__notes`` — GEDCOM 5 has no top-level NOTE records; the list was
-  allocated and never populated.
-* ``self.__element_dictionary`` — caching dict replaced by the on-demand
-  ``get_element_dictionary()`` method.
-
-**Dead ``parse()`` variable removed**
-
-* ``last_element`` — assigned on every iteration but never read.
-
-**Unused imports removed**
-
-* ``Iterator``, ``Iterable``, ``Tuple``, ``Any`` from ``typing``
-* ``version_info`` from ``sys``
-
-**Python 2 compatibility shim removed from ``save_gedcom()``**
-
-The original used ``isinstance(open_file, io.IOBase)`` to decide whether to
-call ``.write()`` or ``sys.stdout.write()``.  The project requires Python ≥
-3.10; the shim was removed and ``save_gedcom()`` now always calls
-``open_file.write()``.
-
-**Bug fixes**
-
-* ``__parse_line()`` — CONC fallback path set ``pointer = None``; storing
-  ``None`` as an element xref later caused a ``TypeError`` in
-  ``to_gedcom_string()``.  Fixed: ``pointer = ""``.
-
-* ``get_element_dictionary()`` — xref keys are now normalised via
-  ``_normalize_xref()`` so that lookups are case-insensitive (e.g. ``@I1@``
-  and ``@i1@`` resolve to the same record).
-
-* Pedigree comparison in the removed ``get_family_members()`` — right-hand
-  side of ``_normalize_xref(fm.value) == individual.xref`` was not normalised,
-  meaning a case mismatch silently skipped the pedigree check.  Fixed in the
-  facade; the raw method was deleted.
-"""
+# GEDCOM 5.x file parser — builds a typed element tree from a .ged file.
+#
+# All high-level analysis lives in Gedcom5.
+# This module is the raw parsing engine only.
 
 import re as regex
-from typing import List, Optional, Union
+from typing import List, Union
 
 from .elements import (
     Element, FamilyRecord, FileElement, HeaderRecord,

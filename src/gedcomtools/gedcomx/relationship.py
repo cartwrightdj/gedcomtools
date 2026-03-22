@@ -1,19 +1,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel
-from .evidence_reference import EvidenceReference
 from .fact import Fact
-from .gx_base import GedcomXModel
-from .identifier import IdentifierList
-from .note import Note
 from .resource import Resource
-from .source_reference import SourceReference
 from .subject import Subject
 
 if TYPE_CHECKING:

@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import ClassVar, List, Optional
+from typing import ClassVar, Optional
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel, Conclusion
-from .gx_base import GedcomXModel
-from .note import Note
-from .resource import Resource
-from .source_reference import SourceReference
+from .conclusion import Conclusion
 
 
 class GenderType(Enum):

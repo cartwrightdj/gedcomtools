@@ -90,7 +90,7 @@ class IdentifierList:
     # ---- pydantic integration -------------------------------------------
 
     @classmethod
-    def __get_pydantic_core_schema__(cls, source_type: Any, handler: Any) -> Any:
+    def __get_pydantic_core_schema__(cls, _source_type: Any, _handler: Any) -> Any:
         from pydantic_core import core_schema
 
         def validate(v: Any) -> "IdentifierList":
@@ -219,7 +219,7 @@ class IdentifierList:
         return out if out else None
 
     @classmethod
-    def from_json(cls, data: Any, context: Any = None) -> "IdentifierList":
+    def from_json(cls, data: Any, _context: Any = None) -> "IdentifierList":
         if not isinstance(data, dict):
             raise ValueError("Data must be a dict of identifiers.")
         identifier_list = cls()

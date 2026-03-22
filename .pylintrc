@@ -1,0 +1,78 @@
+[MASTER]
+# Ignore the broken example extension module and compiled artefacts
+ignore=mod12.7.2025.py,__pycache__
+ignore-paths=src/gedcomtools/gedcomx/extensions/module
+
+[MESSAGES CONTROL]
+disable=
+    # ── False positives ──────────────────────────────────────────────────
+    # orjson is a C extension; pydantic FieldInfo looks like a list at
+    # runtime; IdentifierType members are registered dynamically.
+    no-member,
+
+    # Circular imports are expected in the GedcomX model layer — all models
+    # use `from __future__ import annotations` so there is no runtime cycle.
+    cyclic-import,
+
+    # ── Docstrings — not required on every internal helper ───────────────
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+
+    # ── Naming — intentional single-char type vars, math vars, etc. ──────
+    invalid-name,
+
+    # ── Complexity metrics — parsers and converters are legitimately long ─
+    too-many-branches,
+    too-many-statements,
+    too-many-locals,
+    too-many-instance-attributes,
+    too-many-public-methods,
+    too-many-arguments,
+    too-many-return-statements,
+    too-few-public-methods,
+
+    # ── Protected access — internal APIs intentionally accessed ──────────
+    protected-access,
+
+    # ── Broad except — parsers use bare Exception as a safety net ────────
+    broad-exception-caught,
+    broad-exception-raised,
+
+    # ── Lazy / deferred imports — intentional to break import cycles ─────
+    wrong-import-position,
+    import-outside-toplevel,
+
+    # ── Line length — handled by project style (120 chars) ───────────────
+    line-too-long,
+
+    # ── Structural / architectural — not worth forcing now ───────────────
+    too-many-nested-blocks,
+    too-many-positional-arguments,
+    duplicate-code,
+    too-many-lines,
+    arguments-differ,
+
+    # ── Informational only ───────────────────────────────────────────────
+    fixme,
+
+    # ── Optional dependencies (colorama, networkx) caught in try/except ──
+    import-error,
+
+    # ── Pydantic v2 model_fields ClassVar / metaclass patterns ───────────
+    unsupported-membership-test,
+    not-an-iterable,
+    not-callable,
+    bad-super-call,
+
+[FORMAT]
+max-line-length=120
+
+[DESIGN]
+max-args=10
+max-attributes=20
+max-bool-expr=8
+max-branches=15
+max-locals=20
+max-returns=8
+max-statements=60

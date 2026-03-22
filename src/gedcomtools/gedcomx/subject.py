@@ -4,14 +4,10 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel, Conclusion
+from .conclusion import Conclusion
 from .evidence_reference import EvidenceReference
 from .identifier import Identifier, IdentifierList
-from .note import Note
-from .resource import Resource
 from .source_reference import SourceReference
-from .uri import URI
 from ..glog import get_logger
 
 log = get_logger(__name__)

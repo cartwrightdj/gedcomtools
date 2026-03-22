@@ -10,14 +10,13 @@
 
 ======================================================================
 """
+import json
+from pathlib import Path
 from typing import Any, Iterable, Sequence, get_origin
+
+from gedcomtools.glog import get_logger
 from .schemas import SCHEMA   # adjust as needed
 from .serialization import Serialization
-from pathlib import Path
-import json
-
-
-from gedcomtools.glog import setup_logging, get_logger 
 log = get_logger(__name__)
 
 def _is_collection_type(tp: Any) -> bool:
@@ -105,12 +104,12 @@ def objects_to_schema_table(
         table_rows.append(row)
 
     # Column headers
-    headers = [name for name in field_names]
+    headers = list(field_names)
 
     # Compute column widths
     col_widths = []
-    for col_idx in range(len(headers)):
-        col_vals = [headers[col_idx]] + [r[col_idx] for r in table_rows]
+    for col_idx, header in enumerate(headers):
+        col_vals = [header] + [r[col_idx] for r in table_rows]
         col_widths.append(max(len(str(v)) for v in col_vals))
 
     def fmt_row(vals: list[str]) -> str:

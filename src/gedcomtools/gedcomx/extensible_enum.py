@@ -1,20 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Literal
-
-"""
-======================================================================
- Project: Gedcom-X
- File:    ExtensibleEnum.py
- Author:  David J. Cartwright
- Purpose: Create a class that can act like an enum but be extended by the user at runtime.
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-22: added ability to assign members normaly w/o register
-   
-======================================================================
-"""
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    ExtensibleEnum.py
+#  Author:  David J. Cartwright
+#  Purpose: Create a class that can act like an enum but be extended at runtime.
+#  Created: 2025-08-25
+# ======================================================================
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,7 +66,7 @@ class _ExtEnumMeta(type):
 
         # Otherwise treat as member registration via assignment
         # (no uppercase requirement; any valid identifier works)
-        item = cls.register(name, value)  # type: ignore[attr-defined]  # register will set the attribute (to _EnumItem)
+        _item = cls.register(name, value)  # type: ignore[attr-defined]  # register will set the attribute (to _EnumItem)
         # Avoid double-setting here; register() already installed the attribute.
         return None
 

@@ -148,7 +148,7 @@ class GedcomXModel(BaseModel):
     # Validation API
     # ------------------------------------------------------------------
 
-    def validate(self, _visited: Optional[set] = None) -> ValidationResult:
+    def validate(self, _visited: Optional[set] = None) -> ValidationResult:  # pylint: disable=arguments-renamed
         """Recursively validate this model and all nested GedcomXModel children.
 
         Returns a :class:`ValidationResult` containing errors and warnings.

@@ -19,7 +19,7 @@ from .textvalue import TextValue
 from .uri import URI
 
 if TYPE_CHECKING:
-    from .document import Document
+    pass
 
 
 class ResourceType(Enum):
