@@ -20,11 +20,14 @@ from __future__ import annotations
 #     with hub.use("serialization"):
 #         log.debug("goes to the serialization sink")
 #
-# Environment overrides:
-#     LOG_LEVEL           file + common handler level (e.g. DEBUG, INFO)
-#     LOG_CONSOLE_LEVEL   console handler level
-#     LOG_FILES           truthy (1/true/yes/on) enables file logging
-#     LOG_DIR             overrides base_dir
+# Environment variables (set in .env or shell — take effect on import):
+#     LOG_LEVEL           level for all sinks (e.g. DEBUG, INFO, WARNING, ERROR)
+#     LOG_CONSOLE_LEVEL   overrides LOG_LEVEL for the console sink only
+#     LOG_CONSOLE         truthy (1/true/yes/on) = enable console; falsy = disable
+#     LOG_FILES           truthy (1/true/yes/on) enables per-run file logging
+#     LOG_FILE            path to a single log file (alternative to LOG_FILES/LOG_DIR)
+#     LOG_DIR             base directory for per-run file logging
+#     GEDCOMTOOLS_DEBUG   shortcut: sets level=DEBUG, enables console + file
 
 import logging as _stdlib_logging
 import os
@@ -464,7 +467,9 @@ def setup_logging(
     env_debug         = _env_truthy("GEDCOMTOOLS_DEBUG")
     env_level         = os.getenv("LOG_LEVEL", "").strip().upper()
     env_console_level = os.getenv("LOG_CONSOLE_LEVEL", "").strip().upper()
+    env_console_raw   = os.getenv("LOG_CONSOLE", "").strip().lower()
     env_files         = _env_truthy("LOG_FILES")
+    env_file          = os.getenv("LOG_FILE", "").strip()
     env_dir           = os.getenv("LOG_DIR", "").strip()
 
     if env_debug:
@@ -474,8 +479,14 @@ def setup_logging(
 
     eff_level         = _to_level(env_level or common_level)
     eff_console_level = _to_level(env_console_level or console_level)
-    eff_files         = files or env_files
+    eff_files         = files or env_files or bool(env_file)
     eff_base_dir      = Path(env_dir) if env_dir else base_dir
+
+    # LOG_CONSOLE explicitly set overrides the caller's console arg
+    if env_console_raw in {"1", "true", "yes", "y", "on"}:
+        console = True
+    elif env_console_raw in {"0", "false", "no", "n", "off"}:
+        console = False
 
     # tear down previous configuration
     if _manager is not None:
@@ -504,18 +515,32 @@ def setup_logging(
 
     run_dir: Optional[Path] = None
     if eff_files:
-        run_dir = eff_base_dir / f"run-{_new_run_id()}"
-        run_dir.mkdir(parents=True, exist_ok=True)
+        if env_file:
+            # LOG_FILE: single named file, no run-subdirectory
+            log_path = Path(env_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            sid = _logger.add(
+                str(log_path),
+                format=_FILE_FMT,
+                level=eff_level,
+                rotation=rotation_max_bytes,
+                retention=rotation_backup_count,
+                encoding="utf-8",
+            )
+            sink_ids.append(sid)
+        else:
+            run_dir = eff_base_dir / f"run-{_new_run_id()}"
+            run_dir.mkdir(parents=True, exist_ok=True)
 
-        sid = _logger.add(
-            str(run_dir / common_filename),
-            format=_FILE_FMT,
-            level=eff_level,
-            rotation=rotation_max_bytes,
-            retention=rotation_backup_count,
-            encoding="utf-8",
-        )
-        sink_ids.append(sid)
+            sid = _logger.add(
+                str(run_dir / common_filename),
+                format=_FILE_FMT,
+                level=eff_level,
+                rotation=rotation_max_bytes,
+                retention=rotation_backup_count,
+                encoding="utf-8",
+            )
+            sink_ids.append(sid)
 
         for spec in sublogs:
             if spec.filename:
@@ -582,3 +607,46 @@ def log_failure(
         log.error(f"{final}: {exc}")
     else:
         log.error(final)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auto-configure on import
+# ─────────────────────────────────────────────────────────────────────────────
+# Apply env-var configuration as soon as this module is imported so that
+# LOG_LEVEL / LOG_CONSOLE / LOG_FILE etc. take effect without the caller
+# needing to explicitly invoke setup_logging().
+#
+# Only runs when no manager has been set up yet (i.e. the CLI hasn't already
+# called setup_logging() before import).  The default is INFO on console only
+# — set LOG_LEVEL=WARNING to silence routine conversion chatter.
+
+def _auto_configure() -> None:
+    global _manager  # pylint: disable=global-statement
+    if _manager is not None:
+        return  # already configured by an explicit setup_logging() call
+
+    has_any_env = any([
+        os.getenv("LOG_LEVEL"),
+        os.getenv("LOG_CONSOLE_LEVEL"),
+        os.getenv("LOG_CONSOLE"),
+        os.getenv("LOG_FILES"),
+        os.getenv("LOG_FILE"),
+        os.getenv("LOG_DIR"),
+        os.getenv("GEDCOMTOOLS_DEBUG"),
+    ])
+
+    if not has_any_env:
+        # Nothing set — leave loguru's default stderr handler alone so we
+        # don't produce unexpected output in libraries and test runs.
+        return
+
+    setup_logging(
+        app_name="gedcomtools",
+        console=True,
+        files=False,
+        common_level=os.getenv("LOG_LEVEL", "INFO").strip().upper(),
+        console_level=os.getenv("LOG_LEVEL", "INFO").strip().upper(),
+    )
+
+
+_auto_configure()

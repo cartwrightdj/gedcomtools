@@ -51,6 +51,202 @@ from gedcomtools.gedcom7.structure import GedcomStructure
 
 _POINTER_RE = re.compile(r"^@[^@\s]+@$")
 
+# Matches ISO-style year ranges that FTM and similar apps write:
+#   YYYY-YYYY  →  BET YYYY AND YYYY
+#   YYYY-      →  FROM YYYY
+#   -YYYY      →  TO YYYY
+_ISO_RANGE_RE = re.compile(r"^(\d{3,4})?-(\d{3,4})?$")
+
+# Full English month name / variant abbreviation / German name → GEDCOM 3-letter abbreviation
+_MONTH_MAP: Dict[str, str] = {
+    # Full English names
+    "january": "JAN", "february": "FEB", "march":    "MAR",
+    "april":   "APR", "may":      "MAY", "june":     "JUN",
+    "july":    "JUL", "august":   "AUG", "september":"SEP",
+    "october": "OCT", "november": "NOV", "december": "DEC",
+    # Common English variant abbreviations (incl. period-stripped forms)
+    "jan": "JAN", "feb": "FEB", "mar": "MAR", "apr": "APR",
+    "jun": "JUN", "jul": "JUL", "aug": "AUG",
+    "sept": "SEP", "sep": "SEP",
+    "oct": "OCT", "nov": "NOV", "dec": "DEC",
+    # German month names (common in German genealogy software exports)
+    "januar": "JAN", "februar": "FEB", "märz": "MAR", "marz": "MAR",
+    "mai":    "MAY", "juni":    "JUN", "juli": "JUL",
+    "oktober":"OCT", "dezember":"DEC", "dez":  "DEC",
+}
+
+# ISO full date  YYYY-MM-DD
+_ISO_DATE_RE = re.compile(r"^(\d{3,4})-(\d{2})-(\d{2})$")
+
+# US slash date  MM/DD/YYYY  or  M/D/YYYY
+_US_SLASH_RE = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{3,4})$")
+
+# Dual year appended as range:  14 Feb 1744-1745  → 14 FEB 1744/45
+_DUAL_YEAR_RE = re.compile(r"^(.+\s)(\d{3,4})-(\d{2,4})$")
+
+# Parenthetical alternative year:  "16 March 1720 (1721)"  → strip it
+_PAREN_YEAR_RE = re.compile(r"\s*\(\d{3,4}\)\s*$")
+
+# Numeric month → abbreviation
+_MONTH_NUM: Dict[str, str] = {
+    "01":"JAN","02":"FEB","03":"MAR","04":"APR","05":"MAY","06":"JUN",
+    "07":"JUL","08":"AUG","09":"SEP","10":"OCT","11":"NOV","12":"DEC",
+    "1":"JAN","2":"FEB","3":"MAR","4":"APR","5":"MAY","6":"JUN",
+    "7":"JUL","8":"AUG","9":"SEP",
+}
+
+# US-style "Mon DD YYYY"  e.g. "Mar 13 1816"
+_US_ABBR_MDY_RE = re.compile(r"^([^\W\d_]+)\s+(\d{1,2})\s+(\d{3,4})$", re.UNICODE)
+
+# Dash-separated US date  M-D-YYYY  e.g. "8-20-1732"
+_US_DASH_RE = re.compile(r"^(\d{1,2})-(\d{1,2})-(\d{3,4})$")
+
+# Dual year with spaces around slash  "15 Jan 1717 / 18" → "15 JAN 1717/18"
+_SPACED_DUAL_RE = re.compile(r"^(.+)\s+(\d{3,4})\s*/\s*(\d{2,4})$")
+
+# Parenthetical suffix of any short number  e.g. "(51)"  — strip it
+_PAREN_NUM_RE = re.compile(r"\s*\(\d{1,4}\)\s*$")
+
+# English date qualifiers → GEDCOM equivalents
+_QUALIFIER_MAP: Dict[str, str] = {
+    "before": "BEF", "after": "AFT", "about": "ABT",
+    "circa":  "ABT", "ca":    "ABT", "c.":    "ABT",
+    "abt":    "ABT", "bef":   "BEF", "aft":   "AFT",
+}
+
+# Strip leading day-of-week:  "Wednesday, January 19, 1921" → "January 19, 1921"
+_DOW_RE = re.compile(
+    r"^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*",
+    re.IGNORECASE,
+)
+
+# Full-month date patterns after DOW stripping.
+# Use \w to match Unicode month names (e.g. German "März").
+_FULL_MONTH_DMY_RE = re.compile(
+    r"^(\d{1,2})\s+([^\W\d_]+)\s+(\d{3,4})$", re.UNICODE
+)
+_FULL_MONTH_MDY_RE = re.compile(
+    r"^([^\W\d_]+)\s+(\d{1,2}),?\s+(\d{3,4})$", re.UNICODE
+)
+_FULL_MONTH_MY_RE = re.compile(
+    r"^([^\W\d_]+)\s+(\d{3,4})$", re.UNICODE
+)
+
+
+def _normalize_date(value: str) -> str:
+    """Convert non-standard date strings to GEDCOM date grammar where possible.
+
+    Handles:
+    * ISO year ranges:           ``1999-2017``        →  ``BET 1999 AND 2017``
+    * ISO full date:             ``1891-05-18``        →  ``18 MAY 1891``
+    * US slash date:             ``04/15/1966``        →  ``15 APR 1966``
+    * Full English month names:  ``1 June 1915``       →  ``1 JUN 1915``
+    * Month-day-year US format:  ``June 1, 1915``      →  ``1 JUN 1915``
+    * US abbrev month-day-year:  ``Mar 13 1816``       →  ``13 MAR 1816``
+    * Month-year:                ``November 1726``     →  ``NOV 1726``
+    * Dual year suffix:          ``14 Feb 1744-1745``  →  ``14 FEB 1744/45``
+    * Parenthetical year:        ``16 March 1720 (1721)`` →  ``16 MAR 1720``
+    * English qualifiers:        ``Before 1951``       →  ``BEF 1951``
+    * Day-of-week prefix:        ``Wednesday, January 19, 1921``  →  ``19 JAN 1921``
+
+    All other values are returned unchanged.
+    """
+    v = value.strip()
+
+    # 1. ISO year range  YYYY-YYYY / YYYY- / -YYYY
+    m = _ISO_RANGE_RE.match(v)
+    if m:
+        start, end = m.group(1), m.group(2)
+        if start and end:
+            return f"BET {start} AND {end}"
+        if start:
+            return f"FROM {start}"
+        if end:
+            return f"TO {end}"
+
+    # 2. ISO full date  YYYY-MM-DD
+    m = _ISO_DATE_RE.match(v)
+    if m:
+        abbr = _MONTH_NUM.get(m.group(2))
+        if abbr:
+            return f"{int(m.group(3))} {abbr} {m.group(1)}"
+
+    # 3. US slash date  MM/DD/YYYY
+    m = _US_SLASH_RE.match(v)
+    if m:
+        abbr = _MONTH_NUM.get(m.group(1))
+        if abbr:
+            return f"{int(m.group(2))} {abbr} {m.group(3)}"
+
+    # 4. US dash date  M-D-YYYY  (must be checked before ISO range)
+    m = _US_DASH_RE.match(v)
+    if m:
+        abbr = _MONTH_NUM.get(m.group(1))
+        if abbr:
+            return f"{int(m.group(2))} {abbr} {m.group(3)}"
+
+    # 5. Strip leading day-of-week
+    v = _DOW_RE.sub("", v)
+
+    # 6. Strip period from month abbreviations  "Oct. 25, 1782" → "Oct 25, 1782"
+    v = re.sub(r"\b([A-Za-z]{3,4})\.", r"\1", v)
+
+    # 7. Strip parenthetical suffix (alternative year or age)  "(1721)" / "(51)"
+    v = _PAREN_NUM_RE.sub("", v)
+
+    # 8. Spaced dual year  "15 Jan 1717 / 18"  →  "15 JAN 1717/18"
+    m = _SPACED_DUAL_RE.match(v)
+    if m:
+        rest = _normalize_date(f"{m.group(1)} {m.group(2)}")
+        short = m.group(3)[-2:]
+        return f"{rest}/{short}"
+
+    # 9. English qualifier prefix (Before/After/About …)
+    words = v.split(None, 1)
+    if len(words) == 2 and words[0].rstrip(".").lower() in _QUALIFIER_MAP:
+        qual = _QUALIFIER_MAP[words[0].rstrip(".").lower()]
+        rest = _normalize_date(words[1])  # recurse to normalise the date part
+        return f"{qual} {rest}"
+
+    # 10. Dual year appended as range  "14 Feb 1744-1745" → "14 FEB 1744/45"
+    m = _DUAL_YEAR_RE.match(v)
+    if m:
+        prefix, y1, y2 = m.group(1), m.group(2), m.group(3)
+        short = y2[-2:]
+        rest = _normalize_date(f"{prefix}{y1}")
+        return f"{rest}/{short}"
+
+    # 11. Full/abbrev month name — D MONTH YYYY
+    m2 = _FULL_MONTH_DMY_RE.match(v)
+    if m2:
+        abbr = _MONTH_MAP.get(m2.group(2).lower())
+        if abbr:
+            return f"{m2.group(1)} {abbr} {m2.group(3)}"
+
+    # 12. Full month name — MONTH D, YYYY  (US format)
+    m3 = _FULL_MONTH_MDY_RE.match(v)
+    if m3:
+        abbr = _MONTH_MAP.get(m3.group(1).lower())
+        if abbr:
+            return f"{m3.group(2)} {abbr} {m3.group(3)}"
+
+    # 13. US abbrev month-day-year  "Mar 13 1816"
+    m5 = _US_ABBR_MDY_RE.match(v)
+    if m5:
+        abbr = _MONTH_MAP.get(m5.group(1).lower())
+        if abbr:
+            return f"{m5.group(2)} {abbr} {m5.group(3)}"
+
+    # 14. Full/abbrev month name — MONTH YYYY
+    m4 = _FULL_MONTH_MY_RE.match(v)
+    if m4:
+        abbr = _MONTH_MAP.get(m4.group(1).lower())
+        if abbr:
+            return f"{abbr} {m4.group(2)}"
+
+    return value
+
+
 # Tags whose payload is folded into the parent; they are never emitted as children.
 _FOLD: FrozenSet[str] = frozenset({"CONC", "CONT"})
 
@@ -429,6 +625,10 @@ class Gedcom5to7:
         # Normalise enumeration payloads that G5 sometimes stores in lowercase.
         if tag in _UPPERCASE_PAYLOAD and payload:
             payload = payload.upper()
+
+        # Normalise non-standard date formats (e.g. ISO year ranges) to GEDCOM grammar.
+        if tag == "DATE" and payload:
+            payload = _normalize_date(payload)
 
         is_ptr = bool(payload and _POINTER_RE.match(payload.strip()))
 
