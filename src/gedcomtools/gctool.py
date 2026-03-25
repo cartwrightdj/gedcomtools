@@ -413,7 +413,7 @@ def cmd_show(args) -> int:
                 ("born", born), ("died", died),
                 ("occupation", d.occupation), ("title", d.title),
                 ("religion", d.religion), ("nationality", d.nationality),
-                ("family (child)", ", ".join(d.families_as_child) or None),
+                ("family (child)", ", ".join(lnk.xref for lnk in d.families_as_child) or None),
                 ("family (spouse)", ", ".join(d.families_as_spouse) or None),
                 ("sources", len(d.source_citations) or None),
                 ("notes", len(d.note_texts) or None),
@@ -1854,7 +1854,7 @@ def cmd_export(args) -> int:
                 d.death_year or "",
                 (d.death.place or "") if d.death  else "",
                 d.occupation or "",
-                ";".join(d.families_as_child),
+                ";".join(lnk.xref for lnk in d.families_as_child),
                 ";".join(d.families_as_spouse),
             ])
 

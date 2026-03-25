@@ -7,8 +7,9 @@
  Created: 2026-03-24
 ======================================================================
 """
-import pytest
 from pathlib import Path
+
+import pytest
 from gedcomtools.gedcom7.gedcom7 import Gedcom7
 from gedcomtools.gedcom7.g7togx import Gedcom7Converter
 from gedcomtools.gedcomx.gedcomx import GedcomX
@@ -131,7 +132,6 @@ class TestGender:
 class TestFacts:
     def test_birth_facts_created(self, gx_maximal, g7_maximal):
         from gedcomtools.gedcom7.models import individual_detail
-        from gedcomtools.gedcomx.fact import FactType
         birth_uri = "http://gedcomx.org/Birth"
         for node in g7_maximal.individuals():
             d = individual_detail(node)

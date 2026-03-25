@@ -170,6 +170,20 @@ class SourceCitation:
     quality: Optional[str] = None
 
 
+@dataclass
+class FamcLink:
+    """A FAMC (family-as-child) pointer with optional pedigree qualifier.
+
+    Attributes:
+        xref:     Pointer to the FAM record (e.g. ``"@F1@"``).
+        pedigree: PEDI substructure value — one of ``BIRTH``, ``ADOPTED``,
+                  ``FOSTER``, ``SEALING``, or ``None`` if absent.
+    """
+
+    xref: str
+    pedigree: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Top-level record detail types
 # ---------------------------------------------------------------------------
@@ -197,7 +211,7 @@ class IndividualDetail:
         nationality:       First NATI payload.
         residences:        All RESI events.
         events:            All generic EVEN structures.
-        families_as_child: FAMC pointer values.
+        families_as_child: FAMC links with optional PEDI pedigree qualifier.
         families_as_spouse: FAMS pointer values.
         source_citations:  All SOUR citations on the INDI record itself.
         note_texts:        Inline NOTE payloads (not shared-note pointers).
@@ -222,7 +236,7 @@ class IndividualDetail:
     nationality: Optional[str] = None
     residences: List[EventDetail] = field(default_factory=list)
     events: List[EventDetail] = field(default_factory=list)
-    families_as_child: List[str] = field(default_factory=list)
+    families_as_child: List[FamcLink] = field(default_factory=list)
     families_as_spouse: List[str] = field(default_factory=list)
     source_citations: List[SourceCitation] = field(default_factory=list)
     note_texts: List[str] = field(default_factory=list)
@@ -708,7 +722,18 @@ def individual_detail(node: GedcomStructure) -> IndividualDetail:
         if e is not None
     ]
 
-    detail.families_as_child = _pointers(node, "FAMC")
+    detail.families_as_child = [
+        FamcLink(
+            xref=c.payload,
+            pedigree=(
+                c.first_child("PEDI").payload.strip().upper()
+                if c.first_child("PEDI") and c.first_child("PEDI").payload
+                else None
+            ),
+        )
+        for c in node.get_children("FAMC")
+        if c.payload_is_pointer and c.payload.upper() != "@VOID@"
+    ]
     detail.families_as_spouse = _pointers(node, "FAMS")
 
     detail.source_citations = _source_citations(node)

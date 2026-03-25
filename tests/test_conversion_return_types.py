@@ -11,8 +11,9 @@
  Created: 2026-03-24
 ======================================================================
 """
-import pytest
 from pathlib import Path
+
+import pytest
 
 SAMPLE_DATA  = Path(__file__).parent.parent / ".sample_data"
 GED5_TINY    = SAMPLE_DATA / "gedcom5" / "gedcom5_sample.ged"

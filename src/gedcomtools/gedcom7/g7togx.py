@@ -22,7 +22,14 @@ from ..glog import get_logger
 
 if TYPE_CHECKING:
     from ..gedcom7.gedcom7 import Gedcom7
+    from ..gedcomx.agent import Agent
+    from ..gedcomx.fact import Fact
     from ..gedcomx.gedcomx import GedcomX
+    from ..gedcomx.name import Name
+    from ..gedcomx.person import Person
+    from ..gedcomx.place_description import PlaceDescription
+    from ..gedcomx.place_reference import PlaceReference
+    from ..gedcomx.source_description import SourceDescription
 
 log = get_logger("g7togx")
 
@@ -88,6 +95,14 @@ _SEX_MAP: Dict[str, str] = {
     "U": "http://gedcomx.org/Unknown",
 }
 
+# GEDCOM PEDI value → GedcomX fact type URI for parent-child relationships.
+# BIRTH is the default and needs no annotation.
+_PEDI_FACT_MAP: Dict[str, str] = {
+    "ADOPTED": "http://gedcomx.org/Adoption",
+    "FOSTER":  "http://gedcomx.org/FosterParent",
+    "SEALING": "http://gedcomx.org/SealingChildToParents",
+}
+
 
 # ---------------------------------------------------------------------------
 # Converter
@@ -109,12 +124,20 @@ class Gedcom7Converter:
 
     def __init__(self) -> None:
         # These are populated during Phase 1 (priming)
-        self._person_map: Dict[str, object] = {}          # xref → Person
-        self._source_map: Dict[str, object] = {}          # xref → SourceDescription
-        self._agent_map:  Dict[str, object] = {}          # xref → Agent
-        self._place_cache: Dict[str, object] = {}         # name → PlaceDescription
+        self._person_map: Dict[str, Person] = {}
+        self._source_map: Dict[str, SourceDescription] = {}
+        self._agent_map:  Dict[str, Agent] = {}
+        self._place_cache: Dict[str, PlaceDescription] = {}
         self._unhandled: Dict[str, int] = {}
-        self._gx: Optional[object] = None                 # GedcomX root
+        self._gx: Optional[GedcomX] = None
+        # (fam_xref, child_xref) -> PEDI value; populated in _convert_indi
+        self._pedigree: Dict[tuple, str] = {}
+
+    @property
+    def _root(self) -> GedcomX:
+        """Return the GedcomX root; always non-None after convert() is called."""
+        assert self._gx is not None, "convert() must be called before accessing _root"
+        return self._gx
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -165,7 +188,7 @@ class Gedcom7Converter:
 
     def _prime_sources(self, gedcom7: "Gedcom7") -> None:
         from ..gedcomx.source_description import SourceDescription
-        gx = self._gx
+        gx = self._root
         for node in gedcom7.sources():
             xref = node.xref_id
             if not xref:
@@ -184,7 +207,7 @@ class Gedcom7Converter:
 
     def _prime_agents(self, gedcom7: "Gedcom7") -> None:
         from ..gedcomx.agent import Agent
-        gx = self._gx
+        gx = self._root
         for node in gedcom7.repositories():
             xref = node.xref_id
             if not xref:
@@ -202,7 +225,7 @@ class Gedcom7Converter:
 
     def _prime_persons(self, gedcom7: "Gedcom7") -> None:
         from ..gedcomx.person import Person
-        gx = self._gx
+        gx = self._root
         for node in gedcom7.individuals():
             xref = node.xref_id
             if not xref:
@@ -232,7 +255,7 @@ class Gedcom7Converter:
                 from ..gedcomx.resource import Resource
                 from ..gedcomx.uri import URI
                 attribution.contributor = Resource(resource=URI(fragment=agent.id))
-        self._gx.attribution = attribution
+        self._root.attribution = attribution
 
     def _convert_source(self, d) -> None:
         from ..gedcomx.note import Note
@@ -266,13 +289,13 @@ class Gedcom7Converter:
         if d.name:
             agent.add_name(d.name)
         if d.address:
-            agent.add_address(Address(value=d.address))
+            agent.add_address(Address.model_validate({"value": d.address}))
         if d.phone:
-            agent.phones.append(URI(value=f"tel:{d.phone}"))
+            agent.phones.append(URI.model_validate({"value": f"tel:{d.phone}"}))
         if d.email:
-            agent.emails.append(URI(value=f"mailto:{d.email}"))
+            agent.emails.append(URI.model_validate({"value": f"mailto:{d.email}"}))
         if d.website:
-            agent.homepage = URI(value=d.website)
+            agent.homepage = URI.model_validate({"value": d.website})
 
     def _convert_subm(self, d) -> None:
         from ..gedcomx.address import Address
@@ -283,13 +306,13 @@ class Gedcom7Converter:
         if d.name:
             agent.add_name(d.name)
         if d.address:
-            agent.add_address(Address(value=d.address))
+            agent.add_address(Address.model_validate({"value": d.address}))
         if d.phone:
-            agent.phones.append(URI(value=f"tel:{d.phone}"))
+            agent.phones.append(URI.model_validate({"value": f"tel:{d.phone}"}))
         if d.email:
-            agent.emails.append(URI(value=f"mailto:{d.email}"))
+            agent.emails.append(URI.model_validate({"value": f"mailto:{d.email}"}))
         if d.website:
-            agent.homepage = URI(value=d.website)
+            agent.homepage = URI.model_validate({"value": d.website})
 
     def _convert_media(self, d) -> None:
         sd = self._source_map.get(d.xref)
@@ -299,7 +322,7 @@ class Gedcom7Converter:
             sd.add_title(d.title)
         for filepath, form in d.files:
             from ..gedcomx.uri import URI
-            about = URI(value=filepath)
+            about = URI.model_validate({"value": filepath})
             if sd.about is None:
                 sd.about = about
             if form:
@@ -326,7 +349,7 @@ class Gedcom7Converter:
         if d.text:
             sd.add_note(Note(text=d.text))
         self._source_map[d.xref] = sd
-        self._gx.add_source_description(sd)
+        self._root.add_source_description(sd)
 
     def _convert_indi(self, d) -> None:
         person = self._person_map.get(d.xref)
@@ -390,6 +413,11 @@ class Gedcom7Converter:
         # Record-level source citations
         self._attach_source_refs(person, d.source_citations)
 
+        # Record PEDI values so _convert_fam can attach them to relationships
+        for link in d.families_as_child:
+            if link.pedigree and link.pedigree != "BIRTH":
+                self._pedigree[(link.xref, d.xref)] = link.pedigree
+
     def _convert_fam(self, d) -> None:
         from ..gedcomx.relationship import Relationship, RelationshipType
         from ..gedcomx.resource import Resource
@@ -420,7 +448,7 @@ class Gedcom7Converter:
                 if fact:
                     couple_rel.add_fact(fact)
             self._attach_source_refs(couple_rel, d.source_citations)
-            self._gx.add_relationship(couple_rel)
+            self._root.add_relationship(couple_rel)
 
         # Parent-child relationships
         parents = [p for p in (husb, wife) if p is not None]
@@ -435,13 +463,18 @@ class Gedcom7Converter:
                     person1=Resource(resource=URI(fragment=parent.id)),
                     person2=Resource(resource=URI(fragment=child.id)),
                 )
-                self._gx.add_relationship(pc_rel)
+                pedi = self._pedigree.get((d.xref, child_xref))
+                if pedi:
+                    pedi_fact = self._build_pedigree_fact(pedi)
+                    if pedi_fact:
+                        pc_rel.add_fact(pedi_fact)
+                self._root.add_relationship(pc_rel)
 
     # ------------------------------------------------------------------
     # Building helpers
     # ------------------------------------------------------------------
 
-    def _build_name(self, nd) -> object:
+    def _build_name(self, nd) -> Name:
         """Build a GedcomX :class:`Name` from a :class:`NameDetail`."""
         from ..gedcomx.name import Name, NameForm, NamePart, NameType, NamePartType
 
@@ -485,7 +518,16 @@ class Gedcom7Converter:
 
         return Name(type=name_type, nameForms=name_forms)
 
-    def _build_fact(self, tag: str, event) -> Optional[object]:
+    def _build_pedigree_fact(self, pedi: str) -> "Optional[Fact]":
+        """Return a :class:`Fact` encoding a non-birth PEDI value, or ``None``."""
+        from ..gedcomx.fact import Fact, FactType
+        uri = _PEDI_FACT_MAP.get(pedi)
+        if uri is None:
+            self._note_unhandled(f"PEDI:{pedi}")
+            return None
+        return Fact(type=FactType.from_value(uri))
+
+    def _build_fact(self, tag: str, event) -> Optional[Fact]:
         """Build a GedcomX :class:`Fact` from an :class:`EventDetail`.
 
         Args:
@@ -528,10 +570,14 @@ class Gedcom7Converter:
             from ..gedcomx.note import Note
             fact.add_note(Note(text=event.note))
 
+        if event.agency:
+            from ..gedcomx.note import Note
+            fact.add_note(Note(text=f"Agency: {event.agency}"))
+
         self._attach_source_refs(fact, event.sources)
         return fact
 
-    def _make_place_reference(self, place_name: str) -> object:
+    def _make_place_reference(self, place_name: str) -> PlaceReference:
         """Return a :class:`PlaceReference` for *place_name*, deduplicating the description."""
         from ..gedcomx.place_description import PlaceDescription
         from ..gedcomx.place_reference import PlaceReference
@@ -539,12 +585,12 @@ class Gedcom7Converter:
 
         pd = self._place_cache.get(place_name)
         if pd is None:
-            existing = self._gx.places.by_name(place_name)
+            existing = self._root.places.by_name(place_name)
             if existing:
                 pd = existing[0]
             else:
                 pd = PlaceDescription(names=[TextValue(value=place_name)])
-                self._gx.add_place_description(pd)
+                self._root.add_place_description(pd)
             self._place_cache[place_name] = pd
 
         from ..gedcomx.resource import Resource

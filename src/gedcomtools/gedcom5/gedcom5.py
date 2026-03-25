@@ -420,7 +420,7 @@ class Gedcom5:
                 f.write(gx.json)
         """
         from ..gedcomx.conversion import GedcomConverter
-        return GedcomConverter().Gedcom5x_GedcomX(self)
+        return GedcomConverter().Gedcom5x_GedcomX(self)  # type: ignore[arg-type]  # unwrapped inside
 
     def to_gedcom7(self, *, unknown_tags: str = "drop"):
         """Convert this GEDCOM 5 file to a :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.

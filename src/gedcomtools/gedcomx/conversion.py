@@ -201,27 +201,28 @@ class GedcomConverter:
 
         try:
             subs = record.sub_records() or []
+            ln = record._line_num
             log.debug(
-                "Record tag={} level={} xref={!r} value={!r} subrecords={}",
-                record.tag, record.level, record.xref, record.value, len(subs),
+                "[{}]: Record tag={} level={} xref={!r} value={!r} subrecords={}",
+                ln, record.tag, record.level, record.xref, record.value, len(subs),
             )
 
-            # Special-case “personal event tags”
+            # Special-case "personal event tags"
             if record.tag in self.personal_events:
                 self.handle_pevent(record)
             else:
                 handler = self._dispatch.get(record.tag)
                 if handler is None:
                     self._bump_missing(record.tag)
-                    log.error("No handler for {}: {}", record.tag, record.describe())
+                    log.error("[{}]: No handler for {}: {}", ln, record.tag, record.describe())
                     return
 
-                log.info("Using {} for: {}", handler.__name__, record.describe())
+                log.info("[{}]: Using {} for: {}", ln, handler.__name__, record.describe())
                 handler(record)
 
             # Recurse (your existing behavior)
             for sub in subs:
-                log.debug("Subrecord: {}", sub.describe())
+                log.debug("[{}]: Subrecord: {}", sub._line_num, sub.describe())
                 self.parse_gedcom5x_record(sub)
 
         except ConversionErrorDump:
@@ -501,6 +502,21 @@ class GedcomConverter:
         if isinstance(self.object_map[record.level-1], Address):
             if record.value is not None and self.clean_str(record.value):
                 self.object_map[record.level-1].street6 = self.clean_str(record.value)
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_abbr(self, record: Element):
+        if isinstance(self.object_map[record.level-1], SourceDescription) and record.value:
+            from ..gedcomx.note import Note
+            self.object_map[record.level-1].add_note(Note(text=f"Abbreviation: {self.clean_str(record.value)}"))
+        else:
+            self.convert_exception_dump(record=record)
+
+    def handle_agnc(self, record: Element):
+        parent = self.object_map[record.level-1]
+        if record.value and isinstance(parent, (Fact, SourceDescription)):
+            from ..gedcomx.note import Note
+            parent.add_note(Note(text=f"Agency: {self.clean_str(record.value)}"))
         else:
             self.convert_exception_dump(record=record)
 
