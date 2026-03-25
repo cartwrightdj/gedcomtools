@@ -13,6 +13,7 @@
    - 2026-03-16: exported GedcomError and GedcomParseError from Exceptions
    - 2026-03-16: exported models (IndividualDetail, FamilyDetail, etc.)
    - 2026-03-16: imports updated Exceptions.py → exceptions.py, GedcomStructure.py → structure.py
+   - 2026-03-24: exported Gedcom7Converter
 ======================================================================
 
 GEDCOM 7 parsing and validation tools.
@@ -30,6 +31,7 @@ Modules:
 """
 
 from .exceptions import GedcomError, GedcomParseError
+from .g7togx import Gedcom7Converter
 from .structure import GedcomStructure
 from .gedcom7 import Gedcom7, GedcomValidationError
 from .validator import GedcomValidator, ValidationIssue
@@ -66,6 +68,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "__version__",
+    "Gedcom7Converter",
     "GedcomError",
     "GedcomParseError",
     "Gedcom7",

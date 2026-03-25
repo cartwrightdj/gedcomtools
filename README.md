@@ -5,11 +5,89 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.1**
+> **ALPHA SOFTWARE — v0.7.2**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
+
+---
+
+## What's New in v0.7.2
+
+### GEDCOM 7 → GedcomX converter
+
+A new `Gedcom7Converter` converts a parsed GEDCOM 7 file directly to GedcomX.
+It uses the pre-assembled `Detail` objects from `gedcom7/models.py` so no
+level-tracking stack is needed.
+
+```python
+from gedcomtools.gedcom7.gedcom7 import Gedcom7
+
+g7 = Gedcom7("family.ged")
+gx = g7.to_gedcomx()           # returns GedcomX
+with open("family.json", "wb") as f:
+    f.write(gx.json)
+```
+
+Or use the converter directly:
+
+```python
+from gedcomtools.gedcom7.g7togx import Gedcom7Converter
+
+gx = Gedcom7Converter().convert(g7)
+```
+
+**What is converted:**
+
+| GEDCOM 7 | GedcomX |
+|---|---|
+| `INDI` | `Person` (id = xref) |
+| `INDI.NAME` + parts | `Name` / `NameForm` / `NamePart` (Given, Surname, Prefix, Suffix) |
+| `INDI.NAME.TRAN` | additional `NameForm` with `lang` |
+| `INDI.SEX` M/F/X/U | `Gender` (Male/Female/Intersex/Unknown) |
+| `INDI.BIRT/DEAT/BURI/…` | `Fact` with `Date`, `PlaceReference`, source citations |
+| `INDI.OCCU/TITL/RELI/NATI` | attribute `Fact` with `value` |
+| `FAM` (HUSB + WIFE) | `Relationship(type=Couple)` with marriage/divorce facts |
+| `FAM.CHIL` | `Relationship(type=ParentChild)` per parent × child |
+| `SOUR` | `SourceDescription` with title, notes, repository link |
+| `REPO` | `Agent` with name, address, phone, email, homepage |
+| `SUBM` | `Agent` with name, address, contact info |
+| `OBJE` | `SourceDescription(resourceType=DigitalArtifact)` |
+| `SNOTE` | `SourceDescription(resourceType=Record)` carrying the note text |
+| `HEAD.DATE` / `HEAD.SUBM` | `GedcomX.attribution` |
+| Place names | deduplicated `PlaceDescription`; facts reference via `{"resource": "#id"}` |
+
+### Facade conversion methods
+
+All three parsers now expose conversion methods that return the correct
+high-level type — not a raw list, not a dict:
+
+```python
+# Gedcom5
+g5 = Gedcom5("family.ged")
+g7 = g5.to_gedcom7()           # → Gedcom7
+gx = g5.to_gedcomx()           # → GedcomX
+
+# Gedcom7
+g7 = Gedcom7("family.ged")
+gx = g7.to_gedcomx()           # → GedcomX
+
+# Full chain
+gx = Gedcom5("family.ged").to_gedcom7().to_gedcomx()
+```
+
+`to_gedcom7()` previously returned a raw `List[GedcomStructure]`. It now
+returns a fully constructed `Gedcom7` object (with tag index), so all
+`Gedcom7` accessors (`individuals()`, `validate()`, `write()`, etc.) work
+immediately on the result.
+
+### Return-type test suite
+
+A new `tests/test_conversion_return_types.py` module verifies that every
+conversion method returns the correct type. Each test includes both a positive
+`isinstance` check and a negative check (not a `list`, not a `dict`) so
+regressions like the `to_gedcom7()` list-return bug are caught immediately.
 
 ---
 
@@ -208,6 +286,9 @@ New test modules added this release:
 - ✅ GEDCOM X per-property validation (`validate()` on every model)
 - ✅ Converter — GEDCOM 5.x → GEDCOM X (including TRAN, FONE, multi-language names)
 - ✅ Converter — GEDCOM 5.x → GEDCOM 7 (vendor tag drop/convert via `--on-unknown`)
+- ✅ Converter — GEDCOM 7 → GedcomX (`Gedcom7Converter` / `g7.to_gedcomx()`)
+- ✅ Facade conversion methods on all parsers — `to_gedcom7()`, `to_gedcomx()` return correct types
+- ✅ Full conversion chain: `Gedcom5 → Gedcom7 → GedcomX` in one expression
 - ✅ `gedcomtools convert` unified CLI — auto-detects source format, supports g5→gx and g5→g7
 - ✅ `GedcomZip` — package a GEDCOM X graph into a portable zip archive
 - ✅ O(1) collection lookups by id, URI, and name
@@ -220,7 +301,7 @@ New test modules added this release:
 - ✅ Source, person, family, relationship modeling
 - ✅ Place and event normalization with multi-language translation support
 - ✅ Metadata and attribution handling
-- ✅ ~990 tests, 0 failures
+- ✅ ~1034 tests, 0 failures
 - 🔧 GEDCOM X → GEDCOM 7 converter — planned
 - 🔧 Graph database export (ArangoDB) — in progress
 
@@ -316,22 +397,31 @@ for issue in issues:
 g.write("family_out.ged")
 ```
 
-### Convert GEDCOM 5.x → GEDCOM X
+### Convert between formats
+
+All parsers expose `to_gedcom7()` and `to_gedcomx()` convenience methods
+that return the correct high-level type:
 
 ```python
 from gedcomtools.gedcom5.gedcom5 import Gedcom5
-from gedcomtools.gedcomx.conversion import GedcomConverter
+from gedcomtools.gedcom7.gedcom7 import Gedcom7
 
-# Gedcom5 facade or raw Gedcom5x parser are both accepted
+# GEDCOM 5 → GEDCOM 7
 g5 = Gedcom5("family.ged")
-gx = GedcomConverter().Gedcom5x_GedcomX(g5)
+g7 = g5.to_gedcom7()           # returns Gedcom7
+g7.write("family7.ged")
 
-# Serialize to JSON bytes (resource cross-references use {"resource": "#id"} pointers)
-json_bytes = gx.json
-
-# Or write to file
+# GEDCOM 5 → GedcomX
+gx = g5.to_gedcomx()           # returns GedcomX
 with open("family.json", "wb") as f:
-    f.write(json_bytes)
+    f.write(gx.json)
+
+# GEDCOM 7 → GedcomX
+g7 = Gedcom7("family7.ged")
+gx = g7.to_gedcomx()           # returns GedcomX
+
+# Full chain in one expression
+gx = Gedcom5("family.ged").to_gedcom7().to_gedcomx()
 ```
 
 ### Round-trip JSON serialization

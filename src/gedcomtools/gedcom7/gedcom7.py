@@ -16,6 +16,7 @@
                  imported models layer; get_parents/get_children_of/get_spouses
                  relationship traversal helpers
    - 2026-03-16: import updated GedcomStructure.py → structure.py
+   - 2026-03-24: added to_gedcomx() conversion helper
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -759,6 +760,23 @@ class Gedcom7:
     def get_spouses_detail(self, indi_xref: str) -> List[IndividualDetail]:
         """Return spouses as :class:`IndividualDetail` snapshots."""
         return [individual_detail(r) for r in self.get_spouses(indi_xref)]
+
+    def to_gedcomx(self):
+        """Convert this GEDCOM 7 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Returns:
+            A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance populated
+            from this file's records.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            gx = g7.to_gedcomx()
+            with open("family.json", "wb") as f:
+                f.write(gx.json)
+        """
+        from .g7togx import Gedcom7Converter
+        return Gedcom7Converter().convert(self)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the full GEDCOM file into a serializable dictionary.

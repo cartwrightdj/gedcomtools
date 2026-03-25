@@ -22,7 +22,7 @@
               print(d.full_name, d.birth_year)
 
  Created: 2026-03-16
- Updated: 2026-03-16 — raw-first API; Detail only on explicit request
+ Updated: 2026-03-24 — added to_gedcom7() and to_gedcomx() conversion helpers
 ======================================================================
 """
 
@@ -400,3 +400,51 @@ class Gedcom5:
     def get_spouses_detail(self, indi_xref: str) -> List[IndividualDetail]:
         """Return spouses as :class:`IndividualDetail` snapshots."""
         return [individual_detail_from_g5(r) for r in self.get_spouses(indi_xref)]
+
+    # ------------------------------------------------------------------
+    # Format conversion
+    # ------------------------------------------------------------------
+
+    def to_gedcomx(self):
+        """Convert this GEDCOM 5 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Returns:
+            A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance populated
+            from this file's records.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            gx = g5.to_gedcomx()
+            with open("family.json", "wb") as f:
+                f.write(gx.json)
+        """
+        from ..gedcomx.conversion import GedcomConverter
+        return GedcomConverter().Gedcom5x_GedcomX(self)
+
+    def to_gedcom7(self, *, unknown_tags: str = "drop"):
+        """Convert this GEDCOM 5 file to a :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.
+
+        Args:
+            unknown_tags: How to handle vendor/non-standard tags.
+                ``"drop"`` (default) discards them; ``"convert"`` renames
+                them to ``_TAG`` extension tags declared in ``HEAD.SCHMA``.
+
+        Returns:
+            A :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance populated
+            from the converted records.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            g7 = g5.to_gedcom7(unknown_tags="convert")
+            g7.write("family7.ged")
+        """
+        from .g5tog7 import Gedcom5to7
+        from ..gedcom7.gedcom7 import Gedcom7
+        conv = Gedcom5to7(unknown_tags=unknown_tags)
+        records = conv.convert(self)
+        g7 = Gedcom7()
+        for record in records:
+            g7._append_record(record)
+        return g7
