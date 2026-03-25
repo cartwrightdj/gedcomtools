@@ -8,6 +8,8 @@ import orjson
 #  Author:  David J. Cartwright
 #  Purpose: Object for working with Gedcom-X Data
 #  Created: 2025-07-25
+#  Updated: 2026-03-24 — removed _serializer/_as_dict; json property now
+#                         delegates to _to_dict() via Serialization.serialize
 # ======================================================================
 
 # GEDCOM Module Types
@@ -542,40 +544,6 @@ class GedcomX:
         #    combined[i] = str(type(combined[i]).__name__)
         return combined
 
-    @property
-    def _serializer(self) -> Optional[dict]:
-        """Return a JSON-compatible dict for this GedcomX instance."""
-        from .serialization import Serialization
-        result: dict[str, Any] = {}
-        if self.id:
-            result["id"] = self.id
-        if self.description:
-            result["description"] = self.description
-        if self.attribution:
-            attr = Serialization.serialize(self.attribution)
-            if attr:
-                result["attribution"] = attr
-        _collections = (
-            ("persons", self.persons),
-            ("relationships", self.relationships),
-            ("sourceDescriptions", self.sourceDescriptions),
-            ("agents", self.agents),
-            ("events", self.events),
-            ("documents", self.documents),
-            ("places", self.places),
-            ("groups", self.groups),
-        )
-        for name, col in _collections:
-            if len(col) > 0:
-                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
-                if items:
-                    result[name] = items
-        return result if result else None
-
-    @property
-    def _as_dict(self) -> dict[str, Any]:
-        return self._serializer or {}
-
     @classmethod
     def from_dict(cls, data: dict) -> "GedcomX":
         """Deserialize a GedcomX instance from a JSON-compatible dict."""
@@ -624,15 +592,46 @@ class GedcomX:
                 log.warning("Skipping invalid place record: {}", e)
         return gx
 
+    def _to_dict(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dict via ``Serialization.serialize``.
+
+        Resource references are emitted as ``{"resource": "#id"}`` pointers
+        rather than inlined objects.
+        """
+        from .serialization import Serialization
+        result: dict[str, Any] = {}
+        if self.id:
+            result["id"] = self.id
+        if self.description:
+            result["description"] = self.description
+        if self.attribution:
+            attr = Serialization.serialize(self.attribution)
+            if attr:
+                result["attribution"] = attr
+        for name, col in (
+            ("persons",            self.persons),
+            ("relationships",      self.relationships),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("agents",             self.agents),
+            ("events",             self.events),
+            ("documents",          self.documents),
+            ("places",             self.places),
+            ("groups",             self.groups),
+        ):
+            if col:
+                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
+                if items:
+                    result[name] = items
+        return result
+
     @property
     def json(self) -> bytes:
-        """
-        JSON Representation of the GedcomX Genealogy.
+        """Return the GedcomX document as indented UTF-8 JSON bytes.
 
-        Returns:
-            str: JSON Representation of the GedcomX Genealogy in the GEDCOM X JSON Serialization Format
+        Uses ``Serialization.serialize`` so resource references are emitted
+        as ``{"resource": "#id"}`` pointers rather than inlined objects.
         """
-        return orjson.dumps(self._as_dict,option= orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
+        return orjson.dumps(self._to_dict(), option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
 
     def _resolve(self, resource_reference: Union[URI, Resource]):
         #TODO indept URI search, URI index in collections

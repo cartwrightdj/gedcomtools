@@ -56,12 +56,22 @@ class Resource(GedcomXModel):
             resource = target.resource
         elif isinstance(target, URI):
             resource = target
+        elif isinstance(target, dict):
+            # Already-serialized resource reference: {"resource": "..."} or {"resourceId": "..."}
+            raw = target.get("resource") or target.get("resourceId")
+            resource = URI(value=str(raw)) if raw else None
         else:
             log.debug("Target of type: {}", type(target))
             if hasattr(target, "_uri"):
                 resource = target._uri
-            else:
+            elif hasattr(target, "id") and target.id:
                 resource = URI(fragment=target.id)
+            else:
+                log.warning(
+                    "Resource._of_object: target {} has no id/uri — returning empty resource",
+                    type(target).__name__,
+                )
+                resource = None
         log.debug("Resource '{}'", resource)
         return Resource(resource=resource)
 

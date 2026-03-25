@@ -78,14 +78,14 @@ class TestSerializePerson:
 class TestSerializeGedcomX:
     def test_empty_gedcomx(self):
         gx = GedcomX()
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         # empty GedcomX serializes to None (no fields worth serializing)
         assert result is None or isinstance(result, dict)
 
     def test_gedcomx_with_person(self):
         gx = GedcomX()
         gx.add_person(Person(id="P1"))
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         assert "persons" in result
         assert len(result["persons"]) == 1
 
@@ -93,7 +93,7 @@ class TestSerializeGedcomX:
         gx = GedcomX()
         gx.add_person(Person(id="P1"))
         gx.add_person(Person(id="P2"))
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         ids = [p.get("id") for p in result["persons"]]
         assert "P1" in ids
         assert "P2" in ids
@@ -110,7 +110,7 @@ class TestRoundTrip:
         gx = GedcomX()
         gx.add_person(Person(id="P1", names=[QuickName("John Smith")]))
         gx.add_agent(Agent(id="A1", names=[TextValue(value="FamilySearch")]))
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
         restored = Serialization.deserialize(data, GedcomX)
         assert isinstance(restored, GedcomX)
         assert len(restored.persons) == 1

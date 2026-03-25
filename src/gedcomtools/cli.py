@@ -6,6 +6,7 @@
  Purpose: Main gedcomtools CLI entry point
 
  Created: 2026-03-16
+ Updated: 2026-03-24 — added g5→g7 conversion; --on-unknown drop|convert flag
 ======================================================================
 """
 
@@ -127,7 +128,7 @@ def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     try:
         conv = GedcomConverter()
         gx = conv.Gedcom5x_GedcomX(g5)
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
@@ -144,9 +145,41 @@ def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     return OK
 
 
+def _convert_g5_to_g7(source_path: Path, dest_path: Path, *, unknown_tags: str = "drop") -> int:
+    from gedcomtools.gedcom5.gedcom5 import Gedcom5
+    from gedcomtools.gedcom5.g5tog7 import Gedcom5to7
+    from gedcomtools.gedcom7.writer import Gedcom7Writer
+    print(f"Loading GEDCOM 5 from {source_path} ...")
+    try:
+        g5 = Gedcom5(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GEDCOM 7 ...")
+    try:
+        conv = Gedcom5to7(unknown_tags=unknown_tags)
+        records = conv.convert(g5)
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    for w in conv.warnings:
+        print(f"  warning: {w}")
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        Gedcom7Writer().write(records, dest_path)
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    n_indi = sum(1 for r in records if r.tag == "INDI")
+    n_fam  = sum(1 for r in records if r.tag == "FAM")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    return OK
+
+
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
 _CONVERSIONS = {
     ("g5", "gx"): _convert_g5_to_gx,
+    ("g5", "g7"): _convert_g5_to_g7,
 }
 
 
@@ -191,7 +224,10 @@ def cmd_convert(args) -> int:
         )
         return ERR_UNSUPPORTED_CONV
 
-    return converter(source_path, dest_path)
+    kwargs = {}
+    if (source_type, dest_type) == ("g5", "g7"):
+        kwargs["unknown_tags"] = getattr(args, "on_unknown", "drop") or "drop"
+    return converter(source_path, dest_path, **kwargs)
 
 
 # -----------------------------------------------------------------------
@@ -228,6 +264,18 @@ def main() -> None:
     fmt_group.add_argument("-g5", dest="dest_type", action="store_const", const="g5", help="Convert to GEDCOM 5.x")
     fmt_group.add_argument("-g7", dest="dest_type", action="store_const", const="g7", help="Convert to GEDCOM 7.x")
     fmt_group.add_argument("-gx", dest="dest_type", action="store_const", const="gx", help="Convert to GedcomX JSON")
+    p_convert.add_argument(
+        "--on-unknown",
+        dest="on_unknown",
+        choices=["drop", "convert"],
+        default="drop",
+        help=(
+            "How to handle vendor/non-standard G5 tags (RIN, FSID, AFN, WWW, ADR4-6) "
+            "during G5→G7 conversion. "
+            "'drop' (default) discards them; "
+            "'convert' renames them to _TAG extension tags declared in HEAD.SCHMA."
+        ),
+    )
     p_convert.set_defaults(func=cmd_convert)
 
     args = parser.parse_args()

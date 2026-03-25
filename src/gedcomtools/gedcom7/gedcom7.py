@@ -635,6 +635,23 @@ class Gedcom7:
         node = self._record_by_xref("SUBM", xref)
         return submitter_detail(node) if node else None
 
+    def resolve_subm(self, xref: str) -> str:
+        """Resolve a SUBM xref pointer to a human-readable name.
+
+        Returns the submitter's NAME value, or the raw *xref* string if the
+        record cannot be found or has no name.
+
+        Args:
+            xref: Xref id, e.g. ``"@S1@"`` or ``"S1"``.
+        """
+        xref = xref.strip()
+        if not xref.startswith("@"):
+            xref = f"@{xref}@"
+        detail = self.get_submitter_detail(xref)
+        if detail and detail.name:
+            return detail.name
+        return xref
+
     # ------------------------------------------------------------------
     # Relationship traversal — raw records
     # ------------------------------------------------------------------

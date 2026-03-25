@@ -1,7 +1,21 @@
 """
-Tests for gedcomtools.gedcomx.conversion.GedcomConverter (G5 → GedcomX)
+======================================================================
+ Project: gedcomtools
+ File:    tests/test_conversion.py
+ Purpose: Tests for gedcomtools.gedcomx.conversion.GedcomConverter
+          (G5 → GedcomX).
+
+ Created: 2026-03-16
+ Updated: 2026-03-24 — added TestGedcom5FacadeAccepted; Gedcom5 facade
+                        now accepted by Gedcom5x_GedcomX;
+                        added JSON size regression guard
+======================================================================
 """
+import json
+import warnings
+
 import pytest
+from gedcomtools.gedcom5.gedcom5 import Gedcom5
 from gedcomtools.gedcom5.parser import Gedcom5x
 from gedcomtools.gedcomx.conversion import GedcomConverter
 from gedcomtools.gedcomx.gedcomx import GedcomX
@@ -92,6 +106,23 @@ class TestConversionLarge:
     def test_person_lookup_works(self):
         first_id = list(self.gx.persons)[0].id
         assert self.gx.get_person_by_id(first_id) is not None
+
+    def test_json_size_within_expected_range(self):
+        """Regression guard: output > 5 MB almost certainly means resource inlining."""
+        data = self.gx._to_dict()
+        size = len(json.dumps(data).encode("utf-8"))
+        _SIZE_LIMIT = 5 * 1024 * 1024  # 5 MB
+        if size > _SIZE_LIMIT:
+            warnings.warn(
+                f"Serialized GedcomX is {size / 1_048_576:.1f} MB (> 5 MB). "
+                "This likely indicates a serialization bug where cross-references "
+                "are inlined as full objects instead of {\"resource\": \"#id\"} pointers. "
+                f"Expected < 5 MB; got {size:,} bytes.",
+                stacklevel=1,
+            )
+        assert size < _SIZE_LIMIT, (
+            f"Output JSON is {size / 1_048_576:.1f} MB — resource inlining suspected."
+        )
 
 
 class TestConversionComprehensive:
@@ -289,7 +320,7 @@ class TestConversionComprehensive:
         assert not unexpected, f"Unexpected unhandled tags: {unexpected}"
 
     def test_serializable(self):
-        data = Serialization.serialize(self.gx)
+        data = self.gx._to_dict()
         assert isinstance(data, dict)
 
 
@@ -298,13 +329,27 @@ class TestConversionSerializable:
 
     def test_tiny_serializes(self, ged_tiny):
         gx = _convert(ged_tiny)
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
         assert isinstance(data, dict)
 
     @pytest.mark.xfail(reason="allged.ged causes ConversionErrorDump", strict=False)
     def test_medium_serializes(self, ged_medium):
         gx = _convert(ged_medium)
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
         assert isinstance(data, dict)
         if "persons" in data:
             assert isinstance(data["persons"], list)
+
+
+class TestGedcom5FacadeAccepted:
+    """GedcomConverter.Gedcom5x_GedcomX must accept a Gedcom5 facade, not just Gedcom5x."""
+
+    def test_facade_accepted(self, ged_tiny):
+        g5 = Gedcom5(ged_tiny)
+        gx = GedcomConverter().Gedcom5x_GedcomX(g5)
+        assert isinstance(gx, GedcomX)
+
+    def test_facade_produces_persons(self, ged_tiny):
+        g5 = Gedcom5(ged_tiny)
+        gx = GedcomConverter().Gedcom5x_GedcomX(g5)
+        assert len(gx.persons) > 0

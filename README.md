@@ -5,11 +5,110 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.0**
+> **ALPHA SOFTWARE — v0.7.1**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
+
+---
+
+## What's New in v0.7.1
+
+### GEDCOM 5 → GEDCOM 7 converter
+
+A new `Gedcom5to7` converter translates GEDCOM 5.x files to GEDCOM 7 format.
+The converter is available via the `gedcomtools convert` CLI or directly in Python:
+
+```python
+from gedcomtools.gedcom5.gedcom5 import Gedcom5
+from gedcomtools.gedcom5.g5tog7 import Gedcom5to7
+from gedcomtools.gedcom7.writer import Gedcom7Writer
+
+g5 = Gedcom5("family.ged")
+conv = Gedcom5to7(unknown_tags="convert")   # or "drop"
+records = conv.convert(g5)
+for w in conv.warnings:
+    print(f"  warning: {w}")
+Gedcom7Writer().write(records, "family7.ged")
+```
+
+The `unknown_tags` option controls vendor and non-standard G5 tags
+(`RIN`, `FSID`, `AFN`, `WWW`, `ADR4`–`ADR6`):
+
+| Value | Behaviour |
+|---|---|
+| `"drop"` *(default)* | Tags are silently discarded |
+| `"convert"` | Tags are renamed to `_TAG` extension tags and declared in `HEAD.SCHMA` |
+
+### Unified `gedcomtools convert` CLI
+
+A single entry-point replaces the previous format-specific CLI tools:
+
+```bash
+# GEDCOM 5 → GEDCOM X JSON
+gedcomtools convert family.ged family.json -gx
+
+# GEDCOM 5 → GEDCOM 7
+gedcomtools convert family.ged family7.ged -g7
+
+# Preserve vendor tags as extension tags during G5→G7
+gedcomtools convert family.ged family7.ged -g7 --on-unknown convert
+```
+
+Source format is detected automatically from file content (the `2 VERS` header
+tag) and extension. The `--on-unknown` flag only applies to the G5→G7 path.
+
+### Pydantic migration: broken resource references — and the fix
+
+The v0.7.0 Pydantic migration introduced a serialization regression in the
+GEDCOM X layer. Cross-references that should have been written as compact
+`{"resource": "#id"}` pointers were instead being inlined as full copies of the
+referenced object — causing output JSON files to be an order of magnitude larger
+than expected and breaking the spec-required reference model.
+
+**Root causes:**
+
+1. **`_GXModel` short-circuit placed too early.** `Serialization.serialize`
+   detected pydantic models and immediately called `model_dump()`, bypassing the
+   field-type lookup that was responsible for deciding when to emit a resource
+   reference instead of an inline object. Any field typed `Optional[Any]` (a
+   common migration escape-hatch) also lost its union type information at runtime,
+   so the lookup silently fell through.
+
+2. **`GedcomX._serializer` / `_as_dict` bypassed the serializer.** The container
+   object had its own serialization path that called `model_dump()` recursively,
+   never reaching `Resource._of_object`.
+
+3. **`IdentifierList._serializer` used Python-mode `model_dump()`.** URIs were
+   returned as Python objects instead of JSON-compatible strings, causing
+   `TypeError: Type is not JSON serializable: URI` downstream.
+
+**Fixes applied:**
+
+- **`_RESOURCE_REF_FIELDS`** — an explicit table of `{class_name: {field_names}}`
+  that must always serialize as resource references, regardless of annotation.
+  The full MRO is walked so inherited fields (e.g. `Conclusion.analysis` on
+  `Person`) are covered.
+- **`_normalize_field_type`** — strips `Optional[X]` wrappers and resolves union
+  types (preferring `Resource` when it appears) before the field-type dispatch.
+- **Short-circuit removed** — the `_GXModel` fast-path now sits *after* the
+  field-type loop as a fallback for pydantic models with no registered schema
+  fields, not before it.
+- **`GedcomX._to_dict()`** — replaces `_serializer` / `_as_dict`; calls
+  `Serialization.serialize()` for each item in every collection so the full
+  resource-ref path is always taken.
+- **`IdentifierList._serializer`** — fixed to `model_dump(mode="json")` so URIs
+  are serialized to strings.
+- **`Resource._of_object` hardened** — now handles `dict` inputs (already-
+  serialized refs that appear on a second round-trip) and objects with no `id`
+  attribute (logs a warning and continues instead of raising `AttributeError`).
+
+A regression test (`TestConversionLarge.test_json_size_within_expected_range`)
+was added: it serializes the Royal92 large real-world file and asserts the output
+stays under 5 MB. Inlining all objects instead of using resource references
+pushes the same file above 40 MB, making size a reliable canary for this class
+of bug.
 
 ---
 
@@ -108,18 +207,20 @@ New test modules added this release:
 - ✅ GEDCOM X **Pydantic v2** object model (`gedcomx`) — complete, 0 Pyright errors
 - ✅ GEDCOM X per-property validation (`validate()` on every model)
 - ✅ Converter — GEDCOM 5.x → GEDCOM X (including TRAN, FONE, multi-language names)
+- ✅ Converter — GEDCOM 5.x → GEDCOM 7 (vendor tag drop/convert via `--on-unknown`)
+- ✅ `gedcomtools convert` unified CLI — auto-detects source format, supports g5→gx and g5→g7
 - ✅ `GedcomZip` — package a GEDCOM X graph into a portable zip archive
 - ✅ O(1) collection lookups by id, URI, and name
 - ✅ `ResolveStats` — reference resolution telemetry
-- ✅ CLI tools (`gxcli`, `g7cli`, `validate7`)
+- ✅ Correct `{"resource": "#id"}` pointer serialization — resource references are never inlined
+- ✅ CLI tools (`gedcomtools`, `gxcli`, `g7cli`, `validate7`)
 - ✅ Structured logging (`glog`) with `GEDCOMTOOLS_DEBUG` env var support
 - ✅ Sub-loggers (conversion, parser, io, etc.)
 - ✅ Extensible schema / extension system
 - ✅ Source, person, family, relationship modeling
 - ✅ Place and event normalization with multi-language translation support
 - ✅ Metadata and attribution handling
-- ✅ 884 tests, 0 failures
-- 🔧 GEDCOM 5.x → GEDCOM 7 converter — planned
+- ✅ ~990 tests, 0 failures
 - 🔧 GEDCOM X → GEDCOM 7 converter — planned
 - 🔧 Graph database export (ArangoDB) — in progress
 
@@ -218,16 +319,19 @@ g.write("family_out.ged")
 ### Convert GEDCOM 5.x → GEDCOM X
 
 ```python
-from gedcomtools.gedcom5.parser import Gedcom5x
+from gedcomtools.gedcom5.gedcom5 import Gedcom5
 from gedcomtools.gedcomx.conversion import GedcomConverter
 
-p = Gedcom5x()
-p.parse_file("family.ged")
+# Gedcom5 facade or raw Gedcom5x parser are both accepted
+g5 = Gedcom5("family.ged")
+gx = GedcomConverter().Gedcom5x_GedcomX(g5)
 
-gx = GedcomConverter().Gedcom5x_GedcomX(p)
-
-# Serialize to JSON bytes
+# Serialize to JSON bytes (resource cross-references use {"resource": "#id"} pointers)
 json_bytes = gx.json
+
+# Or write to file
+with open("family.json", "wb") as f:
+    f.write(json_bytes)
 ```
 
 ### Round-trip JSON serialization
@@ -285,6 +389,31 @@ for indi_node in g["INDI"]:
 ---
 
 ## CLI Tools
+
+### `gedcomtools convert` — format converter
+
+```bash
+# GEDCOM 5 → GEDCOM X JSON (auto-detects source format)
+gedcomtools convert family.ged output.json -gx
+
+# GEDCOM 5 → GEDCOM 7
+gedcomtools convert family.ged output.ged -g7
+
+# Drop vendor/non-standard tags during G5→G7 (default)
+gedcomtools convert family.ged output.ged -g7 --on-unknown drop
+
+# Rename vendor tags to _TAG extension tags instead of dropping them
+gedcomtools convert family.ged output.ged -g7 --on-unknown convert
+```
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Source file not found |
+| 2 | Cannot determine source format |
+| 3 | Conversion not supported for this format pair |
+| 4 | Conversion failed (parse or transform error) |
+| 5 | I/O error writing output |
 
 ### `validate7` — GEDCOM 7 validator
 
@@ -346,7 +475,6 @@ Set `GEDCOMTOOLS_DEBUG=1` in your environment to enable debug output.
 
 ## Roadmap
 
-- [ ] GEDCOM 5.x → GEDCOM 7 converter
 - [ ] GEDCOM X → GEDCOM 7 converter
 - [ ] JSON-LD export
 - [ ] RAG pipeline integration

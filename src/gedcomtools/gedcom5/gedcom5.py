@@ -131,6 +131,21 @@ class Gedcom5:
         return "5.5"
 
     # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    def validate(self):
+        """Validate the loaded file against the GEDCOM 5.5.1 specification.
+
+        Returns:
+            A list of :class:`~gedcomtools.gedcom7.validator.ValidationIssue`
+            instances, each with ``severity`` (``"error"`` or ``"warning"``),
+            ``code``, ``message``, ``tag``, and ``line_num`` fields.
+        """
+        from .validator5 import Gedcom5Validator
+        return Gedcom5Validator(self._parser).validate()
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
@@ -261,6 +276,23 @@ class Gedcom5:
         """Return :class:`SubmitterDetail` for a single SUBM by xref."""
         el = self._lookup(xref)
         return submitter_detail_from_g5(el) if el is not None and el.tag == "SUBM" else None
+
+    def resolve_subm(self, xref: str) -> str:
+        """Resolve a SUBM xref pointer to a human-readable name.
+
+        Returns the submitter's NAME value, or the raw *xref* string if the
+        record cannot be found or has no name.
+
+        Args:
+            xref: Xref id, e.g. ``"@S1@"`` or ``"S1"``.
+        """
+        xref = xref.strip()
+        if not xref.startswith("@"):
+            xref = f"@{xref}@"
+        detail = self.get_submitter_detail(xref)
+        if detail and detail.name:
+            return detail.name
+        return xref
 
     # ------------------------------------------------------------------
     # Relationship traversal — raw records

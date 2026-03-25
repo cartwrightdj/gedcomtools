@@ -121,7 +121,7 @@ def gx_data():
     p = Gedcom5x()
     p.parse_file(str(SAMPLE))
     gx = GedcomConverter().Gedcom5x_GedcomX(p)
-    return Serialization.serialize(gx)
+    return gx._to_dict()
 
 
 # ---------------------------------------------------------------------------

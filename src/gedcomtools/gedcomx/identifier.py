@@ -213,7 +213,7 @@ class IdentifierList:
         out: Dict[str, list] = {}
         for k, uris in self.identifiers.items():
             out[k] = [
-                u.model_dump(exclude_none=True) if hasattr(u, "model_dump") else str(u)
+                u.model_dump(exclude_none=True, mode="json") if hasattr(u, "model_dump") else str(u)
                 for u in uris
             ]
         return out if out else None

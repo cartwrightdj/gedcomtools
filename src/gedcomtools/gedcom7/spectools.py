@@ -20,6 +20,8 @@ Usage::
     g7spec export [path]
     g7spec load <path>
     g7spec reset
+    g7spec check [--no-cache] [--cache DIR] [--verbose]
+    g7spec update [--no-cache] [--cache DIR] [--dry-run]
 
 Commands
 --------
@@ -27,10 +29,13 @@ info              Show rule counts and tag list.
 export [path]     Write the active rules to a JSON file (default: spec_rules.json).
 load <path>       Replace the bundled spec_rules.json with the given file.
 reset             Restore the bundled spec_rules.json to compiled-in defaults.
+check             Fetch the live GEDCOM 7 spec from gedcom.io and report diffs.
+update            Fetch the live spec and apply missing/changed rules locally.
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -95,11 +100,110 @@ def cmd_reset(_args: List[str]) -> int:
     return 0
 
 
+def cmd_check(args: List[str]) -> int:
+    """Fetch live GEDCOM 7 spec and report differences from local rules."""
+    ap = argparse.ArgumentParser(prog="g7spec check")
+    ap.add_argument("--cache",    metavar="DIR", default=None,
+                    help="Cache directory for fetched YAMLs")
+    ap.add_argument("--no-cache", action="store_true",
+                    help="Ignore existing cache; re-fetch all terms")
+    ap.add_argument("--verbose",  "-v", action="store_true",
+                    help="Also report extra locally-defined substructures")
+    ns = ap.parse_args(args)
+
+    try:
+        from gedcomtools.gedcom7.spec_sync import (
+            load_all_terms, build_spec_structures, compare,
+        )
+    except ImportError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    cache_dir = Path(ns.cache) if ns.cache else None
+    spec = _get_spec()
+
+    print("Fetching live GEDCOM 7 spec from gedcom.io …", flush=True)
+    try:
+        terms = load_all_terms(cache_dir, no_cache=ns.no_cache, progress=True)
+    except (RuntimeError, ImportError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    print(f"  {len(terms)} terms loaded.")
+    structures = build_spec_structures(terms)
+    print(f"  {len(structures)} structure-type terms.\n")
+
+    report = compare(structures, spec._CORE_RULES, verbose=ns.verbose)
+    print("\n".join(report))
+    return 0
+
+
+def cmd_update(args: List[str]) -> int:
+    """Fetch live GEDCOM 7 spec and apply missing/changed rules locally."""
+    ap = argparse.ArgumentParser(prog="g7spec update")
+    ap.add_argument("--cache",    metavar="DIR", default=None,
+                    help="Cache directory for fetched YAMLs")
+    ap.add_argument("--no-cache", action="store_true",
+                    help="Ignore existing cache; re-fetch all terms")
+    ap.add_argument("--dry-run",  action="store_true",
+                    help="Show what would change without modifying spec_rules.json")
+    ns = ap.parse_args(args)
+
+    try:
+        from gedcomtools.gedcom7.spec_sync import (
+            load_all_terms, build_spec_structures, apply_updates,
+        )
+    except ImportError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    cache_dir = Path(ns.cache) if ns.cache else None
+    spec = _get_spec()
+
+    print("Fetching live GEDCOM 7 spec from gedcom.io …", flush=True)
+    try:
+        terms = load_all_terms(cache_dir, no_cache=ns.no_cache, progress=True)
+    except (RuntimeError, ImportError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    print(f"  {len(terms)} terms loaded.")
+    structures = build_spec_structures(terms)
+    print(f"  {len(structures)} structure-type terms.\n")
+
+    if ns.dry_run:
+        # Run compare to show what would change, then exit without saving
+        from gedcomtools.gedcom7.spec_sync import compare
+        report = compare(structures, spec._CORE_RULES)
+        print("\n".join(report))
+        print("\n(dry-run: no changes written)")
+        return 0
+
+    import copy
+    scratch = copy.deepcopy(spec._CORE_RULES)
+    added, updated = apply_updates(structures, scratch)
+
+    if added == 0 and updated == 0:
+        print("Local spec is already up to date — nothing to change.")
+        return 0
+
+    # Apply the patched dict to the live module state and save
+    spec._CORE_RULES.clear()
+    spec._CORE_RULES.update(scratch)
+    spec.save_rules()
+
+    print(f"Updated spec_rules.json:")
+    print(f"  {added:>4} substructure(s) added")
+    print(f"  {updated:>4} cardinality change(s) applied")
+    print(f"Saved to {spec._RULES_FILE}")
+    return 0
+
+
 _COMMANDS = {
     "info":   cmd_info,
     "export": cmd_export,
     "load":   cmd_load,
     "reset":  cmd_reset,
+    "check":  cmd_check,
+    "update": cmd_update,
 }
 
 

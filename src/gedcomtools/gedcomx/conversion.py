@@ -4,6 +4,7 @@
 #  Author:  David J. Cartwright
 #  Purpose: convert gedcom versions
 #  Created: 2025-08-25
+#  Updated: 2026-03-24 — accept Gedcom5 facade in Gedcom5x_GedcomX (unwrap ._parser)
 # ======================================================================
 
 # GEDCOM Module Types
@@ -339,6 +340,10 @@ class GedcomConverter:
         """
         if not gedcom5x:
             raise ValueError("gedcom5x is falsy")
+
+        # Accept either a Gedcom5 facade or a raw Gedcom5x parser.
+        if hasattr(gedcom5x, "_parser"):
+            gedcom5x = gedcom5x._parser
 
         log.debug("Priming top-level IDs")
         for obj in gedcom5x.objects:

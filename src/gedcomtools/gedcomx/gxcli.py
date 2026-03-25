@@ -1987,7 +1987,7 @@ class Shell:
             return None
         if args[0] == "gx":
             js = orjson.dumps(
-                Serialization.serialize(self.root),
+                self.root._to_dict(),
                 option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE,
             )
             with open(args[1], "wb") as f:

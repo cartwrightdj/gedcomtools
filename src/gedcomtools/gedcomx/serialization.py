@@ -5,6 +5,10 @@ from __future__ import annotations
 #  Author:  David J. Cartwright
 #  Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
 #  Created: 2025-08-25
+#  Updated: 2026-03-24 — restored Resource reference serialization; removed
+#                         _GXModel short-circuit; added _RESOURCE_REF_FIELDS
+#                         with MRO walk; fixed _normalize_field_type for unions;
+#                         added _to_dict dispatch for GedcomX container
 # ======================================================================
 
 from collections.abc import Sized
@@ -34,15 +38,64 @@ from .resource import Resource
 from .gx_base import GedcomXModel as _GXModel
 
 
+# Fields typed Optional[Any] during the pydantic migration that should still be
+# serialized as resource references ({"resource": "#id"}).  Keyed by class name
+# so the lookup is O(1) and import-free.  MRO is walked so subclass fields are
+# covered automatically (see _get_resource_overrides).
+_RESOURCE_REF_FIELDS: Dict[str, Set[str]] = {
+    "Conclusion":        {"analysis"},
+    "Relationship":      {"person1", "person2"},
+    "EventRole":         {"person"},
+    "GroupRole":         {"person"},
+    "SourceReference":   {"description"},   # URI | SourceDescription → resource ref
+    "SourceDescription": {"analysis"},       # Resource | Document → resource ref
+}
+
+
+def _normalize_field_type(tp: Any) -> Any:
+    """Strip Optional, then prefer Resource over URI over first type in a Union."""
+    # Strip Optional[X] → X
+    origin = get_origin(tp)
+    args = get_args(tp)
+    if origin is Union and len(args) == 2 and type(None) in args:
+        tp = next(a for a in args if a is not type(None))
+        origin = get_origin(tp)
+        args = get_args(tp)
+
+    # Union[A, B, ...] → prefer Resource > URI > first
+    if origin is Union:
+        for preferred in (Resource,):
+            if any(a is preferred for a in args):
+                return preferred
+        return args[0] if args else tp
+
+    return tp
+
+
+def _get_resource_overrides(cls) -> Set[str]:
+    """Accumulate resource-reference field names across the full MRO."""
+    overrides: Set[str] = set()
+    for base in cls.__mro__:
+        overrides |= _RESOURCE_REF_FIELDS.get(base.__name__, set())
+    return overrides
+
+
 def _get_class_fields(cls) -> dict:
-    """Return {field_name: annotation} for pydantic GedcomXModel subclasses."""
-    if isinstance(cls, type) and issubclass(cls, _GXModel):
-        return {k: v.annotation for k, v in cls.model_fields.items()}
-    return {}
+    """Return {field_name: normalised_type} for pydantic GedcomXModel subclasses."""
+    if not (isinstance(cls, type) and issubclass(cls, _GXModel)):
+        return {}
+    resource_overrides = _get_resource_overrides(cls)
+    result = {}
+    for k, v in cls.model_fields.items():
+        if k in resource_overrides:
+            result[k] = Resource
+        else:
+            result[k] = _normalize_field_type(v.annotation)
+    return result
 
 
 class _SchemaBridge:
-    """Minimal SCHEMA compatibility shim using pydantic model_fields."""
+    """SCHEMA compatibility shim: normalised field types from pydantic model_fields."""
 
     @staticmethod
     def get_class_fields(name_or_cls) -> dict | None:
@@ -113,7 +166,7 @@ class Serialization:
         """
         if obj is not None:
             with hub.use(serial_log):
-                if hasattr(obj,'_serializer'):
+                if hasattr(obj, '_serializer'):
                     return obj._serializer
 
                 if isinstance(obj, (str, int, float, bool, type(None))):
@@ -132,11 +185,8 @@ class Serialization:
                 if isinstance(obj, enum.Enum):
                     return Serialization.serialize(obj.value)
 
-                # Pydantic models: use model_dump for serialization
-                if isinstance(obj, _GXModel):
-                    result = obj.model_dump(exclude_none=True, mode="json")
-                    return result if result else None
-
+                # Walk schema fields, handling Resource and URI specially.
+                # Pydantic models fall through to model_dump only when no fields found.
                 type_as_dict = {}
                 fields = SCHEMA.get_class_fields(type(obj))
                 if fields:
@@ -154,6 +204,11 @@ class Serialization:
                         else:
                             log.warning("{} missing expected field '{}'", type(obj).__name__, field_name)
                     return type_as_dict if type_as_dict else None
+
+                # Fallback for pydantic models with no registered schema fields
+                if isinstance(obj, _GXModel):
+                    result = obj.model_dump(exclude_none=True, mode="json")
+                    return result if result else None
                 log.error("No SCHEMA fields found for {}", type(obj).__name__)
         return None
 
