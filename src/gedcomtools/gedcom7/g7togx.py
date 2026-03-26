@@ -169,10 +169,10 @@ class Gedcom7Converter:
             self._convert_repo(d)
         for d in gedcom7.submitter_details():
             self._convert_subm(d)
-        for d in gedcom7.media_details():
-            self._convert_media(d)
         for d in gedcom7.shared_note_details():
             self._convert_snote(d)
+        for d in gedcom7.media_details():
+            self._convert_media(d)
         for d in gedcom7.individual_details():
             self._convert_indi(d)
         for d in gedcom7.family_details():
@@ -315,21 +315,48 @@ class Gedcom7Converter:
             agent.homepage = URI.model_validate({"value": d.website})
 
     def _convert_media(self, d) -> None:
+        from ..gedcomx.note import Note
+        from ..gedcomx.uri import URI
+
         sd = self._source_map.get(d.xref)
         if sd is None:
             return
+
         if d.title:
             sd.add_title(d.title)
+
+        # FILE entries — first becomes about/mediaType; extras stored as notes
+        # since SourceDescription.about is singular in GedcomX.
         for filepath, form in d.files:
-            from ..gedcomx.uri import URI
-            about = URI.model_validate({"value": filepath})
             if sd.about is None:
-                sd.about = about
-            if form:
-                sd.mediaType = form
-        from ..gedcomx.note import Note
+                sd.about = URI.model_validate({"value": filepath})
+                if form:
+                    sd.mediaType = form
+            else:
+                extra = f"Additional file: {filepath}"
+                if form:
+                    extra += f" ({form})"
+                sd.add_note(Note(text=extra))
+
+        # Inline notes
         for text in d.note_texts:
             sd.add_note(Note(text=text))
+
+        # Shared-note references — copy note text (SNOTE already converted above)
+        for snote_xref in d.shared_note_refs:
+            snote_sd = self._source_map.get(snote_xref)
+            if snote_sd is not None:
+                for snote_note in snote_sd.notes:
+                    sd.add_note(Note(text=snote_note.text))
+
+        # UID → Persistent identifier
+        if d.uid:
+            from ..gedcomx.identifier import Identifier, IdentifierType
+            uid_val = d.uid if d.uid.startswith("urn:") else f"urn:uuid:{d.uid}"
+            sd.add_identifier(Identifier(
+                type=IdentifierType.Persistent,  # type: ignore[attr-defined]
+                values=[URI(value=uid_val)],
+            ))
 
     def _convert_snote(self, d) -> None:
         sd = self._source_map.get(d.xref)
@@ -410,8 +437,9 @@ class Gedcom7Converter:
                 ft = FactType.from_value(_INDI_FACT_MAP[tag])
                 person.add_fact(Fact(type=ft, value=value))
 
-        # Record-level source citations
+        # Record-level source citations and media links
         self._attach_source_refs(person, d.source_citations)
+        self._attach_media_refs(person, d.media_refs)
 
         # Record PEDI values so _convert_fam can attach them to relationships
         for link in d.families_as_child:
@@ -448,6 +476,7 @@ class Gedcom7Converter:
                 if fact:
                     couple_rel.add_fact(fact)
             self._attach_source_refs(couple_rel, d.source_citations)
+            self._attach_media_refs(couple_rel, d.media_refs)
             self._root.add_relationship(couple_rel)
 
         # Parent-child relationships
@@ -620,6 +649,24 @@ class Gedcom7Converter:
                 sr.add_qualifier(
                     Qualifier(name=KnownSourceReference.Page, value=cit.page)
                 )
+            if hasattr(target, "add_source_reference"):
+                target.add_source_reference(sr)
+
+    def _attach_media_refs(self, target, media_refs: List[str]) -> None:
+        """Attach media-object SourceReferences from *media_refs* to *target*."""
+        from ..gedcomx.source_reference import SourceReference
+        from ..gedcomx.resource import Resource
+        from ..gedcomx.uri import URI
+
+        for xref in media_refs:
+            sd = self._source_map.get(xref)
+            if sd is None:
+                self._note_unhandled(f"OBJE:{xref}")
+                continue
+            sr = SourceReference(
+                descriptionId=xref,
+                description=Resource(resource=URI(fragment=sd.id)),
+            )
             if hasattr(target, "add_source_reference"):
                 target.add_source_reference(sr)
 

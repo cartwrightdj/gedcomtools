@@ -212,7 +212,8 @@ class TestLineLengthWarnings:
         writer.serialize(g.records)
         assert not writer.get_warnings()
 
-    def test_warning_for_long_line(self):
+    def test_long_line_generates_warning(self):
+        """Payloads over 255 chars generate a warning (CONT would add semantic newlines)."""
         long_payload = "A" * 300
         text = f"""\
 0 HEAD
@@ -225,28 +226,22 @@ class TestLineLengthWarnings:
         writer = Gedcom7Writer()
         g = _parse(text)
         writer.serialize(g.records)
-        warnings = writer.get_warnings()
-        assert warnings
-        assert any("NOTE" in w for w in warnings)
+        # A long single-line NOTE generates a warning; it is NOT silently wrapped.
+        assert writer.get_warnings()
+        assert any("NOTE" in w for w in writer.get_warnings())
 
     def test_warnings_reset_between_calls(self):
-        long_payload = "A" * 300
-        text = f"""\
-0 HEAD
-1 GEDC
-2 VERS 7.0
-0 @I1@ INDI
-1 NOTE {long_payload}
-0 TRLR
-"""
+        """Warnings are cleared at the start of each serialize() call."""
+        long_payload = "B" * 500
+        text = f"0 HEAD\n1 GEDC\n2 VERS 7.0\n0 @I1@ INDI\n1 NOTE {long_payload}\n0 TRLR\n"
         writer = Gedcom7Writer()
         g_long = _parse(text)
         writer.serialize(g_long.records)
-        assert writer.get_warnings()
+        assert writer.get_warnings()   # long line → warning
 
         g_short = _parse(_INDI_TEXT)
         writer.serialize(g_short.records)
-        assert not writer.get_warnings()
+        assert not writer.get_warnings()  # short lines → no warnings after reset
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +283,8 @@ class TestWriteToFile:
         writer = Gedcom7Writer()
         returned = writer.write(g.records, dest)
         assert returned == writer.get_warnings()
-        assert returned  # long line should produce a warning
+        # Long single-line NOTE cannot be safely split — writer warns instead.
+        assert returned
 
     def test_write_atomic_tmp_cleaned_on_error(self, tmp_path):
         """Temp file should not linger after a failed write."""

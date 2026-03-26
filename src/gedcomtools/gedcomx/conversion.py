@@ -11,6 +11,35 @@
 
 import mimetypes
 import re
+
+# GEDCOM FORM values are often bare extensions in upper or lower case (JPEG,
+# jpg, pdf, …).  mimetypes.guess_type is case-sensitive on some platforms and
+# doesn't know all common genealogy extensions.  This map covers the gap.
+_G5_FORM_MIME: dict[str, str] = {
+    "jpeg": "image/jpeg",  "jpg":  "image/jpeg",
+    "png":  "image/png",   "gif":  "image/gif",
+    "tif":  "image/tiff",  "tiff": "image/tiff",
+    "bmp":  "image/bmp",   "webp": "image/webp",
+    "pdf":  "application/pdf",
+    "mp3":  "audio/mpeg",  "m4a":  "audio/mp4",
+    "ogg":  "audio/ogg",   "wav":  "audio/wav",
+    "mp4":  "video/mp4",   "m4v":  "video/mp4",
+    "avi":  "video/x-msvideo",
+    "mov":  "video/quicktime",
+    "txt":  "text/plain",  "htm":  "text/html",
+    "html": "text/html",
+}
+
+
+def _form_to_mime(form_value: str) -> str | None:
+    """Resolve a GEDCOM FORM value to a MIME type string, or return None."""
+    if not form_value:
+        return None
+    key = form_value.strip().lower()
+    if key in _G5_FORM_MIME:
+        return _G5_FORM_MIME[key]
+    mime, _ = mimetypes.guess_type(f"file.{key}")
+    return mime
 import math
 import shutil
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, TypeVar
@@ -885,15 +914,25 @@ class GedcomConverter:
 
     def handle_file(self, record: Element):
         if isinstance(self.object_map[record.level-1], SourceDescription):
-            self.object_map[record.level-1].resourceType = ResourceType.DigitalArtifact
-            if record.value != '':
-                self.object_map[record.level-1].about = record.value
+            sd = self.object_map[record.level-1]
+            sd.resourceType = ResourceType.DigitalArtifact
+            if record.value:
+                if sd.about is None:
+                    sd.about = record.value
+                else:
+                    # Multiple FILE entries: store extras as notes (about is singular)
+                    sd.add_note(Note(text=f"Additional file: {record.value}"))
 
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             container = self.object_map[record.level-1]
             container.sourceDescription.resourceType = ResourceType.DigitalArtifact
             if record.value:
-                container.sourceDescription.about = record.value
+                if container.sourceDescription.about is None:
+                    container.sourceDescription.about = record.value
+                else:
+                    container.sourceDescription.add_note(
+                        Note(text=f"Additional file: {record.value}")
+                    )
             self.object_map[record.level] = container
 
 
@@ -906,15 +945,15 @@ class GedcomConverter:
     def handle_form(self, record: Element):
         parent_obj = self.object_map.get(record.level-2)
         if record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, SourceDescription):
-            if record.value and record.value.strip() != '':
-                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+            if record.value and record.value.strip():
+                mime_type = _form_to_mime(record.value)
                 if mime_type:
                     parent_obj.mediaType = mime_type
                 else:
                     log.error("Could not determine mime type from {}", record.value)
         elif record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, DocumentParsingContainer):
-            if record.value and record.value.strip() != '':
-                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+            if record.value and record.value.strip():
+                mime_type = _form_to_mime(record.value)
                 if mime_type:
                     parent_obj.sourceDescription.mediaType = mime_type
                 else:
@@ -924,7 +963,7 @@ class GedcomConverter:
         elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
             container = self.object_map[record.level-1]
             if record.value and record.value.strip():
-                mime_type, _ = mimetypes.guess_type('placehold.' + record.value)
+                mime_type = _form_to_mime(record.value)
                 if mime_type:
                     container.sourceDescription.mediaType = mime_type
                 else:
@@ -942,6 +981,23 @@ class GedcomConverter:
                 log.debug("handle_form[TRAN]: ignoring FORM={!r} under TRAN for {}", record.value, type(parent).__name__ if parent else "None")
         else:
             self.convert_exception_dump(record=record)
+
+    def handle_medi(self, record: Element) -> None:
+        """Handle GEDCOM 5 FILE.MEDI (media qualifier: photo, video, audio, …).
+
+        No direct GedcomX equivalent; the value is stored as a note on the
+        parent SourceDescription so the information is not lost.  MEDI under
+        REPO.CALN has no GX mapping and is silently ignored.
+        """
+        parent = self.object_map.get(record.level - 1)
+        sd = None
+        if isinstance(parent, SourceDescription):
+            sd = parent
+        elif isinstance(parent, DocumentParsingContainer):
+            sd = parent.sourceDescription
+        if sd is not None and record.value:
+            sd.add_note(Note(text=f"Media type: {record.value}"))
+        # else: MEDI under REPO.CALN or other contexts — no mapping, skip silently
 
     def handle_fsid(self,record: Element):
         if record.value:

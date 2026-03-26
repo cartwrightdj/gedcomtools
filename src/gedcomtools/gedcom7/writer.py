@@ -21,8 +21,13 @@ Design notes
 - The parser merges CONT lines into the parent payload using ``\\n`` as a
   separator.  The writer splits those embedded newlines back into CONT
   substructures at ``level + 1``.
-- CONC is not emitted; it was removed in GEDCOM 7.0.  Very long single-line
-  payloads are written as-is with a warning returned to the caller.
+- CONC is not emitted; it was removed in GEDCOM 7.0.
+- Long single-line values that exceed 255 chars are emitted as-is with a
+  warning.  GEDCOM 7 removed CONC, so there is no standard way to split a
+  non-multiline value without changing its semantics: every CONT continuation
+  merges back as ``\\n`` on re-parse, which would corrupt URLs, PAGE refs,
+  and even free-text NOTE values (a paragraph break != a line-wrap).
+  The 255-char limit is a SHOULD, not a MUST.
 - The class is intentionally stateless between calls so that a single writer
   instance can be re-used for many files or round-trip conversions.
 - Future converters (GEDCOM 5 → 7, GEDCOMx → 7) build a
@@ -187,12 +192,43 @@ class Gedcom7Writer:
         for child in node.children:
             yield from self._render_node(child, _depth + 1)
 
+    _MAX_LINE = 255  # GEDCOM 7 recommended line-length limit
+
+    def _emit_segment(self, text: str, line_prefix: str, warn_tag: str) -> Iterator[str]:
+        """Yield one line for *text*, warning if it exceeds the line-length limit.
+
+        A CONT newline is a semantic paragraph-break, not a mere line-wrap.
+        Inserting CONT mid-segment would change the payload value on re-parse
+        (every CONT merges back as ``\\n``).  Therefore this method always emits
+        exactly one line; long values generate a warning.
+
+        Args:
+            text:        Payload text for this logical segment (no embedded newlines).
+            line_prefix: ``"level [xref] tag"`` string for the first line.
+            warn_tag:    Tag name used in the warning message.
+
+        Yields:
+            A single GEDCOM line string without a line ending.
+        """
+        if not text:
+            yield line_prefix
+            return
+
+        line = f"{line_prefix} {text}"
+        if len(line) > self._MAX_LINE:
+            self._warnings.append(
+                f"Line exceeds {self._MAX_LINE} chars (tag={warn_tag!r}, "
+                f"len={len(line)}): {line[:80]!r}…"
+            )
+        yield line
+
     def _format_lines(self, node: GedcomStructure) -> Iterator[str]:
         """Format one node as one or more GEDCOM line strings.
 
-        If the node's payload contains embedded ``\\n`` characters (created
-        during parsing when CONT lines were merged), they are re-emitted as
-        ``CONT`` substructures at ``level + 1``.
+        Embedded ``\\n`` characters (merged from CONT lines during parsing)
+        are re-split into CONT substructures.  Any segment that would exceed
+        ``_MAX_LINE`` characters is additionally wrapped into further CONT
+        lines so the output always stays within the recommended limit.
 
         Args:
             node: Node to format.
@@ -205,39 +241,21 @@ class Gedcom7Writer:
         if node.xref_id:
             parts.append(node.xref_id)
         parts.append(node.tag)
-        prefix = " ".join(parts)
+        line_prefix = " ".join(parts)
+        cont_prefix = f"{node.level + 1} CONT"
 
         payload = node.payload
 
         if not payload:
-            yield prefix
+            yield line_prefix
             return
 
-        # Re-split on embedded newlines that the parser merged from CONT lines.
+        # Re-split on embedded newlines from CONT merging, then emit each
+        # segment as a single line.  CONT is a semantic paragraph separator —
+        # inserting it mid-segment would add a spurious \n on re-parse.
         segments = payload.split("\n")
-
-        first = segments[0]
-        first_emitted = f"{prefix} {first}" if first else prefix
-        yield first_emitted
-
-        # Warn if any emitted line exceeds 255 chars (GEDCOM 7 SHOULD limit).
-        _MAX_LINE = 255
-        if len(first_emitted) > _MAX_LINE:
-            self._warnings.append(
-                f"Line for {node.tag} at source line {node.line_num} is "
-                f"{len(first_emitted)} chars (>{_MAX_LINE}); "
-                f"GEDCOM 7 recommends \u2264{_MAX_LINE}."
-            )
-
-        if len(segments) > 1:
-            cont_level = node.level + 1
-            cont_prefix = f"{cont_level} CONT"
-            for seg in segments[1:]:
-                cont_line = f"{cont_prefix} {seg}" if seg else cont_prefix
-                yield cont_line
-                if len(cont_line) > _MAX_LINE:
-                    self._warnings.append(
-                        f"CONT line for {node.tag} at source line {node.line_num} is "
-                        f"{len(cont_line)} chars (>{_MAX_LINE}); "
-                        f"GEDCOM 7 recommends \u2264{_MAX_LINE}."
-                    )
+        first_prefix = line_prefix
+        for seg in segments:
+            yield from self._emit_segment(seg, first_prefix, node.tag)
+            # All segments after the first are continuations.
+            first_prefix = cont_prefix
