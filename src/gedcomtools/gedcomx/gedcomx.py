@@ -624,6 +624,19 @@ class GedcomX:
                     result[name] = items
         return result
 
+    def gml(self) -> str:
+        """Return the GedcomX graph as a GML string.
+
+        Persons become nodes; Couple and ParentChild relationships become
+        directed edges.  See :class:`~gedcomtools.gedcomx.gml.GedcomXGmlExporter`
+        for the full attribute list.
+
+        Returns:
+            GML content as a :class:`str`.
+        """
+        from .gml import GedcomXGmlExporter
+        return GedcomXGmlExporter().export(self)
+
     @property
     def json(self) -> bytes:
         """Return the GedcomX document as indented UTF-8 JSON bytes.
