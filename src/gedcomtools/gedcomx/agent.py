@@ -33,8 +33,6 @@ class Agent(GedcomXModel):
     addresses: List[Address] = Field(default_factory=list)
     person: Optional[Any] = None        # Person | Resource (avoids circular import)
     attribution: Optional[Any] = None   # Attribution
-    xnotes: List[Any] = Field(default_factory=list)
-
     @field_validator("addresses", mode="before")
     @classmethod
     def _drop_none_addresses(cls, v: Any) -> Any:
@@ -77,12 +75,6 @@ class Agent(GedcomXModel):
                 return
         self.names.append(name_to_add)
 
-    def add_note(self, note_to_add: Any) -> None:
-        from .note import Note
-        if not isinstance(note_to_add, Note):
-            raise ValueError(f"note must be of type Note, got {type(note_to_add)}")
-        self.xnotes.append(note_to_add)
-
     def add_identifier(self, identifier_to_add: Identifier) -> None:
         self.identifiers.append(identifier_to_add)
 
@@ -110,10 +102,6 @@ class Agent(GedcomXModel):
         if self.attribution is not None:
             from .attribution import Attribution
             check_instance(result, "attribution", self.attribution, Attribution)
-        for i, n in enumerate(self.xnotes):
-            from .note import Note
-            check_instance(result, f"xnotes[{i}]", n, Note)
-
     # Dunder methods
     # ------------------------------------------------------------------
 
@@ -122,24 +110,21 @@ class Agent(GedcomXModel):
         homepage_str = f", homepage={self.homepage}" if self.homepage else ""
         return f"Agent(id={self.id}, name='{primary_name}'{homepage_str})"
 
+    __hash__ = None  # mutable object with semantic equality — not safely hashable
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Agent):
             return NotImplemented
-        return (
-            self.id == other.id
-            and self.identifiers == other.identifiers
-            and self.names == other.names
-            and self.homepage == other.homepage
-            and self.openid == other.openid
-            and self.accounts == other.accounts
-            and self.emails == other.emails
-            and self.phones == other.phones
-            and self.addresses == other.addresses
-            and self.person == other.person
-            and self.attribution == other.attribution
-            and self.xnotes == other.xnotes
-            and self._uri == other._uri
-        )
+        if self.person is not None:
+            return self.person == other.person
+        self_values = {(tv.value or "").casefold() for tv in self.names if tv.value}
+        other_values = {(tv.value or "").casefold() for tv in other.names if tv.value}
+        return bool(self_values & other_values)
+
+    @property
+    def sorted_names(self) -> List[TextValue]:
+        """Return names sorted alphabetically by value (primary name order preserved in self.names)."""
+        return sorted(self.names, key=lambda tv: (tv.value or "").casefold())
 
     def shares_name(self, other: "Agent") -> bool:
         if not isinstance(other, Agent):

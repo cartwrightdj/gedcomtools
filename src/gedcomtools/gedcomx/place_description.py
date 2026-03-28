@@ -29,8 +29,8 @@ class PlaceDescription(Subject):
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
         from .validation import check_instance
-        if self.names is not None and len(self.names) == 0:
-            result.warn("names", "PlaceDescription.names list is empty")
+        if self.names is None or len(self.names) == 0:
+            result.warn("names", "PlaceDescription has no names")
         if self.latitude is not None:
             if isinstance(self.latitude, (int, float)):
                 if not -90.0 <= self.latitude <= 90.0:

@@ -137,6 +137,8 @@ class Conclusion(GedcomXModel):
             elif self.confidence.value not in (ConfidenceLevel.High, ConfidenceLevel.Medium, ConfidenceLevel.Low):
                 result.warn("confidence", f"Unrecognised confidence value: {self.confidence.value!r}")
 
+    __hash__ = object.__hash__
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
