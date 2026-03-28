@@ -364,7 +364,7 @@ class LoggingHub:
             sid = _logger.add(cfg.path, **kwargs)
         else:
             del kwargs["filter"]
-            sid = _logger.add(sys.stdout, **kwargs)
+            sid = _logger.add(sys.stderr, **kwargs)
 
         self._sink_ids[cfg.name] = sid
 
@@ -506,7 +506,7 @@ def setup_logging(
 
     if console:
         sid = _logger.add(
-            sys.stdout,
+            sys.stderr,
             format=_CONSOLE_FMT,
             level=eff_console_level,
             colorize=True,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, ClassVar, List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .conclusion import Conclusion
 from .date import Date
@@ -36,6 +36,15 @@ class EventRole(Conclusion):
     person: Optional[Any] = None
     type: Optional[EventRoleType] = None
     details: Optional[str] = None
+
+    @field_validator("person", mode="before")
+    @classmethod
+    def _coerce_person(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            return Resource.model_validate(v)
+        if isinstance(v, str):
+            return Resource(resource=v)
+        return v
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

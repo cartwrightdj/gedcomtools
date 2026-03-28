@@ -223,48 +223,103 @@ class PluginRegistry:
         imported: List[str] = []
         errors: Dict[str, Exception] = {}
 
-        if base_package.startswith(root_package + "."):
-            base_fq = base_package
-        else:
-            base_fq = f"{root_package}.{base_package}"
-
+        base_fq = self._base_fq(base_package, root_package)
         for entry in list(self._entries.values()):
-            if entry.status != PluginStatus.ALLOWED:
-                continue
-
-            # Trust level gate: URL sources require ALL
-            if _is_url(entry.source) and self._trust_level < TrustLevel.ALL:
-                entry.status = PluginStatus.BLOCKED
-                err = PluginBlockedError(
-                    f"{entry.source!r} requires TrustLevel.ALL "
-                    f"(current: {self._trust_level.name})."
-                )
-                entry.error = err
+            mods, err = self._load_one_entry(entry, base_fq=base_fq, recursive=recursive)
+            imported.extend(mods)
+            if err:
                 errors[entry.source] = err
-                continue
-
-            # Trust level gate: local paths require LOCAL
-            if not _is_url(entry.source) and Path(entry.source).exists():
-                if self._trust_level < TrustLevel.LOCAL:
-                    entry.status = PluginStatus.BLOCKED
-                    err = PluginBlockedError(
-                        f"{entry.source!r} requires TrustLevel.LOCAL or higher "
-                        f"(current: {self._trust_level.name})."
-                    )
-                    entry.error = err
-                    errors[entry.source] = err
-                    continue
-
-            try:
-                mods = self._load_entry(entry, base_fq=base_fq, recursive=recursive)
-                imported.extend(mods)
-                entry.status = PluginStatus.LOADED
-            except Exception as exc:
-                entry.status = PluginStatus.FAILED
-                entry.error = exc
-                errors[entry.source] = exc
 
         return {"imported": imported, "errors": errors}
+
+    def load_one(
+        self,
+        name: str,
+        base_package: str = "gedcomx",
+        *,
+        recursive: bool = False,
+        root_package: str = "gedcomtools",
+    ) -> Dict[str, Any]:
+        """Import a single explicitly-allowed plugin by name.
+
+        Unlike ``load()``, this does not lock the registry, so it may be
+        called multiple times for different entries.
+
+        Args:
+            name: The entry name as registered via ``allow()``.
+
+        Returns:
+            dict with keys ``"imported"`` (list of module names) and
+            ``"errors"`` (dict mapping source → exception).
+
+        Raises:
+            KeyError: If no entry with that name exists.
+        """
+        entry = self._entries.get(name)
+        if entry is None:
+            raise KeyError(f"No extension registered with name {name!r}.")
+
+        base_fq = self._base_fq(base_package, root_package)
+        mods, err = self._load_one_entry(entry, base_fq=base_fq, recursive=recursive)
+        errors: Dict[str, Exception] = {}
+        if err:
+            errors[entry.source] = err
+        return {"imported": mods, "errors": errors}
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _base_fq(base_package: str, root_package: str) -> str:
+        if base_package.startswith(root_package + "."):
+            return base_package
+        return f"{root_package}.{base_package}"
+
+    def _load_one_entry(
+        self,
+        entry: "PluginEntry",
+        *,
+        base_fq: str,
+        recursive: bool,
+    ) -> "tuple[List[str], Optional[Exception]]":
+        """Apply trust gate, import entry, update its status.
+
+        Returns (imported_modules, error_or_None).
+        """
+        if entry.status not in (PluginStatus.ALLOWED, PluginStatus.FAILED):
+            return [], None
+
+        # Trust level gate: URL sources require ALL
+        if _is_url(entry.source) and self._trust_level < TrustLevel.ALL:
+            err = PluginBlockedError(
+                f"{entry.source!r} requires TrustLevel.ALL "
+                f"(current: {self._trust_level.name})."
+            )
+            entry.status = PluginStatus.BLOCKED
+            entry.error = err
+            return [], err
+
+        # Trust level gate: local paths require LOCAL
+        if not _is_url(entry.source) and Path(entry.source).exists():
+            if self._trust_level < TrustLevel.LOCAL:
+                err = PluginBlockedError(
+                    f"{entry.source!r} requires TrustLevel.LOCAL or higher "
+                    f"(current: {self._trust_level.name})."
+                )
+                entry.status = PluginStatus.BLOCKED
+                entry.error = err
+                return [], err
+
+        try:
+            mods = self._load_entry(entry, base_fq=base_fq, recursive=recursive)
+            entry.status = PluginStatus.LOADED
+            entry.error = None
+            return mods, None
+        except Exception as exc:
+            entry.status = PluginStatus.FAILED
+            entry.error = exc
+            return [], exc
 
     def _load_entry(
         self, entry: PluginEntry, *, base_fq: str, recursive: bool

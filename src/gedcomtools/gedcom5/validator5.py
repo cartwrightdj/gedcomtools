@@ -60,11 +60,8 @@ def _norm(xref: str) -> str:
 class Gedcom5Validator:
     """Validate a parsed GEDCOM 5.5.1 element tree.
 
-    Parameters
-    ----------
-    parser:
-        A :class:`~gedcomtools.gedcom5.parser.Gedcom5x` instance that has
-        already parsed a ``.ged`` file.
+    Args:
+        parser: A Gedcom5 instance that has already parsed a ``.ged`` file.
     """
 
     def __init__(self, parser: Any) -> None:

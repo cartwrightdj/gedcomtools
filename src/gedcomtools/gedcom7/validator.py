@@ -59,7 +59,7 @@ from typing import Dict, Iterable, List, Optional, Set
 
 from .structure import GedcomStructure
 from . import specification as g7specs
-from .g7interop import is_known_tag
+from .tag_registry import is_known_tag
 
 # ---------------------------------------------------------------------------
 # Pre-compiled payload format patterns

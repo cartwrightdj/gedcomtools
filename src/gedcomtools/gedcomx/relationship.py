@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .fact import Fact
 from .resource import Resource
@@ -36,6 +36,15 @@ class Relationship(Subject):
     person1: Optional[Any] = None       # Person | Resource
     person2: Optional[Any] = None       # Person | Resource
     facts: List[Fact] = Field(default_factory=list)
+
+    @field_validator("person1", "person2", mode="before")
+    @classmethod
+    def _coerce_person(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            return Resource.model_validate(v)
+        if isinstance(v, str):
+            return Resource(resource=v)
+        return v
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

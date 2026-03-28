@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Iterable, List, Optional, Union, overload
+from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
 from collections import defaultdict
 
 from .structure import GedcomStructure
@@ -129,7 +129,7 @@ class Gedcom7:
         """Return the number of top-level records."""
         return len(self.records)
 
-    def __iter__(self) -> Iterable[GedcomStructure]:
+    def __iter__(self) -> Iterator[GedcomStructure]:
         """Iterate over top-level records."""
         return iter(self.records)
 
@@ -777,6 +777,54 @@ class Gedcom7:
         """
         from .g7togx import Gedcom7Converter
         return Gedcom7Converter().convert(self)
+
+    def gml(self) -> str:
+        """Return the family graph as a GML string.
+
+        Converts this GEDCOM 7 file to GedcomX and serializes it to GML
+        (Graph Modelling Language) suitable for Gephi, yEd, and NetworkX.
+
+        Strings are encoded per the Himsolt 1997 GML spec: ``&quot;`` for
+        embedded double-quotes, ``&amp;`` for ampersands, ``&#NNN;`` for
+        non-ASCII and control characters.  Backslash has no special meaning
+        in GML and is passed through unchanged.
+
+        Returns:
+            GML content as a :class:`str`.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            print(g7.gml())
+        """
+        return self.to_gedcomx().gml()
+
+    def write_gml(
+        self,
+        path: Union[str, Path],
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        """Write the family graph to a GML file.
+
+        Converts this GEDCOM 7 file to GedcomX and writes it as GML
+        (Graph Modelling Language) using an atomic write via a temporary
+        file so a failed write never corrupts the destination.
+
+        Args:
+            path: Destination path.  Parent directory must exist.
+            encoding: File encoding (default UTF-8).
+
+        Raises:
+            FileNotFoundError: If the parent directory does not exist.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            g7.write_gml("family.gml")
+        """
+        from ..gedcomx.gml import GedcomXGmlExporter
+        GedcomXGmlExporter().write(self.to_gedcomx(), path, encoding=encoding)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the full GEDCOM file into a serializable dictionary.

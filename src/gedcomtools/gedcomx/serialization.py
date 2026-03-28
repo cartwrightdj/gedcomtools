@@ -49,6 +49,7 @@ _RESOURCE_REF_FIELDS: Dict[str, Set[str]] = {
     "GroupRole":         {"person"},
     "SourceReference":   {"description"},   # URI | SourceDescription → resource ref
     "SourceDescription": {"analysis"},       # Resource | Document → resource ref
+    "PlaceReference":    {"descriptionRef"}, # Resource | URI | PlaceDescription → resource ref
 }
 
 
@@ -260,6 +261,28 @@ class Serialization:
         return isinstance(x, (Resource, URI))
 
     @staticmethod
+    def _is_external_reference(x: Any) -> bool:
+        """Return True if x points to an external (non-local) resource.
+
+        External references have an authority (e.g. ``example.com``) or use a
+        network scheme (``http``, ``https``, ``ftp`` …).  Fragment-only and
+        resourceId references are always local and return False.
+        """
+        _EXTERNAL_SCHEMES = {"http", "https", "ftp", "ftps", "urn"}
+        uri: URI | None = None
+        if isinstance(x, Resource):
+            uri = x.resource
+        elif isinstance(x, URI):
+            uri = x
+        if uri is None:
+            return False
+        if uri.authority:
+            return True
+        if uri.scheme and uri.scheme.lower() in _EXTERNAL_SCHEMES:
+            return True
+        return False
+
+    @staticmethod
     def _has_reference_value(x: Any) -> bool:
         if Serialization._is_reference(x):
             return True
@@ -296,9 +319,16 @@ class Serialization:
 
             # Direct reference?
             if Serialization._is_reference(x):
+                # Skip external references — only resolve local (fragment/ID) refs
+                if Serialization._is_external_reference(x):
+                    log.debug("skipping external reference: {}", x)
+                    return x
+
                 ref_type = type(x).__name__
-                key = getattr(x, "resourceId", None) or getattr(x, "resource", None) or getattr(x, "value", None)
-                cache_hit = key in _cache
+                raw_key = getattr(x, "resourceId", None) or getattr(x, "resource", None) or getattr(x, "value", None)
+                # Normalise to a hashable string so URI objects (Pydantic, not hashable) work as cache keys
+                key = str(raw_key) if raw_key is not None else None
+                cache_hit = key in _cache if key is not None else False
                 if stats is not None:
                     stats.note_attempt(ref_type=ref_type, key=key, path=_path, cache_hit=cache_hit)
 
@@ -372,6 +402,21 @@ class Serialization:
                     new = Serialization._resolve_structure(cur, resolver, _seen=_seen, _cache=_cache,
                                                         stats=stats, _path=(*_path, fname))
                     if new is not cur:
+                        try:
+                            setattr(x, fname, new)
+                        except Exception:
+                            log.debug("'{}' field '{}' did not resolve", type(x).__name__, fname)
+                return x
+
+            # Plain Python objects (e.g. GedcomX root): walk public __dict__ attrs so
+            # that nested TypeCollections and Pydantic models are reached by the resolver.
+            if hasattr(x, "__dict__") and not isinstance(x, type):
+                for fname, fval in list(vars(x).items()):
+                    if fname.startswith("_"):
+                        continue
+                    new = Serialization._resolve_structure(fval, resolver, _seen=_seen, _cache=_cache,
+                                                        stats=stats, _path=(*_path, fname))
+                    if new is not fval:
                         try:
                             setattr(x, fname, new)
                         except Exception:

@@ -48,6 +48,14 @@ def _get_spec():
 
 
 def cmd_info(_args: List[str]) -> int:
+    """Display information about the active GEDCOM 7 specification rules.
+
+    Shows the active rules file path, whether it exists, the total number of
+    tags, and a table of each tag's payload type and substructure count.
+
+    Returns:
+        0 always.
+    """
     spec = _get_spec()
     rules = spec._CORE_RULES
     print(f"Active rules file : {spec._RULES_FILE}")
@@ -64,6 +72,15 @@ def cmd_info(_args: List[str]) -> int:
 
 
 def cmd_export(args: List[str]) -> int:
+    """Export the active GEDCOM 7 specification rules to a JSON file.
+
+    Args:
+        args: Optional list where args[0] is the destination path.
+              Defaults to the bundled rules file if omitted.
+
+    Returns:
+        0 always.
+    """
     spec = _get_spec()
     if args:
         dest = Path(args[0])
@@ -75,6 +92,14 @@ def cmd_export(args: List[str]) -> int:
 
 
 def cmd_load(args: List[str]) -> int:
+    """Load GEDCOM 7 specification rules from a JSON file, replacing the bundled rules.
+
+    Args:
+        args: List where args[0] is the path to the rules JSON file.
+
+    Returns:
+        0 on success, 1 if args is empty or the file does not exist.
+    """
     if not args:
         print("usage: g7spec load <path>", file=sys.stderr)
         return 1
@@ -93,6 +118,11 @@ def cmd_load(args: List[str]) -> int:
 
 
 def cmd_reset(_args: List[str]) -> int:
+    """Reset the GEDCOM 7 specification rules to the built-in defaults.
+
+    Returns:
+        0 always.
+    """
     spec = _get_spec()
     spec.reset_rules()
     print(f"Rules reset to built-in defaults ({len(spec._CORE_RULES)} tags).")

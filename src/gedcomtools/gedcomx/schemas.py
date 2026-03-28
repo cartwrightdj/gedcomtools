@@ -203,8 +203,32 @@ class Schema:
                 fields[k] = self._normalize_field_type(v)
 
     # lookups
-    def get_class_fields(self, type_name: str) -> Dict[str, Any] | None:
-        return self.field_type_table.get(type_name)
+    def get_class_fields(self, type_name: str | type) -> Dict[str, Any] | None:
+        """Return normalised field map for *type_name*.
+
+        Explicit registrations (via ``register_class``) take priority.  For
+        any ``GedcomXModel`` subclass that hasn't been explicitly registered,
+        the fields are auto-derived from Pydantic ``model_fields`` and cached
+        so that the resolver and gxcli type-inference work without needing
+        manual decoration on every model class.
+        """
+        name: str = type_name if isinstance(type_name, str) else type_name.__name__
+        if name in self.field_type_table:
+            return self.field_type_table[name]
+
+        # Fallback: auto-register from Pydantic model_fields for GedcomXModel subclasses
+        cls: type | None = type_name if isinstance(type_name, type) else None
+        if cls is None:
+            return None
+        try:
+            from .gx_base import GedcomXModel as _GXBase
+        except ImportError:
+            return None
+        if not (isinstance(cls, type) and issubclass(cls, _GXBase)):
+            return None
+
+        self.register_class(cls)
+        return self.field_type_table.get(name)
 
     def set_toplevel(self, cls: type, *, meta: Dict[str, Any] | None = None) -> None:
         self._toplevel[cls.__name__] = dict(meta or {})

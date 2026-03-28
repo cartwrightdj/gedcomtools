@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .g7interop import get_uri_for_tag
+from .tag_registry import get_uri_for_tag
 
 
 class GedcomStructure:

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import ast
 import dataclasses
+import glob as _glob_mod
 import inspect  # used for descriptor-safe lookups
 import json
 import logging
@@ -21,9 +22,16 @@ import shlex
 import shutil
 import sys
 import traceback
-from dataclasses import asdict, is_dataclass
+from dataclasses import fields as dataclass_fields, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, get_args, get_origin
+from typing import Any, Iterable, get_args, get_origin
+
+try:
+    import readline as _readline
+    _READLINE = True
+except ImportError:
+    _readline = None  # type: ignore[assignment]
+    _READLINE = False
 
 import orjson
 
@@ -41,14 +49,13 @@ def init_logging(app_name: str = "gedcomtools"):
     return _LOG_MGR
 
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
-from gedcomtools.gedcom5.parser import Gedcom5x
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.cli import objects_to_schema_table, write_jsonl
 from gedcomtools.gedcomx.arango import make_arango_graph_files
 
 
-SHELL_VERSION = '0.5.21'
+SHELL_VERSION = '0.7.1'
 
 def _level_from_str(s: str) -> int:
     s = (s or "").strip().upper()
@@ -249,11 +256,6 @@ def _maybe_as_dict(obj: Any) -> Any:
             return obj.model_dump()
         except Exception:
             pass
-    if is_dataclass(obj) and not isinstance(obj, type):
-        try:
-            return asdict(obj)
-        except Exception:
-            pass
     if hasattr(obj, "__dict__"):
         d = {k: v for k, v in vars(obj).items() if not k.startswith("_")}
         if d:
@@ -307,11 +309,19 @@ def list_fields(obj: Any) -> list[tuple[str, Any]]:
         return [(str(k), v) for k, v in obj.items()]
     if isinstance(obj, (list, tuple)):
         return [(str(i), v) for i, v in enumerate(obj)]
+    # Pydantic models: use model_fields + model_extra to enumerate fields correctly.
+    # Must be checked before as_indexable_list because BaseModel.__iter__ yields
+    # (field, value) tuples — which would make every model appear to be a list of tuples.
+    if not isinstance(obj, type) and hasattr(type(obj), "model_fields"):
+        fields = [(k, getattr(obj, k)) for k in type(obj).model_fields]
+        extra = getattr(obj, "model_extra", None) or {}
+        fields += [(k, v) for k, v in extra.items() if not k.startswith("_")]
+        return fields
     col = as_indexable_list(obj)
     if col is not None:
         return [(str(i), v) for i, v in enumerate(col)]
-    if is_dataclass(obj):
-        return [(f.name, getattr(obj, f.name)) for f in dataclasses.fields(obj)]
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return [(f.name, getattr(obj, f.name)) for f in dataclass_fields(obj)]
     if hasattr(obj, "__dict__"):
         return [(k, v) for k, v in vars(obj).items() if not k.startswith("_")]
     return []
@@ -325,6 +335,10 @@ def as_indexable_list(obj: Any) -> list[Any] | None:
         return None
     if isinstance(obj, (list, tuple, set)):
         return list(obj)
+    # Pydantic models have __iter__ that yields (field, value) tuples — not items.
+    # Skip them here; list_fields handles them directly via model_fields.
+    if not isinstance(obj, type) and hasattr(type(obj), "model_fields"):
+        return None
     if hasattr(obj, "__len__") and hasattr(obj, "__getitem__"):
         try:
             return [obj[i] for i in range(len(obj))]  # type: ignore[index]
@@ -453,8 +467,31 @@ def _print_table(rows: Iterable[Iterable[str]], headers: list[str]) -> None:
 def _schema_fields_for_object(obj: Any) -> dict[str, Any]:
     if obj is None:
         return {}
-    cls_name = obj.__class__.__name__
-    return SCHEMA.get_class_fields(cls_name) or {}
+    # Pydantic models: read type annotations directly from model_fields.
+    cls = type(obj)
+    if not isinstance(obj, type) and hasattr(cls, "model_fields"):
+        return {k: fi.annotation for k, fi in cls.model_fields.items()}
+    # SCHEMA auto-registration for GedcomXModel subclasses.
+    cls = type(obj)
+    schema_fields = SCHEMA.get_class_fields(cls)
+    if schema_fields:
+        return schema_fields
+    # Fallback: read __init__ type hints for plain classes (e.g. GedcomX).
+    try:
+        hints = {
+            k: v
+            for k, v in inspect.get_annotations(cls.__init__, eval_str=False).items()
+            if k not in ("self", "return")
+        }
+        if hints:
+            return hints
+    except Exception:
+        pass
+    # Last resort: class-level __annotations__ merged up the MRO.
+    merged: dict[str, Any] = {}
+    for base in reversed(cls.__mro__):
+        merged.update(getattr(base, "__annotations__", {}))
+    return {k: v for k, v in merged.items() if not k.startswith("_")}
 
 def _parse_elem_from_type_str(container_str: str) -> str | None:
     s = container_str.strip()
@@ -556,6 +593,62 @@ def smart_getattr(obj: Any, name: str, default=None) -> tuple[Any, str]:
 
     return default, "missing"
 
+# ── Settings ─────────────────────────────────────────────────────────────────
+_SETTINGS_PATH = Path.home() / ".config" / "gedcomtools" / "gxcli.json"
+_HISTORY_PATH  = Path.home() / ".config" / "gedcomtools" / "gxcli_history"
+
+_DEFAULT_SETTINGS: dict[str, Any] = {
+    "page_size": 20,
+    "color": "auto",
+    "history_size": 200,
+}
+
+def _load_settings() -> dict[str, Any]:
+    cfg = dict(_DEFAULT_SETTINGS)
+    if _SETTINGS_PATH.exists():
+        try:
+            with open(_SETTINGS_PATH) as _f:
+                _data = json.load(_f)
+            cfg.update({k: v for k, v in _data.items() if k in _DEFAULT_SETTINGS})
+        except Exception:
+            pass
+    return cfg
+
+def _save_settings(cfg: dict[str, Any]) -> None:
+    try:
+        _SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_SETTINGS_PATH, "w") as _f:
+            json.dump(cfg, _f, indent=2)
+    except Exception as e:
+        print(f"Warning: could not save settings: {e}")
+
+
+# ── Grep walker ───────────────────────────────────────────────────────────────
+def _grep_node(
+    obj: Any,
+    rx: "re.Pattern[str]",
+    prefix: str,
+    results: list[tuple[str, str]],
+    depth: int,
+    visited: set[int],
+    max_depth: int,
+) -> None:
+    obj_id = id(obj)
+    if obj_id in visited or depth > max_depth:
+        return
+    visited.add(obj_id)
+    for key, val in list_fields(obj):
+        path = f"{prefix}/{key}" if prefix else str(key)
+        if isinstance(val, str):
+            if rx.search(val):
+                results.append((path, val))
+        elif isinstance(val, (int, float)):
+            if rx.search(str(val)):
+                results.append((path, str(val)))
+        elif val is not None and not isinstance(val, bool):
+            _grep_node(val, rx, path, results, depth + 1, visited, max_depth)
+
+
 # ── Shell / REPL ─────────────────────────────────────────────────────────────
 class Shell:
     def __init__(self, root: Any | None = None):
@@ -566,21 +659,43 @@ class Shell:
         self.use_color = sys.stdout.isatty() or ("WT_SESSION" in os.environ)
         self.status = NO_DATA
         self.version = SHELL_VERSION
+        # Set by run(); commands can test this to skip interactive-only behaviour.
+        self._interactive: bool = True
+        # Navigation history (back command)
+        self._nav_history: list[tuple[Any, list[str]]] = []
+        # Named bookmarks
+        self._bookmarks: dict[str, tuple[Any, list[str]]] = {}
+        # Persistent settings
+        self._settings: dict[str, Any] = _load_settings()
+        # Ahnentafel working set: number → entry dict
+        self._ahnen: dict[int, dict] = {}
 
         self.commands = {
             "agentstbl": self._cmd_agenttbl,
+            "back": self._cmd_back,
+            "bm": self._cmd_bookmark,
+            "bookmark": self._cmd_bookmark,
             "call": self._cmd_call,
             "cd": self._cmd_cd,
+            "cfg": self._cmd_cfg,
             "del": self._cmd_del,
+            "diff": self._cmd_diff,
+            "ext": self._cmd_ext,
+            "extension": self._cmd_ext,
             "extend": self._cmd_extend,
             "extras": self._cmd_extras,
+            "find": self._cmd_find,
             "getattr": self._cmd_getattr,
             "getprop": self._cmd_getprop,
+            "go": self._cmd_go,
+            "goto": self._cmd_goto,
+            "grep": self._cmd_grep,
             "help": self._cmd_help,
             "?": self._cmd_help,
+            "history": self._cmd_history,
             "ld": self._cmd_load,
             "load": self._cmd_load,
-            "log":self._cmd_log,
+            "log": self._cmd_log,
             "ls": self._cmd_ls,
             "list": self._cmd_ls,
             "methods": self._cmd_methods,
@@ -589,9 +704,13 @@ class Shell:
             "resolve": self._cmd_resolve,
             "schema": self._cmd_schema,
             "set": self._cmd_set,
+            "stats": self._cmd_stats,
             "dump": self._cmd_dump,
             "show": self._cmd_show,
             "type": self._cmd_type,
+            "ahnen": self._cmd_ahnen,
+            "ahnentafel": self._cmd_ahnen,
+            "validate": self._cmd_validate,
             "ver": self._cmd_ver,
             "write": self._cmd_write,
         }
@@ -599,13 +718,92 @@ class Shell:
     def prompt(self) -> str:
         return "gx:/" + "/".join(self.path) + "> "
 
+    def _make_tab_completer(self):
+        """Return a readline-compatible completer function."""
+        def completer(text: str, state: int):
+            try:
+                line = _readline.get_line_buffer()
+                before = line[:_readline.get_begidx()]
+                try:
+                    tokens = shlex.split(before, posix=True) if before.strip() else []
+                except ValueError:
+                    tokens = before.split()
+
+                if not tokens:
+                    matches = sorted(c for c in self.commands if c.startswith(text))
+                else:
+                    cmd = tokens[0].lower()
+                    ntok = len(tokens)
+                    if ntok == 1:
+                        if cmd in ("go",):
+                            matches = sorted(b for b in self._bookmarks if b.startswith(text))
+                        elif cmd == "goto":
+                            idx = self.gedcomx.id_index if self.gedcomx else {}
+                            matches = sorted(str(k) for k in idx if str(k).startswith(text))
+                        elif cmd in ("cd", "show", "dump", "type", "grep", "ls"):
+                            fields = list_fields(self.cur) if self.cur is not None else []
+                            matches = sorted(str(k) for k, _ in fields if str(k).startswith(text))
+                        elif cmd in ("load", "extend", "diff"):
+                            matches = _glob_mod.glob(text + "*")
+                        elif cmd == "write":
+                            matches = [f for f in ["gx ", "zip ", "jsonl ", "adbg "] if f.startswith(text)]
+                        elif cmd in ("ext", "extension"):
+                            matches = [s for s in ["ls", "show", "scan", "authorize", "load", "trust"] if s.startswith(text)]
+                        elif cmd == "cfg":
+                            matches = sorted(k for k in _DEFAULT_SETTINGS if k.startswith(text))
+                        elif cmd == "bookmark":
+                            matches = [s for s in ["ls", "rm"] if s.startswith(text)]
+                        else:
+                            matches = []
+                    else:
+                        matches = []
+
+                return matches[state] if state < len(matches) else None
+            except Exception:
+                return None
+        return completer
+
     def run(self) -> None:
-        print(f"Entering GEDCOM-X browser ({self.version}) Type 'help' for commands, 'quit' to exit.")
+        self._interactive = sys.stdin.isatty()
+
+        # Disable ANSI escape codes when stdout is piped (not a real terminal).
+        if not sys.stdout.isatty():
+            global _RED, _RESET, ANSI  # pylint: disable=global-statement
+            _RED = _RESET = ""
+            ANSI = {k: "" for k in ANSI}
+
+        # Set up readline (tab completion + persistent history) for interactive sessions.
+        if self._interactive and _READLINE:
+            try:
+                _readline.set_history_length(self._settings.get("history_size", 200))
+                _HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    _readline.read_history_file(str(_HISTORY_PATH))
+                except FileNotFoundError:
+                    pass
+                _readline.set_completer(self._make_tab_completer())
+                _readline.set_completer_delims(" \t\n")
+                _readline.parse_and_bind("tab: complete")
+                import atexit as _atexit
+                _atexit.register(lambda: _readline.write_history_file(str(_HISTORY_PATH)))
+            except Exception:
+                pass
+
+        if self._interactive:
+            print(f"Entering GEDCOM-X browser ({self.version}) Type 'help' for commands, 'quit' to exit.")
+
         while True:
             try:
-                line = input(self.prompt()).strip()
+                if self._interactive:
+                    line = input(self.prompt()).strip()
+                else:
+                    raw = sys.stdin.readline()
+                    if not raw:          # EOF — pipe closed
+                        break
+                    line = raw.rstrip("\r\n").strip()
             except (EOFError, KeyboardInterrupt):
-                print()
+                if self._interactive:
+                    print()
                 return
 
             if not line:
@@ -631,6 +829,8 @@ class Shell:
             handler = self.commands.get(cmd)
             if not handler:
                 print(f"Unknown command: {cmd}. Try 'help'.")
+                if not self._interactive:
+                    sys.stdout.flush()
                 continue
 
             try:
@@ -640,6 +840,9 @@ class Shell:
                 last = traceback.extract_tb(tb)[-1]
 
                 print(f"! cmd error ({last.filename}:{last.lineno}): {e}")
+
+            if not self._interactive:
+                sys.stdout.flush()
 
     # ---- commands -----------------------------------------------------------
     def _cmd_ver(self, _args: list[str]) -> None:
@@ -759,32 +962,42 @@ class Shell:
             return
 
         print(
-            "Commands:\n"
-            "  load PATH                load .ged (5x) or .json (GEDCOM-X)\n"
-            "  extend PATH              load and extend current root\n"
-            "  ls [PATH] [--full]       list fields/items under node (schema-aware)\n"
+            "Load / Save:\n"
+            "  load PATH                load .ged / .json / .zip\n"
+            "  extend PATH              load and merge into current root\n"
+            "  write gx|zip|jsonl PATH  write current root to a file\n"
+            "\nNavigation:\n"
             "  cd PATH                  change node (.., /, indices, id strings)\n"
+            "  back                     return to previous location\n"
             "  pwd                      print current path\n"
-            "  show [PATH|toplevel]     pretty-print node or list top-level collection items\n"
+            "  goto ID                  jump to any object by id\n"
+            "  find PATTERN [--type T]  search persons/agents/places/events/sources\n"
+            "  bookmark [NAME]          save current location; 'bookmark ls/rm NAME'\n"
+            "  go NAME                  navigate to a saved bookmark\n"
+            "\nInspection:\n"
+            "  ls [PATH] [--full]       list fields/items (schema-aware)\n"
+            "  show [PATH|toplevel]     pretty-print node or top-level items\n"
             "  dump [PATH]              same as show but always JSON\n"
-            "  schema ...               inspect schema/classes/extras (see: schema help)\n"
-            "  extras [opts]            list extras across all classes\n"
+            "  stats                    count all top-level collections\n"
+            "  grep PATTERN [--all]     search field values by regex\n"
+            "  validate                 run GedcomX validation\n"
+            "  diff PATH                compare current root against another file\n"
             "  type [opts] [PATH|ATTR]  runtime & schema type info\n"
-            "  resolve                  resolve Resource/URI refs using model resolver\n"
-            "  write gx PATH            write current root as GEDCOM-X JSON\n"
-            "  getprop NAME [...]       print value of @property(ies) on current node\n"
-            "  props [--instance|--class] [--private]\n"
-            "                           list instance attrs + class properties/attrs\n"
-            "  getattr NAME [...]       smart getattr → value + kind\n"
-            "  methods [--private] [--own] [--match SUBSTR]\n"
-            "                           list callable methods on current node\n"
-            "  call NAME [args...] [kw=val ...]\n"
-            "                           call a method on current node with typed args\n"
-            "  set NAME VALUE | NAME=VALUE [...]\n"
-            "  set --n NAME [NAME2 ...] create and assign/append new instance(s) based on schema\n"
-            "  del NAME [NAME2 ...]     delete attributes/keys/indices on current node\n"
+            "  schema ...               inspect schema/classes (see: schema help)\n"
+            "  extras [opts]            list dynamic extras across classes\n"
+            "\nEditing:\n"
+            "  set NAME VALUE           set a field on the current node\n"
+            "  set --n NAME [NAME2...]  create and append new instance(s)\n"
+            "  del NAME [NAME2...]      delete attributes/keys/indices\n"
+            "  call NAME [args] [k=v]   call a method on the current node\n"
+            "\nShell:\n"
+            "  cfg [NAME [VALUE]]       show/set persistent shell settings\n"
+            "  history [N]              show last N commands\n"
+            "  log ...                  logging controls\n"
+            "  ext ...                  extension/plugin management\n"
             "  ver                      print version\n"
             "  quit | exit              leave\n"
+            "\nType 'help COMMAND' for detailed help on any command.\n"
         )
 
     def _cmd_agenttbl(self, _args: list[str]) -> None:
@@ -806,65 +1019,84 @@ class Shell:
                     print(line)
                 idx = end
                 if idx < total:
-                    input("\n[Press Enter to continue…]\n")
+                    if self._interactive:
+                        input("\n[Press Enter to continue…]\n")
 
         page_table(objects_to_schema_table(self.gedcomx.agents))
 
     def _cmd_extend(self, args: list[str]) -> None:
         """
         extend PATH
-        Load a .ged or .json and extend current root (must support .extend()).
+        Load a .ged, .json, or .zip and extend current root (must support .extend()).
         """
         if len(args) != 1:
             print("usage: extend PATH")
             return
         path = args[0].strip().strip('"')
+        low = path.lower()
 
         if self.root is None or not hasattr(self.root, "extend"):
             print("Current root is None or does not support .extend()")
             return
 
-        if path.lower().endswith(".ged"):
+        if low.endswith(".ged"):
             print("Loading GEDCOM (size may affect time)…")
             gx = self._load_from_ged(path)
-            self.root.extend(gx)
-            print("Loaded GEDCOM 5.x and converted to GedcomX.")
+            if gx is not None:
+                self.root.extend(gx)
+                print("Loaded and converted to GedcomX.")
             return
 
-        if path.lower().endswith(".json"):
+        if low.endswith(".zip"):
+            print("Loading GedcomX ZIP archive…")
+            gx = self._load_from_zip(path)
+            self.root.extend(gx)
+            print("Loaded GedcomX ZIP.")
+            return
+
+        if low.endswith(".json"):
             print("Loading Gedcom-X from JSON (size may affect time)…")
             gx = self._load_from_json(path)
             self.root.extend(gx)
             print("Loaded GEDCOM-X JSON.")
             return
 
-        print(f"Unsupported file type. Use .ged or .json: {path}")
+        print(f"Unsupported file type. Use .ged, .zip, or .json: {path}")
 
     def _cmd_load(self, args: list[str]) -> None:
         """
         load PATH
-        Load a .ged (Gedcom 5.x) or .json (GedcomX) and set as root.
+        Load a .ged (GEDCOM 5/7), .json (GedcomX), or .zip (GedcomX archive) and set as root.
         """
         if len(args) != 1:
             print("usage: load PATH")
             return
         path = args[0].strip().strip('"')
+        low = path.lower()
 
-        if path.lower().endswith(".ged"):
+        if low.endswith(".ged"):
             print("Loading GEDCOM (size may affect time)…")
             gx = self._load_from_ged(path)
-            self._set_root(gx)
-            print("Loaded GEDCOM 5.x and converted to GedcomX.")
+            if gx is not None:
+                self._set_root(gx)
+                print("Loaded and converted to GedcomX.")
             return
 
-        if path.lower().endswith(".json"):
+        if low.endswith(".zip"):
+            print("Loading GedcomX ZIP archive…")
+            gx = self._load_from_zip(path)
+            self._set_root(gx)
+            print("Loaded GedcomX ZIP.")
+            return
+
+        if low.endswith(".json"):
             print("Loading Gedcom-X from JSON (size may affect time)…")
             gx = self._load_from_json(path)
             self._set_root(gx)
             print("Loaded GEDCOM-X JSON.")
             return
 
-        print(f"Unsupported file type. Use .ged or .json: {path}")
+        print(f"Unsupported file type. Use .ged, .zip, or .json: {path}")
 
     def _cmd_log(self, args: list[str]) -> None:
         """
@@ -1014,36 +1246,1224 @@ class Shell:
 
         print("Unknown log command. Try: log, log show <ch>, log enable <ch> [LEVEL], log level <ch> <LEVEL>, log console <LEVEL>, log files on|off")
 
+    # ------------------------------------------------------------------
+    # Extension / plugin management
+    # ------------------------------------------------------------------
+
+    def _cmd_ext(self, args: list[str]) -> None:
+        """
+        ext ls [all|NAME]
+            List registered extensions: name, location, status.
+
+        ext show [all|NAME]
+            Show full details for extension(s).
+
+        ext scan [PACKAGE]
+            Discover and register bundled extensions.
+            PACKAGE defaults to gedcomtools.gedcomx.extensions.
+            Run this before 'ext load' to populate the registry.
+
+        ext authorize SOURCE [NAME] [sha256=HASH]
+            Add SOURCE to the allow-list (must be done before ext load).
+            NAME is optional human label; sha256 is required for URLs.
+
+        ext load [NAME]
+            Load all allowed extensions, or just NAME (substring match).
+
+        ext trust [DISABLED|BUILTIN|LOCAL|ALL]
+            Show or set the plugin trust level.
+        """
+        import importlib.util
+        import pkgutil
+        from gedcomtools.gedcomx.extensible import (
+            plugin_registry, TrustLevel, PluginStatus, RegistryLockedError
+        )
+
+        sub = args[0].lower() if args else "ls"
+        rest = args[1:]
+
+        # ── helpers ───────────────────────────────────────────────────
+        _STATUS_COLOR = {
+            PluginStatus.LOADED:  ANSI.get("green", ""),
+            PluginStatus.FAILED:  ANSI.get("red", ""),
+            PluginStatus.BLOCKED: ANSI.get("red", ""),
+            PluginStatus.ALLOWED: ANSI.get("yellow", ""),
+            PluginStatus.PENDING: ANSI.get("dim", ""),
+        }
+        _RST = ANSI.get("reset", "")
+
+        def _colored_status(s: PluginStatus) -> str:
+            c = _STATUS_COLOR.get(s, "")
+            return f"{c}{s.value}{_RST}" if c else s.value
+
+        def _resolve_module_path(modname: str) -> str:
+            """Return a human-readable file path for a dotted module name."""
+            # Check if already imported
+            mod = sys.modules.get(modname)
+            if mod:
+                f = getattr(mod, "__file__", None)
+                if f:
+                    return f
+                locs = getattr(mod, "__path__", None)
+                if locs:
+                    return list(locs)[0]
+            # Not yet imported — use find_spec (no import side-effect)
+            try:
+                spec = importlib.util.find_spec(modname)
+                if spec:
+                    if spec.origin and spec.origin != "namespace":
+                        return spec.origin
+                    locs = list(spec.submodule_search_locations or [])
+                    if locs:
+                        return locs[0]
+            except (ModuleNotFoundError, ValueError):
+                pass
+            return modname
+
+        def _source_location(entry) -> str:
+            """Return the best-known file/module location for an entry."""
+            src = entry.source
+            # For loaded entries prefer the live module __file__
+            if entry.status == PluginStatus.LOADED:
+                mod = sys.modules.get(entry.name) or sys.modules.get(src)
+                if mod and getattr(mod, "__file__", None):
+                    return mod.__file__
+            # For module-name sources resolve without importing
+            if src and not src.startswith(("http://", "https://", "/", ".", os.sep)):
+                return _resolve_module_path(src)
+            return src
+
+        def _match(entry, selector: str) -> bool:
+            if not selector or selector == "all":
+                return True
+            s = selector.lower()
+            return s in entry.name.lower() or s in entry.source.lower()
+
+        def _entries_for(selector: str):
+            entries = plugin_registry.list()
+            sel = selector.lower() if selector else "all"
+            return [e for e in entries if _match(e, sel)]
+
+        # ── ls ────────────────────────────────────────────────────────
+        if sub == "ls":
+            selector = rest[0] if rest else "all"
+            entries = _entries_for(selector)
+            if not entries:
+                print("No extensions registered." if selector == "all"
+                      else f"No extension matching {selector!r}.")
+                if selector == "all":
+                    print("Tip: run 'ext scan' to discover bundled extensions.")
+                return
+            col_n = max(len(e.name) for e in entries)
+            col_s = max(len(_source_location(e)) for e in entries)
+            col_n = max(col_n, 4)
+            col_s = max(col_s, 8)
+            hdr = f"{'NAME':<{col_n}}  {'LOCATION':<{col_s}}  STATUS"
+            print(hdr)
+            print("-" * len(hdr))
+            for e in entries:
+                loc = _source_location(e)
+                print(f"{e.name:<{col_n}}  {loc:<{col_s}}  {_colored_status(e.status)}")
+            return
+
+        # ── show ──────────────────────────────────────────────────────
+        if sub == "show":
+            selector = rest[0] if rest else "all"
+            entries = _entries_for(selector)
+            if not entries:
+                print("No extensions registered." if selector == "all"
+                      else f"No extension matching {selector!r}.")
+                return
+            for e in entries:
+                loc = _source_location(e)
+                print(f"Name    : {e.name}")
+                print(f"Source  : {e.source}")
+                print(f"Location: {loc}")
+                print(f"Status  : {_colored_status(e.status)}")
+                if e.expected_sha256:
+                    print(f"sha256 (expected): {e.expected_sha256}")
+                if e.actual_sha256:
+                    print(f"sha256 (actual)  : {e.actual_sha256}")
+                if e.error:
+                    print(f"Error   : {e.error}")
+                print()
+            return
+
+        # ── scan ──────────────────────────────────────────────────────
+        if sub == "scan":
+            root_pkg = rest[0] if rest else "gedcomtools.gedcomx.extensions"
+            try:
+                pkg = importlib.import_module(root_pkg)
+            except ModuleNotFoundError:
+                print(f"Package not found: {root_pkg}")
+                return
+            pkg_path = getattr(pkg, "__path__", None)
+            if not pkg_path:
+                print(f"{root_pkg} is not a package.")
+                return
+
+            found: list[tuple[str, str]] = []  # (modname, location)
+            for mi in pkgutil.iter_modules(pkg_path, root_pkg + "."):
+                loc = _resolve_module_path(mi.name)
+                found.append((mi.name, loc))
+
+            if not found:
+                print(f"No extensions found in {root_pkg}.")
+                return
+
+            print(f"Found {len(found)} extension(s) in {root_pkg}:")
+            registered = 0
+            skipped = 0
+            for modname, loc in found:
+                short = modname.split(".")[-1]
+                try:
+                    plugin_registry.allow(modname, name=short)
+                    print(f"  + {short:<20}  {loc}")
+                    registered += 1
+                except RegistryLockedError:
+                    print(f"  ! {short:<20}  registry locked — run before 'ext load'")
+                    skipped += 1
+                except Exception as e:
+                    print(f"  ! {short:<20}  {e}")
+                    skipped += 1
+
+            if registered:
+                print(f"\nRegistered {registered} extension(s). Run 'ext load' to import them.")
+            if skipped:
+                print(f"Skipped {skipped} (already locked). Restart shell to re-scan.")
+            return
+
+        # ── authorize ─────────────────────────────────────────────────
+        if sub in ("authorize", "auth", "allow"):
+            if not rest:
+                print("Usage: ext authorize SOURCE [NAME] [sha256=HASH]")
+                return
+            source = rest[0]
+            name: str | None = None
+            sha256: str | None = None
+            for tok in rest[1:]:
+                if tok.startswith("sha256="):
+                    sha256 = tok[7:]
+                elif name is None:
+                    name = tok
+            try:
+                plugin_registry.allow(source, name=name, sha256=sha256)
+                label = name or source
+                print(f"Authorized: {label!r}  ({source})")
+            except RegistryLockedError as e:
+                print(f"Error: {e}")
+            except ValueError as e:
+                print(f"Error: {e}")
+            return
+
+        # ── load ──────────────────────────────────────────────────────
+        if sub == "load":
+            name_filter = rest[0] if rest else None
+            try:
+                if name_filter:
+                    # Find matching entries (substring match on name)
+                    all_entries = plugin_registry.list()
+                    targets = [e for e in all_entries
+                               if name_filter.lower() in e.name.lower()]
+                    if not targets:
+                        print(f"No extension matching {name_filter!r}. "
+                              f"Run 'ext ls' to see registered extensions.")
+                        return
+                    imported: list[str] = []
+                    errors: dict[str, Exception] = {}
+                    for e in targets:
+                        result = plugin_registry.load_one(e.name)
+                        imported.extend(result.get("imported", []))
+                        errors.update(result.get("errors", {}))
+                else:
+                    result = plugin_registry.load()
+                    imported = result.get("imported", [])
+                    errors = result.get("errors", {})
+            except RegistryLockedError as e:
+                print(f"Error: {e}")
+                return
+            if imported:
+                print(f"Loaded {len(imported)} extension(s):")
+                for mod in imported:
+                    print(f"  {mod}")
+            else:
+                print("No extensions loaded.")
+            if errors:
+                print(f"{len(errors)} error(s):")
+                for src, err in errors.items():
+                    print(f"  {src}: {err}")
+            return
+
+        # ── trust ─────────────────────────────────────────────────────
+        if sub == "trust":
+            if not rest:
+                print(f"Trust level: {plugin_registry.trust_level.name}")
+                return
+            level_str = rest[0].upper()
+            try:
+                level = TrustLevel[level_str]
+            except KeyError:
+                print(f"Unknown trust level {rest[0]!r}. Use: DISABLED, BUILTIN, LOCAL, ALL")
+                return
+            try:
+                plugin_registry.set_trust_level(level)
+                print(f"Trust level set to {level.name}.")
+            except RegistryLockedError as e:
+                print(f"Error: {e}")
+            return
+
+        print(f"Unknown extension subcommand {sub!r}. Use: ls, show, scan, authorize, load, trust")
+
+    # ------------------------------------------------------------------
+    # Ahnentafel
+    # ------------------------------------------------------------------
+
+    # Key aliases for ahnen set parsing
+    _AHNEN_KEY_MAP: dict[str, str] = {
+        "b": "birth_date",   "born": "birth_date",   "birth": "birth_date",
+        "bp": "birth_place", "bplace": "birth_place", "birth_place": "birth_place",
+        "d": "death_date",   "died": "death_date",   "death": "death_date",
+        "dp": "death_place", "dplace": "death_place", "death_place": "death_place",
+        "m": "marr_date",    "married": "marr_date",  "marriage": "marr_date",
+        "mp": "marr_place",  "mplace": "marr_place",  "marriage_place": "marr_place",
+    }
+
+    @staticmethod
+    def _ahnen_generation(n: int) -> int:
+        """Return 0-based generation of Ahnentafel number n (1→0, 2-3→1, 4-7→2, …)."""
+        g = 0
+        while n > 1:
+            n >>= 1
+            g += 1
+        return g
+
+    @staticmethod
+    def _ahnen_relation(n: int) -> str:
+        """Human-readable relationship label for Ahnentafel number n."""
+        if n == 1:
+            return "proband"
+        gen = Shell._ahnen_generation(n)
+        # Walk up to determine paternal/maternal line
+        line_parts: list[str] = []
+        k = n
+        while k > 3:
+            line_parts.append("paternal" if k % 2 == 0 else "maternal")
+            k >>= 1
+        line_parts.reverse()
+        side = " ".join(line_parts) + " " if line_parts else ""
+        gender = "father" if n % 2 == 0 else "mother"
+        if gen == 1:
+            return gender
+        prefix = "great-" * (gen - 2) if gen > 2 else ""
+        parent_word = "grandfather" if n % 2 == 0 else "grandmother"
+        return f"{side}{prefix}{parent_word}"
+
+    def _ahnen_fmt(self, entry: dict, short: bool = False) -> str:
+        """Format a single Ahnentafel entry as a short string."""
+        parts = [entry["name"]]
+        if entry.get("birth_date"):
+            parts.append(f"b.{entry['birth_date']}")
+        if not short and entry.get("birth_place"):
+            parts.append(f"({entry['birth_place']})")
+        if entry.get("death_date"):
+            parts.append(f"d.{entry['death_date']}")
+        if not short and entry.get("death_place"):
+            parts.append(f"({entry['death_place']})")
+        return "  ".join(parts)
+
+    def _ahnen_print_tree(
+        self,
+        n: int,
+        max_depth: int,
+        depth: int = 0,
+        prefix: str = "",
+        is_last: bool = True,
+    ) -> None:
+        has_entry = n in self._ahnen
+        father_n, mother_n = 2 * n, 2 * n + 1
+        has_children = depth < max_depth and (
+            father_n in self._ahnen or mother_n in self._ahnen
+            or (depth + 1 < max_depth and any(
+                k in self._ahnen for k in (2*father_n, 2*father_n+1, 2*mother_n, 2*mother_n+1)
+            ))
+        )
+
+        if not has_entry and not has_children:
+            return
+
+        connector = "└── " if is_last else "├── "
+        line_prefix = prefix + connector if depth > 0 else ""
+        child_prefix = prefix + ("    " if is_last else "│   ") if depth > 0 else ""
+
+        relation = self._ahnen_relation(n)
+        if has_entry:
+            summary = self._ahnen_fmt(self._ahnen[n], short=True)
+            print(f"{line_prefix}#{n}  {summary}  [{relation}]")
+        else:
+            print(f"{line_prefix}#{n}  —  [{relation}]")
+
+        if depth < max_depth:
+            # Show father first (even), then mother (odd) — both are ancestors
+            father_exists = father_n in self._ahnen or (depth + 1 < max_depth and any(
+                k in self._ahnen for k in range(2*father_n, 4*father_n)))
+            mother_exists = mother_n in self._ahnen or (depth + 1 < max_depth and any(
+                k in self._ahnen for k in range(2*mother_n, 4*mother_n)))
+
+            if father_exists or mother_exists:
+                self._ahnen_print_tree(father_n, max_depth, depth+1, child_prefix, not mother_exists)
+                if mother_exists:
+                    self._ahnen_print_tree(mother_n, max_depth, depth+1, child_prefix, True)
+
+    def _cmd_ahnen(self, args: list[str]) -> None:
+        """
+        ahnen set N NAME [b=DATE] [bp=PLACE] [d=DATE] [dp=PLACE] [m=DATE] [mp=PLACE]
+            Add or update a person. N=1 is the proband.
+            Parents of N are 2N (father) and 2N+1 (mother).
+            Key aliases: b/born  bp/bplace  d/died  dp/dplace  m/married  mp/mplace
+            Example:  ahnen set 1 "John Smith" b=1850 bp="New York" d=1920
+
+        ahnen get N
+            Show full details for person N.
+
+        ahnen ls
+            List all entries as a table.
+
+        ahnen tree [DEPTH]
+            Show pedigree chart from person 1 (default depth 3).
+
+        ahnen clear [N]
+            Remove person N, or clear all if N omitted.
+
+        ahnen build
+            Convert all entries to GedcomX and load as root.
+
+        ahnen import FILE
+            Import from a text file (one person per line: N NAME key:value …).
+
+        ahnen export FILE
+            Export entries to a text file.
+        """
+        sub = args[0].lower() if args else "ls"
+        rest = args[1:]
+
+        # ── set ───────────────────────────────────────────────────────
+        if sub == "set":
+            if len(rest) < 2:
+                print("usage: ahnen set N NAME [b=DATE] [bp=PLACE] [d=DATE] [dp=PLACE] [m=DATE] [mp=PLACE]")
+                return
+            try:
+                n = int(rest[0])
+            except ValueError:
+                print(f"N must be an integer, got {rest[0]!r}")
+                return
+            if n < 1:
+                print("N must be ≥ 1")
+                return
+
+            name = rest[1]
+            entry: dict = dict(self._ahnen.get(n, {"name": ""}))
+            entry["name"] = name
+
+            for tok in rest[2:]:
+                if "=" not in tok:
+                    print(f"Ignoring unrecognised token {tok!r} (expected key=value)")
+                    continue
+                k, v = tok.split("=", 1)
+                k = k.strip().lower().rstrip("_")
+                field = self._AHNEN_KEY_MAP.get(k)
+                if field is None:
+                    print(f"Unknown key {k!r}. Use: b, bp, d, dp, m, mp")
+                    continue
+                entry[field] = v.strip()
+
+            self._ahnen[n] = entry
+
+            relation = self._ahnen_relation(n)
+            child_n = n >> 1
+            child_info = f"  (parent of #{child_n})" if n > 1 else ""
+            print(f"Set #{n} [{relation}]{child_info}: {self._ahnen_fmt(entry)}")
+            return
+
+        # ── get ───────────────────────────────────────────────────────
+        if sub == "get":
+            if not rest:
+                print("usage: ahnen get N")
+                return
+            try:
+                n = int(rest[0])
+            except ValueError:
+                print(f"N must be an integer")
+                return
+            if n not in self._ahnen:
+                print(f"No entry for #{n}.")
+                return
+            e = self._ahnen[n]
+            rel = self._ahnen_relation(n)
+            print(f"#{n}  {rel}")
+            print(f"  Name        : {e['name']}")
+            if e.get("birth_date"):  print(f"  Born        : {e['birth_date']}")
+            if e.get("birth_place"): print(f"  Birth place : {e['birth_place']}")
+            if e.get("death_date"):  print(f"  Died        : {e['death_date']}")
+            if e.get("death_place"): print(f"  Death place : {e['death_place']}")
+            if e.get("marr_date"):   print(f"  Married     : {e['marr_date']}")
+            if e.get("marr_place"):  print(f"  Marr. place : {e['marr_place']}")
+            # Show relationship context
+            if n > 1:
+                child_n = n >> 1
+                print(f"  Parent of   : #{child_n} ({self._ahnen.get(child_n, {}).get('name', '—')})")
+            father_n, mother_n = 2*n, 2*n+1
+            if father_n in self._ahnen or mother_n in self._ahnen:
+                print(f"  Father      : #{father_n} ({self._ahnen.get(father_n, {}).get('name', '—')})")
+                print(f"  Mother      : #{mother_n} ({self._ahnen.get(mother_n, {}).get('name', '—')})")
+            return
+
+        # ── ls ────────────────────────────────────────────────────────
+        if sub == "ls":
+            if not self._ahnen:
+                print("No Ahnentafel entries.  Use: ahnen set N NAME [b=DATE] ...")
+                return
+            nums = sorted(self._ahnen)
+            # Column widths
+            num_w  = max(len(str(n)) for n in nums)
+            name_w = max(len(self._ahnen[n]["name"]) for n in nums)
+            rel_w  = max(len(self._ahnen_relation(n)) for n in nums)
+            print(f"{'#':<{num_w}}  {'Name':<{name_w}}  {'Relation':<{rel_w}}  Born        Died        Married")
+            print("-" * (num_w + name_w + rel_w + 40))
+            for n in nums:
+                e = self._ahnen[n]
+                rel = self._ahnen_relation(n)
+                bd = e.get("birth_date", "")
+                dd = e.get("death_date", "")
+                md = e.get("marr_date", "")
+                print(f"{n:<{num_w}}  {e['name']:<{name_w}}  {rel:<{rel_w}}  {bd:<12}{dd:<12}{md}")
+            return
+
+        # ── tree ──────────────────────────────────────────────────────
+        if sub == "tree":
+            if not self._ahnen:
+                print("No Ahnentafel entries.")
+                return
+            try:
+                max_depth = int(rest[0]) if rest else 3
+            except ValueError:
+                max_depth = 3
+            total = len(self._ahnen)
+            max_n = max(self._ahnen)
+            gens = self._ahnen_generation(max_n)
+            print(f"Pedigree  ({total} entr{'y' if total==1 else 'ies'}, {gens+1} generation(s))")
+            print()
+            self._ahnen_print_tree(1, max_depth)
+            return
+
+        # ── clear ─────────────────────────────────────────────────────
+        if sub == "clear":
+            if not rest:
+                count = len(self._ahnen)
+                self._ahnen.clear()
+                print(f"Cleared {count} entr{'y' if count==1 else 'ies'}.")
+                return
+            try:
+                n = int(rest[0])
+            except ValueError:
+                print("usage: ahnen clear [N]")
+                return
+            if n in self._ahnen:
+                del self._ahnen[n]
+                print(f"Removed #{n}.")
+            else:
+                print(f"No entry for #{n}.")
+            return
+
+        # ── build ─────────────────────────────────────────────────────
+        if sub == "build":
+            if not self._ahnen:
+                print("No Ahnentafel entries to build from.")
+                return
+            from gedcomtools.gedcomx import (
+                GedcomX, Person, Relationship, RelationshipType,
+                Fact, FactType, Name, NameForm, Gender, GenderType,
+                Date, PlaceReference,
+            )
+            from gedcomtools.gedcomx.name import QuickName
+
+            gx = GedcomX()
+            persons: dict[int, Person] = {}
+
+            # Pass 1: create all Person objects
+            for n, e in sorted(self._ahnen.items()):
+                p = Person()
+                p.id = f"P{n}"
+                p.names.append(QuickName(e["name"]))
+
+                # Gender: even → male, odd → female, 1 → unknown
+                if n == 1:
+                    p.gender = Gender(type=GenderType.Unknown)
+                elif n % 2 == 0:
+                    p.gender = Gender(type=GenderType.Male)
+                else:
+                    p.gender = Gender(type=GenderType.Female)
+
+                # Birth fact
+                if e.get("birth_date") or e.get("birth_place"):
+                    f = Fact(type=FactType.Birth)
+                    if e.get("birth_date"):
+                        f.date = Date(original=e["birth_date"])
+                    if e.get("birth_place"):
+                        f.place = PlaceReference(original=e["birth_place"])
+                    p.facts.append(f)
+
+                # Death fact
+                if e.get("death_date") or e.get("death_place"):
+                    f = Fact(type=FactType.Death)
+                    if e.get("death_date"):
+                        f.date = Date(original=e["death_date"])
+                    if e.get("death_place"):
+                        f.place = PlaceReference(original=e["death_place"])
+                    p.facts.append(f)
+
+                gx.persons.append(p)
+                persons[n] = p
+
+            # Pass 2: parent-child and couple relationships
+            processed_couples: set[int] = set()
+            for n in sorted(persons):
+                father_n, mother_n = 2 * n, 2 * n + 1
+
+                # Couple relationship (father + mother)
+                couple_key = min(father_n, mother_n)
+                if couple_key not in processed_couples:
+                    if father_n in persons and mother_n in persons:
+                        marr_e = self._ahnen.get(father_n, {}) or self._ahnen.get(mother_n, {})
+                        # Prefer father's entry for marriage data, fall back to mother's
+                        fa_e = self._ahnen.get(father_n, {})
+                        mo_e = self._ahnen.get(mother_n, {})
+                        marr_date = fa_e.get("marr_date") or mo_e.get("marr_date")
+                        marr_place = fa_e.get("marr_place") or mo_e.get("marr_place")
+
+                        couple = Relationship(
+                            type=RelationshipType.Couple,
+                            person1=persons[father_n],
+                            person2=persons[mother_n],
+                        )
+                        if marr_date or marr_place:
+                            mf = Fact(type=FactType.Marriage)
+                            if marr_date:
+                                mf.date = Date(original=marr_date)
+                            if marr_place:
+                                mf.place = PlaceReference(original=marr_place)
+                            couple.facts.append(mf)
+
+                        gx.relationships.append(couple)
+                        processed_couples.add(couple_key)
+
+                # Parent → child relationships
+                if father_n in persons:
+                    gx.relationships.append(Relationship(
+                        type=RelationshipType.ParentChild,
+                        person1=persons[father_n],
+                        person2=persons[n],
+                    ))
+                if mother_n in persons:
+                    gx.relationships.append(Relationship(
+                        type=RelationshipType.ParentChild,
+                        person1=persons[mother_n],
+                        person2=persons[n],
+                    ))
+
+            self._set_root(gx)
+            self.gedcomx = gx
+            p_count = len(persons)
+            r_count = len(gx.relationships)
+            print(f"Built GedcomX: {p_count} person(s), {r_count} relationship(s). Loaded as root.")
+            return
+
+        # ── import ────────────────────────────────────────────────────
+        if sub == "import":
+            if not rest:
+                print("usage: ahnen import FILE")
+                return
+            path = rest[0].strip('"').strip("'")
+            try:
+                lines = Path(path).read_text(encoding="utf-8").splitlines()
+            except OSError as e:
+                print(f"Error reading {path}: {e}")
+                return
+            imported = 0
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                tokens = line.split()
+                if len(tokens) < 2:
+                    continue
+                try:
+                    n = int(tokens[0].rstrip("."))
+                except ValueError:
+                    continue
+                # Find where key:value tokens start
+                name_parts = []
+                kv_start = 2
+                for i, tok in enumerate(tokens[1:], 1):
+                    if ":" in tok and tok.split(":")[0].lower() in self._AHNEN_KEY_MAP:
+                        kv_start = i
+                        break
+                    name_parts.append(tok)
+                name = " ".join(name_parts)
+                entry: dict = dict(self._ahnen.get(n, {"name": ""}))
+                entry["name"] = name
+                for tok in tokens[kv_start:]:
+                    if ":" not in tok:
+                        continue
+                    k, v = tok.split(":", 1)
+                    field = self._AHNEN_KEY_MAP.get(k.lower())
+                    if field:
+                        entry[field] = v
+                self._ahnen[n] = entry
+                imported += 1
+            print(f"Imported {imported} entr{'y' if imported==1 else 'ies'} from {path}.")
+            return
+
+        # ── export ────────────────────────────────────────────────────
+        if sub == "export":
+            if not rest:
+                print("usage: ahnen export FILE")
+                return
+            path = rest[0].strip('"').strip("'")
+            lines = ["# Ahnentafel export — gedcomtools gxcli", "# N  Name  key:value ..."]
+            for n in sorted(self._ahnen):
+                e = self._ahnen[n]
+                parts = [str(n), e["name"]]
+                for key, field in [
+                    ("b", "birth_date"), ("bp", "birth_place"),
+                    ("d", "death_date"),  ("dp", "death_place"),
+                    ("m", "marr_date"),   ("mp", "marr_place"),
+                ]:
+                    if e.get(field):
+                        parts.append(f"{key}:{e[field]}")
+                lines.append("  ".join(parts))
+            try:
+                Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+                print(f"Exported {len(self._ahnen)} entr{'y' if len(self._ahnen)==1 else 'ies'} to {path}.")
+            except OSError as e:
+                print(f"Error writing {path}: {e}")
+            return
+
+        print(f"Unknown subcommand {sub!r}. Use: set, get, ls, tree, clear, build, import, export")
+
+    # ------------------------------------------------------------------
+    # Navigation
+    # ------------------------------------------------------------------
+
+    def _cmd_back(self, args: list[str]) -> None:
+        """
+        back
+        Return to the previous location in navigation history.
+        """
+        _ = args
+        if not self._nav_history:
+            print("No navigation history.")
+            return
+        cur, path = self._nav_history.pop()
+        self.cur = cur
+        self.path = path
+        print("/" + "/".join(self.path))
+
+    def _cmd_goto(self, args: list[str]) -> None:
+        """
+        goto ID
+        Navigate directly to any top-level object by its id.
+        """
+        if not args:
+            print("usage: goto ID")
+            return
+        if self.gedcomx is None:
+            print("No GedcomX data loaded.")
+            return
+        target_id = args[0]
+        if target_id not in self.gedcomx.id_index:
+            print(f"No object with id {target_id!r} found.")
+            return
+        _collections = [
+            ("persons",             self.gedcomx.persons),
+            ("relationships",       self.gedcomx.relationships),
+            ("agents",              self.gedcomx.agents),
+            ("sourceDescriptions",  self.gedcomx.sourceDescriptions),
+            ("places",              self.gedcomx.places),
+            ("events",              self.gedcomx.events),
+            ("documents",           self.gedcomx.documents),
+            ("groups",              self.gedcomx.groups),
+        ]
+        self._nav_history.append((self.cur, list(self.path)))
+        for coll_name, coll in _collections:
+            for i, item in enumerate(coll):
+                if getattr(item, "id", None) == target_id:
+                    self.path = [coll_name, str(i)]
+                    self.cur = item
+                    print(f"→ /{'/'.join(self.path)}")
+                    return
+        # Fallback: object found in id_index but not enumerated above
+        self.cur = self.gedcomx.id_index[target_id]
+        self.path = [f"@{target_id}"]
+        print(f"→ @{target_id}")
+
+    def _cmd_find(self, args: list[str]) -> None:
+        """
+        find PATTERN [--type persons|agents|places|sources|events]
+        Search by name/title. Default: persons. PATTERN is case-insensitive.
+        Select a result with: goto ID
+        """
+        if not args:
+            print("usage: find PATTERN [--type persons|agents|places|sources|events]")
+            return
+        if self.gedcomx is None:
+            print("No GedcomX data loaded.")
+            return
+
+        pattern = None
+        type_filter = "persons"
+        i = 0
+        while i < len(args):
+            if args[i] == "--type" and i + 1 < len(args):
+                type_filter = args[i + 1].lower()
+                i += 2
+            else:
+                pattern = args[i]
+                i += 1
+        if pattern is None:
+            print("usage: find PATTERN [--type ...]")
+            return
+
+        try:
+            rx = re.compile(pattern, re.IGNORECASE)
+        except re.error as e:
+            print(f"Invalid regex: {e}")
+            return
+
+        def _person_label(p) -> str:
+            try:
+                return p.names[0].nameForms[0].fullText or "?"
+            except (IndexError, AttributeError):
+                return getattr(p, "id", "?") or "?"
+
+        def _agent_label(a) -> str:
+            try:
+                return a.names[0].value or "?"
+            except (IndexError, AttributeError):
+                return getattr(a, "id", "?") or "?"
+
+        def _place_label(pl) -> str:
+            try:
+                return pl.names[0].value or "?"
+            except (IndexError, AttributeError):
+                return getattr(pl, "id", "?") or "?"
+
+        def _event_label(ev) -> str:
+            try:
+                return ev.type or getattr(ev, "id", "?") or "?"
+            except AttributeError:
+                return getattr(ev, "id", "?") or "?"
+
+        def _source_label(sd) -> str:
+            return getattr(sd, "title", None) or getattr(sd, "id", "?") or "?"
+
+        search_map = {
+            "persons": (self.gedcomx.persons, _person_label),
+            "agents": (self.gedcomx.agents, _agent_label),
+            "places": (self.gedcomx.places, _place_label),
+            "events": (self.gedcomx.events, _event_label),
+            "sources": (self.gedcomx.sourceDescriptions, _source_label),
+        }
+        if type_filter not in search_map:
+            print(f"Unknown type {type_filter!r}. Use: {', '.join(search_map)}")
+            return
+
+        coll, label_fn = search_map[type_filter]
+        results = []
+        for obj in coll:
+            label = label_fn(obj)
+            obj_id = getattr(obj, "id", "?")
+            if rx.search(label) or rx.search(str(obj_id)):
+                results.append((obj_id, label))
+
+        if not results:
+            print(f"No {type_filter} matching {pattern!r}.")
+            return
+
+        print(f"{len(results)} match(es) in {type_filter}:")
+        id_w = max(len(str(r[0])) for r in results)
+        for oid, label in results:
+            print(f"  {str(oid):<{id_w}}  {label}")
+        if len(results) == 1:
+            print(f"Tip: use 'goto {results[0][0]}' to navigate there.")
+
+    def _cmd_bookmark(self, args: list[str]) -> None:
+        """
+        bookmark [NAME]     Save current location with a name.
+        bookmark ls         List all bookmarks.
+        bookmark rm NAME    Remove a bookmark.
+        """
+        if not args or args[0] == "ls":
+            if not self._bookmarks:
+                print("No bookmarks.")
+                return
+            name_w = max(len(n) for n in self._bookmarks)
+            for name, (_, path) in sorted(self._bookmarks.items()):
+                print(f"  {name:<{name_w}}  /{'/'.join(path)}")
+            return
+        if args[0] == "rm":
+            if len(args) < 2:
+                print("usage: bookmark rm NAME")
+                return
+            name = args[1]
+            if name in self._bookmarks:
+                del self._bookmarks[name]
+                print(f"Removed {name!r}.")
+            else:
+                print(f"No bookmark named {name!r}.")
+            return
+        name = args[0]
+        self._bookmarks[name] = (self.cur, list(self.path))
+        print(f"Bookmark {name!r} → /{'/'.join(self.path)}")
+
+    def _cmd_go(self, args: list[str]) -> None:
+        """
+        go NAME   Navigate to a saved bookmark.
+        """
+        if not args:
+            print("usage: go NAME")
+            if self._bookmarks:
+                print("Bookmarks:", ", ".join(sorted(self._bookmarks)))
+            return
+        name = args[0]
+        if name not in self._bookmarks:
+            print(f"No bookmark named {name!r}.")
+            if self._bookmarks:
+                print("Available:", ", ".join(sorted(self._bookmarks)))
+            return
+        self._nav_history.append((self.cur, list(self.path)))
+        cur, path = self._bookmarks[name]
+        self.cur = cur
+        self.path = list(path)
+        print(f"→ /{'/'.join(self.path)}")
+
+    # ------------------------------------------------------------------
+    # Data inspection
+    # ------------------------------------------------------------------
+
+    def _cmd_stats(self, args: list[str]) -> None:
+        """
+        stats
+        Show counts for all top-level GedcomX collections.
+        """
+        _ = args
+        if self.gedcomx is None:
+            print("No GedcomX data loaded.")
+            return
+        gx = self.gedcomx
+        rows = [
+            ("Persons",             len(gx.persons)),
+            ("Relationships",       len(gx.relationships)),
+            ("Agents",              len(gx.agents)),
+            ("Source Descriptions", len(gx.sourceDescriptions)),
+            ("Places",              len(gx.places)),
+            ("Events",              len(gx.events)),
+            ("Documents",           len(gx.documents)),
+            ("Groups",              len(gx.groups)),
+        ]
+        col_w = max(len(label) for label, _ in rows)
+        print(f"{'Collection':<{col_w}}  Count")
+        print("-" * (col_w + 8))
+        for label, count in rows:
+            print(f"{label:<{col_w}}  {count}")
+        print("-" * (col_w + 8))
+        print(f"{'Total':<{col_w}}  {sum(n for _, n in rows)}")
+
+    def _cmd_grep(self, args: list[str]) -> None:
+        """
+        grep PATTERN [--all] [--depth N]
+        Search field values for PATTERN (case-insensitive regex).
+        --all     search from root instead of current node
+        --depth N max recursion depth (default 6)
+        """
+        if not args:
+            print("usage: grep PATTERN [--all] [--depth N]")
+            return
+        pattern: str | None = None
+        from_root = False
+        max_depth = 6
+        i = 0
+        while i < len(args):
+            if args[i] == "--all":
+                from_root = True
+            elif args[i] == "--depth" and i + 1 < len(args):
+                try:
+                    max_depth = int(args[i + 1])
+                except ValueError:
+                    pass
+                i += 1
+            elif pattern is None:
+                pattern = args[i]
+            i += 1
+        if pattern is None:
+            print("usage: grep PATTERN [--all] [--depth N]")
+            return
+        try:
+            rx = re.compile(pattern, re.IGNORECASE)
+        except re.error as e:
+            print(f"Invalid regex: {e}")
+            return
+        start = self.root if from_root else self.cur
+        if start is None:
+            print("No data loaded.")
+            return
+        results: list[tuple[str, str]] = []
+        _grep_node(start, rx, "", results, 0, set(), max_depth)
+        if not results:
+            print(f"No matches for {pattern!r}.")
+            return
+        print(f"{len(results)} match(es):")
+        for path, val in results[:50]:
+            display = val if len(val) <= 80 else val[:77] + "..."
+            print(f"  {path}: {display!r}")
+        if len(results) > 50:
+            print(f"  … and {len(results) - 50} more")
+
+    def _cmd_validate(self, args: list[str]) -> None:
+        """
+        validate
+        Run GedcomX validation on the loaded data and show all issues.
+        """
+        _ = args
+        if self.gedcomx is None:
+            print("No GedcomX data loaded.")
+            return
+        result = self.gedcomx.validate()
+        errors = result.errors
+        warnings = result.warnings
+        print(f"Validation: {len(errors)} error(s), {len(warnings)} warning(s)")
+        if not result.issues:
+            print("  OK — no issues found.")
+            return
+        for issue in result.issues:
+            sev = issue.severity
+            label = f"{_RED}ERROR{_RESET}" if sev == "error" else "WARN "
+            print(f"  {label}  {issue.path}: {issue.message}")
+
+    def _cmd_diff(self, args: list[str]) -> None:
+        """
+        diff PATH
+        Compare the current root against another file by ID.
+        Supports .ged, .json, and .zip.
+        """
+        if not args:
+            print("usage: diff PATH")
+            return
+        if self.gedcomx is None:
+            print("No GedcomX data loaded (nothing to diff against).")
+            return
+        path = args[0].strip().strip('"')
+        low = path.lower()
+        try:
+            if low.endswith(".zip"):
+                from gedcomtools.gedcomx.zip import GedcomZip
+                other = GedcomZip.read(path)
+            elif low.endswith(".json"):
+                from gedcomtools.cli import _load_gx
+                other = _load_gx(Path(path))
+            elif low.endswith(".ged"):
+                from gedcomtools.cli import _sniff_source_type, _load_g5
+                src_type = _sniff_source_type(Path(path))
+                if src_type == "g7":
+                    print("GEDCOM 7 → GedcomX conversion not yet implemented.")
+                    return
+                g5 = _load_g5(Path(path))
+                other = GedcomConverter().Gedcom5x_GedcomX(g5)
+            else:
+                print(f"Unsupported file type: {path}")
+                return
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
+            return
+
+        _colls = [
+            ("persons",            self.gedcomx.persons,            other.persons),
+            ("relationships",      self.gedcomx.relationships,      other.relationships),
+            ("agents",             self.gedcomx.agents,             other.agents),
+            ("sourceDescriptions", self.gedcomx.sourceDescriptions, other.sourceDescriptions),
+            ("places",             self.gedcomx.places,             other.places),
+            ("events",             self.gedcomx.events,             other.events),
+            ("documents",          self.gedcomx.documents,          other.documents),
+            ("groups",             self.gedcomx.groups,             other.groups),
+        ]
+
+        print(f"Diff: current  ←→  {path}")
+        any_diff = False
+        for cname, cur_coll, other_coll in _colls:
+            cur_ids   = {getattr(o, "id", None) for o in cur_coll}   - {None}
+            other_ids = {getattr(o, "id", None) for o in other_coll} - {None}
+            added   = other_ids - cur_ids
+            removed = cur_ids - other_ids
+            common  = cur_ids & other_ids
+            if not added and not removed:
+                continue
+            any_diff = True
+            total_a = len(cur_coll)
+            total_b = len(other_coll)
+            print(f"\n  {cname}: {total_a} current / {total_b} other")
+            if added:
+                print(f"    + {len(added)} added in other")
+                for oid in sorted(added)[:5]:
+                    print(f"        {oid}")
+                if len(added) > 5:
+                    print(f"        … and {len(added) - 5} more")
+            if removed:
+                print(f"    - {len(removed)} only in current")
+                for oid in sorted(removed)[:5]:
+                    print(f"        {oid}")
+                if len(removed) > 5:
+                    print(f"        … and {len(removed) - 5} more")
+            if common:
+                print(f"    = {len(common)} in common (field-level diff not yet implemented)")
+        if not any_diff:
+            print("  No differences found by ID.")
+
+    # ------------------------------------------------------------------
+    # Shell settings
+    # ------------------------------------------------------------------
+
+    def _cmd_cfg(self, args: list[str]) -> None:
+        """
+        cfg              Show all settings.
+        cfg NAME         Show one setting.
+        cfg NAME VALUE   Set and save a setting.
+        cfg reset        Reset all settings to defaults.
+
+        Settings:
+          page_size    int   Rows per page in paginated output (default 20)
+          color        str   ANSI color: auto | on | off
+          history_size int   Max readline history entries (default 200)
+        """
+        if not args or args[0] == "ls":
+            for k, v in self._settings.items():
+                print(f"  {k} = {v!r}  (default: {_DEFAULT_SETTINGS[k]!r})")
+            return
+        if args[0] == "reset":
+            self._settings = dict(_DEFAULT_SETTINGS)
+            _save_settings(self._settings)
+            print("Settings reset to defaults.")
+            return
+        key = args[0]
+        if key not in _DEFAULT_SETTINGS:
+            print(f"Unknown setting {key!r}. Known: {', '.join(_DEFAULT_SETTINGS)}")
+            return
+        if len(args) == 1:
+            print(f"{key} = {self._settings[key]!r}")
+            return
+        raw_val = args[1]
+        default_type = type(_DEFAULT_SETTINGS[key])
+        try:
+            if default_type is bool:
+                val: Any = raw_val.lower() in ("true", "1", "yes", "on")
+            elif default_type is int:
+                val = int(raw_val)
+            else:
+                val = raw_val
+        except ValueError:
+            print(f"Invalid value {raw_val!r} for {key} (expected {default_type.__name__})")
+            return
+        self._settings[key] = val
+        _save_settings(self._settings)
+        print(f"{key} = {val!r}  (saved)")
+
+    def _cmd_history(self, args: list[str]) -> None:
+        """
+        history [N]   Show last N commands (default 20). Requires readline.
+        """
+        if not _READLINE:
+            print("Command history not available (readline not installed).")
+            return
+        try:
+            n = int(args[0]) if args else 20
+        except ValueError:
+            n = 20
+        total = _readline.get_current_history_length()
+        start = max(1, total - n + 1)
+        for i in range(start, total + 1):
+            item = _readline.get_history_item(i)
+            if item:
+                print(f"  {i:4}  {item}")
+
+    def _print_validation_results(self, issues: list) -> None:
+        """Print validation results from a list of ValidationIssue objects."""
+        errors = [i for i in issues if getattr(i, "severity", "error") == "error"]
+        warnings = [i for i in issues if getattr(i, "severity", "error") == "warning"]
+        if not issues:
+            print("  Validation: OK (no issues)")
+            return
+        print(f"  Validation: {len(errors)} error(s), {len(warnings)} warning(s)")
+        for issue in issues:
+            sev = getattr(issue, "severity", "error")
+            code = getattr(issue, "code", "")
+            line = getattr(issue, "line_num", None)
+            tag = getattr(issue, "tag", None)
+            msg = getattr(issue, "message", str(issue))
+            loc = f" line {line}" if line else ""
+            tag_s = f" [{tag}]" if tag else ""
+            sev_label = f"{_RED}ERROR{_RESET}" if sev == "error" else "WARN "
+            print(f"  {sev_label}{loc}{tag_s}: {code}: {msg}")
+
     def _load_from_ged(self, path: str) -> Any:
-        p = Gedcom5x()
-        p.parse_file(path, True)
-        conv = GedcomConverter()
-        gx: GedcomX = conv.Gedcom5x_GedcomX(p)
+        from gedcomtools.cli import _load_g5, _load_g7, _sniff_source_type
+
+        src_type = _sniff_source_type(Path(path))
+
+        if src_type == "g5":
+            from gedcomtools.gedcom5.validator5 import Gedcom5Validator
+            print("  Parsing GEDCOM 5…")
+            g5 = _load_g5(Path(path))
+            print("  Validating GEDCOM 5…")
+            issues = Gedcom5Validator(g5).validate()
+            self._print_validation_results(issues)
+            print("  Converting to GedcomX…")
+            conv = GedcomConverter()
+            gx: GedcomX = conv.Gedcom5x_GedcomX(g5)
+            self.gedcomx = gx
+            return gx
+
+        if src_type == "g7":
+            from gedcomtools.gedcom7.validator import GedcomValidator
+            print("  Parsing GEDCOM 7…")
+            g7 = _load_g7(Path(path))
+            print("  Validating GEDCOM 7…")
+            issues = GedcomValidator(g7.records).validate()
+            self._print_validation_results(issues)
+            print("  Note: GEDCOM 7 → GedcomX conversion is not yet implemented.")
+            return None
+
+        raise ValueError(f"Cannot determine GEDCOM version for: {path}")
+
+    def _load_from_zip(self, path: str) -> Any:
+        from gedcomtools.gedcomx.zip import GedcomZip
+        gx = GedcomZip.read(path)
         self.gedcomx = gx
         return gx
 
     def _load_from_json(self, path: str) -> Any:
-        with open(path, "rb") as f:
-            data = _json_loads(f.read())
-
+        from gedcomtools.cli import _load_gx
         try:
-            gx = Serialization.deserialize(data=data, class_type=GedcomX)  # type: ignore[attr-defined]
+            gx = _load_gx(Path(path))
             self.gedcomx = gx
             return gx
         except Exception:
-            pass
-
-        try:
-            gx = GedcomX(**data)  # type: ignore[arg-type]
-            self.gedcomx = gx
-            return gx
-        except Exception:
-            return data
+            # Fallback: raw dict (e.g. partial / non-GedcomX JSON)
+            with open(path, "rb") as f:
+                return _json_loads(f.read())
 
     def _set_root(self, root: Any) -> None:
         self.root = root
         self.cur = root
         self.path.clear()
+        self._nav_history.clear()
 
     def _resolve_opt(self, maybe_path: list[str]) -> Any:
         if not maybe_path:
@@ -1079,6 +2499,7 @@ class Shell:
         cd [PATH]
         Change current node. No args resets to root.
         """
+        self._nav_history.append((self.cur, list(self.path)))
         if not args:
             self.cur = self.root
             self.path = []
@@ -1089,6 +2510,7 @@ class Shell:
         try:
             node = self._node_from_parts(parts)
         except Exception as e:
+            self._nav_history.pop()  # undo push on failure
             print(f"! Error: {e}")
             return
 
@@ -1373,7 +2795,11 @@ class Shell:
             if not s:
                 return s
             s = s.replace("gedcomx.gedcomx.", "").replace("gedcomx.", "").replace("typing.", "")
-            return re.sub(r"(?:\b[\w]+\.)+([A-Z]\w+)", r"\1", s)
+            s = re.sub(r"(?:\b[\w]+\.)+([A-Z]\w+)", r"\1", s)
+            # Collapse "X | NoneType" / "NoneType | X" → "X?" for readability
+            s = re.sub(r"\s*\|\s*NoneType", "?", s)
+            s = re.sub(r"NoneType\s*\|\s*", "", s)
+            return s
 
         def _actual_type_str(v: Any) -> str:
             if isinstance(v, _Elided):
@@ -1498,10 +2924,19 @@ class Shell:
 
         else:
             schema_raw = _schema_fields_for_object(node)
-            for name, _ in rows:
+            for name, val in rows:
                 tp = schema_raw.get(name)
+                # Fallback: infer type from TypeCollection item_type when not in schema
+                if tp is None:
+                    item_type = getattr(val, "item_type", None)
+                    if item_type is not None:
+                        tp = item_type
+                        exp = f"TypeCollection[{getattr(item_type, '__name__', str(item_type))}]"
+                    else:
+                        exp = "-"
+                else:
+                    exp = type_repr(tp)
                 expected_map[name] = tp
-                exp = type_repr(tp) if tp is not None else "-"
                 expected_disp[name] = _short_type_str(exp)
 
         term_width = shutil.get_terminal_size((150, 24)).columns
@@ -1565,43 +3000,37 @@ class Shell:
             return
 
         sub, *rest = args
-        table: list[list[str]] = []
 
         def _class_exists(name: str) -> bool:
             return name in SCHEMA.field_type_table
 
-        def _fields_for_class(name: str) -> Dict[str, Any]:
+        def _fields_for_class(name: str) -> dict[str, Any]:
             return SCHEMA.get_class_fields(name) or {}
 
-        if sub == "here":
-            obj = self.cur
-            clsname = type(obj).__name__
+        def _do_here(_rest: list[str]) -> None:
+            clsname = type(self.cur).__name__
             fields = _fields_for_class(clsname)
             if not fields:
                 print(f"(no schema for {clsname})")
                 return
-            for fname, ftype in sorted(fields.items()):
-                table.append([fname, _typename(ftype)])
-            _print_table(table, ["field", "type"])
-            return
+            rows = [[fname, _typename(ftype)] for fname, ftype in sorted(fields.items())]
+            _print_table(rows, ["field", "type"])
 
-        if sub == "class":
-            if not rest:
+        def _do_class(_rest: list[str]) -> None:
+            if not _rest:
                 print("usage: schema class <ClassName>")
                 return
-            clsname = rest[0]
+            clsname = _rest[0]
             if not _class_exists(clsname):
                 print(f"unknown class: {clsname}")
                 return
-            for fname, ftype in sorted(_fields_for_class(clsname).items()):
-                table.append([fname, _typename(ftype)])
-            _print_table(table, ["field", "type"])
-            return
+            rows = [[fname, _typename(ftype)] for fname, ftype in sorted(_fields_for_class(clsname).items())]
+            _print_table(rows, ["field", "type"])
 
-        if sub == "extras":
+        def _do_extras(_rest: list[str]) -> None:
             clsname = None
             mode = "--all"
-            for a in rest:
+            for a in _rest:
                 if a in ("--all", "--direct"):
                     mode = a
                 else:
@@ -1615,66 +3044,57 @@ class Shell:
             if not extras:
                 print("(no extras)")
                 return
+            rows = []
             for fname, ftype in sorted(extras.items()):
-                src = "inherited" if fname in (SCHEMA._inherited_extras.get(clsname, {})) else "direct"
-                table.append([fname, _typename(ftype), src])
-            _print_table(table, ["field", "type", "source"])
-            return
+                src = "inherited" if fname in SCHEMA._inherited_extras.get(clsname, {}) else "direct"
+                rows.append([fname, _typename(ftype), src])
+            _print_table(rows, ["field", "type", "source"])
 
-        if sub == "find":
-            if not rest:
+        def _do_find(_rest: list[str]) -> None:
+            if not _rest:
                 print("usage: schema find <field>")
                 return
-            target = rest[0]
-            for clsname, fields in sorted(SCHEMA.field_type_table.items()):
-                if target in fields:
-                    table.append([clsname, target, _typename(fields[target])])
-            if not table:
-                print("(no matches)")
-                return
-            _print_table(table, ["class", "field", "type"])
-            return
+            target_field = _rest[0]
+            rows = [
+                [clsname, target_field, _typename(fields[target_field])]
+                for clsname, fields in sorted(SCHEMA.field_type_table.items())
+                if target_field in fields
+            ]
+            print("(no matches)") if not rows else _print_table(rows, ["class", "field", "type"])
 
-        if sub == "where":
-            if not rest:
+        def _do_where(_rest: list[str]) -> None:
+            if not _rest:
                 print("usage: schema where <TypeExpr>")
                 return
-            needle = rest[0]
-            for clsname, fields in sorted(SCHEMA.field_type_table.items()):
-                for fname, ftype in fields.items():
-                    tname = _typename(ftype)
-                    if needle in tname:
-                        table.append([clsname, fname, tname])
-            if not table:
-                print("(no matches)")
-                return
-            _print_table(table, ["class", "field", "type"])
-            return
+            needle = _rest[0]
+            rows = [
+                [clsname, fname, _typename(ftype)]
+                for clsname, fields in sorted(SCHEMA.field_type_table.items())
+                for fname, ftype in fields.items()
+                if needle in _typename(ftype)
+            ]
+            print("(no matches)") if not rows else _print_table(rows, ["class", "field", "type"])
 
-        if sub == "bases":
-            if not rest:
+        def _do_bases(_rest: list[str]) -> None:
+            if not _rest:
                 print("usage: schema bases <ClassName>")
                 return
-            clsname = rest[0]
+            clsname = _rest[0]
             bases = SCHEMA._bases.get(clsname, [])
             subs = sorted(SCHEMA._subclasses.get(clsname, set()))
             print("Bases:", ", ".join(bases) if bases else "(none)")
             print("Subclasses:", ", ".join(subs) if subs else "(none)")
-            return
 
-        if sub == "toplevel":
+        def _do_toplevel(_rest: list[str]) -> None:
             tops = sorted(SCHEMA.get_toplevel().keys())
             if not tops:
                 print("(no top-level classes)")
                 return
-            for name in tops:
-                table.append([name])
-            _print_table(table, ["toplevel"])
-            return
+            _print_table([[name] for name in tops], ["toplevel"])
 
-        if sub == "json":
-            if rest:
-                clsname = rest[0]
+        def _do_json(_rest: list[str]) -> None:
+            if _rest:
+                clsname = _rest[0]
                 if not _class_exists(clsname):
                     print(f"unknown class: {clsname}")
                     return
@@ -1682,13 +3102,12 @@ class Shell:
             else:
                 payload = {k: {f: _typename(t) for f, t in v.items()} for k, v in SCHEMA.field_type_table.items()}
             print(json.dumps(payload, indent=2, ensure_ascii=False))
-            return
 
-        if sub == "diff":
+        def _do_diff(_rest: list[str]) -> None:
             target = self.cur
-            if rest:
+            if _rest:
                 try:
-                    target, _ = resolve_path(self.root, self.cur, rest[0])
+                    target, _ = resolve_path(self.root, self.cur, _rest[0])
                 except Exception as e:
                     print(f"! bad path: {e}")
                     return
@@ -1697,44 +3116,51 @@ class Shell:
             if not fields:
                 print(f"(no schema for {clsname})")
                 return
-
-            runtime: Dict[str, Any] = {}
-            if hasattr(target, "__dict__"):
-                for k, v in vars(target).items():
-                    if k.startswith("_") or callable(v):
-                        continue
-                    runtime[k] = v
-
+            runtime: dict[str, Any] = {
+                k: v for k, v in vars(target).items()
+                if not k.startswith("_") and not callable(v)
+            } if hasattr(target, "__dict__") else {}
+            rows: list[list[str]] = []
             for fname, stype in sorted(fields.items()):
+                sname = _typename(stype)
                 if hasattr(target, fname):
                     val = getattr(target, fname)
                     rtype = type(val).__name__ if val is not None else "NoneType"
-                    sname = _typename(stype)
-                    status_ok = (rtype == sname) or (rtype == getattr(stype, "__name__", rtype))
-                    status = "ok" if status_ok else f"{ANSI['red']}mismatch{ANSI['reset']}"
-                    s_disp = sname if status_ok else f"{ANSI['yellow']}{sname}{ANSI['reset']}"
-                    r_disp = rtype if status_ok else f"{ANSI['red']}{rtype}{ANSI['reset']}"
-                    table.append([fname, s_disp, r_disp, status])
+                    ok = (rtype == sname) or (rtype == getattr(stype, "__name__", rtype))
+                    rows.append([
+                        fname,
+                        sname if ok else f"{ANSI['yellow']}{sname}{ANSI['reset']}",
+                        rtype if ok else f"{ANSI['red']}{rtype}{ANSI['reset']}",
+                        "ok" if ok else f"{ANSI['red']}mismatch{ANSI['reset']}",
+                    ])
                 else:
-                    sname = _typename(stype)
-                    table.append([fname, sname, f"{ANSI['red']}(missing){ANSI['reset']}", f"{ANSI['red']}missing{ANSI['reset']}"])
+                    rows.append([fname, sname, f"{ANSI['red']}(missing){ANSI['reset']}", f"{ANSI['red']}missing{ANSI['reset']}"])
+            for k in sorted(k for k in runtime if k not in fields):
+                rows.append([
+                    f"{ANSI['cyan']}{k}{ANSI['reset']}",
+                    f"{ANSI['cyan']}(extra){ANSI['reset']}",
+                    type_of(runtime[k]),
+                    f"{ANSI['cyan']}extra{ANSI['reset']}",
+                ])
+            _print_table(rows, ["field", "schema", "runtime", "status"])
 
-            extra_names = [k for k in runtime if k not in fields]
-            for k in sorted(extra_names):
-                v = runtime[k]
-                table.append(
-                    [
-                        f"{ANSI['cyan']}{k}{ANSI['reset']}",
-                        f"{ANSI['cyan']}(extra){ANSI['reset']}",
-                        type_of(v),
-                        f"{ANSI['cyan']}extra{ANSI['reset']}",
-                    ]
-                )
+        _SCHEMA_SUBS: dict[str, Any] = {
+            "here":     _do_here,
+            "class":    _do_class,
+            "extras":   _do_extras,
+            "find":     _do_find,
+            "where":    _do_where,
+            "bases":    _do_bases,
+            "toplevel": _do_toplevel,
+            "json":     _do_json,
+            "diff":     _do_diff,
+        }
 
-            _print_table(table, ["field", "schema", "runtime", "status"])
+        handler = _SCHEMA_SUBS.get(sub)
+        if handler is None:
+            print(f"unknown subcommand: {sub!r}. Try 'schema help'.")
             return
-
-        print(f"unknown subcommand: {sub}. Try 'schema help'.")
+        handler(rest)
 
     def _cmd_extras(self, args: list[str]) -> None:
         """
@@ -1979,11 +3405,28 @@ class Shell:
 
     def _cmd_write(self, args: list[str]) -> int | None:
         """
-        write gx PATH
-        Write current root as GEDCOM-X JSON.
+        write gx PATH      Write current root as GEDCOM-X JSON.
+        write zip PATH     Write current root as a GEDCOM-X ZIP archive.
+        write jsonl PATH   Write current node as JSON-L.
+        write adbg DIR     Write ArangoDB graph files.
         """
-        if len(args) < 2 or args[0] not in ["gx","adbg","jsonl"]:
-            print("usage: write FORMAT[gx | adbg | jsonl] PATH")
+        if len(args) < 2 or args[0] not in ["gx", "zip", "adbg", "jsonl"]:
+            print("usage: write FORMAT[gx | zip | adbg | jsonl] PATH")
+            return None
+        if args[0] == "zip":
+            from gedcomtools.gedcomx.zip import GedcomZip
+            if self.root is None:
+                print("No data loaded.")
+                return None
+            path = args[1].strip('"').strip("'")
+            if not path.lower().endswith(".zip"):
+                path += ".zip"
+            with GedcomZip(path) as gz:
+                arcname = gz.add_object_as_resource(self.root)
+            if arcname:
+                print(f"Written: {gz.path}  ({arcname})")
+            else:
+                print("Root is not a GedcomX object; nothing written.")
             return None
         if args[0] == "gx":
             js = orjson.dumps(

@@ -6,7 +6,7 @@
  Purpose: Read and write Gedcom-X ZIP file packages with manifest and resource entries
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-27 — manifest writing, read() classmethod
 
 ======================================================================
 """
@@ -21,6 +21,8 @@ from .schemas import SCHEMA
 from .serialization import Serialization
 
 GX_MANIFEST_FILE_NAME = "META-INF/MANIFEST.MF"
+GX_CONFORMSTO = "http://gedcomx.org/file/v1"
+GX_CONTENT_TYPE = "application/x-gedcomx-v1+json"
 
 
 class GedcomHeaderField:
@@ -31,7 +33,7 @@ class GedcomHeaderField:
 
 X_DC_CONFORMSTO_FIELD = GedcomHeaderField(
     key="X-DC-conformsTo",
-    value="http://gedcomx.org/file/v1",
+    value=GX_CONFORMSTO,
 )
 
 
@@ -41,21 +43,39 @@ class GedcomResource:
         path: str,
         headers: list[GedcomHeaderField] | None = None,
     ) -> None:
-        # placeholder for future use
         self.path = path
         self.headers = headers or []
 
 
 class GedcomManifest:
     def __init__(self) -> None:
-        # placeholder for future use
         self.resources: list[GedcomResource] = []
+
+    def add(self, path: str, content_type: str = GX_CONTENT_TYPE) -> None:
+        self.resources.append(GedcomResource(path, [
+            GedcomHeaderField("Content-Type", content_type),
+            GedcomHeaderField("X-DC-conformsTo", GX_CONFORMSTO),
+        ]))
+
+    def render(self) -> str:
+        """Render as a MANIFEST.MF-style text block."""
+        lines = [
+            "Manifest-Version: 1.0",
+            f"X-DC-conformsTo: {GX_CONFORMSTO}",
+            "",
+        ]
+        for res in self.resources:
+            lines.append(f"Name: {res.path}")
+            for h in res.headers:
+                lines.append(f"{h.key}: {h.value}")
+            lines.append("")
+        return "\n".join(lines)
 
 
 class GedcomZip:
     def __init__(self, path: str | None = None) -> None:
         """
-        Initialize a zipfile.
+        Open a new GedcomX ZIP archive for writing.
 
         If `path` is provided:
             - The path is resolved to an absolute path to prevent traversal attacks.
@@ -76,6 +96,7 @@ class GedcomZip:
             mode="w",
             compression=zipfile.ZIP_DEFLATED,
         )
+        self._manifest = GedcomManifest()
 
     # ────────────────────────────────────────────────
     # Internal helpers
@@ -111,7 +132,7 @@ class GedcomZip:
         return Path(temp_path)
 
     # ────────────────────────────────────────────────
-    # Public API
+    # Public API — write
     # ────────────────────────────────────────────────
     def add_object_as_resource(self, obj: object) -> str | None:
         """
@@ -127,6 +148,7 @@ class GedcomZip:
         if isinstance(obj, GedcomX):
             arcname = "tree.json"
             self.zip.writestr(arcname, obj.json)
+            self._manifest.add(arcname)
             return arcname
 
         if not SCHEMA.is_toplevel(obj.__class__):
@@ -140,16 +162,78 @@ class GedcomZip:
         arcname = f"{safe_uri}.json"
 
         self.zip.writestr(arcname, json.dumps(data, ensure_ascii=False, indent=2))
+        self._manifest.add(arcname)
         return arcname
 
+    def write_manifest(self) -> None:
+        """Write ``META-INF/MANIFEST.MF`` based on all added resources."""
+        self.zip.writestr(GX_MANIFEST_FILE_NAME, self._manifest.render())
+
     def close(self) -> None:
-        """
-        Close the underlying zip file if it's still open.
-        Safe to call multiple times.
-        """
+        """Write the manifest and close the zip.  Safe to call multiple times."""
         if getattr(self, "zip", None) is not None:
             if self.zip.fp is not None:
+                self.write_manifest()
                 self.zip.close()
+
+    # ────────────────────────────────────────────────
+    # Public API — read
+    # ────────────────────────────────────────────────
+    @classmethod
+    def read(cls, path: str | Path) -> GedcomX:
+        """
+        Read a GedcomX ZIP archive and return a merged ``GedcomX`` instance.
+
+        Looks for all ``.json`` entries (excluding the manifest), deserializes
+        each one, and merges them into a single ``GedcomX`` object.  The primary
+        entry ``tree.json`` is processed first.
+
+        Raises:
+            FileNotFoundError: If *path* does not exist.
+            ValueError:        If no GedcomX JSON entries are found in the archive.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(p)
+
+        merged = GedcomX()
+
+        with zipfile.ZipFile(p, "r") as zf:
+            names = zf.namelist()
+
+            # Process tree.json first, then all other .json entries
+            ordered = (
+                [n for n in names if n == "tree.json"]
+                + sorted(n for n in names if n.endswith(".json") and n != "tree.json"
+                         and not n.startswith("META-INF/"))
+            )
+
+            if not ordered:
+                raise ValueError(f"No GedcomX JSON entries found in {p}")
+
+            for entry_name in ordered:
+                data = json.loads(zf.read(entry_name))
+                gx = GedcomX.from_dict(data)
+                merged.extend(gx)
+
+        return merged
+
+    @classmethod
+    def list_entries(cls, path: str | Path) -> list[dict]:
+        """
+        Return a list of entry info dicts from a GedcomX ZIP archive.
+
+        Each dict has ``name``, ``size``, ``compress_size``.
+        Manifest entries are included.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(p)
+        with zipfile.ZipFile(p, "r") as zf:
+            return [
+                {"name": i.filename, "size": i.file_size, "compress_size": i.compress_size}
+                for i in zf.infolist()
+            ]
 
     # ────────────────────────────────────────────────
     # Context manager support

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .attribution import Attribution
 from .gx_base import GedcomXModel
@@ -35,10 +35,20 @@ class SourceReference(GedcomXModel):
     identifier: ClassVar[str] = "http://gedcomx.org/v1/SourceReference"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    description: Optional[Any] = None   # URI | SourceDescription
+    description: Optional[Any] = None   # URI | Resource | SourceDescription
     descriptionId: Optional[str] = None
     attribution: Optional[Attribution] = None
     qualifiers: List[Qualifier] = Field(default_factory=list)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def _coerce_description(cls, v: Any) -> Any:
+        """Deserialize description from dict → Resource, str → URI."""
+        if isinstance(v, dict):
+            return Resource.model_validate(v)
+        if isinstance(v, str):
+            return URI(value=v)
+        return v
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

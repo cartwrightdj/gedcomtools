@@ -8,7 +8,7 @@
 
  Created: 2026-03-01
  Updated:
-   - 2026-03-15: added Gedcom7Writer, g7interop helpers, __version__
+   - 2026-03-15: added Gedcom7Writer, tag_registry helpers, __version__
    - 2026-03-16: exported get_label from specification
    - 2026-03-16: exported GedcomError and GedcomParseError from Exceptions
    - 2026-03-16: exported models (IndividualDetail, FamilyDetail, etc.)
@@ -22,7 +22,7 @@ Modules:
     gedcom7: Parser and validation entry points.
     GedcomStructure: In-memory structure tree nodes.
     specification: Normalized GEDCOM 7 rule helpers.
-    g7interop: GEDCOM tag and URI interoperability helpers.
+    tag_registry: GEDCOM 7 tag & URI registry and lookup helpers.
     validator: Grammar and semantic validation.
     writer: GEDCOM 7 serializer.
     g7cli: Interactive browser/editor shell.
@@ -36,7 +36,7 @@ from .structure import GedcomStructure
 from .gedcom7 import Gedcom7, GedcomValidationError
 from .validator import GedcomValidator, ValidationIssue
 from .writer import Gedcom7Writer
-from .g7interop import (
+from .tag_registry import (
     get_uri_for_tag,
     get_tag_for_uri,
     is_known_tag,

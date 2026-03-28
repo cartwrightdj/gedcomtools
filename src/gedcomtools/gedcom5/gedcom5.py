@@ -448,3 +448,51 @@ class Gedcom5:
         for record in records:
             g7._append_record(record)
         return g7
+
+    def gml(self) -> str:
+        """Return the family graph as a GML string.
+
+        Converts this GEDCOM 5 file to GedcomX and serializes it to GML
+        (Graph Modelling Language) suitable for Gephi, yEd, and NetworkX.
+
+        Strings are encoded per the Himsolt 1997 GML spec: ``&quot;`` for
+        embedded double-quotes, ``&amp;`` for ampersands, ``&#NNN;`` for
+        non-ASCII and control characters.  Backslash has no special meaning
+        in GML and is passed through unchanged.
+
+        Returns:
+            GML content as a :class:`str`.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            print(g5.gml())
+        """
+        return self.to_gedcomx().gml()
+
+    def write_gml(
+        self,
+        path: Union[str, Path],
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        """Write the family graph to a GML file.
+
+        Converts this GEDCOM 5 file to GedcomX and writes it as GML
+        (Graph Modelling Language) using an atomic write via a temporary
+        file so a failed write never corrupts the destination.
+
+        Args:
+            path: Destination path.  Parent directory must exist.
+            encoding: File encoding (default UTF-8).
+
+        Raises:
+            FileNotFoundError: If the parent directory does not exist.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            g5.write_gml("family.gml")
+        """
+        from ..gedcomx.gml import GedcomXGmlExporter
+        GedcomXGmlExporter().write(self.to_gedcomx(), path, encoding=encoding)

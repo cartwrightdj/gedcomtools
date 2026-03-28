@@ -183,8 +183,8 @@ class TestConversionComprehensive:
         from gedcomtools.gedcomx.fact import FactType
         birth = next(f for f in james.facts if f.type == FactType.Birth)
         assert birth.place is not None
-        assert birth.place.description.latitude == 'N40.896'
-        assert birth.place.description.longitude == 'W73.912'
+        assert birth.place.descriptionRef.latitude == 'N40.896'
+        assert birth.place.descriptionRef.longitude == 'W73.912'
 
     def test_adoption_fact(self):
         from gedcomtools.gedcomx.fact import FactType

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
-from pydantic import Field, PrivateAttr
+from pydantic import Field, PrivateAttr, field_validator
 
 from .address import Address
 from .gx_base import GedcomXModel
@@ -34,6 +34,13 @@ class Agent(GedcomXModel):
     person: Optional[Any] = None        # Person | Resource (avoids circular import)
     attribution: Optional[Any] = None   # Attribution
     xnotes: List[Any] = Field(default_factory=list)
+
+    @field_validator("addresses", mode="before")
+    @classmethod
+    def _drop_none_addresses(cls, v: Any) -> Any:
+        if isinstance(v, list):
+            return [a for a in v if a is not None]
+        return v
 
     def model_post_init(self, __context: object) -> None:
         self._uri = URI(fragment=self.id)

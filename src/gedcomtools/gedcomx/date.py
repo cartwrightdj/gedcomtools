@@ -60,7 +60,8 @@ class Date(GedcomXModel):
     def _parse_formal(self) -> "Date":
         if self.formal is None and self.original:
             try:
-                self.formal = parse_to_gedcomx_date(self.original)
+                _formal = parse_to_gedcomx_date(self.original)
+                self.formal = _formal if _formal is not None else self.formal
             except Exception:
                 pass  # parsing failures are non-fatal
         return self
@@ -119,7 +120,7 @@ def parse_to_gedcomx_date(s: str) -> str:
     # ---- simple date ----
     result = _parse_simple_to_gx(s)
     if result is None:
-        return original
+        return None
 
     return f"A{result}" if is_approx else result
 

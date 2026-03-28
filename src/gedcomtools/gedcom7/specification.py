@@ -38,7 +38,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .g7interop import G7_TAG_TO_URI, get_uri_for_tag, register_tag_uri
+from .tag_registry import G7_TAG_TO_URI, get_uri_for_tag, register_tag_uri
 
 HEAD = "HEAD"
 TRLR = "TRLR"

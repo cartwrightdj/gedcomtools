@@ -1,0 +1,1194 @@
+# gxcli — GEDCOM-X Interactive Inspector
+
+A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version **0.7.1**.
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Launching gxcli](#2-launching-gxcli)
+3. [Shell Mechanics](#3-shell-mechanics)
+4. [Load and Write Formats](#4-load-and-write-formats)
+   - [load / ld / extend](#41-load--ld)
+   - [write](#42-write)
+5. [Navigation System](#5-navigation-system)
+   - [Path syntax](#51-path-syntax)
+   - [cd](#52-cd)
+   - [pwd](#53-pwd)
+   - [back](#54-back)
+   - [goto](#55-goto)
+   - [find](#56-find)
+   - [bookmark / bm / go](#57-bookmark--bm--go)
+6. [Data Inspection Commands](#6-data-inspection-commands)
+   - [ls](#61-ls)
+   - [show](#62-show)
+   - [dump](#63-dump)
+   - [stats](#64-stats)
+   - [grep](#65-grep)
+   - [validate](#66-validate)
+   - [diff](#67-diff)
+   - [type](#68-type)
+   - [schema](#69-schema)
+   - [extras](#610-extras)
+   - [resolve](#611-resolve)
+7. [Object Introspection Commands](#7-object-introspection-commands)
+   - [props](#71-props)
+   - [methods](#72-methods)
+   - [call](#73-call)
+   - [getattr](#74-getattr)
+   - [getprop](#75-getprop)
+8. [Editing Commands](#8-editing-commands)
+   - [set](#81-set)
+   - [del](#82-del)
+9. [Ahnentafel System](#9-ahnentafel-system)
+   - [Numbering scheme](#91-numbering-scheme)
+   - [ahnen set](#92-ahnen-set)
+   - [ahnen get](#93-ahnen-get)
+   - [ahnen ls](#94-ahnen-ls)
+   - [ahnen tree](#95-ahnen-tree)
+   - [ahnen clear](#96-ahnen-clear)
+   - [ahnen build](#97-ahnen-build)
+   - [ahnen import / export](#98-ahnen-import--export)
+10. [Extension Management](#10-extension-management)
+    - [ext ls](#101-ext-ls)
+    - [ext show](#102-ext-show)
+    - [ext scan](#103-ext-scan)
+    - [ext authorize](#104-ext-authorize)
+    - [ext load](#105-ext-load)
+    - [ext trust](#106-ext-trust)
+11. [Shell Quality](#11-shell-quality)
+    - [cfg](#111-cfg)
+    - [history](#112-history)
+    - [log](#113-log)
+    - [Tab completion](#114-tab-completion)
+12. [Miscellaneous Commands](#12-miscellaneous-commands)
+13. [Command Quick Reference](#13-command-quick-reference)
+
+---
+
+## 1. Overview
+
+`gxcli` is an interactive REPL (read-eval-print loop) for browsing and editing [GEDCOM-X](https://gedcomx.org) object graphs. It provides:
+
+- **Schema awareness** — knows expected field types from the project's `SCHEMA` registry; flags mismatches in red.
+- **Filesystem-style navigation** — navigate with `cd`, `pwd`, `back`, and bookmarks.
+- **Rich inspection** — `ls`, `show`, `grep`, `stats`, `validate`, `diff`.
+- **Live object introspection** — `props`, `methods`, `call`, `getattr`, `getprop`.
+- **Ahnentafel pedigree builder** — build and visualise an ancestor chart directly from the REPL, then convert it to a GedcomX graph.
+- **Extension/plugin management** — discover, authorise, and load Python extension modules.
+- **Persistent settings and readline history** — stored under `~/.config/gedcomtools/`.
+
+Typical uses:
+
+- Inspect a family tree converted from GEDCOM 5.x or 7.x.
+- Verify field types and data integrity.
+- Resolve cross-references.
+- Build a quick ancestor list without an external file.
+- Export to GEDCOM-X JSON, ZIP, JSONL, or ArangoDB graph files.
+
+---
+
+## 2. Launching gxcli
+
+```bash
+# Start empty
+python -m gedcomtools.gedcomx.gxcli
+
+# Or run the file directly
+python src/gedcomtools/gedcomx/gxcli.py
+
+# Load a file on startup
+python src/gedcomtools/gedcomx/gxcli.py path/to/tree.json    # GEDCOM-X JSON
+python src/gedcomtools/gedcomx/gxcli.py path/to/tree.ged     # GEDCOM 5.x / 7.x (auto-detected)
+python src/gedcomtools/gedcomx/gxcli.py path/to/archive.zip  # GEDCOM-X ZIP
+```
+
+On startup, an interactive session prints:
+
+```
+Entering GEDCOM-X browser (0.7.1) Type 'help' for commands, 'quit' to exit.
+gx:/>
+```
+
+When piped (non-interactive), the prompt is suppressed and output is line-buffered. `EOF` on stdin causes a clean exit.
+
+**Optional dependencies:**
+
+| Package | Purpose |
+|---|---|
+| `orjson` | Faster JSON serialisation/deserialisation |
+| `colorama` | ANSI colour on Windows |
+| `readline` | Tab completion and persistent history (standard library on Linux/macOS; `pyreadline3` on Windows) |
+
+---
+
+## 3. Shell Mechanics
+
+The prompt reflects the current location in the object graph:
+
+```
+gx:/persons/0/names>
+```
+
+Input is tokenised with `shlex.split`, so:
+
+- Quoted strings preserve spaces: `cd "given name"`
+- Single quotes work too: `cd 'given name'`
+
+Unknown commands produce a suggestion to run `help`. Command errors print a `!` prefix with the source location.
+
+Settings and history persist across sessions in:
+
+| File | Purpose |
+|---|---|
+| `~/.config/gedcomtools/gxcli.json` | Shell settings (`cfg`) |
+| `~/.config/gedcomtools/gxcli_history` | Readline history |
+
+---
+
+## 4. Load and Write Formats
+
+### 4.1 load / ld
+
+```
+load PATH
+ld PATH
+```
+
+Loads a file and sets it as the root of the current session. Navigation history and path are reset. Supports three formats, detected by extension:
+
+| Extension | Behaviour |
+|---|---|
+| `.ged` | Auto-detect GEDCOM 5.x or 7.x. GEDCOM 5 is parsed, validated, then converted to GEDCOM-X. GEDCOM 7 is parsed and validated; conversion to GEDCOM-X is not yet implemented. |
+| `.json` | Loaded as GEDCOM-X JSON via the project serialisation layer. Falls back to raw dict if the file is not a well-formed GEDCOM-X document. |
+| `.zip` | Loaded as a GEDCOM-X ZIP archive. |
+
+Loading a `.ged` file prints validation results (errors and warnings) before conversion.
+
+**extend PATH**
+
+```
+extend PATH
+```
+
+Same format support as `load`, but _merges_ the loaded data into the current root by calling `root.extend()`. The root must support `.extend()`. Useful for combining multiple sources into one session.
+
+### 4.2 write
+
+```
+write FORMAT PATH
+```
+
+Serialises and saves the current root. `FORMAT` is one of:
+
+| Format | Description |
+|---|---|
+| `gx` | GEDCOM-X JSON (indented, UTF-8). Writes the root object via `_to_dict()`. |
+| `zip` | GEDCOM-X ZIP archive. A `.zip` extension is appended if the path does not already have one. |
+| `jsonl` | JSON Lines. Serialises the **current node** (not necessarily root), one record per line. |
+| `adbg` | ArangoDB graph files. `PATH` is a **directory**; writes `persons.jsonl` and `person_to_person.jsonl` into it. |
+
+Examples:
+
+```text
+write gx output/tree.json
+write zip output/tree
+write jsonl output/persons.jsonl
+write adbg output/arango/
+```
+
+---
+
+## 5. Navigation System
+
+### 5.1 Path syntax
+
+Paths follow a filesystem metaphor:
+
+| Syntax | Meaning |
+|---|---|
+| `/` | Root of the loaded object graph |
+| `.` | Current node (no-op segment) |
+| `..` | Parent node |
+| `persons` | Named field or attribute |
+| `0`, `1`, `-1` | Integer index into a collection |
+| `P001` | ID string — navigates to the collection item whose `id`, `xref_id`, or `identifier` matches |
+
+Paths can be chained with `/`:
+
+```text
+cd persons/0/names/1
+```
+
+Absolute paths start with `/`; relative paths resolve from the current node.
+
+### 5.2 cd
+
+```
+cd [PATH]
+```
+
+Changes the current node. With no argument, resets to root. Every successful `cd` pushes the previous location onto the navigation history stack (used by `back`).
+
+```text
+cd /persons
+cd 0/names
+cd ..
+cd /
+cd "given name"
+```
+
+### 5.3 pwd
+
+```
+pwd
+```
+
+Prints the current path as an absolute string, e.g. `/persons/0/names`.
+
+### 5.4 back
+
+```
+back
+```
+
+Returns to the previous location by popping the navigation history stack. Reports the new path. Prints a message if history is empty.
+
+### 5.5 goto
+
+```
+goto ID
+```
+
+Jumps directly to any top-level object by its `id` (e.g. `P001`, `R023`). Searches all top-level collections in order: persons, relationships, agents, sourceDescriptions, places, events, documents, groups. Pushes the current location onto navigation history first. Tab-completion is available for IDs in the current `id_index`.
+
+```text
+goto P001
+goto R012
+```
+
+### 5.6 find
+
+```
+find PATTERN [--type persons|agents|places|sources|events]
+```
+
+Searches by name or title using a case-insensitive regex. Default collection is `persons`. Results are printed as a two-column table of `id` and display label. When exactly one result is found, a `goto` tip is shown.
+
+```text
+find Smith
+find "Mary.*Jones" --type persons
+find London --type places
+```
+
+After finding a result, navigate to it with `goto ID`.
+
+### 5.7 bookmark / bm / go
+
+**Save a bookmark:**
+
+```
+bookmark NAME
+bm NAME
+```
+
+Saves the current location (node and path) under `NAME`. `bookmark` and `bm` are aliases.
+
+**List bookmarks:**
+
+```
+bookmark ls
+bm ls
+bookmark        # (no args also shows list)
+```
+
+**Remove a bookmark:**
+
+```
+bookmark rm NAME
+```
+
+**Navigate to a bookmark:**
+
+```
+go NAME
+```
+
+Navigates to the saved location. Pushes the current location onto navigation history. Tab-completion cycles through bookmark names for `go`.
+
+---
+
+## 6. Data Inspection Commands
+
+### 6.1 ls
+
+```
+ls [PATH] [--full]
+```
+
+Lists the fields or indexed items of a node. If `PATH` is given, lists that node instead of the current one.
+
+Output columns:
+
+| Column | Description |
+|---|---|
+| `name` | Field name or collection index |
+| `type` | Runtime Python type (shown in **red** if it does not match the schema) |
+| `schema` | Declared schema type for the field |
+| `preview` | Short human-readable summary of the value |
+
+For collections (TypeCollection, list, tuple, set), consecutive runs of three or more items of the same type are collapsed into a single elision row (`… TypeName × N`) to keep output readable. `--full` disables this collapsing and shows every element.
+
+`NoneType` is stripped from union types: `str | NoneType` appears as `str?`.
+
+```text
+ls
+ls /persons/0
+ls names --full
+```
+
+### 6.2 show
+
+```
+show [PATH]
+show COLLECTION_NAME
+```
+
+Two modes:
+
+- **Normal path or no argument** — pretty-prints the resolved node as indented JSON.
+- **Top-level collection name** (e.g. `persons`, `agents`) — prints a three-column table: `idx`, `id`, `name`/preview.
+
+```text
+show
+show /persons/0/names/0
+show persons
+show agents
+```
+
+### 6.3 dump
+
+```
+dump [PATH]
+```
+
+Always prints the node as JSON regardless of type, with no table shortcut. Equivalent to `show` but forces JSON output.
+
+### 6.4 stats
+
+```
+stats
+```
+
+Prints counts for all eight top-level GEDCOM-X collections and a grand total:
+
+```
+Collection            Count
+------------------------------
+Persons               412
+Relationships         398
+Agents                  3
+Source Descriptions    17
+Places                 28
+Events                  0
+Documents               0
+Groups                  0
+------------------------------
+Total                 858
+```
+
+Requires a GedcomX object to be loaded.
+
+### 6.5 grep
+
+```
+grep PATTERN [--all] [--depth N]
+```
+
+Recursively searches field values (strings and numbers) for a case-insensitive regex pattern, starting from the current node.
+
+| Option | Description |
+|---|---|
+| `--all` | Start from root instead of the current node |
+| `--depth N` | Maximum recursion depth (default `6`) |
+
+Prints up to 50 matches as `path: value`. If there are more, a count of the remainder is shown.
+
+```text
+grep "Smith"
+grep "1850" --all
+grep "New York" --depth 10
+```
+
+### 6.6 validate
+
+```
+validate
+```
+
+Runs the built-in GEDCOM-X validation on the loaded data. Prints a summary count of errors and warnings, then lists each issue with severity, path, and message. Errors are shown in red.
+
+```
+Validation: 2 error(s), 1 warning(s)
+  ERROR  /persons/0: missing required field 'gender'
+  WARN   /relationships/3: person1 reference not resolved
+```
+
+### 6.7 diff
+
+```
+diff PATH
+```
+
+Compares the current root against another file (`.ged`, `.json`, or `.zip`) by object ID. For each top-level collection, reports:
+
+- IDs present in the other file but not the current root (added).
+- IDs present in the current root but not the other file (removed).
+- IDs in common (field-level diff is not yet implemented).
+
+```text
+diff backup/tree_20250101.json
+diff archive.zip
+```
+
+### 6.8 type
+
+```
+type [PATH|ATTR] [--fields] [--mro] [-c|--class ClassName]
+type class ClassName [--fields] [--mro]
+```
+
+Reports runtime and schema type information.
+
+**No argument** — describes the current node.
+
+**With a path or attribute name** — describes that child. If the name is a simple attribute of the current object, schema field type and match status are shown.
+
+**`type class ClassName`** — looks up a class in the schema registry directly and prints its bases, subclasses, and optionally its full field table.
+
+Flags:
+
+| Flag | Description |
+|---|---|
+| `--fields` | Print the class field table |
+| `--mro` | Show Python method resolution order |
+| `-c` / `--class` | Force a specific schema class name for the current/target node |
+
+```text
+type
+type names
+type /persons/0/names
+type class Person --fields
+type class Name --mro
+```
+
+### 6.9 schema
+
+```
+schema SUBCOMMAND [args]
+```
+
+Interrogates the project's schema registry. Subcommands:
+
+| Subcommand | Syntax | Description |
+|---|---|---|
+| `help` | `schema help` | Show the subcommand list |
+| `here` | `schema here` | Field table for the current node's class |
+| `class` | `schema class ClassName` | Field table for a named class |
+| `extras` | `schema extras [ClassName] [--all\|--direct]` | Extra (non-core) fields; `--all` includes inherited, `--direct` direct only |
+| `find` | `schema find FIELD` | All classes that define `FIELD` |
+| `where` | `schema where TypeExpr` | All fields whose declared type string contains `TypeExpr` |
+| `bases` | `schema bases ClassName` | Base classes and subclasses |
+| `toplevel` | `schema toplevel` | All top-level classes in the schema |
+| `json` | `schema json [ClassName]` | Dump the schema mapping as formatted JSON |
+| `diff` | `schema diff [PATH]` | Compare runtime vs. schema for a node; mismatches shown in red/yellow |
+
+`schema diff` columns: `field`, `schema` (declared type), `runtime` (actual type), `status` (ok / mismatch / missing / extra).
+
+```text
+schema here
+schema class Person
+schema extras Person --all
+schema find id
+schema where TypeCollection
+schema bases ExtensibleData
+schema toplevel
+schema json Person
+schema diff /persons/0
+```
+
+### 6.10 extras
+
+```
+extras [--all|--direct] [--filter SUBSTR]
+```
+
+Lists dynamic extra fields across **all** schema classes (not just the current node). Use `--all` (default) to include inherited extras, `--direct` for only directly-declared extras. `--filter SUBSTR` restricts output to rows where the class name, field name, or type contains `SUBSTR`.
+
+Output columns: `class`, `field`, `type`, `source` (direct / inherited).
+
+```text
+extras
+extras --direct
+extras --filter Note
+```
+
+### 6.11 resolve
+
+```
+resolve
+```
+
+Resolves all `Resource`/`URI` cross-references within the loaded GedcomX graph and prints resolver statistics:
+
+```
+total refs: 842
+cache hits: 631  misses: 211
+ok: 839  fail: 3
+by ref type: {'ResourceReference': 839, ...}
+by target type: {'Person': 412, ...}
+resolver time (ms): 14.72
+FAIL /relationships/5/person1: unresolved ref '#P999'
+```
+
+---
+
+## 7. Object Introspection Commands
+
+### 7.1 props
+
+```
+props [--instance] [--class] [--private]
+```
+
+Lists instance attributes and class-level `@property` descriptors with their current values.
+
+| Flag | Description |
+|---|---|
+| `--instance` | Show only instance `__dict__` entries (suppress class-level) |
+| `--class` | Show only class-level properties and attributes (suppress instance data) |
+| `--private` | Include names that start with `_` |
+
+Output columns: `scope` (instance / class), `kind` (data / property / attr), `name`, `value` (short preview).
+
+```text
+props
+props --class
+props --private
+```
+
+### 7.2 methods
+
+```
+methods [--private] [--own] [--match SUBSTR]
+```
+
+Lists all callable methods on the current node, walking the MRO.
+
+| Flag | Description |
+|---|---|
+| `--private` | Include `_`-prefixed methods |
+| `--own` | Only methods defined directly on the current class (no inheritance) |
+| `--match SUBSTR` | Case-insensitive substring filter on method names |
+
+Output columns: `name`, `signature` (parameters and return type if annotated), `defined in` (declaring class), `doc` (first line of the docstring).
+
+Methods defined on the current class are sorted before inherited ones.
+
+```text
+methods
+methods --own
+methods --match fact
+methods --private --match _resolve
+```
+
+### 7.3 call
+
+```
+call NAME [args...] [key=value ...]
+```
+
+Calls a method on the current node. Positional and keyword arguments are type-coerced:
+
+| Input token | Coerced to |
+|---|---|
+| `true` / `false` | `True` / `False` |
+| `none` | `None` |
+| Numeric string | `int` or `float` |
+| JSON-like `{...}` / `[...]` | `dict` / `list` |
+| Anything else | `str` |
+
+Arguments are validated against the method's signature before calling. On success, prints `Result: <short preview>`.
+
+```text
+call fullName
+call age 1950
+call addFact {"type": "http://gedcomx.org/Birth"} date="1901-01-01"
+```
+
+### 7.4 getattr
+
+```
+getattr NAME [NAME ...]
+```
+
+For each name, prints the value and how it was found: `instance` (in `__dict__`), `property` (via `@property`), `class_attr` (non-callable class attribute), or `missing`.
+
+```text
+getattr id lang
+getattr names facts
+```
+
+### 7.5 getprop
+
+```
+getprop NAME [NAME ...]
+```
+
+For each name, checks whether it is a `@property` on the class and prints its current value. If the name exists but is not a property, explains what kind it is (method or attribute). Useful for properties that are not visible in `__dict__`.
+
+```text
+getprop displayName
+getprop fullText
+```
+
+---
+
+## 8. Editing Commands
+
+### 8.1 set
+
+Three forms:
+
+**Set a single field to a primitive value:**
+
+```
+set NAME VALUE
+```
+
+`VALUE` is the remainder of the line after `NAME`; whitespace is preserved. The value is type-coerced (same rules as `call`). Refuses to overwrite a non-primitive value; refuses to create new attributes that don't already exist on the object.
+
+**Set multiple fields using `=` syntax:**
+
+```
+set NAME=VALUE NAME2=VALUE2 ...
+```
+
+**Create and append new instances (`--n` mode):**
+
+```
+set --n NAME [NAME2 ...]
+```
+
+For each field name, instantiates a new object of the declared schema element type. If the field is a collection (has `.append()`), the new instance is appended; otherwise, the field is replaced. Uses `SCHEMA` to determine the correct type. Refuses to operate on private fields.
+
+```text
+set id P999
+set lang=en confidence=2
+set --n names
+set --n facts
+```
+
+### 8.2 del
+
+```
+del NAME [NAME2 ...]
+```
+
+Deletes attributes, dictionary keys, or collection indices on the current node.
+
+- **Dict keys**: `del keyname` removes the key.
+- **Collection indices**: `del 3` removes element at index 3 (supports negative indices); uses `__delitem__` or `pop`.
+- **Object attributes**: `delattr` is called; handles writable properties.
+- Refuses to delete private (`_`-prefixed) names.
+- Refuses to delete read-only properties.
+
+```text
+del confidence
+del 2
+del lang notes
+```
+
+---
+
+## 9. Ahnentafel System
+
+The Ahnentafel system is a built-in scratch-pad for building a pedigree chart directly inside the REPL without loading a file. Entries are keyed by **Ahnentafel number** (`ahnen` or `ahnentafel` are aliases for the command).
+
+### 9.1 Numbering scheme
+
+The Ahnentafel (German: "ancestor table") system assigns integers to ancestors:
+
+| Number | Person |
+|---|---|
+| 1 | Proband (subject) |
+| 2 | Father of 1 |
+| 3 | Mother of 1 |
+| 4 | Paternal grandfather |
+| 5 | Paternal grandmother |
+| 6 | Maternal grandfather |
+| 7 | Maternal grandmother |
+| 2N | Father of N |
+| 2N+1 | Mother of N |
+
+In general, for any person N > 1:
+- Their father is `2N`
+- Their mother is `2N + 1`
+- They are a child of `N >> 1` (integer division by 2)
+- Even numbers are male ancestors, odd numbers (except 1) are female ancestors
+
+Generation of person N = `floor(log2(N))`. Generation 0 = proband, generation 1 = parents, generation 2 = grandparents, and so on.
+
+The relationship label is computed by walking from N back toward 1 to determine the paternal/maternal line prefix, then prefixing `great-` for each generation beyond grandparents.
+
+### 9.2 ahnen set
+
+```
+ahnen set N NAME [key=value ...]
+```
+
+Add or update a person. `N` must be ≥ 1.
+
+Key aliases for life events:
+
+| Short | Long alias | Field |
+|---|---|---|
+| `b` | `born`, `birth` | Birth date |
+| `bp` | `bplace`, `birth_place` | Birth place |
+| `d` | `died`, `death` | Death date |
+| `dp` | `dplace`, `death_place` | Death place |
+| `m` | `married`, `marriage` | Marriage date |
+| `mp` | `mplace`, `marriage_place` | Marriage place |
+
+After setting, prints the entry summary and its relationship label.
+
+```text
+ahnen set 1 "John Smith" b=1850 bp="New York" d=1920 dp="Brooklyn"
+ahnen set 2 "William Smith" b=1820 d=1895 m=1845 mp="Albany"
+ahnen set 3 "Mary Jones" b=1822 bp="Boston"
+ahnen set 4 "Thomas Smith" b=1795 d=1870
+```
+
+### 9.3 ahnen get
+
+```
+ahnen get N
+```
+
+Shows full details for person N, including all life event fields and relationship context (child of, father/mother).
+
+```text
+ahnen get 1
+#1  proband
+  Name        : John Smith
+  Born        : 1850
+  Birth place : New York
+  Died        : 1920
+  Death place : Brooklyn
+  Father      : #2 (William Smith)
+  Mother      : #3 (Mary Jones)
+```
+
+### 9.4 ahnen ls
+
+```
+ahnen ls
+```
+
+Lists all entries as a table with columns: `#`, `Name`, `Relation`, `Born`, `Died`, `Married`.
+
+### 9.5 ahnen tree
+
+```
+ahnen tree [DEPTH]
+```
+
+Prints a Unicode box-drawing pedigree chart rooted at person 1. Default depth is 3 (shows up to great-grandparents). Each node shows Ahnentafel number, name (with birth/death dates), and relationship label.
+
+```text
+ahnen tree
+Pedigree  (7 entries, 3 generation(s))
+
+#1  John Smith  b.1850  d.1920  [proband]
+├── #2  William Smith  b.1820  d.1895  [father]
+│   ├── #4  Thomas Smith  b.1795  [paternal grandfather]
+│   └── #5  —  [paternal grandmother]
+└── #3  Mary Jones  b.1822  [mother]
+    ├── #6  —  [maternal grandfather]
+    └── #7  —  [maternal grandmother]
+```
+
+### 9.6 ahnen clear
+
+```
+ahnen clear [N]
+```
+
+Removes person N, or clears all entries if N is omitted.
+
+### 9.7 ahnen build
+
+```
+ahnen build
+```
+
+Converts all Ahnentafel entries to a live GedcomX object and loads it as the current root. This is a non-destructive operation — it does not overwrite any file.
+
+What is created:
+
+- A `Person` object for each entry, with ID `P{N}` (e.g. `P1`, `P2`).
+- Gender is inferred: even N → Male, odd N → Female, N=1 → Unknown.
+- Birth and death facts are created where dates or places are set.
+- A `Couple` relationship for each pair of parents (2N, 2N+1) where both exist. Marriage facts are attached if `m` or `mp` data is set on either parent.
+- `ParentChild` relationships from father and mother to each child.
+
+After build, the standard navigation and inspection commands work on the generated data.
+
+```text
+ahnen build
+# Built GedcomX: 7 person(s), 9 relationship(s). Loaded as root.
+write gx output/family.json
+```
+
+### 9.8 ahnen import / export
+
+**Import from a text file:**
+
+```
+ahnen import FILE
+```
+
+Each non-blank, non-comment line has the format:
+
+```
+N  Name Words  key:value key:value ...
+```
+
+Key-value pairs use `:` (not `=`). Key names use the short aliases (`b`, `bp`, `d`, `dp`, `m`, `mp`). Comment lines start with `#`. Example file:
+
+```
+# My family tree
+1  John Smith  b:1850  bp:New York  d:1920
+2  William Smith  b:1820  m:1845
+3  Mary Jones  b:1822  bp:Boston
+```
+
+**Export to a text file:**
+
+```
+ahnen export FILE
+```
+
+Writes all current entries in the import format, with a comment header. The file can be round-tripped with `ahnen import`.
+
+---
+
+## 10. Extension Management
+
+Extensions are Python modules that augment gxcli's behaviour at runtime. The system uses a `PluginRegistry` with a `TrustLevel` gating which extensions may load.
+
+Trust levels (in increasing permissiveness):
+
+| Level | Description |
+|---|---|
+| `DISABLED` | No extensions may load |
+| `BUILTIN` | Only bundled (package-internal) extensions |
+| `LOCAL` | Bundled plus extensions from the local filesystem |
+| `ALL` | All sources including URLs |
+
+### 10.1 ext ls
+
+```
+ext ls [all|NAME]
+```
+
+Lists registered extensions as a table: `NAME`, `LOCATION` (resolved file path), `STATUS`. Status values:
+
+| Status | Colour | Meaning |
+|---|---|---|
+| `LOADED` | green | Successfully imported |
+| `ALLOWED` | yellow | Registered but not yet loaded |
+| `PENDING` | dim | Discovered, not yet allowed |
+| `FAILED` | red | Import attempted but raised an error |
+| `BLOCKED` | red | Blocked by trust level |
+
+With no argument or `all`, lists all. With a name fragment, filters by substring match on name or source.
+
+```text
+ext ls
+ext ls analytics
+```
+
+### 10.2 ext show
+
+```
+ext show [all|NAME]
+```
+
+Prints full details for one or more extensions: name, source, resolved location, status, expected and actual SHA-256 (for URL sources), and error message if failed.
+
+### 10.3 ext scan
+
+```
+ext scan [PACKAGE]
+```
+
+Discovers sub-modules within a Python package and registers them in the extension registry. Default package: `gedcomtools.gedcomx.extensions`. Run this before `ext load` to populate the registry. Reports how many extensions were found and registered.
+
+```text
+ext scan
+ext scan myproject.plugins
+```
+
+### 10.4 ext authorize
+
+```
+ext authorize SOURCE [NAME] [sha256=HASH]
+```
+
+Adds `SOURCE` to the allow-list. `SOURCE` is a Python dotted module name, a file path, or a URL. `NAME` is an optional human-readable label. For URL sources, `sha256=HASH` is required for verification.
+
+```text
+ext authorize gedcomtools.gedcomx.extensions.analytics
+ext authorize /opt/plugins/custom.py custom_plugin
+ext authorize https://example.com/plugin.py my_plugin sha256=abc123...
+```
+
+### 10.5 ext load
+
+```
+ext load [NAME]
+```
+
+Imports all allowed extensions (or only those matching the `NAME` substring). Reports how many were loaded and any errors.
+
+```text
+ext load
+ext load analytics
+```
+
+### 10.6 ext trust
+
+```
+ext trust [DISABLED|BUILTIN|LOCAL|ALL]
+```
+
+With no argument, shows the current trust level. With an argument, sets it. The registry must not yet be locked (i.e., `ext load` must not have run).
+
+```text
+ext trust
+ext trust BUILTIN
+ext trust LOCAL
+```
+
+---
+
+## 11. Shell Quality
+
+### 11.1 cfg
+
+```
+cfg
+cfg NAME
+cfg NAME VALUE
+cfg reset
+```
+
+Shows or sets persistent shell settings, stored in `~/.config/gedcomtools/gxcli.json`.
+
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `page_size` | int | 20 | Rows per page in paginated output |
+| `color` | str | `auto` | ANSI colour mode: `auto`, `on`, or `off` |
+| `history_size` | int | 200 | Maximum readline history entries |
+
+`cfg reset` restores all settings to defaults. Changes are saved immediately.
+
+```text
+cfg
+cfg page_size 40
+cfg color off
+cfg history_size 500
+cfg reset
+```
+
+### 11.2 history
+
+```
+history [N]
+```
+
+Shows the last N commands from the readline history (default 20). Requires the `readline` module. Each line is prefixed with its history index.
+
+```text
+history
+history 50
+```
+
+### 11.3 log
+
+```
+log [list]
+log show CHANNEL
+log enable CHANNEL [LEVEL]
+log level CHANNEL LEVEL
+log console LEVEL
+log files on [DIR]
+log files off
+```
+
+Controls the application's logging system at runtime.
+
+| Subcommand | Description |
+|---|---|
+| `log` / `log list` | List all configured loggers |
+| `log show CHANNEL` | Show one logger's level, propagation, and handlers |
+| `log enable CHANNEL [LEVEL]` | Configure a channel (console-only) and optionally set its level |
+| `log level CHANNEL LEVEL` | Set logger level for a channel (creates it if needed) |
+| `log console LEVEL` | Set the console handler level for all configured loggers simultaneously |
+| `log files on [DIR]` | Set `LOG_FILES=1` (and optionally `LOG_DIR`) for the next run |
+| `log files off` | Set `LOG_FILES=0` for the next run |
+
+Valid `LEVEL` values: `DEBUG`, `INFO`, `WARNING`, `WARN`, `ERROR`, `CRITICAL`, `NOTSET`.
+
+Note: `log files` changes environment variables for future sessions; enabling file logging at runtime requires restarting the logging manager.
+
+```text
+log
+log show gedcomtools
+log level gedcomtools DEBUG
+log console WARNING
+log files on /var/log/gedcomtools
+```
+
+### 11.4 Tab completion
+
+Tab completion is active in interactive sessions when `readline` is available. Completion behaviour depends on context:
+
+| Command | Completes |
+|---|---|
+| (empty / first word) | All command names |
+| `cd`, `show`, `dump`, `type`, `grep`, `ls` | Field names of the current node |
+| `go` | Saved bookmark names |
+| `goto` | IDs in the current `id_index` |
+| `load`, `extend`, `diff` | Filesystem paths (glob) |
+| `write` | Format names (`gx `, `zip `, `jsonl `, `adbg `) |
+| `ext` / `extension` | Subcommand names (`ls`, `show`, `scan`, `authorize`, `load`, `trust`) |
+| `cfg` | Setting key names |
+| `bookmark` | Subcommand names (`ls`, `rm`) |
+
+Completer delimiters are set to `space`, `tab`, `newline` only, so paths with `/` are completed as a single token.
+
+---
+
+## 12. Miscellaneous Commands
+
+| Command | Description |
+|---|---|
+| `help` | Show the command overview. `help COMMAND` shows the docstring for that command. |
+| `?` | Alias for `help` |
+| `ver` | Print the shell version string |
+| `agentstbl` | Print a paginated schema table for all agents in the loaded data |
+| `quit` | Exit the REPL |
+| `exit` | Exit the REPL |
+
+---
+
+## 13. Command Quick Reference
+
+### Load / Save
+
+| Command | Description |
+|---|---|
+| `load PATH` / `ld PATH` | Load `.ged`, `.json`, or `.zip`; set as root |
+| `extend PATH` | Load and merge into the current root |
+| `write gx PATH` | Save as GEDCOM-X JSON |
+| `write zip PATH` | Save as GEDCOM-X ZIP archive |
+| `write jsonl PATH` | Save current node as JSON Lines |
+| `write adbg DIR` | Write ArangoDB graph files to a directory |
+
+### Navigation
+
+| Command | Description |
+|---|---|
+| `cd [PATH]` | Change current node |
+| `back` | Return to previous location |
+| `pwd` | Print current path |
+| `goto ID` | Jump to any object by id |
+| `find PATTERN [--type T]` | Search by name/title |
+| `bookmark NAME` / `bm NAME` | Save current location |
+| `bookmark ls` | List bookmarks |
+| `bookmark rm NAME` | Remove bookmark |
+| `go NAME` | Navigate to a saved bookmark |
+
+### Inspection
+
+| Command | Description |
+|---|---|
+| `ls [PATH] [--full]` | List fields/items (schema-aware, with run/schema type columns) |
+| `show [PATH\|COLL]` | Pretty-print node as JSON, or tabulate a top-level collection |
+| `dump [PATH]` | Print node as JSON (always) |
+| `stats` | Count all top-level GEDCOM-X collections |
+| `grep PATTERN [--all] [--depth N]` | Search field values by regex |
+| `validate` | Run GEDCOM-X validation |
+| `diff PATH` | Compare current root against another file by ID |
+| `type [opts] [PATH\|ATTR]` | Runtime and schema type info |
+| `schema ...` | Interrogate schema registry (see §6.9) |
+| `extras [opts]` | List extras across all schema classes |
+| `resolve` | Resolve resource references and print stats |
+
+### Object Introspection
+
+| Command | Description |
+|---|---|
+| `props [--instance] [--class] [--private]` | List instance attrs and `@property` values |
+| `methods [--private] [--own] [--match S]` | List callable methods |
+| `call NAME [args] [k=v ...]` | Call a method with type-coerced arguments |
+| `getattr NAME [...]` | Value and kind (instance / property / class_attr / missing) |
+| `getprop NAME [...]` | Value of `@property` descriptors |
+
+### Editing
+
+| Command | Description |
+|---|---|
+| `set NAME VALUE` | Set a primitive field on the current node |
+| `set NAME=V NAME2=V2 ...` | Set multiple primitive fields |
+| `set --n NAME [NAME2...]` | Create and append new schema-typed instances |
+| `del NAME [NAME2...]` | Delete attributes, dict keys, or collection indices |
+
+### Ahnentafel
+
+| Command | Description |
+|---|---|
+| `ahnen set N NAME [key=val...]` | Add or update an ancestor |
+| `ahnen get N` | Show full details for person N |
+| `ahnen ls` | List all entries as a table |
+| `ahnen tree [DEPTH]` | Print pedigree chart |
+| `ahnen clear [N]` | Remove person N or clear all |
+| `ahnen build` | Convert entries to GedcomX and load as root |
+| `ahnen import FILE` | Import from text file |
+| `ahnen export FILE` | Export to text file |
+
+### Extensions
+
+| Command | Description |
+|---|---|
+| `ext ls [NAME]` | List registered extensions |
+| `ext show [NAME]` | Show full extension details |
+| `ext scan [PACKAGE]` | Discover extensions in a package |
+| `ext authorize SOURCE [NAME] [sha256=H]` | Add a source to the allow-list |
+| `ext load [NAME]` | Import allowed extensions |
+| `ext trust [LEVEL]` | Show or set the plugin trust level |
+
+### Shell
+
+| Command | Description |
+|---|---|
+| `cfg [NAME [VALUE]]` | Show or set persistent settings |
+| `cfg reset` | Reset all settings to defaults |
+| `history [N]` | Show last N commands |
+| `log ...` | Logging controls |
+| `ver` | Print shell version |
+| `help [COMMAND]` | General help or help for a specific command |
+| `quit` / `exit` | Exit gxcli |

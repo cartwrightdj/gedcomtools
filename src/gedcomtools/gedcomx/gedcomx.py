@@ -207,7 +207,7 @@ class GedcomX:
     attribution : Attribution Object
         Attribution information for the Genealogy
     filepath : str
-        Not Implimented.
+        Not Implemented.
     description : str
         Description of the Genealogy: ex. 'My Family Tree'
 
@@ -333,7 +333,7 @@ class GedcomX:
             None
 
         Raises:
-            ValueError: If `person` is not of type Person.
+            ValueError: If ``document`` is not of type Document.
         """
         if document and isinstance(document,Document):
             self.documents.append(item=document)
@@ -423,17 +423,18 @@ class GedcomX:
             agent: The Agent to add.
 
         Returns:
-            False if the agent's id already exists; None otherwise.
+            False if an agent with this id already exists (duplicate skipped);
+            None (implicit return) if the agent was successfully added.
 
         Raises:
             ValueError: If the argument is not an Agent.
         """
         if isinstance(agent,Agent) and agent is not None:
             if self.agents.by_id(agent.id) is not None:
-                log.debug("Skipped duplicate agent id={}", agent.id)
+                #log.debug("Skipped duplicate agent id={}", agent.id)
                 return False
             self.agents.append(agent)
-            log.debug("Added agent id={}", agent.id)
+            #log.debug("Added agent id={}", agent.id)
             return None
         raise ValueError(
             f"agent must be an Agent instance, got {type(agent).__name__}"

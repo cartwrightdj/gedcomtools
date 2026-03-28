@@ -53,8 +53,8 @@ def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
 
             if fact.date and fact.date.original is not None:
                 fact_desc["date"] = fact.date.original
-            if fact.place and fact.place.description is not None:
-                fact_desc["place"] = fact.place.description.id or ""
+            if fact.place and fact.place.descriptionRef is not None:
+                fact_desc["place"] = fact.place.descriptionRef.id or ""
 
             facts.append(fact_desc)
 
