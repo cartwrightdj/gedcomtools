@@ -1,9 +1,15 @@
+# GedcomX Identifier model and IdentifierList container.
+# Identifier maps a type URI to one or more URI values.
+# IdentifierList is a dict-like container (not a pydantic model) with pydantic schema support.
+
 from __future__ import annotations
 
 import secrets
 import string
 from collections.abc import Iterator
 from typing import Any, ClassVar, Dict, List, Optional
+
+from pydantic import Field
 
 from .extensible_enum import ExtensibleEnum, _EnumItem
 from .gx_base import GedcomXModel
@@ -48,7 +54,7 @@ class Identifier(GedcomXModel):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     type: Optional[IdentifierType] = None
-    values: List[URI] = []
+    values: List[URI] = Field(default_factory=list)
 
     def model_post_init(self, __context: object) -> None:
         # Normalise: value kwarg → values list

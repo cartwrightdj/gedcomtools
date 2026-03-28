@@ -5,6 +5,7 @@
 #  Purpose: convert gedcom versions
 #  Created: 2025-08-25
 #  Updated: 2026-03-24 — accept Gedcom5 facade in Gedcom5x_GedcomX (unwrap ._parser)
+#  Updated: 2026-03-28 — fix handle_even: wrong object_map index; add SourceDescription branch for unknown EVEN type; cache clean_str() results via walrus operator
 # ======================================================================
 
 # GEDCOM Module Types
@@ -499,8 +500,8 @@ class GedcomConverter:
     def handle_addr(self, record: Element):
         if isinstance(self.object_map[record.level-1], Agent):
             # TODO CHeck if URL?
-            if record.value is not None and self.clean_str(record.value):
-                gxobject = Address.model_validate({"value": self.clean_str(record.value)})
+            if v := self.clean_str(record.value):
+                gxobject = Address.model_validate({"value": v})
             else:
                 gxobject = Address()
             self.object_map[record.level-1].add_address(gxobject)
@@ -510,8 +511,8 @@ class GedcomConverter:
 
     def handle_adr1(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street = v
             else:
                 self.convert_exception_dump(record=record)
         else:
@@ -519,8 +520,8 @@ class GedcomConverter:
 
     def handle_adr2(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street2 = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street2 = v
             else:
                 self.convert_exception_dump(record=record)
         else:
@@ -528,8 +529,8 @@ class GedcomConverter:
 
     def handle_adr3(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street3 = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street3 = v
             else:
                 self.convert_exception_dump(record=record)
         else:
@@ -537,22 +538,22 @@ class GedcomConverter:
 
     def handle_adr4(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street4 = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street4 = v
         else:
             self.convert_exception_dump(record=record)
 
     def handle_adr5(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street5 = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street5 = v
         else:
             self.convert_exception_dump(record=record)
 
     def handle_adr6(self, record: Element):
         if isinstance(self.object_map[record.level-1], Address):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].street6 = self.clean_str(record.value)
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].street6 = v
         else:
             self.convert_exception_dump(record=record)
 
@@ -588,22 +589,22 @@ class GedcomConverter:
 
     def handle_phon(self, record: Element):
         if isinstance(self.object_map[record.level-1], Agent):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].phones.append(self.clean_str(record.value))
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].phones.append(v)
         else:
             self.convert_exception_dump(record=record)
 
     def handle_email(self, record: Element):
         if isinstance(self.object_map[record.level-1], Agent):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].emails.append(self.clean_str(record.value))
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].emails.append(v)
         else:
             self.convert_exception_dump(record=record)
 
     def handle_fax(self, record: Element):
         if isinstance(self.object_map[record.level-1], Agent):
-            if record.value is not None and self.clean_str(record.value):
-                self.object_map[record.level-1].emails.append('FAX:' + (self.clean_str(record.value) if record.value is not None else ''))
+            if v := self.clean_str(record.value):
+                self.object_map[record.level-1].emails.append('FAX:' + v)
         else:
             self.convert_exception_dump(record=record)
 
@@ -858,9 +859,17 @@ class GedcomConverter:
                         self.convert_exception_dump(record=record)
                 else:
                     log.warning(f"EVEN type is not known {record.describe()}")
-                    gxobject = Event(roles=[EventRole(person=self.object_map[record.level],type=EventRoleType.Principal)])
-                    self.gedcomx.add_event(gxobject)
-                    self.object_map[record.level] = gxobject
+                    if isinstance(self.object_map[record.level-1], Person):
+                        gxobject = Event(roles=[EventRole(person=self.object_map[record.level-1], type=EventRoleType.Principal)])
+                        self.gedcomx.add_event(gxobject)
+                        self.object_map[record.level] = gxobject
+                    elif isinstance(self.object_map[record.level-1], SourceDescription):
+                        sd = self.object_map[record.level-1]
+                        gxobject = Event(type=None, sources=[SourceReference(description=sd)])
+                        self.gedcomx.add_event(gxobject)
+                        self.object_map[record.level] = gxobject
+                    else:
+                        self.convert_exception_dump(record=record)
 
         else:
             if (even_type := record.sub_record('TYPE')) is not None:

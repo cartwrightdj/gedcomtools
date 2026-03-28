@@ -1,7 +1,14 @@
+# GedcomX Event and EventRole models.
+# EventRole.person typed as Union[Person, Resource]; circular import resolved via
+# bottom-of-file import and model_rebuild().
+
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, ClassVar, List, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+
+if TYPE_CHECKING:
+    from .person import Person
 
 from pydantic import Field, field_validator
 
@@ -33,7 +40,7 @@ class EventRole(Conclusion):
     identifier: ClassVar[str] = "http://gedcomx.org/v1/EventRole"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    person: Optional[Any] = None
+    person: Optional[Union[Person, Resource]] = None
     type: Optional[EventRoleType] = None
     details: Optional[str] = None
 
@@ -229,3 +236,8 @@ class Event(Subject):
         check_instance(result, "place", self.place, PlaceReference)
         for i, role in enumerate(self.roles):
             check_instance(result, f"roles[{i}]", role, EventRole)
+
+
+# Break the Person ↔ EventRole circular reference.
+from .person import Person  # noqa: E402
+EventRole.model_rebuild()

@@ -1,3 +1,7 @@
+# GedcomX Conclusion base class.
+# Base for all genealogical assertions (Name, Fact, Relationship, etc.).
+# __hash__ = None — mutable object with value-based equality, not safely hashable.
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
@@ -137,7 +141,7 @@ class Conclusion(GedcomXModel):
             elif self.confidence.value not in (ConfidenceLevel.High, ConfidenceLevel.Medium, ConfidenceLevel.Low):
                 result.warn("confidence", f"Unrecognised confidence value: {self.confidence.value!r}")
 
-    __hash__ = object.__hash__
+    __hash__ = None  # mutable object with value-based equality — not safely hashable
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):

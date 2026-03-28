@@ -1,7 +1,11 @@
+# GedcomX Relationship model.
+# person1/person2 typed as Union[Person, Resource]; circular import resolved via
+# bottom-of-file import and model_rebuild().
+
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
 from pydantic import Field, field_validator
 
@@ -33,8 +37,8 @@ class Relationship(Subject):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     type: Optional[RelationshipType] = None
-    person1: Optional[Any] = None       # Person | Resource
-    person2: Optional[Any] = None       # Person | Resource
+    person1: Optional[Union[Person, Resource]] = None
+    person2: Optional[Union[Person, Resource]] = None
     facts: List[Fact] = Field(default_factory=list)
 
     @field_validator("person1", "person2", mode="before")

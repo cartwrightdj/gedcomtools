@@ -1,6 +1,13 @@
+# GedcomX PlaceDescription model.
+# jurisdiction typed as Union[Resource, PlaceDescription] (self-reference).
+# spatialDescription typed as PlaceReference; both resolved via bottom-of-file model_rebuild().
+
 from __future__ import annotations
 
-from typing import Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+
+if TYPE_CHECKING:
+    from .place_reference import PlaceReference
 
 from .date import Date
 from .resource import Resource
@@ -20,11 +27,11 @@ class PlaceDescription(Subject):
     names: Optional[List[TextValue]] = None
     type: Optional[str] = None  # TODO: replace with enumeration
     place: Optional[URI] = None
-    jurisdiction: Optional[Any] = None  # Resource | PlaceDescription
+    jurisdiction: Optional[Union[Resource, PlaceDescription]] = None
     latitude: Optional[Union[float, str]] = None
     longitude: Optional[Union[float, str]] = None
     temporalDescription: Optional[Date] = None
-    spatialDescription: Optional[Any] = None  # PlaceReference
+    spatialDescription: Optional[PlaceReference] = None
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
@@ -46,7 +53,11 @@ class PlaceDescription(Subject):
         if self.jurisdiction is not None:
             check_instance(result, "jurisdiction", self.jurisdiction, Resource, PlaceDescription)
         if self.spatialDescription is not None:
-            from .place_reference import PlaceReference
             check_instance(result, "spatialDescription", self.spatialDescription, PlaceReference)
         check_instance(result, "temporalDescription", self.temporalDescription, Date)
         check_instance(result, "place", self.place, URI)
+
+
+# Resolve forward references (self-reference + PlaceReference).
+from .place_reference import PlaceReference  # noqa: E402
+PlaceDescription.model_rebuild()

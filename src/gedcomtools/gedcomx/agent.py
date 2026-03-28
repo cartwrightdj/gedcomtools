@@ -1,3 +1,8 @@
+# GedcomX Agent model.
+# Represents a person, organisation, or software that created or modified data.
+# Equality is semantic: person reference takes priority; falls back to name overlap.
+# __hash__ = None — mutable object, not safely hashable.
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Optional, Union
