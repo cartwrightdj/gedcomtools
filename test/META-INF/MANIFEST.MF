@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+X-DC-conformsTo: http://gedcomx.org/file/v1
+
+Name: tree.json
+Content-Type: application/x-gedcomx-v1+json
+X-DC-conformsTo: http://gedcomx.org/file/v1

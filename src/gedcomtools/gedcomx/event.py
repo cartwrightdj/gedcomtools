@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/event.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Event model: Event, EventType, and EventRole types
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 # GedcomX Event and EventRole models.
 # EventRole.person typed as Union[Person, Resource]; circular import resolved via
 # bottom-of-file import and model_rebuild().
@@ -20,6 +31,8 @@ from .subject import Subject
 
 
 class EventRoleType(Enum):
+    """Enumeration of recognized roles a person may play in an event."""
+
     Principal = "http://gedcomx.org/Principal"
     Participant = "http://gedcomx.org/Participant"
     Official = "http://gedcomx.org/Official"
@@ -27,6 +40,7 @@ class EventRoleType(Enum):
 
     @property
     def description(self):
+        """Return a human-readable description of this event role type."""
         descriptions = {
             EventRoleType.Principal: "The person is the principal person of the event.",
             EventRoleType.Participant: "A participant in the event.",
@@ -37,6 +51,8 @@ class EventRoleType(Enum):
 
 
 class EventRole(Conclusion):
+    """A person's role in a genealogical event."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/EventRole"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -95,6 +111,8 @@ class EventRole(Conclusion):
 
 
 class EventType(Enum):
+    """Enumeration of known genealogical event types."""
+
     Adoption = "http://gedcomx.org/Adoption"
     AdultChristening = "http://gedcomx.org/AdultChristening"
     Annulment = "http://gedcomx.org/Annulment"
@@ -133,6 +151,7 @@ class EventType(Enum):
 
     @property
     def description(self):
+        """Return a human-readable description of this event type."""
         descriptions = {
             EventType.Adoption: "An adoption event.",
             EventType.AdultChristening: "An adult christening event.",
@@ -173,6 +192,7 @@ class EventType(Enum):
 
     @staticmethod
     def guess(description):
+        """Return the best-matching EventType for the given description string, or None."""
         keywords_to_event_type = {
             "adoption": EventType.Adoption,
             "christening": EventType.Christening,
@@ -217,6 +237,8 @@ class EventType(Enum):
 
 
 class Event(Subject):
+    """A genealogical event with an optional date, place, and participant roles."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Event"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 

@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/place_reference.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX PlaceReference model: reference to a place with optional description
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
 

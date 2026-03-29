@@ -219,6 +219,7 @@ def _norm_xref(xref: str) -> str:
 # ---------------------------------------------------------------------------
 
 def cmd_info(args) -> int:
+    """Handle the `info` command."""
     path = Path(args.file)
     fmt, obj = _load(path)
     version = obj.detect_gedcom_version() or "unknown"
@@ -257,6 +258,7 @@ def cmd_info(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_validate(args) -> int:
+    """Handle the `validate` command."""
     path = Path(args.file)
     fmt, obj = _load(path)
 
@@ -299,6 +301,7 @@ _LIST_TYPES = ("indi", "fam", "sour", "repo", "obje", "subm", "snote")
 
 
 def cmd_list(args) -> int:
+    """Handle the `list` command."""
     path = Path(args.file)
     rtype = (args.type or "indi").lower()
     fmt, obj = _load(path)
@@ -376,6 +379,7 @@ def cmd_list(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_show(args) -> int:
+    """Handle the `show` command."""
     path = Path(args.file)
     xref = _norm_xref(args.xref)
     fmt, obj = _load(path)
@@ -478,6 +482,7 @@ def cmd_show(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_find(args) -> int:
+    """Handle the `find` command."""
     path = Path(args.file)
     target = args.tag.upper()
     payload_filter: Optional[str] = args.payload
@@ -557,6 +562,7 @@ def cmd_find(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_tree(args) -> int:
+    """Handle the `tree` command."""
     path = Path(args.file)
     xref = _norm_xref(args.xref)
     max_depth: int = args.depth
@@ -644,6 +650,7 @@ def cmd_tree(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_stats(args) -> int:
+    """Handle the `stats` command."""
     path = Path(args.file)
     fmt, obj = _load(path)
 
@@ -699,6 +706,7 @@ def cmd_stats(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_convert(args) -> int:
+    """Handle the `convert` command."""
     from gedcomtools.cli import _sniff_source_type, _CONVERSIONS
     source_path = Path(args.file)
     dest_type = args.to.lower()
@@ -760,6 +768,7 @@ def _package_version() -> str:
 
 
 def cmd_version(args) -> int:
+    """Handle the `version` command."""
     print(_package_version())
     return 0
 
@@ -769,6 +778,7 @@ def cmd_version(args) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_spec(args) -> int:
+    """Handle the `spec` command."""
     from gedcomtools.gedcom7.spectools import main as spectools_main
     return spectools_main(["g7spec"] + list(args.spec_args))
 
@@ -788,17 +798,20 @@ class _Node:
 
     @property
     def tag(self) -> str:
+        """Return the tag for this node."""
         t = self._raw.tag or ""
         return t.upper()
 
     @property
     def xref_id(self) -> Optional[str]:
+        """Return the cross-reference identifier for this node."""
         if self._fmt == "g7":
             return getattr(self._raw, "xref_id", None) or None
         return getattr(self._raw, "xref", None) or None
 
     @property
     def payload(self) -> str:
+        """Return the payload value for this node."""
         if self._fmt == "g7":
             return self._raw.payload or ""
         return self._raw.get_value() or ""
@@ -806,11 +819,13 @@ class _Node:
     # ---- tree traversal ----------------------------------------------------
 
     def children(self) -> List["_Node"]:
+        """Return the child nodes."""
         if self._fmt == "g7":
             return [_Node(c, self._fmt) for c in self._raw.children]
         return [_Node(c, self._fmt) for c in self._raw.get_child_elements()]
 
     def parent(self) -> Optional["_Node"]:
+        """Return the parent node."""
         if self._fmt == "g7":
             p = getattr(self._raw, "parent", None)
             return _Node(p, self._fmt) if p else None
@@ -820,12 +835,14 @@ class _Node:
     # ---- mutation (G7 only — G5 elements have set_value) -------------------
 
     def set_payload(self, value: str) -> None:
+        """Set the payload value for this node."""
         if self._fmt == "g7":
             self._raw.payload = value
         else:
             self._raw.set_value(value)
 
     def add_child(self, tag: str, value: str = "") -> "_Node":
+        """Add a child node."""
         if self._fmt == "g7":
             from gedcomtools.gedcom7.structure import GedcomStructure
             child_level = (getattr(self._raw, "level", 0) or 0) + 1
@@ -840,6 +857,7 @@ class _Node:
             return _Node(child, self._fmt)
 
     def remove_child(self, child: "_Node") -> None:
+        """Remove a child node."""
         if self._fmt == "g7":
             self._raw.children.remove(child._raw)
             child._raw.parent = None
@@ -927,18 +945,23 @@ class _FileRoot:
         self._root_nodes = root_nodes
 
     def children(self) -> List[_Node]:
+        """Return the child nodes."""
         return list(self._root_nodes)
 
     def parent(self) -> None:  # type: ignore[override]
+        """Return the parent node."""
         return None
 
     def set_payload(self, value: str) -> None:
+        """Set the payload value for this node."""
         raise ValueError("Cannot set payload on the file root.")
 
     def add_child(self, tag: str, value: str = "") -> _Node:
+        """Add a child node."""
         raise ValueError("Cannot add records at the file root level.")
 
     def remove_child(self, child: _Node) -> None:
+        """Remove a child node."""
         raise ValueError("Cannot remove records at the file root level.")
 
 
@@ -1325,6 +1348,7 @@ def _print_status(path: Optional[Path], fmt: Optional[str], obj: Optional[Any]) 
 
 
 def cmd_interactive(args) -> int:
+    """Handle the interactive shell command."""
     try:
         import readline  # noqa: F401 — enables arrow-key history on most platforms
     except ImportError:
@@ -2128,6 +2152,7 @@ _LIST_TYPES_STR = "|".join(_LIST_TYPES)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Run the command-line entry point."""
     parser = argparse.ArgumentParser(
         prog="gctool",
         description=__doc__,

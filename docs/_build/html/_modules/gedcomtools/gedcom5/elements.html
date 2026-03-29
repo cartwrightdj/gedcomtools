@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom5.elements - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -230,19 +230,16 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcom5.elements</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: gedcomtools</span>
-<span class="sd"> File:    gedcom5/elements.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records</span>
+<span class="sd">&quot;&quot;&quot;Element and record classes used by the GEDCOM 5.x parser tree.&quot;&quot;&quot;</span>
 
-<span class="sd"> Created: 2026-01-01</span>
-<span class="sd"> Updated:</span>
-
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: gedcomtools</span>
+<span class="c1">#  File:    gedcom5/elements.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records</span>
+<span class="c1">#  Created: 2026-01-01</span>
+<span class="c1"># ======================================================================</span>
 <span class="c1"># Python GEDCOM Parser</span>
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)</span>
@@ -268,19 +265,39 @@
 <span class="c1">#</span>
 <span class="c1"># Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html</span>
 
-<span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">regex</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Base GEDCOM element</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">regex</span>
+<span class="c1"># Base GEDCOM element</span>
 
-<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">version_info</span>
-<span class="kn">from</span> <span class="nn">gedcomtools.gedcom5.helpers</span> <span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">version_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcom5.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 
-<span class="kn">from</span> <span class="nn">.tags</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tags</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GEDCOM_TAG_BIRTH</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_BURIAL</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_CENSUS</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_CHANGE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_CONCATENATION</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_CONTINUED</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_DATE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_DEATH</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_FAMILY</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_FAMILY_CHILD</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_FILE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_GIVEN_NAME</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_INDIVIDUAL</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_NAME</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_OBJECT</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_OCCUPATION</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_PLACE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_PRIVATE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_SEX</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_SOURCE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_SURNAME</span><span class="p">,</span>
+<span class="p">)</span>
 
 <div class="viewcode-block" id="Element">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element">[docs]</a>
-<span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Element</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;GEDCOM element</span>
 
 <span class="sd">    Each line in a GEDCOM file is an element with the format</span>
@@ -308,7 +325,7 @@
 <span class="sd">    Tags available to an element are seen here: `gedcom.tags`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">xref</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">crlf</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">multi_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">xref</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">crlf</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">multi_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="c1"># basic element info</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__level</span> <span class="o">=</span> <span class="n">level</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__xref</span> <span class="o">=</span> <span class="n">xref</span>
@@ -324,55 +341,60 @@
         <span class="k">if</span> <span class="n">multi_line</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_multi_line_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_set_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parent</span><span class="p">:</span> <span class="s1">&#39;Element&#39;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parent</span><span class="p">:</span> <span class="s1">&#39;Element&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__parent</span> <span class="o">=</span> <span class="n">parent</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the parent node.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parent</span>
-    
+
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the level of this element from within the GEDCOM file</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__level</span>
-    
+
     <span class="nd">@level</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Document the `level` callable.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__level</span> <span class="o">=</span> <span class="n">level</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">xref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the pointer of this element from within the GEDCOM file</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__xref</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the tag of this element from within the GEDCOM file</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__tag</span>
     <span class="nd">@tag</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the tag for this node.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__tag</span> <span class="o">=</span> <span class="n">tag</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Document the `value` callable.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__value</span>
 
 <div class="viewcode-block" id="Element.describe">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.describe">[docs]</a>
-    <span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span><span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable summary of this object.&quot;&quot;&quot;</span>
         <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_line_num</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">xref</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">s</span></div>
 
 
 <div class="viewcode-block" id="Element.get_value">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the value of this element from within the GEDCOM file</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -381,7 +403,7 @@
 
 <div class="viewcode-block" id="Element.set_value">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the value of this element</span>
 <span class="sd">        :type value: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -389,13 +411,13 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">crlf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">crlf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the line ending used for this element.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__crlf</span>
 
 <div class="viewcode-block" id="Element.get_multi_line_value">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_multi_line_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_multi_line_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_multi_line_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the value of this element including concatenations or continuations</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -412,14 +434,14 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 
-    <span class="k">def</span> <span class="nf">__available_characters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__available_characters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of available characters of the elements original string</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">element_characters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">())</span>
         <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">element_characters</span> <span class="o">&gt;</span> <span class="mi">255</span> <span class="k">else</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">element_characters</span>
 
-    <span class="k">def</span> <span class="nf">__line_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__line_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;@TODO Write docs.</span>
 <span class="sd">        :type line: str</span>
 <span class="sd">        :rtype: int</span>
@@ -435,7 +457,7 @@
             <span class="k">return</span> <span class="n">available_characters</span>
         <span class="k">return</span> <span class="n">available_characters</span> <span class="o">-</span> <span class="n">spaces</span>
 
-    <span class="k">def</span> <span class="nf">__set_bounded_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_bounded_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;@TODO Write docs.</span>
 <span class="sd">        :type value: str</span>
 <span class="sd">        :rtype: int</span>
@@ -444,7 +466,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">value</span><span class="p">[:</span><span class="n">line_length</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">line_length</span>
 
-    <span class="k">def</span> <span class="nf">__add_bounded_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__add_bounded_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;@TODO Write docs.</span>
 <span class="sd">        :type tag: str</span>
 <span class="sd">        :type value: str</span>
@@ -453,7 +475,7 @@
         <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_child_element</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">__set_bounded_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__add_concatenation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__add_concatenation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;@TODO Write docs.</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -464,7 +486,7 @@
 
 <div class="viewcode-block" id="Element.set_multi_line_value">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_multi_line_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_multi_line_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_multi_line_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the value of this element, adding concatenation and continuation lines when necessary</span>
 <span class="sd">        :type value: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -483,28 +505,31 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">__add_concatenation</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">n</span><span class="p">:])</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_record</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-    
+
 <div class="viewcode-block" id="Element.sub_record">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.sub_record">[docs]</a>
-    <span class="k">def</span> <span class="nf">sub_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sub_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first matching child record.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__children</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span> <span class="k">return</span> <span class="n">r</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">r</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
-    
+
 <div class="viewcode-block" id="Element.sub_records">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.sub_records">[docs]</a>
-    <span class="k">def</span> <span class="nf">sub_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sub_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all matching child records.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__children</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__children</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">]</span></div>
 
-    
+
 <div class="viewcode-block" id="Element.get_child_elements">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_child_elements">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_child_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_child_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the direct child elements of this element</span>
 <span class="sd">        :rtype: list of Element</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -513,7 +538,7 @@
 
 <div class="viewcode-block" id="Element.new_child_element">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.new_child_element">[docs]</a>
-    <span class="k">def</span> <span class="nf">new_child_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">pointer</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">new_child_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">pointer</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates and returns a new child element of this element</span>
 
 <span class="sd">        :type tag: str</span>
@@ -521,7 +546,7 @@
 <span class="sd">        :type value: str</span>
 <span class="sd">        :rtype: Element</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        
+
         <span class="c1"># Differentiate between the type of the new child element</span>
         <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="n">GEDCOM_TAG_FAMILY</span><span class="p">:</span>
             <span class="n">child_element</span> <span class="o">=</span> <span class="n">FamilyRecord</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">pointer</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__crlf</span><span class="p">)</span>
@@ -541,7 +566,7 @@
 
 <div class="viewcode-block" id="Element.add_child_element">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.add_child_element">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_child_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_child_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a child element to this element</span>
 
 <span class="sd">        :type element: Element</span>
@@ -554,7 +579,7 @@
 
 <div class="viewcode-block" id="Element.get_parent_element">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_parent_element">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_parent_element</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parent_element</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the parent element of this element</span>
 <span class="sd">        :rtype: Element</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -563,7 +588,7 @@
 
 <div class="viewcode-block" id="Element.set_parent_element">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.set_parent_element">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_parent_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_parent_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a parent element to this element</span>
 
 <span class="sd">        There&#39;s usually no need to call this method manually,</span>
@@ -577,7 +602,7 @@
 <div class="viewcode-block" id="Element.get_individual">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.get_individual">[docs]</a>
     <span class="nd">@deprecated</span>
-    <span class="k">def</span> <span class="nf">get_individual</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_individual</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns this element and all of its sub-elements represented as a GEDCOM string</span>
 <span class="sd">        ::deprecated:: As of version 1.0.0 use `to_gedcom_string()` method instead</span>
 <span class="sd">        :rtype: str</span>
@@ -587,7 +612,7 @@
 
 <div class="viewcode-block" id="Element.to_gedcom_string">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.Element.to_gedcom_string">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_gedcom_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gedcom_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Formats this element and optionally all of its sub-elements into a GEDCOM string</span>
 <span class="sd">        :type recursive: bool</span>
 <span class="sd">        :rtype: str</span>
@@ -603,7 +628,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
 
-        
+
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -616,7 +641,7 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;:rtype: str&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">()</span>
@@ -626,60 +651,68 @@
 
 <div class="viewcode-block" id="RootElement">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.RootElement">[docs]</a>
-<span class="k">class</span> <span class="nc">RootElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RootElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Virtual GEDCOM root element containing all logical records as children&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pointer</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;ROOT&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">crlf</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">multi_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">RootElement</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">pointer</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">crlf</span><span class="p">,</span> <span class="n">multi_line</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pointer</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;ROOT&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">crlf</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">multi_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">pointer</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">crlf</span><span class="p">,</span> <span class="n">multi_line</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HeaderRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.HeaderRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">HeaderRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeaderRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent the GEDCOM 5.x HEAD record.&quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="SubmitterRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.SubmitterRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">SubmitterRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmitterRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x SUBM record.&quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="FamilyRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.FamilyRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">FamilyRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FamilyRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x family record.&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="FamilyRecord.get_tag">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.FamilyRecord.get_tag">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GEDCOM tag associated with this record type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">GEDCOM_TAG_FAMILY</span></div>
 </div>
 
 
 <div class="viewcode-block" id="FileElement">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.FileElement">[docs]</a>
-<span class="k">class</span> <span class="nc">FileElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FileElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x OBJE or file-linked element.&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="FileElement.get_tag">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.FileElement.get_tag">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GEDCOM tag associated with this record type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">GEDCOM_TAG_FILE</span></div>
 </div>
 
 
 <div class="viewcode-block" id="IndividualRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">IndividualRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IndividualRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x individual record.&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="IndividualRecord.get_tag">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_tag">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GEDCOM tag associated with this record type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">GEDCOM_TAG_INDIVIDUAL</span></div>
 
 
 <div class="viewcode-block" id="IndividualRecord.is_deceased">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_deceased">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_deceased</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_deceased</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if this individual is deceased</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -692,7 +725,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.is_child">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_child">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_child</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_child</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if this element is a child of a family</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -707,7 +740,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.is_private">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.is_private">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_private</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_private</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if this individual is marked private</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -722,7 +755,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_name">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an individual&#39;s names as a tuple: (`str` given_name, `str` surname)</span>
 <span class="sd">        :rtype: tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -767,25 +800,26 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_all_names">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_all_names">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_all_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all name values found on the individual record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_child_elements</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">GEDCOM_TAG_NAME</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="IndividualRecord.surname_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.surname_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">surname_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surname_to_match</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">surname_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surname_to_match</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Matches a string with the surname of an individual</span>
 <span class="sd">        :type surname_to_match: str</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="p">(</span><span class="n">given_name</span><span class="p">,</span> <span class="n">surname</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">_given_name</span><span class="p">,</span> <span class="n">surname</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">surname_to_match</span><span class="p">,</span> <span class="n">surname</span><span class="p">,</span> <span class="n">regex</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="IndividualRecord.given_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.given_match">[docs]</a>
     <span class="nd">@deprecated</span>
-    <span class="k">def</span> <span class="nf">given_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">given_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Matches a string with the given name of an individual</span>
 <span class="sd">        ::deprecated:: As of version 1.0.0 use `given_name_match()` method instead</span>
 <span class="sd">        :type name: str</span>
@@ -796,18 +830,18 @@
 
 <div class="viewcode-block" id="IndividualRecord.given_name_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.given_name_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">given_name_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">given_name_to_match</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">given_name_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">given_name_to_match</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Matches a string with the given name of an individual</span>
 <span class="sd">        :type given_name_to_match: str</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="p">(</span><span class="n">given_name</span><span class="p">,</span> <span class="n">surname</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">given_name</span><span class="p">,</span> <span class="n">_surname</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">given_name_to_match</span><span class="p">,</span> <span class="n">given_name</span><span class="p">,</span> <span class="n">regex</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="IndividualRecord.get_gender">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_gender">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_gender</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_gender</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the gender of a person in string format</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -822,7 +856,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_birth_data">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_birth_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_birth_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_birth_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the birth data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        :rtype: tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -848,7 +882,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_birth_year">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_birth_year">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_birth_year</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_birth_year</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the birth year of a person as an integer, or ``None`` if unknown.</span>
 <span class="sd">        :rtype: int or None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -867,7 +901,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_death_data">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_death_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_death_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_death_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the death data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        :rtype: tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -890,7 +924,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_death_year">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_death_year">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_death_year</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_death_year</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the death year of a person as an integer, or ``None`` if unknown.</span>
 <span class="sd">        :rtype: int or None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -910,7 +944,7 @@
 <div class="viewcode-block" id="IndividualRecord.get_burial">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_burial">[docs]</a>
     <span class="nd">@deprecated</span>
-    <span class="k">def</span> <span class="nf">get_burial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_burial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the burial data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        ::deprecated:: As of version 1.0.0 use `get_burial_data()` method instead</span>
 <span class="sd">        :rtype: tuple</span>
@@ -920,7 +954,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_burial_data">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_burial_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_burial_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_burial_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the burial data of a person formatted as a tuple: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        :rtype: tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -947,7 +981,7 @@
 <div class="viewcode-block" id="IndividualRecord.get_census">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_census">[docs]</a>
     <span class="nd">@deprecated</span>
-    <span class="k">def</span> <span class="nf">get_census</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_census</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list of censuses of an individual formatted as tuples: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        ::deprecated:: As of version 1.0.0 use `get_census_data()` method instead</span>
 <span class="sd">        :rtype: list of tuple</span>
@@ -957,7 +991,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_census_data">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_census_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_census_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_census_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list of censuses of an individual formatted as tuples: (`str` date, `str` place, `list` sources)</span>
 <span class="sd">        :rtype: list of tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -988,7 +1022,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_last_change_date">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_last_change_date">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_last_change_date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_last_change_date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the date of when the person data was last changed formatted as a string</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1005,7 +1039,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.get_occupation">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.get_occupation">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_occupation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_occupation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the occupation of a person</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1020,7 +1054,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.birth_year_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.birth_year_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">birth_year_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">birth_year_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns `True` if the given year matches the birth year of this person.</span>
 <span class="sd">        Returns ``False`` if the birth year is unknown.</span>
 <span class="sd">        :type year: int</span>
@@ -1032,7 +1066,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.birth_range_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.birth_range_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">birth_range_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_year</span><span class="p">,</span> <span class="n">to_year</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">birth_range_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_year</span><span class="p">,</span> <span class="n">to_year</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if the birth year of a person lies within the given range.</span>
 <span class="sd">        Returns ``False`` if the birth year is unknown.</span>
 <span class="sd">        :type from_year: int</span>
@@ -1045,7 +1079,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.death_year_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.death_year_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">death_year_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">death_year_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns `True` if the given year matches the death year of this person.</span>
 <span class="sd">        Returns ``False`` if the death year is unknown.</span>
 <span class="sd">        :type year: int</span>
@@ -1057,7 +1091,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.death_range_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.death_range_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">death_range_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_year</span><span class="p">,</span> <span class="n">to_year</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">death_range_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_year</span><span class="p">,</span> <span class="n">to_year</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if the death year of a person lies within the given range.</span>
 <span class="sd">        Returns ``False`` if the death year is unknown.</span>
 <span class="sd">        :type from_year: int</span>
@@ -1070,7 +1104,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.criteria_match">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.criteria_match">[docs]</a>
-    <span class="k">def</span> <span class="nf">criteria_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">criteria</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">criteria_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">criteria</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if this individual matches all of the given criteria</span>
 
 <span class="sd">        `criteria` is a colon-separated list, where each item in the</span>
@@ -1151,7 +1185,7 @@
 
 <div class="viewcode-block" id="IndividualRecord.describe">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.IndividualRecord.describe">[docs]</a>
-    <span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a human-readable description of this individual.</span>
 <span class="sd">        Includes name, gender, birth/death data, and occupation if available.</span>
@@ -1187,14 +1221,15 @@
         <span class="k">return</span> <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
 </div>
 
-    
+
 <div class="viewcode-block" id="ObjectRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.ObjectRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">ObjectRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ObjectRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x multimedia object record.&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="ObjectRecord.is_object">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.ObjectRecord.is_object">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks if this element is an actual object</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1204,15 +1239,16 @@
 
 <div class="viewcode-block" id="RepositoryRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.RepositoryRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">RepositoryRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RepositoryRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x repository record.&quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="SourceRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.SourceRecord">[docs]</a>
-<span class="k">class</span> <span class="nc">SourceRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x source record.&quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
-
 
 </pre></div>
         </article>

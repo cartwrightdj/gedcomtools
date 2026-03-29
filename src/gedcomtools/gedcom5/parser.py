@@ -6,6 +6,8 @@
 #  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
 #  Created: 2026-01-01
 # ======================================================================
+"""Parse GEDCOM 5.x files into the project’s element tree representation."""
+
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -93,30 +95,37 @@ class Gedcom5x:
 
     @property
     def individuals(self) -> List[IndividualRecord]:
+        """Return the individual records."""
         return self.__individuals
 
     @property
     def families(self) -> List[FamilyRecord]:
+        """Return the family records."""
         return self.__families
 
     @property
     def sources(self) -> List[SourceRecord]:
+        """Return the source records."""
         return self.__sources
 
     @property
     def repositories(self) -> List[RepositoryRecord]:
+        """Return the repository records."""
         return self.__repositories
 
     @property
     def objects(self) -> List[ObjectRecord]:
+        """Return the multimedia object records."""
         return self.__objects
 
     @property
     def header(self) -> List[HeaderRecord]:
+        """Return the header record."""
         return self.__header
 
     @property
     def submitters(self) -> List[SubmitterRecord]:
+        """Return the submitter records."""
         return self.__submitters
 
     # ------------------------------------------------------------------

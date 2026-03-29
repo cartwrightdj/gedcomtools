@@ -168,3 +168,129 @@ g7spec export [path]     # dump active rules to JSON (default: spec_rules.json)
 g7spec load <path>       # replace bundled spec_rules.json with a custom file
 g7spec reset             # restore compiled-in defaults
 ```
+
+---
+
+## Relationship Cross-Reference Validation Fix (2026-03-29)
+
+### Overview
+`GedcomX.validate()` was silently skipping person-reference checks for relationships whose
+`person1`/`person2` used the `Resource(resource=URI(fragment="Pn"))` form — the form the
+serializer produces during resource-ref deduplication. Only the `resourceId` string form was
+checked. Dangling references in the URI-fragment form passed validation without error.
+
+### Root cause
+
+```python
+# gedcomx.py — before fix
+ref_id = getattr(pfield, "id", None) or getattr(pfield, "resourceId", None)
+```
+
+`pfield.id` is the resource object's own identifier (always `None` here, not the target person
+id). `pfield.resourceId` covers `Resource(resourceId="P1")` but not
+`Resource(resource=URI(fragment="P1"))`. The third branch — `.resource.fragment` — was missing.
+
+### Fix
+
+```python
+# gedcomx.py — after fix
+ref_id = pfield.resourceId or (pfield.resource.fragment if pfield.resource else None)
+```
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | Line 526: replaced incorrect `getattr(pfield, "id", …)` fallback with `pfield.resource.fragment` extraction, covering both `resourceId` and `Resource(resource=URI(fragment=…))` forms. |
+| `tests/test_gedcomx_validation_rules.py` | Added `TestRelationshipPersonCrossRef` with 4 cases: valid resourceId form, valid resource-fragment form, dangling resourceId (must error), dangling resource-fragment (regression for this bug). |
+
+---
+
+## `from_dict()` Root-Field Loss & `serialize(dict)` Null Leak (2026-03-29)
+
+### Bug #2 — `GedcomX.from_dict()` dropped `attribution` and `groups`
+
+`from_dict()` only passed `id` and `description` to the constructor. `attribution` and `groups`
+present in a serialized document were silently ignored, making round-trips lossy without any
+error or warning.
+
+**Fix** (`gedcomx.py`): deserialize `attribution` via `Attribution.model_validate()` and append
+each `groups` entry via `gx.groups.append()`, using the same guarded pattern as the other
+collections.
+
+### Bug #4 — `Serialization.serialize(dict)` leaked `None` placeholders
+
+When serializing a plain `dict`, values were serialized recursively but `None` results were not
+filtered. Empty list fields (which `serialize` returns as `None`) produced `"key": null` in the
+output instead of being omitted, violating the omit-empty-fields contract.
+
+**Fix** (`serialization.py`): filter `None` values inline during dict comprehension using a
+walrus-operator guard, consistent with how `_serialize_dict` already handled this case.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | `from_dict()`: added deserialization of `attribution` and `groups` before the collection loops. |
+| `src/gedcomtools/gedcomx/serialization.py` | `serialize(dict)`: replaced unfiltered dict comprehension with one that drops `None` values after recursive serialization. |
+| `tests/test_serialization.py` | Added `TestFromDictRootFields` (attribution, groups, id/description round-trips) and `TestSerializeDictNullPruning` (empty list pruned, None pruned, nested None pruned). |
+
+---
+
+## GedcomZip Collision-Safe Naming (2026-03-29)
+
+### Overview
+`GedcomZip.add_object_as_resource()` always wrote `GedcomX` objects as `tree.json`,
+producing duplicate zip entries (and a `UserWarning`) when more than one was added.
+The per-spec entry name is arbitrary; `tree.json` was also non-standard.
+
+### Fix
+- Renamed the default entry from `tree.json` to `genealogy.json` (more descriptive,
+  consistent with the GedcomX file format spec which has no mandated filename).
+- Added `_arcnames: set[str]` on the instance to track all written entry names.
+- Added `_unique_arcname(base)` helper: returns `base.json`; on collision returns
+  `base2.json`, `base3.json`, … — no silent overwrites.
+- Applied the same deduplication to non-GedcomX top-level object entries.
+- Updated `read()` to process `genealogy.json` first instead of `tree.json`.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/zip.py` | `__init__`: added `_arcnames` set. Added `_unique_arcname()`. `add_object_as_resource()`: GedcomX path uses `genealogy` base name via `_unique_arcname`; non-GedcomX path also routes through `_unique_arcname`. `read()`: priority entry changed from `tree.json` to `genealogy.json`. |
+| `tests/test_zip.py` | Added `test_gedcomx_named_genealogy`; updated `test_multiple_resources` to assert `genealogy.json` / `genealogy2.json` naming and absence of duplicate-name warning. |
+
+---
+
+## TypeCollection URI Fix & Zip Directory Structure (2026-03-29)
+
+### Overview
+`TypeCollection.append()` was overwriting every item's `_uri` with a type-path form
+(`/persons/#P1`) regardless of whether one was already set. This caused resource references
+in serialized output to point at `/persons/#P1` — implying a separate `persons` file in the
+zip that doesn't exist — instead of the correct same-document fragment `#P1`.
+
+Additionally, `add_object_as_resource()` was stripping slashes from the URI and flattening
+everything to a single directory, so even deliberately path-based URIs lost their structure.
+
+### Fixes
+
+**`gedcomx.py` — `TypeCollection.append()`**
+- Only sets `_uri` when the item has none (was: always overwrites)
+- Default `_uri` is now `URI(fragment=id)` — no type path — so serialized resource refs
+  become `{"resource": "#P1"}` (same-document) not `{"resource": "/persons/#P1"}`
+- Explicit path-based URIs set before `append()` are preserved as-is
+
+**`zip.py` — `add_object_as_resource()` and `_unique_arcname()`**
+- When `obj._uri` has a path component, the zip entry is placed under that directory:
+  `URI(path="/persons/", fragment="P1")` → `persons/P1.json`
+- `_unique_arcname()` handles collision suffix correctly for both forms:
+  flat: `genealogy2.json`; path-based: `persons/P1_2.json`
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | `TypeCollection.append()`: removed type-path stamping; sets `URI(fragment=id)` only when `_uri` is absent. |
+| `src/gedcomtools/gedcomx/zip.py` | `add_object_as_resource()`: path-based `_uri` builds directory structure; `_unique_arcname()`: separate collision suffix logic for flat vs path-based names. |
+| `tests/test_zip.py` | Added `test_path_uri_builds_directory_structure`: creates a `Person` with explicit `URI(path="/persons/", fragment="P1")`, writes to zip, asserts entry at `persons/P1.json`. |

@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.models - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -274,13 +274,13 @@
 <span class="sd">        print(f.xref, f.husband_xref, f.wife_xref, len(f.children_xrefs))</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomStructure</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -290,18 +290,11 @@
 <div class="viewcode-block" id="EventDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.EventDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">EventDetail</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A genealogical event (birth, death, marriage, etc.).</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventDetail</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A genealogical event such as birth, death, or marriage.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        date:        Raw GEDCOM date string, e.g. ``&quot;1 JAN 2000&quot;`` or</span>
-<span class="sd">                     ``&quot;ABT 1850&quot;``.</span>
-<span class="sd">        place:       Place name from the PLAC substructure.</span>
-<span class="sd">        age:         Age of the individual at the event (AGE substructure).</span>
-<span class="sd">        cause:       Cause of the event (CAUS — typically used for death).</span>
-<span class="sd">        event_type:  Free-text TYPE qualifier attached to the event node.</span>
-<span class="sd">        agency:      AGNC substructure value.</span>
-<span class="sd">        note:        First inline NOTE payload, if any.</span>
+<span class="sd">    The fields store the raw GEDCOM-derived values for date, place, age,</span>
+<span class="sd">    cause, type qualifier, agency, note text, and related citations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -314,17 +307,27 @@
     <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">shared_note_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">media_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">place_translations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the four-digit year from the date string, or ``None``.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the four-digit year from the date string, or ``None``.</span>
+
+<span class="sd">        Handles dual-year notation (e.g. ``&quot;1800/01&quot;``) by returning the</span>
+<span class="sd">        primary year.  Prefers a four-digit match over a three-digit one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(\d{3,4})\b&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+        <span class="c1"># Prefer a 4-digit year (with optional /YY dual-year suffix)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\d</span><span class="si">{4}</span><span class="s2">)(?:/\d</span><span class="si">{2}</span><span class="s2">)?&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># Fall back to 3-digit year (rare, very old dates)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(\d</span><span class="si">{3}</span><span class="s2">)\b&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">qualifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qualifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return any date qualifier prefix: ABT, BEF, AFT, CAL, EST, etc.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -336,7 +339,7 @@
         <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">age_years</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">age_years</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the year component from the AGE string (e.g. ``&quot;45y 3m&quot;`` → 45).&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -348,7 +351,7 @@
 <div class="viewcode-block" id="NameDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.NameDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">NameDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NameDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A single name entry from an INDI NAME structure.</span>
 
 <span class="sd">    Attributes:</span>
@@ -360,6 +363,8 @@
 <span class="sd">        nickname:   NICK substructure value.</span>
 <span class="sd">        surname_prefix: SPFX surname prefix (de, van, von, etc.).</span>
 <span class="sd">        name_type:  TYPE substructure value (BIRTH, AKA, IMMIGRANT, etc.).</span>
+<span class="sd">        lang:       Language tag for this name (populated on TRAN entries).</span>
+<span class="sd">        translations: NAME.TRAN translations of this name in other languages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">full</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -370,9 +375,11 @@
     <span class="n">nickname</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">surname_prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">name_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">translations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;NameDetail&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean display name with GEDCOM surname slashes removed.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/([^/]*)/&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
 
@@ -381,7 +388,7 @@
 <div class="viewcode-block" id="SourceCitation">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceCitation">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SourceCitation</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceCitation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A source citation attached to a record or event.</span>
 
 <span class="sd">    Attributes:</span>
@@ -396,6 +403,17 @@
 
 
 
+<div class="viewcode-block" id="FamcLink">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.FamcLink">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FamcLink</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A FAMC family-as-child pointer with an optional pedigree qualifier.&quot;&quot;&quot;</span>
+
+    <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pedigree</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Top-level record detail types</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -403,7 +421,7 @@
 <div class="viewcode-block" id="IndividualDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.IndividualDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">IndividualDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IndividualDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 INDI record.</span>
 
 <span class="sd">    All repeated structures (names, residences, events, source citations)</span>
@@ -425,7 +443,7 @@
 <span class="sd">        nationality:       First NATI payload.</span>
 <span class="sd">        residences:        All RESI events.</span>
 <span class="sd">        events:            All generic EVEN structures.</span>
-<span class="sd">        families_as_child: FAMC pointer values.</span>
+<span class="sd">        families_as_child: FAMC links with optional PEDI pedigree qualifier.</span>
 <span class="sd">        families_as_spouse: FAMS pointer values.</span>
 <span class="sd">        source_citations:  All SOUR citations on the INDI record itself.</span>
 <span class="sd">        note_texts:        Inline NOTE payloads (not shared-note pointers).</span>
@@ -450,7 +468,7 @@
     <span class="n">nationality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">residences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">families_as_child</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">families_as_child</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">FamcLink</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">families_as_spouse</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">source_citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">note_texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -464,7 +482,7 @@
 
 <div class="viewcode-block" id="IndividualDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.IndividualDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.</span>
 
 <span class="sd">        Raises:</span>
@@ -484,32 +502,35 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NameDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NameDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Primary (first) name entry.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">full_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">full_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean display name of the primary name entry.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">display</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;Unknown&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Unknown&quot;</span>
+        <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">display</span> <span class="ow">or</span> <span class="s2">&quot;Unknown&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">birth_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">birth_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the birth date, or ``None``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">death_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">death_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the death date, or ``None``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_living</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_living</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;``True`` when no death event is recorded.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">death</span> <span class="ow">is</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">age_at_death</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">age_at_death</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Approximate age at death computed from birth/death years.&quot;&quot;&quot;</span>
         <span class="n">by</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth_year</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">death_year</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">dy</span> <span class="o">-</span> <span class="n">by</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">by</span> <span class="ow">and</span> <span class="n">dy</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -519,7 +540,7 @@
 <div class="viewcode-block" id="FamilyDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.FamilyDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">FamilyDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FamilyDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 FAM record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -558,7 +579,7 @@
 
 <div class="viewcode-block" id="FamilyDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.FamilyDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -569,17 +590,17 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">marriage_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marriage_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the marriage date, or ``None``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">marriage</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">marriage</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">divorce_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">divorce_year</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Year extracted from the divorce date, or ``None``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divorce</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">divorce</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of children listed in the family record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children_xrefs</span><span class="p">)</span></div>
 
@@ -588,7 +609,7 @@
 <div class="viewcode-block" id="SourceDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SourceDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SOUR record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -621,7 +642,7 @@
 
 <div class="viewcode-block" id="SourceDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SourceDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -636,7 +657,7 @@
 <div class="viewcode-block" id="RepositoryDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.RepositoryDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">RepositoryDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RepositoryDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 REPO record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -667,7 +688,7 @@
 
 <div class="viewcode-block" id="RepositoryDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.RepositoryDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -682,7 +703,7 @@
 <div class="viewcode-block" id="MediaDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.MediaDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">MediaDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MediaDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 OBJE record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -707,7 +728,7 @@
 
 <div class="viewcode-block" id="MediaDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.MediaDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -722,7 +743,7 @@
 <div class="viewcode-block" id="SharedNoteDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SharedNoteDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SharedNoteDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SharedNoteDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SNOTE record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -747,7 +768,7 @@
 
 <div class="viewcode-block" id="SharedNoteDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SharedNoteDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -762,7 +783,7 @@
 <div class="viewcode-block" id="SubmitterDetail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SubmitterDetail">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SubmitterDetail</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmitterDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated view of a GEDCOM 7 SUBM record.</span>
 
 <span class="sd">    Attributes:</span>
@@ -795,7 +816,7 @@
 
 <div class="viewcode-block" id="SubmitterDetail.save">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.SubmitterDetail.save">[docs]</a>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write Detail fields back to the underlying raw record.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -811,18 +832,18 @@
 <span class="c1"># Internal helpers</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="k">def</span> <span class="nf">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the payload of the first child matching *tag*, or ``None``.&quot;&quot;&quot;</span>
     <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">payload</span> <span class="k">if</span> <span class="n">child</span> <span class="k">else</span> <span class="kc">None</span>
 
 
-<span class="k">def</span> <span class="nf">_payloads</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_payloads</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return payloads of all children matching *tag*.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">payload</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pointer payload of the first matching child, or ``None``.&quot;&quot;&quot;</span>
     <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">child</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;@VOID@&quot;</span><span class="p">:</span>
@@ -830,7 +851,7 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span> <span class="nf">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all non-void pointer payloads for children matching *tag*.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">c</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
@@ -838,7 +859,7 @@
     <span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_changed</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return CHAN.DATE payload if present.&quot;&quot;&quot;</span>
     <span class="n">chan</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;CHAN&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">chan</span><span class="p">:</span>
@@ -846,12 +867,12 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span> <span class="nf">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_uid</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first UID payload.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;UID&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect all SOUR citation children of *node*.&quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">sour</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">):</span>
@@ -865,7 +886,7 @@
     <span class="k">return</span> <span class="n">result</span>
 
 
-<span class="k">def</span> <span class="nf">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_note_texts</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return inline NOTE payloads (skip pointer notes).&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">n</span><span class="o">.</span><span class="n">payload</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;NOTE&quot;</span><span class="p">)</span>
@@ -873,15 +894,25 @@
     <span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return SNOTE pointer values (non-void).&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SNOTE&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_event</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventDetail</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an EventDetail from an event structure node.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Collect PLAC.TRAN translations: {lang: translated_place_name}</span>
+    <span class="n">place_translations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">plac_node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;PLAC&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plac_node</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">tran</span> <span class="ow">in</span> <span class="n">plac_node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;TRAN&quot;</span><span class="p">):</span>
+            <span class="n">lang</span> <span class="o">=</span> <span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lang</span> <span class="ow">and</span> <span class="n">tran</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
+                <span class="n">place_translations</span><span class="p">[</span><span class="n">lang</span><span class="p">]</span> <span class="o">=</span> <span class="n">tran</span><span class="o">.</span><span class="n">payload</span>
+
     <span class="k">return</span> <span class="n">EventDetail</span><span class="p">(</span>
         <span class="n">date</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;DATE&quot;</span><span class="p">),</span>
         <span class="n">place</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PLAC&quot;</span><span class="p">),</span>
@@ -893,11 +924,25 @@
         <span class="n">sources</span><span class="o">=</span><span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">),</span>
         <span class="n">shared_note_refs</span><span class="o">=</span><span class="n">_shared_note_refs</span><span class="p">(</span><span class="n">node</span><span class="p">),</span>
         <span class="n">media_refs</span><span class="o">=</span><span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">),</span>
+        <span class="n">place_translations</span><span class="o">=</span><span class="n">place_translations</span><span class="p">,</span>
     <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_extract_name</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NameDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_name</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NameDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a NameDetail from a NAME structure node.&quot;&quot;&quot;</span>
+    <span class="n">translations</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">NameDetail</span><span class="p">(</span>
+            <span class="n">full</span><span class="o">=</span><span class="n">tran</span><span class="o">.</span><span class="n">payload</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">given</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;GIVN&quot;</span><span class="p">),</span>
+            <span class="n">surname</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;SURN&quot;</span><span class="p">),</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;NPFX&quot;</span><span class="p">),</span>
+            <span class="n">suffix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;NSFX&quot;</span><span class="p">),</span>
+            <span class="n">nickname</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;NICK&quot;</span><span class="p">),</span>
+            <span class="n">surname_prefix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;SPFX&quot;</span><span class="p">),</span>
+            <span class="n">lang</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">tran</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;TRAN&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
     <span class="k">return</span> <span class="n">NameDetail</span><span class="p">(</span>
         <span class="n">full</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
         <span class="n">given</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;GIVN&quot;</span><span class="p">),</span>
@@ -907,6 +952,7 @@
         <span class="n">nickname</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NICK&quot;</span><span class="p">),</span>
         <span class="n">surname_prefix</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;SPFX&quot;</span><span class="p">),</span>
         <span class="n">name_type</span><span class="o">=</span><span class="n">_payload</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">),</span>
+        <span class="n">translations</span><span class="o">=</span><span class="n">translations</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -916,7 +962,7 @@
 
 <div class="viewcode-block" id="individual_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.individual_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">individual_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndividualDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">individual_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndividualDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an :class:`IndividualDetail` from an INDI :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -950,7 +996,18 @@
         <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="p">]</span>
 
-    <span class="n">detail</span><span class="o">.</span><span class="n">families_as_child</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;FAMC&quot;</span><span class="p">)</span>
+    <span class="n">detail</span><span class="o">.</span><span class="n">families_as_child</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">FamcLink</span><span class="p">(</span>
+            <span class="n">xref</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
+            <span class="n">pedigree</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;PEDI&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;PEDI&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;PEDI&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">payload</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FAMC&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;@VOID@&quot;</span>
+    <span class="p">]</span>
     <span class="n">detail</span><span class="o">.</span><span class="n">families_as_spouse</span> <span class="o">=</span> <span class="n">_pointers</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;FAMS&quot;</span><span class="p">)</span>
 
     <span class="n">detail</span><span class="o">.</span><span class="n">source_citations</span> <span class="o">=</span> <span class="n">_source_citations</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
@@ -969,7 +1026,7 @@
 
 <div class="viewcode-block" id="family_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.family_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">family_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FamilyDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">family_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FamilyDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`FamilyDetail` from a FAM :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1008,7 +1065,7 @@
 
 <div class="viewcode-block" id="source_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.source_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">source_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourceDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">source_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourceDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SourceDetail` from a SOUR :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1038,7 +1095,7 @@
 
 <div class="viewcode-block" id="repository_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.repository_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">repository_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RepositoryDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">repository_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RepositoryDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`RepositoryDetail` from a REPO :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1067,7 +1124,7 @@
 
 <div class="viewcode-block" id="media_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.media_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">media_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">media_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`MediaDetail` from an OBJE :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1097,7 +1154,7 @@
 
 <div class="viewcode-block" id="shared_note_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.shared_note_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">shared_note_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SharedNoteDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shared_note_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SharedNoteDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SharedNoteDetail` from an SNOTE :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1123,7 +1180,7 @@
 
 <div class="viewcode-block" id="submitter_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.models.submitter_detail">[docs]</a>
-<span class="k">def</span> <span class="nf">submitter_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubmitterDetail</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">submitter_detail</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubmitterDetail</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`SubmitterDetail` from a SUBM :class:`GedcomStructure`.</span>
 
 <span class="sd">    Args:</span>
@@ -1155,7 +1212,7 @@
 <span class="c1"># G7 write-back helpers</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="k">def</span> <span class="nf">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set, create, or remove a single-value child node.</span>
 
 <span class="sd">    * value is not None  → set existing child&#39;s payload, or create one.</span>
@@ -1171,7 +1228,7 @@
         <span class="n">GedcomStructure</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">node</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_g7_save_event</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_g7_save_event</span><span class="p">(</span>
     <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;EventDetail&quot;</span><span class="p">],</span>
     <span class="n">event_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">],</span>
     <span class="n">parent_node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span>
@@ -1197,7 +1254,7 @@
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">event_node</span><span class="p">,</span> <span class="s2">&quot;NOTE&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_g7_save_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;NameDetail&quot;</span><span class="p">,</span> <span class="n">name_node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_g7_save_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;NameDetail&quot;</span><span class="p">,</span> <span class="n">name_node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a NameDetail back into a NAME GedcomStructure node.&quot;&quot;&quot;</span>
     <span class="n">name_node</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">full</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;GIVN&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">given</span><span class="p">)</span>
@@ -1209,7 +1266,7 @@
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">name_node</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">name_type</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_individual_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;IndividualDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_individual_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;IndividualDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">name_nodes</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">nd</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">name_nodes</span><span class="p">):</span>
@@ -1235,20 +1292,20 @@
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_family_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;FamilyDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_family_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;FamilyDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">marriage</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;MARR&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;MARR&quot;</span><span class="p">)</span>
     <span class="n">_g7_save_event</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">divorce</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">first_child</span><span class="p">(</span><span class="s2">&quot;DIV&quot;</span><span class="p">),</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;DIV&quot;</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;RESN&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_source_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SourceDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_source_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SourceDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;AUTH&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">author</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PUBL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">publication</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ABBR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">abbreviation</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_repository_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;RepositoryDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_repository_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;RepositoryDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">phone</span><span class="p">)</span>
@@ -1256,17 +1313,24 @@
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;WWW&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">website</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_media_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;MediaDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_media_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;MediaDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Rebuild FILE children from the files list</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FILE&quot;</span><span class="p">)):</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">detail</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+        <span class="n">file_node</span> <span class="o">=</span> <span class="n">GedcomStructure</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;FILE&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="p">:</span>
+            <span class="n">GedcomStructure</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">file_node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;FORM&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">form</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">file_node</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;TITL&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_shared_note_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SharedNoteDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_shared_note_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SharedNoteDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">node</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">detail</span><span class="o">.</span><span class="n">text</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;MIME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">mime</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;LANG&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">language</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_save_submitter_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SubmitterDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_submitter_g7</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="s2">&quot;SubmitterDetail&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ADDR&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
     <span class="n">_g7_set</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;PHON&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="o">.</span><span class="n">phone</span><span class="p">)</span>

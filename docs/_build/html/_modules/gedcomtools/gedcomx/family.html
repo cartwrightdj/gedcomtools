@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.family - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -238,114 +238,129 @@
 
 <span class="sd"> Created: 2025-10-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   </span>
+
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">..gedcom5.elements</span> <span class="kn">import</span> <span class="n">Element</span>
-<span class="kn">from</span> <span class="nn">.gedcomx</span> <span class="kn">import</span> <span class="n">GedcomX</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>
-<span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="kn">from</span> <span class="nn">.textvalue</span> <span class="kn">import</span> <span class="n">TextValue</span>
+<span class="c1"># GEDCOM Module Types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..gedcom5.elements</span><span class="w"> </span><span class="kn">import</span> <span class="n">Element</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomX</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.note</span><span class="w"> </span><span class="kn">import</span> <span class="n">Note</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
 
 <div class="viewcode-block" id="FamilyParser">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser">[docs]</a>
-<span class="k">class</span> <span class="nc">FamilyParser</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">gx</span><span class="p">:</span> <span class="n">GedcomX</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FamilyParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stateful parser that accumulates FAM record fields and commits couple and parent-child relationships to a GedcomX object.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">gx</span><span class="p">:</span> <span class="n">GedcomX</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">:</span> <span class="n">GedcomX</span> <span class="o">=</span> <span class="n">gx</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span><span class="p">:</span> <span class="n">Person</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span><span class="p">:</span> <span class="n">Person</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Person</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Person</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Person</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_event_fact</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="p">:</span> <span class="n">Relationship</span> <span class="o">=</span> <span class="n">Relationship</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">RelationshipType</span><span class="o">.</span><span class="n">Couple</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">:</span> <span class="n">Fact</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">:</span> <span class="n">Fact</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marr_date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
 <div class="viewcode-block" id="FamilyParser.reset">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.reset">[docs]</a>
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset all family members and the couple relationship for the next FAM record.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span><span class="p">:</span> <span class="n">Person</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span><span class="p">:</span> <span class="n">Person</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Person</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="p">:</span> <span class="n">Relationship</span> <span class="o">=</span> <span class="n">Relationship</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">RelationshipType</span><span class="o">.</span><span class="n">Couple</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalize the current family then reset for the next FAM record.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">couple</span> <span class="o">=</span> <span class="n">Relationship</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">RelationshipType</span><span class="o">.</span><span class="n">Couple</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">marr_date</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">marr_date</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
 
 
 <div class="viewcode-block" id="FamilyParser.add_source_reference">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_source_reference">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceReference to the marriage fact.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">add_source_reference</span><span class="p">(</span><span class="n">source_ref</span><span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="FamilyParser.add_note">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_note">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="n">Note</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="n">Note</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Note to the marriage fact.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">note</span><span class="p">)</span></div>
 
-        
+
 <div class="viewcode-block" id="FamilyParser.set_marr_date">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_marr_date">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_marr_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_marr_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the marriage date from a GEDCOM DATE element.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">marr_date</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span></div>
 
-    
+
 <div class="viewcode-block" id="FamilyParser.set_marr_plac">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_marr_plac">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_marr_plac</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_marr_plac</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the marriage place from a GEDCOM PLAC element, creating a PlaceDescription if needed.&quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.place_reference</span> <span class="kn">import</span> <span class="n">PlaceReference</span><span class="p">,</span> <span class="n">PlaceDescription</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.place_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlaceReference</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.place_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlaceDescription</span>
+        <span class="n">existing_places</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">existing_places</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">descriptionRef</span><span class="o">=</span><span class="n">existing_places</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">place_des</span> <span class="o">=</span> <span class="n">PlaceDescription</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_place_description</span><span class="p">(</span><span class="n">place_des</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">place_des</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">descriptionRef</span><span class="o">=</span><span class="n">place_des</span><span class="p">)</span></div>
 
-            
+
 <div class="viewcode-block" id="FamilyParser.set_husband">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_husband">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_husband</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">husband</span><span class="p">:</span> <span class="n">Person</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign the husband (person1) of the couple relationship and register it in the genealogy.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_husband</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">husband</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Person</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign the husband (person1) of the couple relationship.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">husband</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;set_husband called twice: person1 is already set on this couple relationship&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person1</span> <span class="o">=</span> <span class="n">husband</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="p">)</span>
-                
-                <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span> <span class="o">=</span> <span class="n">husband</span></div>
 
-    
+
 <div class="viewcode-block" id="FamilyParser.set_wife">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.set_wife">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_wife</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wife</span><span class="p">:</span> <span class="n">Person</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign the wife (person2) of the couple relationship and register it in the genealogy.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_wife</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wife</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Person</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign the wife (person2) of the couple relationship.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">wife</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;set_wife called twice: person2 is already set on this couple relationship&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person2</span> <span class="o">=</span> <span class="n">wife</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="p">)</span>
-                
-                <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent2</span> <span class="o">=</span> <span class="n">wife</span></div>
 
-    
+
+<div class="viewcode-block" id="FamilyParser.finalize">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.finalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Commit the couple relationship to the GedcomX graph.</span>
+
+<span class="sd">        Only called when the FAM record is fully parsed.  A couple relationship</span>
+<span class="sd">        requires both persons; if only one is present the family had no partner</span>
+<span class="sd">        recorded and we skip the couple (parent-child relationships were already</span>
+<span class="sd">        created directly in add_child).  Marriage facts are attached to persons</span>
+<span class="sd">        only when the couple is complete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marr_fact</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">couple</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">couple_added</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
 <div class="viewcode-block" id="FamilyParser.add_child">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.family.FamilyParser.add_child">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Person</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Person</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create ParentChild relationships between the child and each known parent.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">child</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -356,8 +371,6 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="n">p2child</span><span class="p">)</span></div>
 </div>
 
-
-            
 </pre></div>
         </article>
       </div>

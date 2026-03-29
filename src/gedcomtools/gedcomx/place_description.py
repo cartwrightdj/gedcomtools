@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/place_description.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX PlaceDescription model
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 # GedcomX PlaceDescription model.
 # jurisdiction typed as Union[Resource, PlaceDescription] (self-reference).
 # spatialDescription typed as PlaceReference; both resolved via bottom-of-file model_rebuild().

@@ -58,17 +58,10 @@ from .structure import GedcomStructure
 
 @dataclass
 class EventDetail:
-    """A genealogical event (birth, death, marriage, etc.).
+    """A genealogical event such as birth, death, or marriage.
 
-    Attributes:
-        date:        Raw GEDCOM date string, e.g. ``"1 JAN 2000"`` or
-                     ``"ABT 1850"``.
-        place:       Place name from the PLAC substructure.
-        age:         Age of the individual at the event (AGE substructure).
-        cause:       Cause of the event (CAUS — typically used for death).
-        event_type:  Free-text TYPE qualifier attached to the event node.
-        agency:      AGNC substructure value.
-        note:        First inline NOTE payload, if any.
+    The fields store the raw GEDCOM-derived values for date, place, age,
+    cause, type qualifier, agency, note text, and related citations.
     """
 
     date: Optional[str] = None
@@ -172,13 +165,7 @@ class SourceCitation:
 
 @dataclass
 class FamcLink:
-    """A FAMC (family-as-child) pointer with optional pedigree qualifier.
-
-    Attributes:
-        xref:     Pointer to the FAM record (e.g. ``"@F1@"``).
-        pedigree: PEDI substructure value — one of ``BIRTH``, ``ADOPTED``,
-                  ``FOSTER``, ``SEALING``, or ``None`` if absent.
-    """
+    """A FAMC family-as-child pointer with an optional pedigree qualifier."""
 
     xref: str
     pedigree: Optional[str] = None

@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/resource.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Resource reference type used for serialization of top-level objects
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import Any, Optional
 
@@ -41,17 +52,19 @@ class Resource(GedcomXModel):
 
     @property
     def uri(self) -> Optional[URI]:
+        """Return the URI held by this resource reference."""
         return self.resource
 
     @property
     def value(self) -> Optional[dict]:
+        """Return ``{"resource": uri}`` if a URI is set, or None."""
         res: dict = {}
         if self.resource:
             res["resource"] = self.resource
         return res if res else None
 
     @classmethod
-    def _of_object(cls, target: Any) -> "Resource":
+    def _of_object(cls, target: Any) -> Optional["Resource"]:
         if isinstance(target, Resource):
             resource = target.resource
         elif isinstance(target, URI):
@@ -68,10 +81,10 @@ class Resource(GedcomXModel):
                 resource = URI(fragment=target.id)
             else:
                 log.warning(
-                    "Resource._of_object: target {} has no id/uri — returning empty resource",
+                    "Resource._of_object: target {} has no id/uri — skipping field",
                     type(target).__name__,
                 )
-                resource = None
+                return None
         log.debug("Resource '{}'", resource)
         return Resource(resource=resource)
 

@@ -7,7 +7,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Getting Started - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -250,8 +250,8 @@
 </pre></div>
 </div>
 <p>Or use the Python API directly:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gedcomtools.gedcom5.parser</span> <span class="kn">import</span> <span class="n">Gedcom5x</span>
-<span class="kn">from</span> <span class="nn">gedcomtools.gedcomx.conversion</span> <span class="kn">import</span> <span class="n">GedcomConverter</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcom5.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom5x</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomConverter</span>
 
 <span class="n">parser</span> <span class="o">=</span> <span class="n">Gedcom5x</span><span class="p">()</span>
 <span class="n">parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="s2">&quot;family.ged&quot;</span><span class="p">)</span>
@@ -266,9 +266,9 @@
 </section>
 <section id="working-with-gedcomx-objects">
 <h2>Working with GedcomX objects<a class="headerlink" href="#working-with-gedcomx-objects" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gedcomtools.gedcomx.gedcomx</span> <span class="kn">import</span> <span class="n">GedcomX</span>
-<span class="kn">from</span> <span class="nn">gedcomtools.gedcomx.person</span> <span class="kn">import</span> <span class="n">Person</span><span class="p">,</span> <span class="n">QuickPerson</span>
-<span class="kn">from</span> <span class="nn">gedcomtools.gedcomx.name</span> <span class="kn">import</span> <span class="n">Name</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.person</span><span class="w"> </span><span class="kn">import</span> <span class="n">Person</span><span class="p">,</span> <span class="n">QuickPerson</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.name</span><span class="w"> </span><span class="kn">import</span> <span class="n">Name</span>
 
 <span class="n">gx</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="p">()</span>
 
@@ -284,8 +284,8 @@
 </section>
 <section id="serialization">
 <h2>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gedcomtools.gedcomx.serialization</span> <span class="kn">import</span> <span class="n">Serialization</span>
-<span class="kn">import</span> <span class="nn">json</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serialization</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;output.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>

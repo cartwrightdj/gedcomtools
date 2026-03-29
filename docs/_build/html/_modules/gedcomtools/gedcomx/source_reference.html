@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.source_reference - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,134 +229,112 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.source_reference</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    Person.py</span>
+<span class="sd"> File:    gedcomx/source_reference.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Python Object representation of GedcomX Person Type</span>
+<span class="sd"> Purpose: GedcomX SourceReference model: link from a conclusion to a source description</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qualifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qualifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.source_description</span> <span class="kn">import</span> <span class="n">SourceDescription</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.source_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceDescription</span>
 
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.qualifier</span> <span class="kn">import</span> <span class="n">Qualifier</span>
-
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-
-<span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">serial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
-<span class="c1">#=====================================================================</span>
-
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sized</span>
 
 <div class="viewcode-block" id="KnownSourceReference">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_reference.KnownSourceReference">[docs]</a>
-<span class="k">class</span> <span class="nc">KnownSourceReference</span><span class="p">(</span><span class="n">Qualifier</span><span class="p">):</span>
-    <span class="n">CharacterRegion</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/CharacterRegion&quot;</span>
-    <span class="n">RectangleRegion</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/RectangleRegion&quot;</span>
-    <span class="n">TimeRegion</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/TimeRegion&quot;</span>
-    <span class="n">Page</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Page&quot;</span>
-    
+<span class="k">class</span><span class="w"> </span><span class="nc">KnownSourceReference</span><span class="p">(</span><span class="n">Qualifier</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Qualifier subclass with known region and page qualifier URIs for source references.&quot;&quot;&quot;</span>
+
+    <span class="n">CharacterRegion</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/CharacterRegion&quot;</span>
+    <span class="n">RectangleRegion</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/RectangleRegion&quot;</span>
+    <span class="n">TimeRegion</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/TimeRegion&quot;</span>
+    <span class="n">Page</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Page&quot;</span>
+
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable description of this qualifier&#39;s meaning.&quot;&quot;&quot;</span>
         <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">CharacterRegion</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;A region of text in a digital document, in the form of a,b where a is the index of the start &quot;</span>
-                <span class="s2">&quot;character and b is the index of the end character. The meaning of this qualifier is undefined &quot;</span>
-                <span class="s2">&quot;if the source being referenced is not a digital document.&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">RectangleRegion</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;A rectangular region of a digital image. The value of the qualifier is interpreted as a series &quot;</span>
-                <span class="s2">&quot;of four comma-separated numbers. If all numbers are less than 1, it is interpreted as x1,y1,x2,y2, &quot;</span>
-                <span class="s2">&quot;representing percentage-based coordinates of the top-left and bottom-right corners. If any number is &quot;</span>
-                <span class="s2">&quot;more than 1, it is interpreted as x,y,w,h where x and y are coordinates in pixels, and w and h are &quot;</span>
-                <span class="s2">&quot;the width and height of the rectangle in pixels.&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">TimeRegion</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;A region of time in a digital audio or video recording, in the form of a,b where a is the starting &quot;</span>
-                <span class="s2">&quot;point in milliseconds and b is the ending point in milliseconds. This qualifier&#39;s meaning is undefined &quot;</span>
-                <span class="s2">&quot;if the source is not a digital audio or video recording.&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">Page</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;A single page in a multi-page document, represented as a 1-based integer. This always references the &quot;</span>
-                <span class="s2">&quot;absolute page number, not any custom page number. This qualifier is undefined if the source is not a &quot;</span>
-                <span class="s2">&quot;multi-page document.&quot;</span>
-            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">CharacterRegion</span><span class="p">:</span> <span class="s2">&quot;A region of text in a digital document.&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">RectangleRegion</span><span class="p">:</span> <span class="s2">&quot;A rectangular region of a digital image.&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">TimeRegion</span><span class="p">:</span> <span class="s2">&quot;A region of time in a digital audio or video recording.&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Page</span><span class="p">:</span> <span class="s2">&quot;A single page in a multi-page document.&quot;</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="SourceReference">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">SourceReference</span><span class="p">:</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/SourceReference&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
-    
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">description</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">URI</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">descriptionId</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">qualifiers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Qualifier</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span> <span class="o">=</span> <span class="n">descriptionId</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">=</span> <span class="n">qualifiers</span> <span class="k">if</span> <span class="n">qualifiers</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qualifiers</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span> 
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceReference</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A reference from a conclusion to a SourceDescription, with optional qualifiers.&quot;&quot;&quot;</span>
+
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/SourceReference&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Union[URI, Resource, SourceDescription] at runtime</span>
+    <span class="n">descriptionId</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">qualifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Qualifier</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_description</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize description from dict → Resource, str → URI.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Resource</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">URI</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.source_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceDescription</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_instance</span><span class="p">,</span> <span class="n">check_nonempty</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;SourceReference has neither description nor descriptionId&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="n">URI</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">check_nonempty</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;descriptionId&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;attribution&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">,</span> <span class="n">Attribution</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;qualifiers[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">Qualifier</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SourceReference.add_qualifier">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.add_qualifier">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_qualifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qualifier</span><span class="p">:</span> <span class="n">Qualifier</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a qualifier to the source reference, skipping exact duplicates.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_qualifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qualifier</span><span class="p">:</span> <span class="n">Qualifier</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Qualifier to this source reference, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qualifier</span><span class="p">,</span> <span class="p">(</span><span class="n">Qualifier</span><span class="p">,</span> <span class="n">KnownSourceReference</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The &#39;qualifier&#39; must be type &#39;Qualifier&#39; or &#39;KnownSourceReference&#39;, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">qualifier</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">qualifier</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qualifier</span><span class="p">)</span></div>
 
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not a Qualifier or KnownSourceReference.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qualifier</span><span class="p">,</span> <span class="p">(</span><span class="n">Qualifier</span><span class="p">,</span><span class="n">KnownSourceReference</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">:</span>
-                <span class="c1">#TODO Prevent Duplicates</span>
-                <span class="k">for</span> <span class="n">current_qualifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">qualifier</span> <span class="o">==</span> <span class="n">current_qualifier</span><span class="p">:</span>
-                        <span class="k">return</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qualifier</span><span class="p">)</span>
-            <span class="k">return</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;qualifier&#39; must be type &#39;Qualifier&#39; or &#39;KnownSourceReference&#39;, not &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qualifier</span><span class="p">)))</span> </div>
 
-    
 <div class="viewcode-block" id="SourceReference.append">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.append">[docs]</a>
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_add</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append text to descriptionId, setting it if not yet assigned.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If text_to_add is not a non-empty string.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_add</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append *text_to_add* to the descriptionId field.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">text_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_to_add</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">descriptionId</span> <span class="o">=</span> <span class="n">text_to_add</span>
@@ -365,43 +343,12 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;text_to_add&#39; must be a non-empty string.&quot;</span><span class="p">)</span></div>
 
-    
-<div class="viewcode-block" id="SourceReference.from_json">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_reference.SourceReference.from_json">[docs]</a>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SourceReference&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize a SourceReference from a JSON dict.&quot;&quot;&quot;</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="c1"># Scalars</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">descriptionId</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;descriptionId&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ref</span><span class="p">[</span><span class="s2">&quot;descriptionId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">descriptionId</span>
-
-        <span class="c1"># Objects (description could be URI or SourceDescription)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">description</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># if description is just a string, assume URI</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">description</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">ref</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">description</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">ref</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Resource</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">description</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">pass</span> <span class="c1">#TODO</span>
-            <span class="c1">#print(ref[&quot;descriptionId&quot;])</span>
-
-        <span class="k">if</span> <span class="p">(</span><span class="n">attribution</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attribution&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ref</span><span class="p">[</span><span class="s2">&quot;attribution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Attribution</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">attribution</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span><span class="n">qualifiers</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qualifiers&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ref</span><span class="p">[</span><span class="s2">&quot;qualifiers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Qualifier</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qualifiers</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">ref</span><span class="p">)</span></div>
-
-  
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="n">self_uri</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>  <span class="s1">&#39;_uri&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">other_uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="s1">&#39;_uri&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">self_uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">other_uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">self_uri</span> <span class="o">==</span> <span class="n">other_uri</span></div>
 
 </pre></div>

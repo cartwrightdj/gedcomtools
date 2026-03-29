@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.uri - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,140 +229,173 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.uri</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">urlunsplit</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">SplitResult</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    uri.py</span>
+<span class="sd"> File:    gedcomx/uri.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose: GedcomX URI model: structured URI with scheme, authority, path, query, and fragment</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor </span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span><span class="p">,</span> <span class="n">SCHEMA</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitResult</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">urlunparse</span><span class="p">,</span> <span class="n">urlunsplit</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_serializer</span><span class="p">,</span> <span class="n">model_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">serial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
-<span class="c1">#=====================================================================</span>
 
 <span class="n">_DEFAULT_SCHEME</span> <span class="o">=</span> <span class="s2">&quot;gedcomx&quot;</span>
 
+
 <div class="viewcode-block" id="URI">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.uri.URI">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">URI</span><span class="p">():</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 
-                 <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">scheme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">authority</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">params</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">fragment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">URI</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GedcomX URI — parsed into components; serializes as its string value.&quot;&quot;&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">scheme</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">authority</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="o">=</span> <span class="n">fragment</span>     
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">scheme</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">authority</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fragment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="n">_DEFAULT_SCHEME</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">authority</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">netloc</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">path</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">query</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">fragment</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Construction helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1">#log.debug(f&quot;Creating URI from Target {target}, most likely for serialization&quot;)</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">):</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">.id&#39; = </span><span class="si">{}</span><span class="s2">, using as fragment&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">target</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">_value</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">scheme</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">authority</span> 
-                        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">path</span> 
-                        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">query</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">fragment</span>
-                    <span class="c1">#TODO Log</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;target.uri was None for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="n">URI</span><span class="p">):</span>
-                <span class="c1">#log.debug(f&quot;&#39;{target} is a URI, copying&quot;)</span>
-                <span class="k">if</span> <span class="n">target</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">_value</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">scheme</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">authority</span> 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">path</span> 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">query</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">fragment</span>
-                <span class="c1">#TODO Log</span>
-            
-            
-            
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
-                <span class="c1">#log.warning(f&quot;Creating a URI from target type {type(target)} with data: {target}.&quot;)</span>
-                <span class="n">s</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="n">_DEFAULT_SCHEME</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">authority</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">netloc</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">path</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">query</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">fragment</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1">#log.warning(f&quot;Unable to create URI from target type {type(target)} with data: {target}.&quot;)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">target</span>
-        <span class="c1">#log.info(f&quot;self.scheme = {self.scheme} self.authority={self.authority} self.path={self.path} self.query={self.query}  self.fragment={self.fragment}&quot;)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_input</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pre-process the various construction paths into a component dict.</span>
 
-        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>   
+<span class="sd">        Accepted forms:</span>
+<span class="sd">            URI(value=&#39;http://...&#39;)          — parse URL string</span>
+<span class="sd">            URI(fragment=&#39;abc&#39;)              — set fragment only</span>
+<span class="sd">            URI(target=obj_with_id)          — extract id as fragment</span>
+<span class="sd">            URI(target=uri_instance)         — copy components from another URI</span>
+<span class="sd">            URI(target=&#39;http://...&#39;)         — parse string target</span>
+<span class="sd">            URI(target=obj_with_uri)         — copy components from obj.uri</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># Positional or non-dict — treat as a value string</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_value_string</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># don&#39;t mutate the caller&#39;s dict</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_value_string</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="c1"># component kwargs take priority over the parsed value</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;scheme&quot;</span><span class="p">,</span> <span class="s2">&quot;authority&quot;</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_process_target</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_value_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="n">_DEFAULT_SCHEME</span><span class="p">,</span>
+            <span class="s2">&quot;authority&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">netloc</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">path</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;fragment&quot;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_target</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">URI</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="o">**</span><span class="n">base</span><span class="p">,</span>
+                <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span>
+                <span class="s2">&quot;authority&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">authority</span><span class="p">,</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+                <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+                <span class="s2">&quot;fragment&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">fragment</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_value_string</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parsed</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}}</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;uri&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;uri&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">uri</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">URI</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_process_target</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;target.uri is not a URI instance for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">}</span>
+        <span class="c1"># Fallback — store as fragment string</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">)}</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_not_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;URI&quot;</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">authority</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;URI: at least one component must be set&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Pydantic coercion — accept strings where URI is expected</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_pydantic_core_schema__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">source_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_schema</span> <span class="k">as</span> <span class="n">cs</span>
+
+        <span class="c1"># handler(source_type) gives the base model schema; pydantic resolves</span>
+        <span class="c1"># the self-reference safely via a definition-reference node.</span>
+        <span class="n">model_schema</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="n">source_type</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_from_string</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;URI&quot;</span><span class="p">:</span>
+            <span class="c1"># model_construct bypasses the schema to avoid re-entering this validator</span>
+            <span class="n">components</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_value_string</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_construct</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">cs</span><span class="o">.</span><span class="n">union_schema</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">cs</span><span class="o">.</span><span class="n">is_instance_schema</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
+                <span class="n">cs</span><span class="o">.</span><span class="n">chain_schema</span><span class="p">([</span><span class="n">cs</span><span class="o">.</span><span class="n">str_schema</span><span class="p">(),</span> <span class="n">cs</span><span class="o">.</span><span class="n">no_info_plain_validator_function</span><span class="p">(</span><span class="n">_from_string</span><span class="p">)]),</span>
+                <span class="n">model_schema</span><span class="p">,</span>   <span class="c1"># handles dict inputs via _normalize_input</span>
+            <span class="p">],</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;left_to_right&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Serialization — output as the string value, not a component dict</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@model_serializer</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Standard interface</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full URI string assembled from its components, or None if empty.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the URI as a string assembled from its components, or None if all components are empty.&quot;&quot;&quot;</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -370,8 +403,8 @@
 
 <div class="viewcode-block" id="URI.split">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.uri.URI.split">[docs]</a>
-    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SplitResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the URI components as a urllib SplitResult named tuple.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SplitResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a :class:`~urllib.parse.SplitResult` of this URI&#39;s components.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">SplitResult</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -381,22 +414,23 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">urlunsplit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
-    
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scheme = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">, authority=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">authority</span><span class="si">}</span><span class="s2">, path=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">, query=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="si">}</span><span class="s2">, fragment=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;URI(scheme=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="si">}</span><span class="s2">, authority=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">authority</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;path=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">, query=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="si">}</span><span class="s2">, fragment=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fragment</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="URI.from_url">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.uri.URI.from_url">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_url</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a URI from a URL string or target object.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">url</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_url</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;URI&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a URI by parsing any URL-like value via the ``target`` construction path.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">url</span><span class="p">})</span></div>
 </div>
 
-
-<span class="c1">#SCHEMA.set_uri_class(URI)</span>
 </pre></div>
         </article>
       </div>

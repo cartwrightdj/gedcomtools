@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/identifier.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Identifier model: Identifier, IdentifierType, and IdentifierList
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 # GedcomX Identifier model and IdentifierList container.
 # Identifier maps a type URI to one or more URI values.
 # IdentifierList is a dict-like container (not a pydantic model) with pydantic schema support.
@@ -32,6 +43,7 @@ def make_uid(length: int = 10, alphabet: str = string.ascii_letters + string.dig
 # ---------------------------------------------------------------------------
 
 class IdentifierType(ExtensibleEnum):
+    """Runtime-extensible enum of identifier type URIs (Primary, Authority, Deprecated, etc.)."""
     pass
 
 
@@ -50,6 +62,8 @@ IdentifierType.register("FamilySearchId", "https://gedcom.io/terms/v5/FSID")
 # ---------------------------------------------------------------------------
 
 class Identifier(GedcomXModel):
+    """A typed identifier for a GedcomX entity, mapping an IdentifierType to one or more URI values."""
+
     identifier_spec: ClassVar[str] = "http://gedcomx.org/v1/Identifier"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -58,6 +72,7 @@ class Identifier(GedcomXModel):
 
     def model_post_init(self, __context: object) -> None:
         # Normalise: value kwarg → values list
+        """Populate derived state after model initialization."""
         raw = (self.model_extra or {}).get("value")
         if raw is not None and not self.values:
             if isinstance(raw, list):
@@ -117,6 +132,7 @@ class IdentifierList:
     # ---- hashing helpers -----------------------------------------------
 
     def make_hashable(self, obj: Any) -> Any:
+        """Recursively convert *obj* to a hashable form for deduplication."""
         if isinstance(obj, URI):
             return str(obj)  # urlunsplit — same result as model_dump(mode="json") but free
         if isinstance(obj, dict):
@@ -133,6 +149,7 @@ class IdentifierList:
         return obj
 
     def unique_list(self, items: list) -> list:
+        """Return a deduplicated list, preserving first-occurrence order."""
         seen: set = set()
         result = []
         for item in items:
@@ -145,12 +162,14 @@ class IdentifierList:
     # ---- public mutation API -------------------------------------------
 
     def append(self, identifier: Identifier) -> None:
+        """Append an Identifier to the list (alias for add_identifier)."""
         if isinstance(identifier, Identifier):
             self.add_identifier(identifier)
         else:
             raise ValueError("append expects an Identifier instance")
 
     def add_identifier(self, identifier: Identifier) -> None:
+        """Merge the values of *identifier* into the corresponding type bucket, deduplicating."""
         if not (identifier and isinstance(identifier, Identifier) and identifier.type):
             raise ValueError("The 'identifier' must be a valid Identifier instance with a type.")
         if not isinstance(identifier.type, _EnumItem):
@@ -162,6 +181,7 @@ class IdentifierList:
     # ---- queries -------------------------------------------------------
 
     def contains(self, identifier: Identifier) -> bool:
+        """Return True if any value of *identifier* is already stored under its type key."""
         if not (identifier and isinstance(identifier, Identifier) and identifier.type):
             return False
         key = identifier.type.value if hasattr(identifier.type, "value") else str(identifier.type)  # type: ignore[attr-defined]
@@ -199,15 +219,19 @@ class IdentifierList:
         del self.identifiers[k]
 
     def keys(self):
+        """Return the type-URI keys of the identifier dict."""
         return self.identifiers.keys()
 
     def values(self):
+        """Return the URI value lists for each type key."""
         return self.identifiers.values()
 
     def items(self):
+        """Return (type_key, uri_list) pairs for all identifier entries."""
         return self.identifiers.items()
 
     def iter_pairs(self) -> Iterator[tuple]:
+        """Yield ``(type_key, uri)`` pairs for every individual URI value across all types."""
         for k, vals in self.identifiers.items():
             for v in vals:
                 yield (k, v)
@@ -216,6 +240,7 @@ class IdentifierList:
 
     @property
     def _serializer(self) -> Optional[Dict[str, list]]:
+        """Return a JSON-serializable dict of identifier values, or None if empty."""
         out: Dict[str, list] = {}
         for k, uris in self.identifiers.items():
             out[k] = [
@@ -226,6 +251,7 @@ class IdentifierList:
 
     @classmethod
     def from_json(cls, data: Any, _context: Any = None) -> "IdentifierList":
+        """Deserialize an IdentifierList from a dict mapping type-URIs to lists of value strings."""
         if not isinstance(data, dict):
             raise ValueError("Data must be a dict of identifiers.")
         identifier_list = cls()

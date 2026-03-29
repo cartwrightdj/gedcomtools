@@ -5,11 +5,102 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.2**
+> **ALPHA SOFTWARE — v0.7.3-dev**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
+
+---
+
+## What's New (development)
+
+### GML graph export
+
+A new `gml.py` module exports a GedcomX object graph to **GML (Graph Modelling Language)**,
+readable by Gephi, yEd, NetworkX, and other graph tools. Persons become nodes; Couple and
+ParentChild relationships become directed edges.
+
+```python
+from gedcomtools.gedcomx.gml import to_gml
+
+gml_text = to_gml(gx)
+with open("family.gml", "w") as f:
+    f.write(gml_text)
+```
+
+Node attributes: `id`, `label` (primary name), `gender`, `birth_year`, `birth_place`,
+`death_year`, `death_place`, `living`. Edge attributes: `source`, `target`, `label`
+(relationship type), `rel_type`.
+
+### Expanded `gxcli` interactive shell
+
+The `gxcli` REPL was significantly expanded with new commands:
+
+| Command | Description |
+|---|---|
+| `ahnentafel` / `ahnen` | Ancestor numbering — set, add, tree, export (decimal/binary/GEDCOM formats) |
+| `grep` PATTERN | Recursive regex search across entire object tree |
+| `schema` | Browse schema: `here`, `class`, `find`, `where`, `bases`, `toplevel`, `json`, `diff` |
+| `bookmark` / `bm` | Named bookmarks for quick navigation |
+| `dump` | Serialize current node to JSON |
+| `resolve` | Resolve resource references at current node |
+| `write` FORMAT | Export to `gx`, `zip`, `jsonl`, or `adbg` format |
+| `log` LEVEL | Set runtime log level |
+| `cfg` | Persistent configuration (set/get/tree/import/export) |
+| `ext` | Load, unload, and trust plugins |
+
+### OBJE multimedia support
+
+GEDCOM `OBJE` (multimedia object) records are now handled in both the G5→GX and G7→GX
+converters. `OBJE` records produce `SourceDescription(resourceType=DigitalArtifact)` with
+MIME type detection from the file extension.
+
+### PEDI and ABBR tag support
+
+- `PEDI` (pedigree linkage type: `adopted`, `birth`, `foster`, `sealing`) is now preserved
+  as a qualifier on `ParentChild` relationships in both the G7→GX and G5→GX paths.
+- `ABBR` (source abbreviation) is stored as a note on `SourceDescription`.
+
+### Improved date parsing (G5 → G7)
+
+The GEDCOM 5 → GEDCOM 7 date converter (`g5tog7.py`) now handles a wider range of
+date formats including approximate dates (`ABT`, `CAL`, `EST`), date ranges
+(`BEF`, `AFT`, `BET … AND …`), and French Republican / Hebrew calendar indicators.
+
+### Model correctness fixes
+
+- **`Agent.__eq__`** redesigned: person reference takes priority (if set, equality
+  is determined entirely by person match); falls back to case-insensitive name overlap
+  when person is `None`. `Agent.__hash__ = None` — mutable objects are no longer
+  accidentally hashable.
+- **`Conclusion.__hash__ = None`** — consistent with value-based `__eq__` and mutable
+  list fields (`sources`, `notes`).
+- **`Identifier.values`** — mutable default `[]` replaced with `Field(default_factory=list)`.
+  Previously all `Identifier` instances without an explicit `values` argument shared the
+  same list.
+- **`Agent.sorted_names`** — new read-only property returning names sorted alphabetically
+  (case-insensitive). `names[0]` primary-name order is preserved in the stored list.
+
+### Type annotation improvements
+
+Forward-reference circular imports resolved via `TYPE_CHECKING` guards and
+`model_rebuild()` calls, replacing several `Optional[Any]` fields with proper types:
+
+| Field | Before | After |
+|---|---|---|
+| `Relationship.person1` / `.person2` | `Optional[Any]` | `Optional[Union[Person, Resource]]` |
+| `EventRole.person` | `Optional[Any]` | `Optional[Union[Person, Resource]]` |
+| `PlaceDescription.jurisdiction` | `Optional[Any]` | `Optional[Union[Resource, PlaceDescription]]` |
+| `PlaceDescription.spatialDescription` | `Optional[Any]` | `Optional[PlaceReference]` |
+
+### Event conversion bug fix
+
+`handle_even` in `conversion.py` used the wrong `object_map` index (`record.level`
+instead of `record.level-1`) when creating an `EventRole` for an unknown EVEN type,
+silently assigning the wrong object (e.g. a `Note`) as the person. The fix adds the
+same parent-type guards (`Person` / `SourceDescription`) that the known-type branches
+already used.
 
 ---
 
@@ -297,11 +388,16 @@ New test modules added this release:
 - ✅ CLI tools (`gedcomtools`, `gxcli`, `g7cli`, `validate7`)
 - ✅ Structured logging (`glog`) with `GEDCOMTOOLS_DEBUG` env var support
 - ✅ Sub-loggers (conversion, parser, io, etc.)
-- ✅ Extensible schema / extension system
+- ✅ Extensible schema / extension system with TrustLevel plugin security
 - ✅ Source, person, family, relationship modeling
 - ✅ Place and event normalization with multi-language translation support
 - ✅ Metadata and attribution handling
-- ✅ ~1034 tests, 0 failures
+- ✅ OBJE multimedia record support (G5→GX and G7→GX)
+- ✅ PEDI pedigree linkage and ABBR abbreviation tag support
+- ✅ GML graph export — Gephi / yEd / NetworkX compatible
+- ✅ Expanded `gxcli` — ahnentafel, grep, schema browser, bookmarks, plugin manager
+- ✅ Correct `Agent.__eq__` — person-reference priority with name-overlap fallback
+- ✅ ~1145 tests, 0 failures
 - 🔧 GEDCOM X → GEDCOM 7 converter — planned
 - 🔧 Graph database export (ArangoDB) — in progress
 

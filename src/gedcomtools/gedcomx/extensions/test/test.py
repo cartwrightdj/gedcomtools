@@ -1,19 +1,5 @@
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/extensions/test/test.py
- Author:  David J. Cartwright
- Purpose: Test class using the extensible decorator for extension development testing
+"""Compatibility wrapper for the legacy test extension module path."""
 
- Created: 2025-08-25
- Updated:
+from ..ae_arango.test import TestClass
 
-======================================================================
-"""
-from gedcomtools.gedcomx.schemas import extensible
-
-@extensible()
-class TestClass:
-    def __init__(self,arg1: str,arg2: str) -> None:
-        self.arg1 = arg1
-        self.arg2 = arg2
+__all__ = ["TestClass"]

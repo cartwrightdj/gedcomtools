@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("../src"))
 
@@ -21,8 +22,28 @@ def _strip_file_header(app, what, name, obj, options, lines):
     lines[:] = clean
 
 
+_SKIP_IMPORTED_HELPERS = {
+    "BaseModel",
+    "ConfigDict",
+    "Field",
+    "PrivateAttr",
+    "computed_field",
+    "field_validator",
+    "model_validator",
+    "validator",
+}
+
+
+def _skip_imported_helpers(_app, _what, name, obj, skip, _options):
+    """Skip imported Pydantic helper symbols that are not part of the public API docs."""
+    if name in _SKIP_IMPORTED_HELPERS:
+        return True
+    return skip
+
+
 def setup(app):
     app.connect("autodoc-process-docstring", _strip_file_header)
+    app.connect("autodoc-skip-member", _skip_imported_helpers)
 
 project   = "gedcomtools"
 copyright = "2025, David J. Cartwright"
@@ -32,7 +53,6 @@ release   = "0.6.0"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx_autodoc_typehints",
@@ -46,21 +66,22 @@ autodoc_default_options = {
     "private-members":  False,
     "show-inheritance": True,
     "member-order":     "bysource",
+    "exclude-members":  ",".join(sorted(_SKIP_IMPORTED_HELPERS)),
 }
-
-napoleon_google_docstring   = True
-napoleon_numpy_docstring    = False
-napoleon_include_init_with_doc = True
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = ["_static"] if Path(__file__).with_name("_static").exists() else []
 html_title = "gedcomtools"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-suppress_warnings = ["ref.duplicate"]
+suppress_warnings = [
+    "ref.duplicate",
+    "sphinx_autodoc_typehints.forward_reference",
+    "sphinx_autodoc_typehints.guarded_import",
+]

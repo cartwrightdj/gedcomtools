@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.gedcomx - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,52 +229,45 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.gedcomx</h1><div class="highlight"><pre>
-<span></span><span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">True</span>
+<span></span><span class="sd">&quot;&quot;&quot;Core GedcomX container types, collections, validation, and serialization entry points.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">random</span>
-<span class="kn">import</span> <span class="nn">string</span>
-<span class="kn">import</span> <span class="nn">orjson</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Iterable</span>
 
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">orjson</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    GedcomX.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Object for working with Gedcom-X Data</span>
-
-<span class="sd"> Created: 2025-07-25</span>
-<span class="sd"> Updated:</span>
-<span class="sd">    - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data,</span>
-<span class="sd">    id_index functionality, will be used for resolution of Resources</span>
-<span class="sd">    - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">    - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.agent</span> <span class="kn">import</span> <span class="n">Agent</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.document</span> <span class="kn">import</span> <span class="n">Document</span>
-<span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">Event</span>
-<span class="kn">from</span> <span class="nn">.group</span> <span class="kn">import</span> <span class="n">Group</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">make_uid</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">hub</span>
-<span class="kn">from</span> <span class="nn">.person</span> <span class="kn">import</span> <span class="n">Person</span>
-<span class="kn">from</span> <span class="nn">.place_description</span> <span class="kn">import</span> <span class="n">PlaceDescription</span>
-<span class="kn">from</span> <span class="nn">.relationship</span> <span class="kn">import</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.source_description</span> <span class="kn">import</span> <span class="n">ResourceType</span><span class="p">,</span> <span class="n">SourceDescription</span>
-<span class="kn">from</span> <span class="nn">.textvalue</span> <span class="kn">import</span> <span class="n">TextValue</span>
-<span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: Gedcom-X</span>
+<span class="c1">#  File:    GedcomX.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: Object for working with Gedcom-X Data</span>
+<span class="c1">#  Created: 2025-07-25</span>
+<span class="c1">#  Updated: 2026-03-24 — removed _serializer/_as_dict; json property now</span>
+<span class="c1">#                         delegates to _to_dict() via Serialization.serialize</span>
+<span class="c1">#           2026-03-29 — validate(): fixed cross-ref check to extract person id</span>
+<span class="c1">#                         from Resource.resource.fragment (URI form), not only</span>
+<span class="c1">#                         resourceId; fixes silent pass for dangling refs</span>
+<span class="c1">#                       — from_dict(): now restores attribution and groups;</span>
+<span class="c1">#                         previously both were silently dropped on deserialization</span>
+<span class="c1">#                       — TypeCollection.append(): no longer stamps type path onto</span>
+<span class="c1">#                         _uri; uses URI(fragment=id) only so resource refs serialize</span>
+<span class="c1">#                         as #id (same-document); explicit path URIs are preserved</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1"># GEDCOM Module Types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.group</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.person</span><span class="w"> </span><span class="kn">import</span> <span class="n">Person</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.place_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlaceDescription</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>  <span class="c1"># re-exported: family.py imports from here  # pylint: disable=unused-import</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceDescription</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationResult</span>
 <span class="c1">#=====================================================================</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -287,50 +280,57 @@
 
 <div class="viewcode-block" id="TypeCollection">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection">[docs]</a>
-<span class="k">class</span> <span class="nc">TypeCollection</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TypeCollection</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A typed, indexable, iterable container with small indexes on id/name/uri.</span>
 <span class="sd">    The class name stays &#39;Collection&#39;; the element type is carried in `item_type`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="n">item_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># object id → item</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">s/&quot;</span><span class="p">)</span>
 
     <span class="c1"># --- core container protocol ---</span>
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over items in insertion order.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of items in the collection.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the item or slice of items at the given index.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if the item is present in the collection.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Collection&lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&gt;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2"> items)&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Delete an item at the given index, updating all secondary indexes.</span>
-<span class="sd">        Supports negative indices like a normal list.</span>
+<span class="sd">        Delete item(s) at the given index or slice, updating all secondary indexes.</span>
+<span class="sd">        Supports negative indices and slices like a normal list.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Let list semantics raise IndexError if out of range</span>
-        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="c1"># Remove from primary storage first</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="c1"># Then clean up indexes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">items_to_remove</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items_to_remove</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
 <div class="viewcode-block" id="TypeCollection.pop">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.pop">[docs]</a>
-    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Pop and return an item at the given index (default: last),</span>
 <span class="sd">        updating all secondary indexes.</span>
@@ -342,7 +342,7 @@
 
 
     <span class="c1"># --- indexing helpers ---</span>
-    <span class="k">def</span> <span class="nf">_update_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">item</span>
 
@@ -355,9 +355,9 @@
             <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
                 <span class="n">name_value</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name_value</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name_value</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name_value</span><span class="p">,</span> <span class="p">{})[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="n">item</span>
 
-    <span class="k">def</span> <span class="nf">_remove_from_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_remove_from_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
 
@@ -370,41 +370,42 @@
             <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
                 <span class="n">name_value</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="n">lst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name_value</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">lst</span> <span class="ow">and</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
-                        <span class="n">lst</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">lst</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name_value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+                        <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="p">:</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name_value</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># --- lookups ---</span>
 <div class="viewcode-block" id="TypeCollection.by_id">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_id">[docs]</a>
-    <span class="k">def</span> <span class="nf">by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the item with the given id, or None if not found.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="TypeCollection.by_uri">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri">[docs]</a>
-    <span class="k">def</span> <span class="nf">by_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">URI</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">by_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">URI</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the item whose URI matches, or None if not found.&quot;&quot;&quot;</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">uri</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="TypeCollection.by_name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return items whose name matches sname (stripped), or None if not found.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sname</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sname</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sname</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
     <span class="c1"># --- mutation ---</span>
 <div class="viewcode-block" id="TypeCollection.append">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.append">[docs]</a>
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Append an item to the collection and update all secondary indexes.</span>
 
 <span class="sd">        Args:</span>
@@ -416,13 +417,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># ensure/normalize item.uri</span>
-        <span class="n">u</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">u</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="n">URI</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">s/&quot;</span><span class="p">,</span> <span class="n">fragment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-                <span class="n">u</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">s/&quot;</span>
+        <span class="c1"># ensure item has a _uri; only set it if absent — never overwrite an</span>
+        <span class="c1"># explicitly assigned path-based URI (e.g. /persons/#P1 for zip layout)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
@@ -430,7 +428,7 @@
 
 <div class="viewcode-block" id="TypeCollection.extend">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.extend">[docs]</a>
-    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Append each item from an iterable to the collection.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">it</span><span class="p">)</span></div>
@@ -438,7 +436,7 @@
 
 <div class="viewcode-block" id="TypeCollection.remove">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.remove">[docs]</a>
-    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove an item from the collection and update all secondary indexes.</span>
 
 <span class="sd">        Raises:</span>
@@ -451,7 +449,7 @@
 
 
     <span class="c1"># --- convenience / serialization ---</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of items whose attributes match all given keyword arguments.&quot;&quot;&quot;</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
@@ -467,8 +465,7 @@
 
 <div class="viewcode-block" id="GedcomX">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">GedcomX</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomX</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Main GedcomX Object representing a Genealogy. Stores collections of Top Level Gedcom-X Types.</span>
 <span class="sd">    complies with GEDCOM X Conceptual Model V1 (http://gedcomx.org/conceptual-model/v1)</span>
@@ -480,7 +477,7 @@
 <span class="sd">    attribution : Attribution Object</span>
 <span class="sd">        Attribution information for the Genealogy</span>
 <span class="sd">    filepath : str</span>
-<span class="sd">        Not Implimented.</span>
+<span class="sd">        Not Implemented.</span>
 <span class="sd">    description : str</span>
 <span class="sd">        Description of the Genealogy: ex. &#39;My Family Tree&#39;</span>
 
@@ -491,9 +488,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pylint: disable=redefined-builtin</span>
                  <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">_filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">persons</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">[</span><span class="n">Person</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">relationships</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">[</span><span class="n">Relationship</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -502,26 +499,33 @@
                  <span class="n">places</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">[</span><span class="n">PlaceDescription</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">events</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">[</span><span class="n">Event</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">documents</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">[</span><span class="n">Document</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span> <span class="k">if</span> <span class="n">attribution</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span> <span class="o">=</span> <span class="kc">None</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">SourceDescription</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sourceDescriptions</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sourceDescriptions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sourceDescriptions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sourceDescriptions</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">persons</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Person</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">persons</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">persons</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">persons</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">persons</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Relationship</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">relationships</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span>      
+        <span class="k">if</span> <span class="n">relationships</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">agents</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Agent</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">agents</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">agents</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">agents</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">agents</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Event</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">events</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">events</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">events</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">documents</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Document</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">documents</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">documents</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">places</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">PlaceDescription</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">places</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">places</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">places</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">places</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">TypeCollection</span><span class="p">(</span><span class="n">Group</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">__relationship_table</span> <span class="o">=</span> <span class="p">{}</span>
@@ -530,7 +534,7 @@
         <span class="c1">#self.default_id_generator = make_uid</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a dict with item counts for each top-level collection.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;source_descriptions&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="p">),</span>
@@ -542,10 +546,10 @@
             <span class="s2">&quot;places&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="p">),</span>
             <span class="s2">&quot;groups&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">),</span>
         <span class="p">}</span>
-            
+
 <div class="viewcode-block" id="GedcomX.add">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add">[docs]</a>
-    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcomx_type_object</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcomx_type_object</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Dispatch a GedcomX top-level object to its appropriate ``add_*`` method.</span>
 
 <span class="sd">        Args:</span>
@@ -578,7 +582,7 @@
 
 <div class="viewcode-block" id="GedcomX.add_source_description">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_source_description">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_source_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sourceDescription</span><span class="p">:</span> <span class="n">SourceDescription</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_source_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sourceDescription</span><span class="p">:</span> <span class="n">SourceDescription</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceDescription to the genealogy.</span>
 
 <span class="sd">        Args:</span>
@@ -591,14 +595,13 @@
             <span class="k">if</span> <span class="n">sourceDescription</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SourceDescription must have an id before being added&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">sourceDescription</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__lastSourceDescriptionAdded</span> <span class="o">=</span> <span class="n">sourceDescription</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;When adding a SourceDescription, value must be of type SourceDescription, type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sourceDescription</span><span class="p">)</span><span class="si">}</span><span class="s2"> was provided&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomX.add_document">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_document">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">document</span><span class="p">:</span> <span class="n">Document</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">document</span><span class="p">:</span> <span class="n">Document</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Document object to the Genealogy</span>
 
 <span class="sd">        Args:</span>
@@ -608,17 +611,17 @@
 <span class="sd">            None</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If `person` is not of type Person.</span>
+<span class="sd">            ValueError: If ``document`` is not of type Document.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">document</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="p">,</span><span class="n">Document</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">document</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;document must be a &#39;Document&#39;&#39; Object not type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-      
+
 <div class="viewcode-block" id="GedcomX.add_person">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_person">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_person</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">person</span><span class="p">:</span> <span class="n">Person</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_person</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">person</span><span class="p">:</span> <span class="n">Person</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Person object to the Genealogy</span>
 
 <span class="sd">        Args:</span>
@@ -635,10 +638,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;person must be a Person Object not type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">person</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
-        
+
 <div class="viewcode-block" id="GedcomX.add_relationship">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_relationship">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">:</span> <span class="n">Relationship</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">:</span> <span class="n">Relationship</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Relationship to the genealogy.</span>
 
 <span class="sd">        Also registers any embedded Person objects and updates the internal</span>
@@ -654,11 +657,11 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="p">,</span><span class="n">Resource</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="p">,</span><span class="n">Resource</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship</span><span class="p">)</span>
                 <span class="k">return</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="p">,</span><span class="n">Person</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="p">,</span><span class="n">Person</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="p">,</span><span class="n">Person</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="p">,</span><span class="n">Person</span><span class="p">):</span>
 
                 <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_id</span><span class="p">()</span>
+                        <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">make_uid</span><span class="p">()</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__relationship_table</span><span class="p">:</span>
@@ -667,10 +670,10 @@
                     <span class="n">relationship</span><span class="o">.</span><span class="n">person1</span><span class="o">.</span><span class="n">_add_relationship</span><span class="p">(</span><span class="n">relationship</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">pass</span>
-                
+
                 <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_id</span><span class="p">()</span> <span class="c1">#TODO</span>
+                        <span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">make_uid</span><span class="p">()</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">relationship</span><span class="o">.</span><span class="n">person2</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__relationship_table</span><span class="p">:</span>
@@ -681,13 +684,19 @@
                     <span class="k">pass</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># person1/person2 may be dicts (e.g. after JSON round-trip) or</span>
+                <span class="c1"># other valid types — store the relationship as-is.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;relationship must be a Relationship instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">relationship</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="GedcomX.add_place_description">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_place_description">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_place_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">placeDescription</span><span class="p">:</span> <span class="n">PlaceDescription</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_place_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">placeDescription</span><span class="p">:</span> <span class="n">PlaceDescription</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a PlaceDescription to the genealogy.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">placeDescription</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">placeDescription</span><span class="p">,</span><span class="n">PlaceDescription</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">placeDescription</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -697,32 +706,34 @@
 
 <div class="viewcode-block" id="GedcomX.add_agent">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_agent">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_agent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">Agent</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_agent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">Agent</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an Agent to the genealogy, skipping duplicates by id.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            agent: The Agent to add.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            False if the agent&#39;s id already exists; None otherwise.</span>
+<span class="sd">            False if an agent with this id already exists (duplicate skipped);</span>
+<span class="sd">            None (implicit return) if the agent was successfully added.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the argument is not an Agent.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span><span class="n">Agent</span><span class="p">)</span> <span class="ow">and</span> <span class="n">agent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipped duplicate agent id=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">agent</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="c1">#log.debug(&quot;Skipped duplicate agent id={}&quot;, agent.id)</span>
                 <span class="k">return</span> <span class="kc">False</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Added agent id=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">agent</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
+            <span class="c1">#log.debug(&quot;Added agent id={}&quot;, agent.id)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;agent must be an Agent instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="GedcomX.add_event">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_event">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_to_add</span><span class="p">:</span> <span class="n">Event</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_to_add</span><span class="p">:</span> <span class="n">Event</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an Event to this GedcomX genealogy.</span>
 
 <span class="sd">        Automatically assigns a uid if the event has no id.</span>
@@ -739,7 +750,7 @@
                 <span class="n">event_to_add</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">make_uid</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">current_event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">event_to_add</span> <span class="o">==</span> <span class="n">current_event</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping duplicate event: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event_to_add</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping duplicate event: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event_to_add</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
                     <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event_to_add</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -748,9 +759,18 @@
 
 <div class="viewcode-block" id="GedcomX.extend">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.extend">[docs]</a>
-    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcomx</span><span class="p">:</span> <span class="s1">&#39;GedcomX&#39;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcomx</span><span class="p">:</span> <span class="s1">&#39;GedcomX&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge all top-level objects from another GedcomX instance into this one.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">gedcomx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">description</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">attribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">attribution</span>
+            <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">persons</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_person</span><span class="p">(</span><span class="n">person</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">agent</span> <span class="ow">in</span> <span class="n">gedcomx</span><span class="o">.</span><span class="n">agents</span><span class="p">:</span>
@@ -769,26 +789,68 @@
 
 <div class="viewcode-block" id="GedcomX.get_person_by_id">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.get_person_by_id">[docs]</a>
-    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">65536</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_person_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first Person whose id matches, or None if not found.&quot;&quot;&quot;</span>
-        <span class="n">filtered</span> <span class="o">=</span> <span class="p">[</span><span class="n">person</span> <span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">filtered</span><span class="p">:</span> <span class="k">return</span> <span class="n">filtered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_person_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Person with the given id, or None if not found.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span></div>
 
-     
+
 <div class="viewcode-block" id="GedcomX.source_by_id">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id">[docs]</a>
-    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">65536</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">source_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first SourceDescription whose id matches, or None if not found.&quot;&quot;&quot;</span>
-        <span class="n">filtered</span> <span class="o">=</span> <span class="p">[</span><span class="n">source</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">filtered</span><span class="p">:</span> <span class="k">return</span> <span class="n">filtered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">source_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the SourceDescription with the given id, or None if not found.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomX.validate">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ValidationResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate this GedcomX document.</span>
+
+<span class="sd">        Recursively validates every object in every collection, then performs</span>
+<span class="sd">        cross-collection checks (e.g. relationship person references resolve).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ValidationResult with accumulated errors and warnings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ValidationResult</span><span class="p">()</span>
+        <span class="n">visited</span><span class="p">:</span> <span class="nb">set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">collections</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;relationships&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;agents&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;places&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;documents&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">cname</span><span class="p">,</span> <span class="n">coll</span> <span class="ow">in</span> <span class="n">collections</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coll</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">visited</span><span class="p">),</span> <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cname</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Cross-collection: relationship persons must exist</span>
+        <span class="n">person_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">pnum</span><span class="p">,</span> <span class="n">pfield</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;person1&quot;</span><span class="p">,</span> <span class="n">rel</span><span class="o">.</span><span class="n">person1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;person2&quot;</span><span class="p">,</span> <span class="n">rel</span><span class="o">.</span><span class="n">person2</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">pfield</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pfield</span><span class="p">,</span> <span class="n">Person</span><span class="p">):</span>
+                    <span class="n">ref_id</span> <span class="o">=</span> <span class="n">pfield</span><span class="o">.</span><span class="n">id</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pfield</span><span class="p">,</span> <span class="n">Resource</span><span class="p">):</span>
+                    <span class="n">ref_id</span> <span class="o">=</span> <span class="n">pfield</span><span class="o">.</span><span class="n">resourceId</span> <span class="ow">or</span> <span class="p">(</span><span class="n">pfield</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">fragment</span> <span class="k">if</span> <span class="n">pfield</span><span class="o">.</span><span class="n">resource</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ref_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pfield</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ref_id</span> <span class="ow">and</span> <span class="n">ref_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">person_ids</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;relationships[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].</span><span class="si">{</span><span class="n">pnum</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;Referenced person id </span><span class="si">{</span><span class="n">ref_id</span><span class="si">!r}</span><span class="s2"> not found in persons collection&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">id_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span><span class="n">Union</span><span class="p">[</span><span class="n">SourceDescription</span><span class="p">,</span><span class="n">Person</span><span class="p">,</span><span class="n">Relationship</span><span class="p">,</span><span class="n">Agent</span><span class="p">,</span><span class="n">Event</span><span class="p">,</span><span class="n">Document</span><span class="p">,</span><span class="n">PlaceDescription</span><span class="p">,</span><span class="n">Group</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">id_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span><span class="n">Union</span><span class="p">[</span><span class="n">SourceDescription</span><span class="p">,</span><span class="n">Person</span><span class="p">,</span><span class="n">Relationship</span><span class="p">,</span><span class="n">Agent</span><span class="p">,</span><span class="n">Event</span><span class="p">,</span><span class="n">Document</span><span class="p">,</span><span class="n">PlaceDescription</span><span class="p">,</span><span class="n">Group</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a combined id→object mapping across all top-level collections.&quot;&quot;&quot;</span>
         <span class="n">combined</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">_id_index</span><span class="p">,</span>
                     <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">_id_index</span><span class="p">,</span>
@@ -803,32 +865,134 @@
         <span class="c1">#    combined[i] = str(type(combined[i]).__name__)</span>
         <span class="k">return</span> <span class="n">combined</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="kn">from</span> <span class="nn">.serialization</span> <span class="kn">import</span> <span class="n">Serialization</span>
-        <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        JSON Representation of the GedcomX Genealogy.</span>
+<div class="viewcode-block" id="GedcomX.from_dict">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GedcomX&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize a GedcomX instance from a JSON-compatible dict.&quot;&quot;&quot;</span>
+        <span class="n">gx</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ad</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attribution&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">Attribution</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid attribution: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">Group</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">gd</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid group record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_person</span><span class="p">(</span><span class="n">Person</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">pd</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid person record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;agents&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_agent</span><span class="p">(</span><span class="n">Agent</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ad</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid agent record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">Relationship</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
+        <span class="k">for</span> <span class="n">rd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;relationships&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="n">Relationship</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">rd</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid relationship record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_source_description</span><span class="p">(</span><span class="n">SourceDescription</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">sd</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid sourceDescription record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
+        <span class="k">for</span> <span class="n">ed</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">Event</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ed</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid event record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
+        <span class="k">for</span> <span class="n">dd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;documents&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">dd</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid document record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.place_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlaceDescription</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
+        <span class="k">for</span> <span class="n">pld</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;places&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gx</span><span class="o">.</span><span class="n">add_place_description</span><span class="p">(</span><span class="n">PlaceDescription</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">pld</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid place record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gx</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize to a JSON-compatible dict via ``Serialization.serialize``.</span>
+
+<span class="sd">        Resource references are emitted as ``{&quot;resource&quot;: &quot;#id&quot;}`` pointers</span>
+<span class="sd">        rather than inlined objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serialization</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">:</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">attr</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="s2">&quot;attribution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">,</span>            <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;relationships&quot;</span><span class="p">,</span>      <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;agents&quot;</span><span class="p">,</span>             <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span>             <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;documents&quot;</span><span class="p">,</span>          <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;places&quot;</span><span class="p">,</span>             <span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span>             <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">col</span><span class="p">:</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">:=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">item</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">items</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">items</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="GedcomX.gml">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.gml">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gml</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GedcomX graph as a GML string.</span>
+
+<span class="sd">        Persons become nodes; Couple and ParentChild relationships become</span>
+<span class="sd">        directed edges.  See :class:`~gedcomtools.gedcomx.gml.GedcomXGmlExporter`</span>
+<span class="sd">        for the full attribute list.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            str: JSON Representation of the GedcomX Genealogy in the GEDCOM X JSON Serialization Format</span>
+<span class="sd">            GML content as a :class:`str`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_as_dict</span><span class="p">,</span><span class="n">option</span><span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">OPT_INDENT_2</span> <span class="o">|</span> <span class="n">orjson</span><span class="o">.</span><span class="n">OPT_APPEND_NEWLINE</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.gml</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXGmlExporter</span>
+        <span class="k">return</span> <span class="n">GedcomXGmlExporter</span><span class="p">()</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">65536</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">resource_reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">URI</span><span class="p">,</span><span class="n">Resource</span><span class="p">]):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GedcomX document as indented UTF-8 JSON bytes.</span>
+
+<span class="sd">        Uses ``Serialization.serialize`` so resource references are emitted</span>
+<span class="sd">        as ``{&quot;resource&quot;: &quot;#id&quot;}`` pointers rather than inlined objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">(),</span> <span class="n">option</span><span class="o">=</span><span class="n">orjson</span><span class="o">.</span><span class="n">OPT_INDENT_2</span> <span class="o">|</span> <span class="n">orjson</span><span class="o">.</span><span class="n">OPT_APPEND_NEWLINE</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource_reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">URI</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve a Resource or URI reference to the matching top-level object, or None.&quot;&quot;&quot;</span>
         <span class="c1">#TODO indept URI search, URI index in collections</span>
         <span class="k">if</span> <span class="n">resource_reference</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_reference</span><span class="p">,</span> <span class="n">Resource</span><span class="p">):</span>
-                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">resource_reference</span><span class="o">.</span><span class="n">resource</span>
-                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">ref_id</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">ref_id</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">_res</span> <span class="o">=</span> <span class="n">resource_reference</span><span class="o">.</span><span class="n">resource</span>
+                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">_res</span><span class="o">.</span><span class="n">fragment</span> <span class="k">if</span> <span class="n">_res</span> <span class="k">else</span> <span class="kc">None</span>
                 <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_reference</span><span class="p">,</span> <span class="n">URI</span><span class="p">):</span>
-                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">resource_reference</span><span class="o">.</span><span class="n">value</span>
-                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">ref_id</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">ref_id</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">ref_id</span> <span class="o">=</span> <span class="n">resource_reference</span><span class="o">.</span><span class="n">fragment</span>
                 <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">()</span>
@@ -838,11 +1002,9 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Resolved id=&#39;</span><span class="si">{}</span><span class="s2">&#39; to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ref_id</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ref</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;_resolve: reference was None&quot;</span><span class="p">)</span></div>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;_resolve: reference was None&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
-
-    
 </pre></div>
         </article>
       </div>

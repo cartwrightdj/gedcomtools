@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.name - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,51 +229,35 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.name</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span><span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    Name.py</span>
+<span class="sd"> File:    gedcomx/name.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Python Object representation of GedcomX Name, NameType, NameForm, NamePart Types</span>
+<span class="sd"> Purpose: GedcomX Name model: Name, NameForm, NamePart, NameType, and NamePartType</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#======================================================================</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.conclusion</span> <span class="kn">import</span> <span class="n">Conclusion</span><span class="p">,</span> <span class="n">ConfidenceLevel</span>
-<span class="kn">from</span> <span class="nn">.date</span> <span class="kn">import</span> <span class="n">Date</span>
-<span class="kn">from</span> <span class="nn">.document</span> <span class="kn">import</span> <span class="n">Document</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#=====================================================================</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.conclusion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Conclusion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.date</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
 
 
 <div class="viewcode-block" id="NameType">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.NameType">[docs]</a>
-<span class="k">class</span> <span class="nc">NameType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NameType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of name classification types (birth, married, nickname, etc.).&quot;&quot;&quot;</span>
+
     <span class="n">BirthName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/BirthName&quot;</span>
     <span class="n">MarriedName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/MarriedName&quot;</span>
     <span class="n">AlsoKnownAs</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/AlsoKnownAs&quot;</span>
@@ -281,25 +265,15 @@
     <span class="n">AdoptiveName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/AdoptiveName&quot;</span>
     <span class="n">FormalName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/FormalName&quot;</span>
     <span class="n">ReligiousName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/ReligiousName&quot;</span>
-    <span class="n">Other</span> <span class="o">=</span> <span class="s2">&quot;other&quot;</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">BirthName</span><span class="p">:</span> <span class="s2">&quot;Name given at birth.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">MarriedName</span><span class="p">:</span> <span class="s2">&quot;Name accepted at marriage.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">AlsoKnownAs</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">Also known as</span><span class="se">\&quot;</span><span class="s2"> name.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">Nickname</span><span class="p">:</span> <span class="s2">&quot;Nickname.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">AdoptiveName</span><span class="p">:</span> <span class="s2">&quot;Name given at adoption.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">FormalName</span><span class="p">:</span> <span class="s2">&quot;A formal name, usually given to distinguish it from a name more commonly used.&quot;</span><span class="p">,</span>
-            <span class="n">NameType</span><span class="o">.</span><span class="n">ReligiousName</span><span class="p">:</span> <span class="s2">&quot;A name given at a religious rite or ceremony.&quot;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+    <span class="n">Other</span> <span class="o">=</span> <span class="s2">&quot;other&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="NamePartQualifier">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.NamePartQualifier">[docs]</a>
-<span class="k">class</span> <span class="nc">NamePartQualifier</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NamePartQualifier</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of qualifiers that further describe a NamePart (e.g. Primary, Maiden).&quot;&quot;&quot;</span>
+
     <span class="n">Title</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Title&quot;</span>
     <span class="n">Primary</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Primary&quot;</span>
     <span class="n">Secondary</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Secondary&quot;</span>
@@ -315,95 +289,53 @@
     <span class="n">Characteristic</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Characteristic&quot;</span>
     <span class="n">Postnom</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Postnom&quot;</span>
     <span class="n">Particle</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Particle&quot;</span>
-    <span class="n">RootName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/RootName&quot;</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Title</span><span class="p">:</span> <span class="s2">&quot;A designation for honorifics (e.g., Dr., Rev., His Majesty, Haji), ranks (e.g., Colonel, General), positions (e.g., Count, Chief), or other titles (e.g., PhD, MD). Name part qualifiers of type Title SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Primary</span><span class="p">:</span> <span class="s2">&quot;A designation for the most prominent name among names of that type (e.g., the primary given name). Name part qualifiers of type Primary SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Secondary</span><span class="p">:</span> <span class="s2">&quot;A designation for a name that is not primary in its importance among names of that type. Name part qualifiers of type Secondary SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Middle</span><span class="p">:</span> <span class="s2">&quot;Useful for cultures designating a middle name distinct from a given name and surname. Name part qualifiers of type Middle SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Familiar</span><span class="p">:</span> <span class="s2">&quot;A designation for one&#39;s familiar name. Name part qualifiers of type Familiar SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Religious</span><span class="p">:</span> <span class="s2">&quot;A name given for religious purposes. Name part qualifiers of type Religious SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Family</span><span class="p">:</span> <span class="s2">&quot;A name that associates a person with a group, such as a clan, tribe, or patriarchal hierarchy. Name part qualifiers of type Family SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Maiden</span><span class="p">:</span> <span class="s2">&quot;Original surname retained by women after adopting a new surname upon marriage. Name part qualifiers of type Maiden SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Patronymic</span><span class="p">:</span> <span class="s2">&quot;A name derived from a father or paternal ancestor. Name part qualifiers of type Patronymic SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Matronymic</span><span class="p">:</span> <span class="s2">&quot;A name derived from a mother or maternal ancestor. Name part qualifiers of type Matronymic SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Geographic</span><span class="p">:</span> <span class="s2">&quot;A name derived from associated geography. Name part qualifiers of type Geographic SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Occupational</span><span class="p">:</span> <span class="s2">&quot;A name derived from one&#39;s occupation. Name part qualifiers of type Occupational SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Characteristic</span><span class="p">:</span> <span class="s2">&quot;A name derived from a characteristic. Name part qualifiers of type Characteristic SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Postnom</span><span class="p">:</span> <span class="s2">&quot;A name mandated by law for populations in specific regions. Name part qualifiers of type Postnom SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">Particle</span><span class="p">:</span> <span class="s2">&quot;A grammatical designation for articles, prepositions, conjunctions, and other words used as name parts. Name part qualifiers of type Particle SHOULD NOT provide a value.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartQualifier</span><span class="o">.</span><span class="n">RootName</span><span class="p">:</span> <span class="s2">&quot;The &#39;root&#39; of a name part, as distinguished from prefixes or suffixes (e.g., the root of &#39;Wilkówna&#39; is &#39;Wilk&#39;). A RootName qualifier MUST provide a value property.&quot;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+    <span class="n">RootName</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/RootName&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="NamePartType">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.NamePartType">[docs]</a>
-<span class="k">class</span> <span class="nc">NamePartType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NamePartType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of structural name part types (Prefix, Suffix, Given, Surname).&quot;&quot;&quot;</span>
+
     <span class="n">Prefix</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Prefix&quot;</span>
     <span class="n">Suffix</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Suffix&quot;</span>
     <span class="n">Given</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Given&quot;</span>
-    <span class="n">Surname</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Surname&quot;</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">NamePartType</span><span class="o">.</span><span class="n">Prefix</span><span class="p">:</span> <span class="s2">&quot;A name prefix.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartType</span><span class="o">.</span><span class="n">Suffix</span><span class="p">:</span> <span class="s2">&quot;A name suffix.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">:</span> <span class="s2">&quot;A given name.&quot;</span><span class="p">,</span>
-            <span class="n">NamePartType</span><span class="o">.</span><span class="n">Surname</span><span class="p">:</span> <span class="s2">&quot;A surname.&quot;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+    <span class="n">Surname</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Surname&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="NamePart">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.NamePart">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>    
-<span class="k">class</span> <span class="nc">NamePart</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Used to model a portion of a full name</span>
-<span class="sd">        including the terms that make up that portion. Some name parts may have qualifiers</span>
-<span class="sd">        to provide additional semantic meaning to the name part (e.g., &quot;given name&quot; or &quot;surname&quot;).</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NamePart</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single structural component of a name form (e.g. a given name or surname).&quot;&quot;&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        type (NamePartType | None): Classification of this component of the name</span>
-<span class="sd">            (e.g., ``Given``, ``Surname``, ``Prefix``, ``Suffix``, ``Title``, ``Particle``).</span>
-<span class="sd">        value (str): The textual value for this part, without surrounding</span>
-<span class="sd">            punctuation (e.g., ``&quot;John&quot;``, ``&quot;van&quot;``, ``&quot;III&quot;``).</span>
-<span class="sd">        qualifiers (list[NamePartQualifier] | None): Optional qualifiers that refine</span>
-<span class="sd">            the meaning or usage of this part (e.g., language/script variants, initials).</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/NamePart&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    Examples:</span>
-<span class="sd">        &gt;&gt;&gt; from gedcomx.Name import *</span>
-<span class="sd">        &gt;&gt;&gt; typ = NamePartType.Given</span>
-<span class="sd">        &gt;&gt;&gt; given = &quot;Moses&quot;</span>
-<span class="sd">        &gt;&gt;&gt; q = NamePartQualifier.Primary</span>
-<span class="sd">        &gt;&gt;&gt; name = NamePart(type=typ,value=given,qualifiers=[q])</span>
-<span class="sd">        &gt;&gt;&gt; print(name)</span>
-<span class="sd">        NamePart(type=Given, value=&#39;Moses&#39;, qualifiers=1)</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamePartType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">qualifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NamePartQualifier</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/NamePart&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">NamePartType</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected NamePartType, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;NamePart has no value&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">NamePartQualifier</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;qualifiers[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected NamePartQualifier, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamePartType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">qualifiers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">NamePartQualifier</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">=</span> <span class="n">qualifiers</span> <span class="k">if</span> <span class="n">qualifiers</span> <span class="k">else</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">NamePart</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">NotImplemented</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">type</span> <span class="ow">and</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">)</span>    
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">type</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type=</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;name&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -411,212 +343,124 @@
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;qualifiers=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;NamePart(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;NamePart()&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;NamePart(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">&quot;NamePart()&quot;</span></div>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">tcls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-            <span class="n">tname</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">))</span>
-            <span class="n">tval</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
-            <span class="n">type_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">tcls</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">tname</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">tval</span><span class="si">!r}</span><span class="s2">&gt;&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">type_repr</span> <span class="o">=</span> <span class="s2">&quot;None&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;type=</span><span class="si">{</span><span class="n">type_repr</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;qualifiers=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiers</span><span class="si">!r}</span><span class="s2">)&quot;</span>
-        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NameForm">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.NameForm">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">NameForm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A representation of a name (a &quot;name form&quot;) </span>
-<span class="sd">        within a given cultural context, such as a given language and script.</span>
-<span class="sd">        As names are captured (both in records or in applications), the terms</span>
-<span class="sd">        in the name are sometimes classified by type. For example, a certificate</span>
-<span class="sd">        of death might prompt for **&quot;given name(s)&quot;** and **&quot;surname&quot;**. The parts</span>
-<span class="sd">        list can be used to represent the terms in the name that have been classified.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NameForm</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One script/language representation of a name, consisting of full text and optional parts.&quot;&quot;&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        lang (str | None): BCP-47 language tag for this name form (e.g., &quot;en&quot;).</span>
-<span class="sd">        fullText (str | None): The full, unparsed name string as written in the source.</span>
-<span class="sd">            If provided, the name SHOULD be rendered as it would normally be spoken in</span>
-<span class="sd">            the applicable cultural context.</span>
-<span class="sd">        parts (list[NamePart] | None): Ordered structured components of the name</span>
-<span class="sd">            (e.g., Given, Surname). If provided, ``fullText`` may be omitted. If</span>
-<span class="sd">            provided, the list SHOULD be ordered such that the parts are in the order</span>
-<span class="sd">            they would normally be spoken in the applicable cultural context.</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/NameForm&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/NameForm&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fullText</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NamePart</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">fullText</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">parts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">NamePart</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">lang</span> <span class="o">=</span> <span class="n">lang</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fullText</span> <span class="o">=</span> <span class="n">fullText</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parts</span> <span class="o">=</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">_fulltext_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_lang</span>
+        <span class="n">check_lang</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;lang&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullText</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;NameForm has no fullText and no parts&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">NamePart</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parts[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected NamePart, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="Name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.Name">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">Name</span><span class="p">(</span><span class="n">Conclusion</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;**Defines a name of a person.**</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Name</span><span class="p">(</span><span class="n">Conclusion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A name conclusion for a person, comprising one or more NameForm representations.&quot;&quot;&quot;</span>
 
-<span class="sd">            A Name is intended to represent a single variant of a person&#39;s name. </span>
-<span class="sd">            This means that nicknames, spelling variations, or other names </span>
-<span class="sd">            (often distinguishable by a name type) should be modeled with </span>
-<span class="sd">            separate instances of Name.</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Name&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    .. admonition:: Advanced details</span>
-<span class="sd">        :class: toggle</span>
-<span class="sd">    </span>
-<span class="sd">        The name forms of a name contain alternate representations of the name.</span>
-<span class="sd">        A Name MUST contain at least one name form, presumably a representation</span>
-<span class="sd">        of the name that is considered proper and well formed in the person&#39;s native,</span>
-<span class="sd">        historical cultural context. Other name forms MAY be included, which can be</span>
-<span class="sd">        used to represent this name in contexts where the native name form is not easily</span>
-<span class="sd">        recognized and interpreted. Alternate forms are more likely in situations where</span>
-<span class="sd">        conclusions are being analyzed across cultural context boundaries that have both</span>
-<span class="sd">        language and writing script differences.</span>
-<span class="sd">        </span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nameForms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NameForm</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        type (Optional[:class:`~gedcomx.NameType`]): Classification of the name</span>
-<span class="sd">            (e.g., BirthName, AlsoKnownAs).</span>
-<span class="sd">        nameForms (List[:class:`~gedcomx.NameForm`]): One or more structured</span>
-<span class="sd">            representations of the name (full text and parts).</span>
-<span class="sd">        date (Optional[:class:`~gedcomx.Date`]): Date context for this name</span>
-<span class="sd">            (e.g., when the name was used or recorded).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/Name&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_instance</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;nameForms&quot;</span><span class="p">,</span> <span class="s2">&quot;Name has no nameForms&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">NameType</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected NameType, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">Date</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">nf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;nameForms[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">nf</span><span class="p">,</span> <span class="n">NameForm</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Name.simple">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.Name.simple">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">simple</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Name&#39;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Name from a string, populating fullText and structured parts.</span>
-
-<span class="sd">        Supports GEDCOM slash notation where the surname is enclosed in slashes:</span>
-<span class="sd">            ``&quot;John /Smith/&quot;``        → Given=&quot;John&quot;, Surname=&quot;Smith&quot;</span>
-<span class="sd">            ``&quot;John /Smith/ Jr.&quot;``   → Given=&quot;John&quot;, Surname=&quot;Smith&quot;, Suffix=&quot;Jr.&quot;</span>
-<span class="sd">            ``&quot;/Smith/&quot;``            → Surname=&quot;Smith&quot; only</span>
-<span class="sd">            ``&quot;John Robert /van der Berg/&quot;`` → Given=&quot;John Robert&quot;, Surname=&quot;van der Berg&quot;</span>
-
-<span class="sd">        Without slashes the last whitespace-delimited token is treated as the</span>
-<span class="sd">        surname when more than one token is present; a single token becomes a</span>
-<span class="sd">        Given-name part.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simple</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Name&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Name from a plain string, parsing GEDCOM slash-notation.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Name</span><span class="p">()</span>
-
-        <span class="n">name_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NamePart</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="n">slash_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;/([^/]*)/&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="n">name_parts</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">slash_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/([^/]*)/&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">slash_match</span><span class="p">:</span>
             <span class="n">surname_raw</span> <span class="o">=</span> <span class="n">slash_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">before</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">slash_match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">after</span>  <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">slash_match</span><span class="o">.</span><span class="n">end</span><span class="p">():]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
+            <span class="n">before</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span> <span class="n">slash_match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">after</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">slash_match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">before</span><span class="p">:</span>
-                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span>   <span class="n">value</span><span class="o">=</span><span class="n">before</span><span class="p">))</span>
+                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">before</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">surname_raw</span><span class="p">:</span>
                 <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Surname</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">surname_raw</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">after</span><span class="p">:</span>
-                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Suffix</span><span class="p">,</span>  <span class="n">value</span><span class="o">=</span><span class="n">after</span><span class="p">))</span>
-
-            <span class="c1"># fullText: strip slashes and normalise whitespace</span>
-            <span class="n">full_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Suffix</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">after</span><span class="p">))</span>
+            <span class="n">full_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">full_text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="n">tokens</span> <span class="o">=</span> <span class="n">full_text</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span>   <span class="n">value</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
                 <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Surname</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">tokens</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
             <span class="k">elif</span> <span class="n">tokens</span><span class="p">:</span>
-                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span>   <span class="n">value</span><span class="o">=</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-
+                <span class="n">name_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NamePart</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NamePartType</span><span class="o">.</span><span class="n">Given</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">name_form</span> <span class="o">=</span> <span class="n">NameForm</span><span class="p">(</span><span class="n">fullText</span><span class="o">=</span><span class="n">full_text</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="n">name_parts</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Name</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">NameType</span><span class="o">.</span><span class="n">BirthName</span><span class="p">,</span> <span class="n">nameForms</span><span class="o">=</span><span class="p">[</span><span class="n">name_form</span><span class="p">])</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">sources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Document</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">notes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConfidenceLevel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NameType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">nameForms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">NameForm</span><span class="p">]]</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,):</span>
-                 <span class="c1">#links: Optional[_rsLinks] = None) -&gt; None:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">sources</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="n">attribution</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span> <span class="o">=</span> <span class="n">nameForms</span> <span class="k">if</span> <span class="n">nameForms</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="kc">None</span> <span class="c1"># no need for id</span>
-    
-    <span class="k">def</span> <span class="nf">_add_name_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">namepart</span><span class="p">:</span> <span class="n">NamePart</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">namepart</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">namepart</span><span class="p">,</span> <span class="n">NamePart</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_namepart</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">namepart</span> <span class="o">==</span> <span class="n">current_namepart</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_name_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">namepart</span><span class="p">:</span> <span class="n">NamePart</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">namepart</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">namepart</span><span class="p">,</span> <span class="n">NamePart</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">namepart</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                    <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">namepart</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable string for the Name-like object.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Name(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">, type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">, forms=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="p">)</span><span class="si">}</span><span class="s2">, date=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="si">}</span><span class="s2">)&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an unambiguous string representation of the Name-like object.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;lang=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;sources=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;analysis=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;notes=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;confidence=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;attribution=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;nameForms=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="si">!r}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;date=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="si">!r}</span><span class="s2">)&quot;</span>
-    <span class="p">)</span></div>
+            <span class="sa">f</span><span class="s2">&quot;Name(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">!r}</span><span class="s2">, lang=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">!r}</span><span class="s2">, type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;nameForms=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nameForms</span><span class="si">!r}</span><span class="s2">, date=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="QuickName">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.QuickName">[docs]</a>
-<span class="k">class</span> <span class="nc">QuickName</span><span class="p">():</span>
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Name</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">Name</span><span class="p">(</span><span class="n">nameForms</span><span class="o">=</span><span class="p">[</span><span class="n">NameForm</span><span class="p">(</span><span class="n">fullText</span><span class="o">=</span><span class="n">name</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">obj</span></div>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuickName</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience factory: ``QuickName(&quot;John Smith&quot;)`` returns a Name with a single NameForm.&quot;&quot;&quot;</span>
 
-    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Name</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="k">return</span> <span class="n">Name</span><span class="p">(</span><span class="n">nameForms</span><span class="o">=</span><span class="p">[</span><span class="n">NameForm</span><span class="p">(</span><span class="n">fullText</span><span class="o">=</span><span class="n">name</span><span class="p">)])</span></div>
+
+
+
 <div class="viewcode-block" id="ensure_list">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.name.ensure_list">[docs]</a>
-<span class="k">def</span> <span class="nf">ensure_list</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_list</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap *val* in a list if it is not already one; returns ``[]`` for None.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">val</span><span class="p">]</span></div>
-
-    
-
-
-
-
-
-
 
 </pre></div>
         </article>

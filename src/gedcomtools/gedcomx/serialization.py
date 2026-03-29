@@ -1,3 +1,5 @@
+"""Serialize, deserialize, and resolve references across GedcomX object graphs."""
+
 from __future__ import annotations
 # ======================================================================
 #  Project: Gedcom-X
@@ -10,7 +12,6 @@ from __future__ import annotations
 #                         with MRO walk; fixed _normalize_field_type for unions;
 #                         added _to_dict dispatch for GedcomX container
 # ======================================================================
-
 from collections.abc import Sized
 from dataclasses import dataclass, field
 import enum
@@ -100,6 +101,7 @@ class _SchemaBridge:
 
     @staticmethod
     def get_class_fields(name_or_cls) -> dict | None:
+        """Return normalized schema field metadata for the given class."""
         if isinstance(name_or_cls, type):
             f = _get_class_fields(name_or_cls)
             return f if f else None
@@ -108,7 +110,15 @@ class _SchemaBridge:
 
 SCHEMA = _SchemaBridge()
 from .uri import URI
-#======================================================================
+# ======================================================================
+#  Project: Gedcom-X
+#  File:    serialization.py
+#  Author:  David J. Cartwright
+#  Purpose: Serialize / deserialize GedcomX objects to/from JSON dicts
+#  Updated: 2026-03-29 — serialize(dict): filter None values after
+#                         recursive serialization; previously empty list
+#                         fields produced "key": null in output
+# ======================================================================
 
 log = get_logger(__name__)
 
@@ -117,6 +127,7 @@ deserial_log = "gedcomx.deserialization"
 
 @dataclass
 class ResolveStats:
+    """Telemetry counters and details collected during a reference-resolution pass."""
     # high-level counters
     total_refs: int = 0
     cache_hits: int = 0
@@ -137,6 +148,7 @@ class ResolveStats:
         d[k] = d.get(k, 0) + n
 
     def note_attempt(self, *, ref_type: str, key: Any, path: Tuple[str, ...], cache_hit: bool) -> None:
+        """Record a resolution attempt, incrementing total and cache hit/miss counters."""
         self.total_refs += 1
         if cache_hit:
             self.cache_hits += 1
@@ -146,17 +158,21 @@ class ResolveStats:
         self.attempts.append({"ref_type": ref_type, "key": key, "path": "/".join(path), "cache_hit": cache_hit})
 
     def note_success(self, *, target: Any) -> None:
+        """Record a successful resolution and increment the target-type counter."""
         self.resolved_ok += 1
         self._bump(self.by_target_type, type(target).__name__)
 
     def note_failure(self, *, ref_type: str, key: Any, path: Tuple[str, ...], reason: str) -> None:
+        """Record a failed resolution with the failure reason."""
         self.resolved_fail += 1
         self.failures.append({"ref_type": ref_type, "key": key, "path": "/".join(path), "reason": reason})
 
     def note_resolver_time(self, dt_ms: float) -> None:
+        """Accumulate resolver wall-clock time in milliseconds."""
         self.resolver_time_ms += dt_ms
 
 class Serialization:
+    """Static utilities for serializing GedcomX objects to JSON-compatible dicts and deserializing them back."""
 
     @staticmethod
     def serialize(obj):
@@ -173,8 +189,8 @@ class Serialization:
                 if isinstance(obj, (str, int, float, bool, type(None))):
                     return obj
                 if isinstance(obj, dict):
-                    r = {k: Serialization.serialize(v) for k, v in obj.items()}
-                    return r if r != {} else None
+                    r = {k: sv for k, v in obj.items() if (sv := Serialization.serialize(v)) is not None}
+                    return r if r else None
                 if isinstance(obj, URI):
                     return obj.value
                 if isinstance(obj, (list, tuple, set, TypeCollection)):
@@ -196,7 +212,8 @@ class Serialization:
                             if (v := getattr(obj, field_name)) is not None:
                                 if type_ in (Resource, 'Resource'):
                                     res = Resource._of_object(target=v)
-                                    type_as_dict[field_name] = Serialization.serialize(res.value)
+                                    if res is not None:
+                                        type_as_dict[field_name] = Serialization.serialize(res.value)
                                 elif type_ in (URI, 'URI'):
                                     uri = URI.model_validate({"target": v})
                                     type_as_dict[field_name] = uri.value
@@ -258,6 +275,7 @@ class Serialization:
 
     @staticmethod
     def _is_reference(x: Any) -> bool:
+        """Return True if *x* is a Resource or URI (i.e. a reference, not an inline value)."""
         return isinstance(x, (Resource, URI))
 
     @staticmethod
@@ -284,6 +302,7 @@ class Serialization:
 
     @staticmethod
     def _has_reference_value(x: Any) -> bool:
+        """Return True if *x* or any nested element is a Resource or URI reference."""
         if Serialization._is_reference(x):
             return True
         if isinstance(x, (list, tuple, set)):
@@ -448,15 +467,10 @@ class Serialization:
     ) -> Any:
         """Deserialize a JSON dict into an instance of ``class_type``.
 
-        Args:
-            data: A JSON-compatible dict whose keys correspond to ``class_type`` fields.
-            class_type: The target class to instantiate.
-            resolver: Optional callable to immediately resolve Resource/URI references.
-            queue_setters: If True, unresolved references are stored as lazy setters
-                on the instance for deferred resolution.
-
-        Returns:
-            An instance of ``class_type`` populated from ``data``.
+        ``data`` should contain keys that correspond to ``class_type`` fields.
+        If ``resolver`` is provided, Resource and URI references are resolved
+        immediately; otherwise unresolved references may be queued as lazy
+        setters when ``queue_setters`` is true.
         """
         with hub.use(deserial_log):
             t0 = perf_counter()
@@ -754,6 +768,7 @@ class Serialization:
     @staticmethod
     @lru_cache(maxsize=None)
     def _unwrap(T: Any) -> Any:
+        """Strip Optional/Annotated wrappers and flatten single-member Unions."""
         origin = get_origin(T)
         if origin is None:
             return T
@@ -768,6 +783,7 @@ class Serialization:
     @staticmethod
     @lru_cache(maxsize=None)
     def _resolve_forward(T: Any) -> Any:
+        """Resolve a ForwardRef or string type annotation to the actual class if available."""
         if isinstance(T, ForwardRef):
             return globals().get(T.__forward_arg__, T)
         if isinstance(T, str):
@@ -777,6 +793,7 @@ class Serialization:
     @staticmethod
     @lru_cache(maxsize=None)
     def _is_enum_type(T: Any) -> bool:
+        """Return True if the resolved type is an Enum subclass."""
         U = Serialization._resolve_forward(Serialization._unwrap(T))
         try:
             return isinstance(U, type) and issubclass(U, enum.Enum)
@@ -785,21 +802,25 @@ class Serialization:
 
     @staticmethod
     def _is_list_like(T: Any) -> bool:
+        """Return True if T is a list or List annotation."""
         origin = get_origin(T) or T
         return origin in (list, List)
 
     @staticmethod
     def _is_set_like(T: Any) -> bool:
+        """Return True if T is a set or Set annotation."""
         origin = get_origin(T) or T
         return origin in (set, Set)
 
     @staticmethod
     def _is_tuple_like(T: Any) -> bool:
+        """Return True if T is a tuple or Tuple annotation."""
         origin = get_origin(T) or T
         return origin in (tuple, Tuple)
 
     @staticmethod
     def _is_dict_like(T: Any) -> bool:
+        """Return True if T is a dict or Dict annotation."""
         origin = get_origin(T) or T
         return origin in (dict, Dict)
 

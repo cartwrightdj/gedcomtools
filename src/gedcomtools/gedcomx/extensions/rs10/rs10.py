@@ -1,3 +1,5 @@
+"""RS 1.0 extension models and schema bindings for GedcomX objects."""
+
 from __future__ import annotations
 from typing import Callable, Optional, List
 
@@ -10,7 +12,6 @@ from dataclasses import dataclass
 #  Purpose: Link type of GedcomX RS 1.0 (Extension)
 #  Created: 2025-08-25
 # ======================================================================
-
 # GEDCOM Module Types
 from gedcomtools.gedcomx.conclusion import Conclusion
 from gedcomtools.gedcomx.name import Name
@@ -106,6 +107,7 @@ class rsLink:
 
 @extensible()
 class _rsLinks:
+    """Store RS 1.0 link collections attached to GedcomX objects."""
     def __init__(self,
                  person: Optional[rsLink] = None,
                  portrait: Optional[rsLink] = None) -> None:
@@ -141,6 +143,7 @@ class _rsLinks:
 @extensible()
 @dataclass
 class FamilyView():
+    """Represent RS 1.0 family link references for a person view."""
     identifier = "http://gedcomx.org/v1/FamilyView"
     """
     Family membership references.
@@ -157,6 +160,7 @@ class FamilyView():
 @extensible()
 @dataclass
 class DisplayProperties():
+    """Represent RS 1.0 display-oriented properties for a person."""
     name: str | None = None
     gender: str | None = None
     lifespan: str | None = None
@@ -207,6 +211,7 @@ SCHEMA.register_extra(Person,"living",bool)
 SCHEMA.register_extra(Person,"_display",DisplayProperties)
 
 def display_properies(self):  # pylint: disable=unused-argument
+    """Build display properties for the provided GedcomX person."""
     return DisplayProperties()
 
 SCHEMA.register_extra(Person,"display",DisplayProperties)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""Low-level GEDCOM 5.x parsing helpers and parser-facing data structures."""
+
 import html
 import logging as _logging
 import os
@@ -14,7 +16,6 @@ from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
 #  Purpose:
 #  Created: 2025-08-25
 # ======================================================================
-
 # GEDCOM Module Types
 from .glog import get_logger, hub, ChannelConfig
 
@@ -70,6 +71,7 @@ line = f'{level}{d}((?P<xref>{xref}){d})?(?P<tag>{tag})({d}{lineval})?{eol}'
 
 
 class Gedcom5xRecord():
+    """Represent a parsed GEDCOM 5.x record with nested sub-records."""
     def __init__(self,
                     line_num: Optional[int] = None,
                     lvl: int = -1,
@@ -93,6 +95,7 @@ class Gedcom5xRecord():
     # ───────────────────────────────
     @property
     def to_dict(self):
+        """Return this object as a dictionary."""
         return {
             "level": self.level,
             "xref": self.xref,
@@ -107,6 +110,7 @@ class Gedcom5xRecord():
     # ───────────────────────────────
     def add_sub_record(self, record: "Gedcom5xRecord"):
 
+        """Add a child record to this record."""
         if record is not None and (record.level == (self.level + 1)):
             record.parent = self
             self._subRecords.append(record)
@@ -116,6 +120,7 @@ class Gedcom5xRecord():
             )
 
     def record_only(self):
+        """Return this record without its nested sub-records."""
         return Gedcom5xRecord(
             line_num=self.line, lvl=self.level, tag_str=self.tag, value=self.value
         )
@@ -124,6 +129,7 @@ class Gedcom5xRecord():
     # Pretty printers
     # ───────────────────────────────
     def dump(self) -> str:
+        """Return a formatted dump of this record tree."""
         record_dump = (
             f"Level: {self.level}, tag: {self.tag}, value: {self.value}, "
             f"subRecords: {len(self._subRecords)}\n"
@@ -133,6 +139,7 @@ class Gedcom5xRecord():
         return record_dump
 
     def describe(self, sub_records: bool = False) -> str:
+        """Return a human-readable summary of this object."""
         level_str = "\t" * self.level
         description = (
             f"Line {self.line}: {level_str} Level: {self.level}, "
@@ -148,10 +155,12 @@ class Gedcom5xRecord():
     # Subrecord access
     # ───────────────────────────────
     def sub_record(self, tag_str: str):
+        """Return the first matching child record."""
         result = [r for r in self._subRecords if r.tag == tag_str]
         return None if not result else result
 
     def sub_records(self, tag_str: str | None = None) -> List['Gedcom5xRecord']:
+        """Return all matching child records."""
         if not tag_str:
             return self._subRecords
         tags = tag_str.split("/", 1)
@@ -337,19 +346,23 @@ class Gedcom5x():
 
     # If you add/replace records after init, keep the index fresh:
     def append(self, rec: 'Gedcom5xRecord') -> None:
+        """Append an item to the collection."""
         self.records.append(rec)
         self._tag_index.setdefault(rec.tag, []).append(rec)
 
     def extend(self, recs: Iterable['Gedcom5xRecord']) -> None:
+        """Extend the collection with items from an iterable or peer object."""
         self.records.extend(recs)
         for r in recs:
             self._tag_index.setdefault(r.tag, []).append(r)
 
     def insert(self, idx: int, rec: 'Gedcom5xRecord') -> None:
+        """Insert an item at the given position."""
         self.records.insert(idx, rec)
         self._tag_index.setdefault(rec.tag, []).append(rec)
 
     def remove(self, rec: 'Gedcom5xRecord') -> None:
+        """Remove the given item from the collection."""
         self.records.remove(rec)
         try:
             bucket = self._tag_index.get(rec.tag)
@@ -361,6 +374,7 @@ class Gedcom5x():
             pass  # already out of index
 
     def clear(self) -> None:
+        """Remove all items from the collection."""
         self.records.clear()
         self._tag_index.clear()
     # =========================================================
@@ -369,11 +383,13 @@ class Gedcom5x():
 
     @property
     def json(self):
+        """Return a JSON-compatible representation of the current data."""
         import json
         return json.dumps({'Individuals': [indi.to_dict for indi in self._individuals]},indent=4)
 
     @property
     def contents(self):
+        """Return a summary of the contained records."""
         def _print_table(pairs):
 
             # Calculate the width of the columns
@@ -405,10 +421,12 @@ class Gedcom5x():
 
     @property
     def sources(self) -> List[Gedcom5xRecord]:
+        """Return the source records."""
         return self._sources
 
     @sources.setter
     def sources(self, value: List[Gedcom5xRecord]):
+        """Return the source records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("sources must be a list of GedcomRecord objects.")
         self._sources = value
@@ -422,36 +440,43 @@ class Gedcom5x():
 
     @repositories.setter
     def repositories(self, value: List[Gedcom5xRecord]):
+        """Return the repository records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("repositories must be a list of GedcomRecord objects.")
         self._repositories = value
 
     @property
     def individuals(self) -> List[Gedcom5xRecord]:
+        """Return the individual records."""
         return self._individuals
 
     @individuals.setter
     def individuals(self, value: List[Gedcom5xRecord]):
+        """Return the individual records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("individuals must be a list of GedcomRecord objects.")
         self._individuals = value
 
     @property
     def families(self) -> List[Gedcom5xRecord]:
+        """Return the family records."""
         return self._families
 
     @families.setter
     def families(self, value: List[Gedcom5xRecord]):
+        """Return the family records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("families must be a list of GedcomRecord objects.")
         self._families = value
 
     @property
     def objects(self) -> List[Gedcom5xRecord]:
+        """Return the multimedia object records."""
         return self._objects
 
     @objects.setter
     def objects(self, value: List[Gedcom5xRecord]):
+        """Return the multimedia object records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("objects must be a list of GedcomRecord objects.")
         self._objects = value
@@ -575,6 +600,7 @@ class Gedcom5x():
         return gedcom
 
     def load_file(self,file_path: str) -> None:
+        """Load GEDCOM content from a file path."""
         records = Gedcom5x._records_from_file(file_path)
         if records:
             self.records.extend(records)

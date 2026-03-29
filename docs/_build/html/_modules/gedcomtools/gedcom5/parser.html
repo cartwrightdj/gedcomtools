@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom5.parser - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -230,18 +230,15 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcom5.parser</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: gedcomtools</span>
-<span class="sd"> File:    gedcom5/parser.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: gedcomtools</span>
+<span class="c1">#  File:    gedcom5/parser.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects</span>
+<span class="c1">#  Created: 2026-01-01</span>
+<span class="c1"># ======================================================================</span>
+<span class="sd">&quot;&quot;&quot;Parse GEDCOM 5.x files into the project’s element tree representation.&quot;&quot;&quot;</span>
 
-<span class="sd"> Created: 2026-01-01</span>
-<span class="sd"> Updated:</span>
-
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Python GEDCOM Parser</span>
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)</span>
@@ -265,95 +262,33 @@
 <span class="c1"># with this program; if not, write to the Free Software Foundation, Inc.,</span>
 <span class="c1"># 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">GEDCOM 5.x file parser — builds a typed element tree from a .ged file.</span>
+<span class="c1"># GEDCOM 5.x file parser — builds a typed element tree from a .ged file.</span>
+<span class="c1">#</span>
+<span class="c1"># All high-level analysis lives in Gedcom5.</span>
+<span class="c1"># This module is the raw parsing engine only.</span>
 
-<span class="sd">All high-level analysis lives in :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5`.</span>
-<span class="sd">This module is the raw parsing engine only.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">regex</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="sd">Changes from the original python-gedcom source</span>
-<span class="sd">-----------------------------------------------</span>
-
-<span class="sd">**Module / file**</span>
-
-<span class="sd">* Renamed from ``gedcom5x.py`` (which was itself a rename of the original</span>
-<span class="sd">  ``parser.py`` from python-gedcom) to ``parser.py`` inside the ``gedcom5``</span>
-<span class="sd">  sub-package.  The class retains the name ``Gedcom5x`` to distinguish it from</span>
-<span class="sd">  the high-level :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade.</span>
-
-<span class="sd">**Dead code removed**</span>
-
-<span class="sd">The following methods were present in the original but are entirely superseded</span>
-<span class="sd">by the :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade and were never</span>
-<span class="sd">called from outside it.  All have been deleted:</span>
-
-<span class="sd">* ``get_marriages()``</span>
-<span class="sd">* ``get_marriage_years()``</span>
-<span class="sd">* ``marriage_year_match()``</span>
-<span class="sd">* ``marriage_range_match()``</span>
-<span class="sd">* ``get_families()``</span>
-<span class="sd">* ``get_ancestors()``</span>
-<span class="sd">* ``get_parents()``</span>
-<span class="sd">* ``find_path_to_ancestor()``</span>
-<span class="sd">* ``get_family_members()``</span>
-<span class="sd">* ``describe_individual()``</span>
-<span class="sd">* ``zero_records`` (property)</span>
-<span class="sd">* ``records`` (property)</span>
-<span class="sd">* ``__build_list()`` (private helper for the above)</span>
-<span class="sd">* Module-level ``FAMILY_MEMBERS_TYPE_*`` constants (only used by the removed</span>
-<span class="sd">  methods)</span>
-
-<span class="sd">**Dead ``__init__`` state removed**</span>
-
-<span class="sd">* ``self.__notes`` — GEDCOM 5 has no top-level NOTE records; the list was</span>
-<span class="sd">  allocated and never populated.</span>
-<span class="sd">* ``self.__element_dictionary`` — caching dict replaced by the on-demand</span>
-<span class="sd">  ``get_element_dictionary()`` method.</span>
-
-<span class="sd">**Dead ``parse()`` variable removed**</span>
-
-<span class="sd">* ``last_element`` — assigned on every iteration but never read.</span>
-
-<span class="sd">**Unused imports removed**</span>
-
-<span class="sd">* ``Iterator``, ``Iterable``, ``Tuple``, ``Any`` from ``typing``</span>
-<span class="sd">* ``version_info`` from ``sys``</span>
-
-<span class="sd">**Python 2 compatibility shim removed from ``save_gedcom()``**</span>
-
-<span class="sd">The original used ``isinstance(open_file, io.IOBase)`` to decide whether to</span>
-<span class="sd">call ``.write()`` or ``sys.stdout.write()``.  The project requires Python ≥</span>
-<span class="sd">3.10; the shim was removed and ``save_gedcom()`` now always calls</span>
-<span class="sd">``open_file.write()``.</span>
-
-<span class="sd">**Bug fixes**</span>
-
-<span class="sd">* ``__parse_line()`` — CONC fallback path set ``pointer = None``; storing</span>
-<span class="sd">  ``None`` as an element xref later caused a ``TypeError`` in</span>
-<span class="sd">  ``to_gedcom_string()``.  Fixed: ``pointer = &quot;&quot;``.</span>
-
-<span class="sd">* ``get_element_dictionary()`` — xref keys are now normalised via</span>
-<span class="sd">  ``_normalize_xref()`` so that lookups are case-insensitive (e.g. ``@I1@``</span>
-<span class="sd">  and ``@i1@`` resolve to the same record).</span>
-
-<span class="sd">* Pedigree comparison in the removed ``get_family_members()`` — right-hand</span>
-<span class="sd">  side of ``_normalize_xref(fm.value) == individual.xref`` was not normalised,</span>
-<span class="sd">  meaning a case mismatch silently skipped the pedigree check.  Fixed in the</span>
-<span class="sd">  facade; the raw method was deleted.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">regex</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-
-<span class="kn">from</span> <span class="nn">.elements</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.elements</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Element</span><span class="p">,</span> <span class="n">FamilyRecord</span><span class="p">,</span> <span class="n">FileElement</span><span class="p">,</span> <span class="n">HeaderRecord</span><span class="p">,</span>
     <span class="n">IndividualRecord</span><span class="p">,</span> <span class="n">ObjectRecord</span><span class="p">,</span> <span class="n">RepositoryRecord</span><span class="p">,</span>
     <span class="n">RootElement</span><span class="p">,</span> <span class="n">SourceRecord</span><span class="p">,</span> <span class="n">SubmitterRecord</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.tags</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tags</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GEDCOM_TAG_CONCATENATION</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_FAMILY</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_FILE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_HEADER</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_INDIVIDUAL</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_OBJECT</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_REPOSITORY</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_SOURCE</span><span class="p">,</span>
+    <span class="n">GEDCOM_TAG_SUBMITTER</span><span class="p">,</span>
+<span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_normalize_xref</span><span class="p">(</span><span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_xref</span><span class="p">(</span><span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize an xref pointer for case-insensitive comparison.</span>
 
 <span class="sd">    Strips surrounding whitespace and uppercases the value so that</span>
@@ -364,14 +299,14 @@
 
 <div class="viewcode-block" id="GedcomFormatViolationError">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.GedcomFormatViolationError">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomFormatViolationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomFormatViolationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a line violates the GEDCOM 5.5 format.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="Gedcom5x">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x">[docs]</a>
-<span class="k">class</span> <span class="nc">Gedcom5x</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Gedcom5x</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Low-level GEDCOM 5.x parser.</span>
 
 <span class="sd">    Reads a ``.ged`` file and builds a typed element tree.  Typed</span>
@@ -380,7 +315,7 @@
 <span class="sd">    outputs consumed by :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__header</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">HeaderRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__submitters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__individuals</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -395,31 +330,38 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the individual records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__individuals</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">families</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">FamilyRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">families</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">FamilyRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the family records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__families</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the source records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sources</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">repositories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">repositories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the repository records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repositories</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">objects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ObjectRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">objects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ObjectRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the multimedia object records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__objects</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">header</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">HeaderRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">header</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">HeaderRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the header record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__header</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">submitters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterRecord</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submitters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the submitter records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__submitters</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -428,7 +370,7 @@
 
 <div class="viewcode-block" id="Gedcom5x.get_element_dictionary">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.get_element_dictionary">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_element_dictionary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_element_dictionary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all xref-identified records keyed by uppercased xref.</span>
 
 <span class="sd">        :rtype: dict of Element</span>
@@ -442,7 +384,7 @@
 
 <div class="viewcode-block" id="Gedcom5x.get_root_child_elements">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.get_root_child_elements">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_root_child_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Element</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_root_child_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Element</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return top-level records in document order.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__root_element</span><span class="o">.</span><span class="n">get_child_elements</span><span class="p">()</span></div>
 
@@ -453,7 +395,7 @@
 
 <div class="viewcode-block" id="Gedcom5x.parse_file">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.parse_file">[docs]</a>
-    <span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Open and parse a GEDCOM 5.x file.</span>
 
 <span class="sd">        :type file_path: str</span>
@@ -465,7 +407,7 @@
 
 <div class="viewcode-block" id="Gedcom5x.parse">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.parse">[docs]</a>
-    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcom_stream</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gedcom_stream</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a byte stream as GEDCOM 5.x data.</span>
 
 <span class="sd">        Resets all collections before parsing.</span>
@@ -514,7 +456,7 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Element</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Element</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one GEDCOM line and return the appropriate Element subclass.&quot;&quot;&quot;</span>
 
         <span class="n">level_regex</span> <span class="o">=</span> <span class="s1">&#39;^(0|[1-9]+[0-9]*) &#39;</span>
@@ -585,16 +527,16 @@
 
 <div class="viewcode-block" id="Gedcom5x.save_gedcom">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.save_gedcom">[docs]</a>
-    <span class="k">def</span> <span class="nf">save_gedcom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">open_file</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_gedcom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">open_file</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the parsed GEDCOM tree to *open_file* in GEDCOM 5.x format.&quot;&quot;&quot;</span>
         <span class="n">open_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__root_element</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="Gedcom5x.print_gedcom">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.print_gedcom">[docs]</a>
-    <span class="k">def</span> <span class="nf">print_gedcom</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_gedcom</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the parsed GEDCOM tree to stdout.&quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_gedcom</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span></div>
 </div>
 

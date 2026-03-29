@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.date - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -233,84 +233,99 @@
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
 <span class="sd"> File:    gedcomx/date.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Gedcom-X Date class with GEDCOM date format parsing and ISO 8601 support</span>
+<span class="sd"> Purpose: Gedcom-X Date class with GEDCOM date format parsing and ISO 8601 support.</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json refactored</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
 <span class="sd">   - 2025-11-13: added Gedcom-X Date Format API</span>
-
+<span class="sd">   - 2026-03-19: migrated to pydantic GedcomXModel</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
-<span class="kn">from</span> <span class="nn">dateutil</span> <span class="kn">import</span> <span class="n">parser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dateparser</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dateparser</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">dateparser</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">dateutil</span> <span class="kn">import</span> <span class="n">parser</span> <span class="k">as</span> <span class="n">dateutil_parser</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dateutil</span><span class="w"> </span><span class="kn">import</span> <span class="n">parser</span> <span class="k">as</span> <span class="n">dateutil_parser</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">dateutil_parser</span> <span class="o">=</span> <span class="kc">None</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#=====================================================================</span>
 
 
 <div class="viewcode-block" id="DateFormat">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.date.DateFormat">[docs]</a>
-<span class="k">class</span> <span class="nc">DateFormat</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span></div>
+<span class="k">class</span><span class="w"> </span><span class="nc">DateFormat</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder for GedcomX date format constants.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
 
 
 <div class="viewcode-block" id="DateNormalization">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.date.DateNormalization">[docs]</a>
-<span class="k">class</span> <span class="nc">DateNormalization</span><span class="p">():</span>
-    <span class="k">pass</span>        </div>
+<span class="k">class</span><span class="w"> </span><span class="nc">DateNormalization</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder for GedcomX date normalization data.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
 
 
 <div class="viewcode-block" id="Date">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.date.Date">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">Date</span><span class="p">:</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/Date&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Date</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A GedcomX date value with optional original text and formal GedcomX-format string.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span><span class="n">normalized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DateNormalization</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="p">,</span><span class="n">formal</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">DateFormat</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="n">original</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">formal</span> <span class="o">=</span> <span class="n">formal</span> <span class="k">if</span> <span class="n">formal</span> <span class="k">else</span> <span class="n">parse_to_gedcomx_date</span><span class="p">(</span><span class="n">original</span><span class="p">)</span> <span class="k">if</span> <span class="n">original</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Date&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">normalized</span><span class="p">:</span> <span class="n">DateNormalization</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">normalized</span> <span class="k">if</span> <span class="n">normalized</span> <span class="k">else</span> <span class="kc">None</span></div>
+    <span class="n">original</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">formal</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DateNormalization</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    
-        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_gedcomx_date</span><span class="p">,</span> <span class="n">check_nonempty</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">formal</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;Date has neither original nor formal value&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">check_nonempty</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;original&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">)</span>
+        <span class="n">check_gedcomx_date</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;formal&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">formal</span><span class="p">)</span>
 
-<span class="c1"># ----------------------------------------------------------------------</span>
-<span class="c1"># API for Gedcom-X Date Format</span>
-<span class="c1"># ----------------------------------------------------------------------</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_formal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Date&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">formal</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_formal</span> <span class="o">=</span> <span class="n">parse_to_gedcomx_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">formal</span> <span class="o">=</span> <span class="n">_formal</span> <span class="k">if</span> <span class="n">_formal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">formal</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># parsing failures are non-fatal</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># GedcomX Date Format parsing (unchanged from original)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="parse_to_gedcomx_date">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.date.parse_to_gedcomx_date">[docs]</a>
-<span class="k">def</span> <span class="nf">parse_to_gedcomx_date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_to_gedcomx_date</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a natural-language or standard date string into a GedcomX formal date string.</span>
+
+<span class="sd">    Handles approximate prefixes (``abt``, ``circa``), range expressions</span>
+<span class="sd">    (``between X and Y``), and before/after qualifiers.  Returns ``None`` if</span>
+<span class="sd">    the input cannot be parsed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXDateParseError</span>
+
     <span class="n">original</span> <span class="o">=</span> <span class="n">s</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
@@ -320,255 +335,116 @@
 
     <span class="c1"># ---- detect approximate ----</span>
     <span class="n">approx_prefixes</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;about &quot;</span><span class="p">,</span> <span class="s2">&quot;abt &quot;</span><span class="p">,</span> <span class="s2">&quot;abt. &quot;</span><span class="p">,</span> <span class="s2">&quot;around &quot;</span><span class="p">,</span> <span class="s2">&quot;circa &quot;</span><span class="p">,</span> <span class="s2">&quot;c. &quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ca. &quot;</span><span class="p">,</span> <span class="s2">&quot;approx &quot;</span><span class="p">,</span> <span class="s2">&quot;approximately &quot;</span>
+        <span class="s2">&quot;about &quot;</span><span class="p">,</span> <span class="s2">&quot;abt &quot;</span><span class="p">,</span> <span class="s2">&quot;abt. &quot;</span><span class="p">,</span> <span class="s2">&quot;circa &quot;</span><span class="p">,</span> <span class="s2">&quot;ca. &quot;</span><span class="p">,</span> <span class="s2">&quot;ca &quot;</span><span class="p">,</span> <span class="s2">&quot;c. &quot;</span><span class="p">,</span>
+        <span class="s2">&quot;approximately &quot;</span><span class="p">,</span> <span class="s2">&quot;approx. &quot;</span><span class="p">,</span> <span class="s2">&quot;approx &quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">is_approx</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">approx_prefixes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_approx</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">approx_prefixes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">):]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">lower</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">break</span>
 
-    <span class="n">approx</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">for</span> <span class="n">pref</span> <span class="ow">in</span> <span class="n">approx_prefixes</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">lower</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">pref</span><span class="p">):</span>
-            <span class="n">approx</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">pref</span><span class="p">):]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">lower</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">break</span>
+    <span class="c1"># ---- detect range: &quot;between X and Y&quot; ----</span>
+    <span class="n">range_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;^between\s+(.+?)\s+and\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">range_match</span><span class="p">:</span>
+        <span class="n">start_str</span> <span class="o">=</span> <span class="n">range_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">end_str</span> <span class="o">=</span> <span class="n">range_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">start_str</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">end_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="ow">and</span> <span class="n">end</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">start</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">end</span><span class="si">}</span><span class="s2">]&quot;</span>
 
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># CLOSED RANGES</span>
-    <span class="c1">#   - &quot;day month YYYY-YYYY&quot;   e.g. &quot;14 Feb 1744-1745&quot;</span>
-    <span class="c1">#   - &quot;day month YYYY/YY&quot;     e.g. &quot;22 Feb 1662/63&quot;</span>
-    <span class="c1">#   - &quot;between X and Y&quot;</span>
-    <span class="c1">#   - &quot;from X to Y&quot;</span>
-    <span class="c1">#   - &quot;X - Y&quot; (with spaces)</span>
-    <span class="c1">#   - &quot;YYYY-YYYY&quot; or &quot;YYYY/YY&quot;</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># ---- detect &quot;before X&quot; / &quot;after X&quot; ----</span>
+    <span class="n">before_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:before|bef\.?)\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">before_match</span><span class="p">:</span>
+        <span class="n">date_part</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">before_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;A/</span><span class="si">{</span><span class="n">date_part</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">date_part</span> <span class="k">else</span> <span class="n">original</span>
 
-    <span class="c1"># Double-year notation with prefix:</span>
-    <span class="c1">#   &quot;14 Feb 1744-1745&quot; → &quot;14 Feb 1744&quot; / &quot;14 Feb 1745&quot;</span>
-    <span class="c1">#   &quot;22 Feb 1662/63&quot;   → &quot;22 Feb 1662&quot; / &quot;22 Feb 1663&quot;</span>
-    <span class="n">m_double_year</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.*\D)(\d{3,4})\s*[-/]\s*(\d{2,4})\s*$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_double_year</span><span class="p">:</span>
-        <span class="n">prefix</span> <span class="o">=</span> <span class="n">m_double_year</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>        <span class="c1"># e.g. &quot;22 Feb &quot;</span>
-        <span class="n">y1_str</span> <span class="o">=</span> <span class="n">m_double_year</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>        <span class="c1"># &quot;1662&quot;</span>
-        <span class="n">y2_str</span> <span class="o">=</span> <span class="n">m_double_year</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>        <span class="c1"># &quot;63&quot;</span>
+    <span class="n">after_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:after|aft\.?)\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">after_match</span><span class="p">:</span>
+        <span class="n">date_part</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">after_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">date_part</span><span class="si">}</span><span class="s2">/&quot;</span> <span class="k">if</span> <span class="n">date_part</span> <span class="k">else</span> <span class="n">original</span>
 
-        <span class="c1"># Expand shortened year, e.g. 1662 + &quot;63&quot; -&gt; &quot;1663&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y2_str</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">y1_str</span><span class="p">):</span>
-            <span class="n">y2_full</span> <span class="o">=</span> <span class="n">y1_str</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">y1_str</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">y2_str</span><span class="p">)]</span> <span class="o">+</span> <span class="n">y2_str</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">y2_full</span> <span class="o">=</span> <span class="n">y2_str</span>
+    <span class="c1"># ---- simple date ----</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">left_raw</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">y1_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">right_raw</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">y2_full</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-        <span class="n">left</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">left_raw</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">right_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># pure year range &quot;1999-2017&quot;, &quot;1662/63&quot; (spaces optional)</span>
-    <span class="n">m_year_range</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(\d{3,4})\s*[-/]\s*(\d{2,4})\s*$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_year_range</span><span class="p">:</span>
-        <span class="n">y1_str</span> <span class="o">=</span> <span class="n">m_year_range</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>     <span class="c1"># &quot;1662&quot;</span>
-        <span class="n">y2_str</span> <span class="o">=</span> <span class="n">m_year_range</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>     <span class="c1"># &quot;63&quot; or &quot;2017&quot;</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y2_str</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">y1_str</span><span class="p">):</span>
-            <span class="n">y2_full</span> <span class="o">=</span> <span class="n">y1_str</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">y1_str</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">y2_str</span><span class="p">)]</span> <span class="o">+</span> <span class="n">y2_str</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">y2_full</span> <span class="o">=</span> <span class="n">y2_str</span>
-
-        <span class="n">y1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1_str</span><span class="p">)</span>
-        <span class="n">y2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">y2_full</span><span class="p">)</span>
-
-        <span class="n">left</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">y2</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># between X and Y</span>
-    <span class="n">m_between</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:between)\s+(.+?)\s+and\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_between</span><span class="p">:</span>
-        <span class="n">left_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_between</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span><span class="n">m_between</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="n">right_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_between</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span><span class="n">m_between</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">left_raw</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">right_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># from X to Y</span>
-    <span class="n">m_from</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:from)\s+(.+?)\s+to\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_from</span><span class="p">:</span>
-        <span class="n">left_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_from</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span><span class="n">m_from</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="n">right_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_from</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span><span class="n">m_from</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">left_raw</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">right_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># X - Y  (dash ranges with spaces so we don&#39;t collide with 1880-03-14)</span>
-    <span class="n">m_dash</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.+?)\s+[-–]\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_dash</span><span class="p">:</span>
-        <span class="n">left_raw</span> <span class="o">=</span> <span class="n">m_dash</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">right_raw</span> <span class="o">=</span> <span class="n">m_dash</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">left_raw</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">right_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># OPEN-ENDED RANGES (&quot;before X&quot;, &quot;after X&quot;)</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
-
-    <span class="n">m_before</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:before|bef\.?)\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_before</span><span class="p">:</span>
-        <span class="n">tgt_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_before</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span><span class="n">m_before</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="n">tgt</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">tgt_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">tgt</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="n">m_after</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:after|aft\.?)\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m_after</span><span class="p">:</span>
-        <span class="n">tgt_raw</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">m_after</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span><span class="n">m_after</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="n">tgt</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">tgt_raw</span><span class="p">)</span>
-        <span class="n">gx</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tgt</span><span class="si">}</span><span class="s2">/&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span>
-
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Plain simple date</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="n">gx</span> <span class="o">=</span> <span class="n">_parse_simple_to_gx</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="n">gx</span> <span class="k">if</span> <span class="n">approx</span> <span class="k">else</span> <span class="n">gx</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;A</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">is_approx</span> <span class="k">else</span> <span class="n">result</span></div>
 
 
 
-<span class="c1"># ----------------------------------------------------------------------</span>
-<span class="c1"># Helpers</span>
-<span class="c1"># ----------------------------------------------------------------------</span>
-<span class="n">_YEAR_ONLY_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(\d</span><span class="si">{4}</span><span class="s2">)\s*$&quot;</span><span class="p">)</span>
-<span class="n">_YEAR_MONTH_NUM_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(\d</span><span class="si">{4}</span><span class="s2">)[-/](\d{1,2})\s*$&quot;</span><span class="p">)</span>
-<span class="c1"># e.g. &quot;March 1880&quot;, &quot;Mar 1880&quot;</span>
-<span class="n">_MONTH_YEAR_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;^\s*([A-Za-z]{3,9})[\s,]+(\d</span><span class="si">{4}</span><span class="s2">)\s*$&quot;</span>
-<span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_parse_simple_to_gx</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse a single non-range, non-approx string into a GEDCOM X simple date:</span>
-<span class="sd">      +YYYY</span>
-<span class="sd">      +YYYY-MM</span>
-<span class="sd">      +YYYY-MM-DD</span>
-
-<span class="sd">    Uses heuristics to guess precision from the text.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">raw</span> <span class="o">=</span> <span class="n">s</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_simple_to_gx</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a single simple date string into a GedcomX ISO-style component string.&quot;&quot;&quot;</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">GedcomXDateParseError</span><span class="p">(</span><span class="s2">&quot;Empty date part in range&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="c1"># Determine intended precision from the *text* first</span>
-    <span class="n">precision</span> <span class="o">=</span> <span class="n">_infer_precision_from_text</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="c1"># Already in GedcomX/ISO format</span>
+    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[+-]?\d</span><span class="si">{4}</span><span class="s2">(-\d</span><span class="si">{2}</span><span class="s2">(-\d</span><span class="si">{2}</span><span class="s2">)?)?$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">s</span>
 
     <span class="n">dt</span> <span class="o">=</span> <span class="n">_parse_to_datetime</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">GedcomXDateParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not parse date: </span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">year</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">year</span>
-    <span class="k">if</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="c1"># For now we punt on BCE; GEDCOM X supports it, but typical</span>
-        <span class="c1"># libs don&#39;t parse negative/0 years well.</span>
-        <span class="k">raise</span> <span class="n">GedcomXDateParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;BCE or year &lt;= 0 not supported yet: </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">sign</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>
-    <span class="c1"># GEDCOM X wants 4-digit year, left padded</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">_infer_precision_from_text</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">precision</span> <span class="o">==</span> <span class="s2">&quot;year&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sign</span><span class="si">}{</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">elif</span> <span class="n">precision</span> <span class="o">==</span> <span class="s2">&quot;month&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sign</span><span class="si">}{</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># &quot;day&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sign</span><span class="si">}{</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">precision</span> <span class="o">==</span> <span class="s2">&quot;month&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">_infer_precision_from_text</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Best-effort guess of precision: &#39;year&#39;, &#39;month&#39;, or &#39;day&#39;</span>
-<span class="sd">    based on the raw text.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">s_clean</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="c1"># just 4 digits</span>
-    <span class="k">if</span> <span class="n">_YEAR_ONLY_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s_clean</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_infer_precision_from_text</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the date precision level (&#39;year&#39;, &#39;month&#39;, or &#39;day&#39;) implied by the text.&quot;&quot;&quot;</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;year&quot;</span>
-
-    <span class="c1"># pure numeric year-month:  YYYY-MM or YYYY/MM</span>
-    <span class="k">if</span> <span class="n">_YEAR_MONTH_NUM_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s_clean</span><span class="p">):</span>
+    <span class="n">year_only_patterns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">r</span><span class="s2">&quot;^\w+\s+\d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>          <span class="c1"># &quot;Jan 1900&quot; — month+year only</span>
+        <span class="sa">r</span><span class="s2">&quot;^\d{1,2}/\d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>         <span class="c1"># 1/1900</span>
+        <span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">s?$&quot;</span><span class="p">,</span>               <span class="c1"># 1900 or 1900s</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">year_only_patterns</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;month&quot;</span>
-
-    <span class="c1"># &quot;March 1880&quot;, &quot;Mar 1880&quot; etc.</span>
-    <span class="k">if</span> <span class="n">_MONTH_YEAR_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s_clean</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;month&quot;</span>
-
-    <span class="c1"># Default: assume day precision if there&#39;s enough info</span>
     <span class="k">return</span> <span class="s2">&quot;day&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">_parse_to_datetime</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Try dateparser first (if installed), then dateutil, otherwise fail.</span>
-<span class="sd">    Returns a datetime or None.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># dateparser</span>
-    <span class="k">if</span> <span class="n">dateparser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">dateparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
-            <span class="n">s</span><span class="p">,</span>
-            <span class="n">settings</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;PREFER_DAY_OF_MONTH&quot;</span><span class="p">:</span> <span class="s2">&quot;first&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;PREFER_DATES_FROM&quot;</span><span class="p">:</span> <span class="s2">&quot;past&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">dt</span>
-
-    <span class="c1"># dateutil</span>
-    <span class="k">if</span> <span class="n">dateutil_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_to_datetime</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attempt to parse *s* into a datetime using dateutil or dateparser; returns None on failure.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dateutil_parser</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">dateutil_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fuzzy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dateutil_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">pass</span>
-
+    <span class="k">if</span> <span class="n">dateparser</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">dateparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
     <span class="k">return</span> <span class="kc">None</span>
-
 
 
 <div class="viewcode-block" id="date_to_timestamp">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.date.date_to_timestamp">[docs]</a>
-<span class="k">def</span> <span class="nf">date_to_timestamp</span><span class="p">(</span><span class="n">date_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">assume_utc_if_naive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">print_definition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert a date string of various formats into a Unix timestamp.</span>
-
-<span class="sd">    A &quot;timestamp&quot; refers to an instance of time, including values for year, </span>
-<span class="sd">    month, date, hour, minute, second, and timezone.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Handle year ranges like &quot;1894-1912&quot; → pick first year</span>
-    <span class="k">if</span> <span class="s2">&quot;-&quot;</span> <span class="ow">in</span> <span class="n">date_str</span> <span class="ow">and</span> <span class="n">date_str</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">date_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)):</span>
-        <span class="n">date_str</span> <span class="o">=</span> <span class="n">date_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="c1"># Parse date</span>
-    <span class="n">dt</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">date_str</span><span class="p">)</span>
-
-    <span class="c1"># Ensure timezone awareness</span>
-    <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="k">if</span> <span class="n">assume_utc_if_naive</span> <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">astimezone</span><span class="p">()</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span>
-
-    <span class="c1"># Normalize to UTC and compute timestamp</span>
-    <span class="n">dt_utc</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-    <span class="n">epoch</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="p">(</span><span class="n">dt_utc</span> <span class="o">-</span> <span class="n">epoch</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
-
-    <span class="c1"># Create ISO 8601 string with full date/time/timezone</span>
-    <span class="n">full_timestamp_str</span> <span class="o">=</span> <span class="n">dt_utc</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
-
-    
-    <span class="k">return</span> <span class="n">ts</span><span class="p">,</span> <span class="n">full_timestamp_str</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">date_to_timestamp</span><span class="p">(</span><span class="n">date_obj</span><span class="p">:</span> <span class="n">Date</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a Date object to a Python datetime by parsing its formal or original value.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">date_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;formal&quot;</span><span class="p">,</span> <span class="s2">&quot;original&quot;</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">date_obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">_parse_to_datetime</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">dt</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
 
 </pre></div>
         </article>

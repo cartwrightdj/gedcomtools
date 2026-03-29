@@ -197,6 +197,8 @@ fact_event_table = {
 }
 
 class GedcomXObject:
+    """Base wrapper capturing the GEDCOM5 record that spawned a GedcomX object."""
+
     def __init__(self,record: Gedcom5xRecord) -> None:
         self.record = record
         self.created_with_tag: str | None = record.tag if record and isinstance(record, Gedcom5xRecord) else None
@@ -204,6 +206,8 @@ class GedcomXObject:
         self.created_at_line_number: int | None = record.line if record and isinstance(record, Gedcom5xRecord) else None
 
 class GedcomXSourceOrDocument(GedcomXObject):
+    """Accumulates metadata fields for a GEDCOM SOUR or OBJE record before creating a SourceDescription."""
+
     def __init__(self,record: Gedcom5xRecord) -> None:
         super().__init__(record)
         self.title: str | None = None
@@ -224,6 +228,8 @@ class GedcomXSourceOrDocument(GedcomXObject):
         self.description: str | None = None
 
 class GedcomXEventOrFact(GedcomXObject):
+    """Factory that returns the correct Fact or Event instance for a GEDCOM5 tag."""
+
     def __new__(cls,record: Gedcom5xRecord, _object_stack: dict | None = None) -> object:
         if record.tag in fact_event_table:
 
@@ -239,4 +245,5 @@ class GedcomXEventOrFact(GedcomXObject):
         raise ValueError(f"{record.tag} not found in map")
 
 class GedcomXRelationshipBuilder(GedcomXObject):
+    """Placeholder builder for constructing complex GEDCOM relationship structures."""
     pass

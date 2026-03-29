@@ -238,6 +238,7 @@ _COMMANDS = {
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Run the command-line entry point."""
     args = (argv if argv is not None else sys.argv)[1:]
     if not args or args[0] in ("-h", "--help"):
         print(__doc__)

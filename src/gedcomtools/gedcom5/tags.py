@@ -6,6 +6,8 @@
 #  Purpose: GEDCOM 5.x tag constants and definitions
 #  Created: 2026-01-01
 # ======================================================================
+"""Constants and tag metadata used throughout GEDCOM 5.x parsing."""
+
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)

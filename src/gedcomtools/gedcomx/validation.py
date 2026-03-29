@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/validation.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX validation helpers: ValidationIssue, ValidationResult, and field-check utilities
+
+ Created: 2025-10-01
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 # Validation result types and shared helpers for GedcomX model validation.
@@ -40,12 +51,15 @@ class ValidationResult:
     # ── helpers ────────────────────────────────────────────────────────────────
 
     def error(self, path: str, message: str) -> None:
+        """Append an error-severity ValidationIssue for the given field path."""
         self.issues.append(ValidationIssue("error", path, message))
 
     def warn(self, path: str, message: str) -> None:
+        """Append a warning-severity ValidationIssue for the given field path."""
         self.issues.append(ValidationIssue("warning", path, message))
 
     def merge(self, other: "ValidationResult", prefix: str = "") -> None:
+        """Merge issues from *other* into this result, prepending *prefix* to each path."""
         for issue in other.issues:
             full = f"{prefix}.{issue.path}" if issue.path else prefix
             self.issues.append(ValidationIssue(issue.severity, full, issue.message))
@@ -54,14 +68,17 @@ class ValidationResult:
 
     @property
     def is_valid(self) -> bool:
+        """Return True when there are no error-severity issues."""
         return not any(i.severity == "error" for i in self.issues)
 
     @property
     def errors(self) -> list[ValidationIssue]:
+        """Return only the error-severity issues."""
         return [i for i in self.issues if i.severity == "error"]
 
     @property
     def warnings(self) -> list[ValidationIssue]:
+        """Return only the warning-severity issues."""
         return [i for i in self.issues if i.severity == "warning"]
 
     def __bool__(self) -> bool:

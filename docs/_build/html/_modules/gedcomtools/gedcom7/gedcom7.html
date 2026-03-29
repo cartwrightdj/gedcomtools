@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.gedcom7 - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -247,6 +247,7 @@
 <span class="sd">                 imported models layer; get_parents/get_children_of/get_spouses</span>
 <span class="sd">                 relationship traversal helpers</span>
 <span class="sd">   - 2026-03-16: import updated GedcomStructure.py → structure.py</span>
+<span class="sd">   - 2026-03-24: added to_gedcomx() conversion helper</span>
 <span class="sd">======================================================================</span>
 
 <span class="sd">This module parses GEDCOM 7 files into an in-memory tree and exposes</span>
@@ -268,19 +269,19 @@
 <span class="sd">Sphinx Napoleon.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 
-<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">specification</span> <span class="k">as</span> <span class="n">g7specs</span>
-<span class="kn">from</span> <span class="nn">.validator</span> <span class="kn">import</span> <span class="n">GedcomValidator</span>
-<span class="kn">from</span> <span class="nn">.writer</span> <span class="kn">import</span> <span class="n">Gedcom7Writer</span>
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">GedcomParseError</span>
-<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">specification</span> <span class="k">as</span> <span class="n">g7specs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.validator</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom7Writer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomParseError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IndividualDetail</span><span class="p">,</span> <span class="n">FamilyDetail</span><span class="p">,</span> <span class="n">SourceDetail</span><span class="p">,</span> <span class="n">RepositoryDetail</span><span class="p">,</span>
     <span class="n">MediaDetail</span><span class="p">,</span> <span class="n">SharedNoteDetail</span><span class="p">,</span> <span class="n">SubmitterDetail</span><span class="p">,</span>
     <span class="n">individual_detail</span><span class="p">,</span> <span class="n">family_detail</span><span class="p">,</span> <span class="n">source_detail</span><span class="p">,</span> <span class="n">repository_detail</span><span class="p">,</span>
@@ -291,7 +292,7 @@
 <div class="viewcode-block" id="GedcomValidationError">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.GedcomValidationError">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">GedcomValidationError</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomValidationError</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a validation problem.</span>
 
 <span class="sd">    Attributes:</span>
@@ -312,12 +313,12 @@
 
 <div class="viewcode-block" id="Gedcom7">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7">[docs]</a>
-<span class="k">class</span> <span class="nc">Gedcom7</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Gedcom7</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse and validate GEDCOM 7 files.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="Gedcom7.__init__">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the parser.</span>
 
 <span class="sd">        Args:</span>
@@ -333,7 +334,7 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_norm_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_norm_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize a GEDCOM tag.</span>
 
 <span class="sd">        Args:</span>
@@ -344,7 +345,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_append_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_append_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Append a top-level record.</span>
 
 <span class="sd">        Args:</span>
@@ -353,7 +354,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_rebuild_tag_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_tag_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild the tag index from the current records list.</span>
 
 <span class="sd">        Call this after any direct mutation of ``self.records`` (e.g. pop or</span>
@@ -363,15 +364,15 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">record</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of top-level records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over top-level records.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether a tag or record exists.</span>
 
 <span class="sd">        Args:</span>
@@ -381,7 +382,16 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_norm_tag</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_index</span>
         <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GedcomStructure</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]]:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]]:</span>
@@ -415,7 +425,7 @@
 <div class="viewcode-block" id="Gedcom7.parse_gedcom_line">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_gedcom_line">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">parse_gedcom_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_gedcom_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one GEDCOM line into normalized fields.</span>
 
 <span class="sd">        Args:</span>
@@ -438,7 +448,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid GEDCOM level: </span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid GEDCOM level: </span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
         <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GEDCOM level must be non-negative, got </span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
@@ -473,7 +483,7 @@
         <span class="p">}</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_handle_schema_registration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_schema_registration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Register extension tags defined under ``HEAD.SCHMA.TAG``.</span>
 
 <span class="sd">        Args:</span>
@@ -495,7 +505,7 @@
 
 <div class="viewcode-block" id="Gedcom7.loadfile">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.loadfile">[docs]</a>
-    <span class="k">def</span> <span class="nf">loadfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">loadfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and parse a GEDCOM file.</span>
 
 <span class="sd">        Args:</span>
@@ -508,15 +518,21 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">handle</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot open file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot open file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="k">with</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parse_lines</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parse_lines</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> is not valid UTF-8. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 requires UTF-8 encoding. (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.parse_string">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_string">[docs]</a>
-    <span class="k">def</span> <span class="nf">parse_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse GEDCOM 7 content from a string.</span>
 
 <span class="sd">        This resets any previously loaded data.  Useful for testing or</span>
@@ -534,7 +550,7 @@
 
 <div class="viewcode-block" id="Gedcom7.parse_lines">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_lines">[docs]</a>
-    <span class="k">def</span> <span class="nf">parse_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse GEDCOM 7 content from an iterable of raw lines.</span>
 
 <span class="sd">        This resets any previously loaded data.</span>
@@ -648,7 +664,7 @@
 
 <div class="viewcode-block" id="Gedcom7.validate">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.validate">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomValidationError</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomValidationError</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the loaded GEDCOM tree.</span>
 
 <span class="sd">        Returns:</span>
@@ -660,7 +676,7 @@
 <span class="sd">        instead of running the full validator (which would produce</span>
 <span class="sd">        thousands of false positives on GEDCOM 5.x files).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">_re</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_re</span>
         <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect_gedcom_version</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^7\.&quot;</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
             <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;GEDCOM </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">version</span> <span class="k">else</span> <span class="s2">&quot;unknown version&quot;</span>
@@ -695,7 +711,7 @@
 
 <div class="viewcode-block" id="Gedcom7.detect_gedcom_version">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.detect_gedcom_version">[docs]</a>
-    <span class="k">def</span> <span class="nf">detect_gedcom_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_gedcom_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GEDCOM version declared in ``HEAD.GEDC.VERS``.</span>
 
 <span class="sd">        Returns:</span>
@@ -720,7 +736,7 @@
 
 <div class="viewcode-block" id="Gedcom7.write">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.write">[docs]</a>
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
@@ -742,10 +758,10 @@
     <span class="c1"># Internal helpers</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span> <span class="nf">_records_by_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_records_by_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_record_by_xref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_record_by_xref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">xref</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
             <span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span>
@@ -759,98 +775,98 @@
 
 <div class="viewcode-block" id="Gedcom7.individuals">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individuals">[docs]</a>
-    <span class="k">def</span> <span class="nf">individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every INDI record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_individual">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_individual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_individual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single INDI by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.families">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.families">[docs]</a>
-    <span class="k">def</span> <span class="nf">families</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">families</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every FAM record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_family">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_family</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_family</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single FAM by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.sources">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.sources">[docs]</a>
-    <span class="k">def</span> <span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SOUR record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_source">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SOUR by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.repositories">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repositories">[docs]</a>
-    <span class="k">def</span> <span class="nf">repositories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">repositories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every REPO record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_repository">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single REPO by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.media_objects">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_objects">[docs]</a>
-    <span class="k">def</span> <span class="nf">media_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">media_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every OBJE record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_media">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single OBJE by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.shared_notes">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_notes">[docs]</a>
-    <span class="k">def</span> <span class="nf">shared_notes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shared_notes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SNOTE record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_shared_note">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_shared_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_shared_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SNOTE by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.submitters">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitters">[docs]</a>
-    <span class="k">def</span> <span class="nf">submitters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submitters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every SUBM record as a raw :class:`GedcomStructure`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_submitter">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_submitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_submitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the raw :class:`GedcomStructure` for a single SUBM by xref.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span></div>
 
@@ -861,14 +877,14 @@
 
 <div class="viewcode-block" id="Gedcom7.individual_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.individual_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">individual_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">individual_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`IndividualDetail` for every INDI record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_individual_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_individual_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_individual_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_individual_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`IndividualDetail` for a single INDI by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;INDI&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">individual_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -876,14 +892,14 @@
 
 <div class="viewcode-block" id="Gedcom7.family_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.family_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">family_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">family_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`FamilyDetail` for every FAM record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">family_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_family_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_family_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_family_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_family_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FamilyDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`FamilyDetail` for a single FAM by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;FAM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">family_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -891,14 +907,14 @@
 
 <div class="viewcode-block" id="Gedcom7.source_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.source_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">source_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">source_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SourceDetail` for every SOUR record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">source_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_source_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_source_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_source_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_source_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SourceDetail` for a single SOUR by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">source_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -906,14 +922,14 @@
 
 <div class="viewcode-block" id="Gedcom7.repository_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.repository_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">repository_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">repository_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`RepositoryDetail` for every REPO record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">repository_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_repository_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_repository_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_repository_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_repository_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RepositoryDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`RepositoryDetail` for a single REPO by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">repository_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -921,14 +937,14 @@
 
 <div class="viewcode-block" id="Gedcom7.media_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.media_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">media_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">media_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`MediaDetail` for every OBJE record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">media_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_media_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_media_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_media_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_media_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MediaDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`MediaDetail` for a single OBJE by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">media_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -936,14 +952,14 @@
 
 <div class="viewcode-block" id="Gedcom7.shared_note_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.shared_note_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">shared_note_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shared_note_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SharedNoteDetail` for every SNOTE record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">shared_note_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_shared_note_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_shared_note_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_shared_note_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_shared_note_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SharedNoteDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SharedNoteDetail` for a single SNOTE by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">shared_note_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
@@ -951,17 +967,37 @@
 
 <div class="viewcode-block" id="Gedcom7.submitter_details">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.submitter_details">[docs]</a>
-    <span class="k">def</span> <span class="nf">submitter_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submitter_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SubmitterDetail` for every SUBM record.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">submitter_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records_by_tag</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_submitter_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_submitter_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_submitter_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_submitter_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubmitterDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return :class:`SubmitterDetail` for a single SUBM by xref.&quot;&quot;&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_by_xref</span><span class="p">(</span><span class="s2">&quot;SUBM&quot;</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">submitter_detail</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.resolve_subm">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.resolve_subm">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_subm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve a SUBM xref pointer to a human-readable name.</span>
+
+<span class="sd">        Returns the submitter&#39;s NAME value, or the raw *xref* string if the</span>
+<span class="sd">        record cannot be found or has no name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            xref: Xref id, e.g. ``&quot;@S1@&quot;`` or ``&quot;S1&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">xref</span> <span class="o">=</span> <span class="n">xref</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">xref</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">):</span>
+            <span class="n">xref</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;@</span><span class="si">{</span><span class="n">xref</span><span class="si">}</span><span class="s2">@&quot;</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_submitter_detail</span><span class="p">(</span><span class="n">xref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">detail</span> <span class="ow">and</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">detail</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">return</span> <span class="n">xref</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -970,7 +1006,7 @@
 
 <div class="viewcode-block" id="Gedcom7.get_parents">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the parents of an individual as raw records.</span>
 
 <span class="sd">        Walks FAMC → FAM → HUSB/WIFE.</span>
@@ -1002,7 +1038,7 @@
 
 <div class="viewcode-block" id="Gedcom7.get_children_of">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_of">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_children_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_children_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the children of an individual as raw records.</span>
 
 <span class="sd">        Walks FAMS → FAM → CHIL.</span>
@@ -1033,7 +1069,7 @@
 
 <div class="viewcode-block" id="Gedcom7.get_spouses">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_spouses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_spouses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the spouses of an individual as raw records.</span>
 
 <span class="sd">        For each FAMS family, returns the other HUSB or WIFE record.</span>
@@ -1071,28 +1107,102 @@
 
 <div class="viewcode-block" id="Gedcom7.get_parents_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_parents_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_parents_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parents_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return parents as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parents</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_children_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_children_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_children_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_children_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return children as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children_of</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.get_spouses_detail">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.get_spouses_detail">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_spouses_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_spouses_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indi_xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">IndividualDetail</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return spouses as :class:`IndividualDetail` snapshots.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">individual_detail</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spouses</span><span class="p">(</span><span class="n">indi_xref</span><span class="p">)]</span></div>
 
 
+<div class="viewcode-block" id="Gedcom7.to_gedcomx">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.to_gedcomx">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gedcomx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert this GEDCOM 7 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance populated</span>
+<span class="sd">            from this file&#39;s records.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            g7 = Gedcom7(&quot;family.ged&quot;)</span>
+<span class="sd">            gx = g7.to_gedcomx()</span>
+<span class="sd">            with open(&quot;family.json&quot;, &quot;wb&quot;) as f:</span>
+<span class="sd">                f.write(gx.json)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.g7togx</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom7Converter</span>
+        <span class="k">return</span> <span class="n">Gedcom7Converter</span><span class="p">()</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.gml">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.gml">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gml</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the family graph as a GML string.</span>
+
+<span class="sd">        Converts this GEDCOM 7 file to GedcomX and serializes it to GML</span>
+<span class="sd">        (Graph Modelling Language) suitable for Gephi, yEd, and NetworkX.</span>
+
+<span class="sd">        Strings are encoded per the Himsolt 1997 GML spec: ``&amp;quot;`` for</span>
+<span class="sd">        embedded double-quotes, ``&amp;amp;`` for ampersands, ``&amp;#NNN;`` for</span>
+<span class="sd">        non-ASCII and control characters.  Backslash has no special meaning</span>
+<span class="sd">        in GML and is passed through unchanged.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            GML content as a :class:`str`.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            g7 = Gedcom7(&quot;family.ged&quot;)</span>
+<span class="sd">            print(g7.gml())</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gedcomx</span><span class="p">()</span><span class="o">.</span><span class="n">gml</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.write_gml">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.write_gml">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_gml</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the family graph to a GML file.</span>
+
+<span class="sd">        Converts this GEDCOM 7 file to GedcomX and writes it as GML</span>
+<span class="sd">        (Graph Modelling Language) using an atomic write via a temporary</span>
+<span class="sd">        file so a failed write never corrupts the destination.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path: Destination path.  Parent directory must exist.</span>
+<span class="sd">            encoding: File encoding (default UTF-8).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If the parent directory does not exist.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            g7 = Gedcom7(&quot;family.ged&quot;)</span>
+<span class="sd">            g7.write_gml(&quot;family.gml&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..gedcomx.gml</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXGmlExporter</span>
+        <span class="n">GedcomXGmlExporter</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_gedcomx</span><span class="p">(),</span> <span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Gedcom7.to_dict">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.to_dict">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the full GEDCOM file into a serializable dictionary.</span>
 
 <span class="sd">        Returns:</span>

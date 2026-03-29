@@ -6,6 +6,8 @@
 #  Purpose: Helper utilities for GEDCOM 5.x parsing and element handling
 #  Created: 2026-01-01
 # ======================================================================
+"""Shared helper functions for GEDCOM 5.x parsing and record traversal."""
+
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)

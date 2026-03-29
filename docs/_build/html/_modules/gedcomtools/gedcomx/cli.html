@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.cli - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -241,17 +241,16 @@
 
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">get_origin</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">SCHEMA</span>   <span class="c1"># adjust as needed</span>
-<span class="kn">from</span> <span class="nn">.serialization</span> <span class="kn">import</span> <span class="n">Serialization</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">get_origin</span>
 
-
-<span class="kn">from</span> <span class="nn">gedcomtools.glog</span> <span class="kn">import</span> <span class="n">setup_logging</span><span class="p">,</span> <span class="n">get_logger</span> 
+<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCHEMA</span>   <span class="c1"># adjust as needed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serialization</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">_is_collection_type</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_collection_type</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decide if a schema field type represents a collection (list/set/tuple).</span>
 <span class="sd">    Works with both real types and string-encoded types from Schema.</span>
@@ -264,7 +263,7 @@
     <span class="k">return</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_value_to_str</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_value_to_str</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort stringifier for your GedcomX-style objects.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -275,13 +274,13 @@
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_collection_to_str</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_collection_to_str</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_value_to_str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="objects_to_schema_table">
 <a class="viewcode-back" href="../../../api/cli.html#gedcomtools.gedcomx.cli.objects_to_schema_table">[docs]</a>
-<span class="k">def</span> <span class="nf">objects_to_schema_table</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">objects_to_schema_table</span><span class="p">(</span>
     <span class="n">objs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">include</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -338,15 +337,15 @@
         <span class="n">table_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
     <span class="c1"># Column headers</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">]</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">field_names</span><span class="p">)</span>
 
     <span class="c1"># Compute column widths</span>
     <span class="n">col_widths</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">col_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)):</span>
-        <span class="n">col_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">headers</span><span class="p">[</span><span class="n">col_idx</span><span class="p">]]</span> <span class="o">+</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">col_idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">col_idx</span><span class="p">,</span> <span class="n">header</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">headers</span><span class="p">):</span>
+        <span class="n">col_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">col_idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="p">]</span>
         <span class="n">col_widths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">col_vals</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">fmt_row</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fmt_row</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">col_widths</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)))</span>
 
     <span class="c1"># Build final table string</span>
@@ -361,7 +360,7 @@
 
 <div class="viewcode-block" id="write_jsonl">
 <a class="viewcode-back" href="../../../api/cli.html#gedcomtools.gedcomx.cli.write_jsonl">[docs]</a>
-<span class="k">def</span> <span class="nf">write_jsonl</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_jsonl</span><span class="p">(</span>
     <span class="n">top_level_collection</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">,</span>
     <span class="n">output_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -387,9 +386,9 @@
 
     <span class="k">if</span> <span class="n">output_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Overwriting existing file: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Overwriting existing file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">append</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Appending to existing file: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Appending to existing file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output file already exists: </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">. Use overwrite=True or append=True.&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -404,7 +403,7 @@
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Wrote </span><span class="si">%d</span><span class="s2"> records to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Wrote </span><span class="si">{}</span><span class="s2"> records to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">count</span></div>
 
 </pre></div>

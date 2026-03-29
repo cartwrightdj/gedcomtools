@@ -135,6 +135,7 @@ class Shell:
     # ------------------------------------------------------------------
 
     def run(self, initial_file: Optional[str] = None) -> None:
+        """Run the interactive shell loop."""
         print(f"g7cli {_VERSION}  —  GEDCOM 7 browser/editor  —  type 'help' or '?' for commands")
         if initial_file:
             self._do_load(initial_file)
@@ -675,6 +676,7 @@ class Shell:
 # ---------------------------------------------------------------------------
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Run the command-line entry point."""
     args = (argv if argv is not None else sys.argv)[1:]
     shell = Shell()
     shell.run(initial_file=args[0] if args else None)

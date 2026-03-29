@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/person.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Person model with facts, names, gender, and display helpers
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from typing import Any, ClassVar, List, Optional
@@ -44,6 +55,7 @@ class Person(Subject):
             check_instance(result, f"facts[{i}]", f_, Fact)
 
     def add_fact(self, fact_to_add: Fact) -> bool:
+        """Add a Fact to this person, skipping duplicates.  Returns True if the fact was added."""
         if fact_to_add and isinstance(fact_to_add, Fact):
             for current in self.facts:
                 if fact_to_add == current:
@@ -53,6 +65,7 @@ class Person(Subject):
         return False
 
     def add_name(self, name_to_add: Name) -> bool:
+        """Add a Name to this person, skipping duplicates.  Returns True if the name was added."""
         if name_to_add and isinstance(name_to_add, Name):
             for current in self.names:
                 if name_to_add == current:
@@ -69,28 +82,51 @@ class Person(Subject):
             raise ValueError("Expected a Relationship instance")
 
     def display(self) -> dict:
+        """Return a display-summary dict with name, gender, lifespan, birth date, and death date."""
         try:
             name_text = self.names[0].nameForms[0].fullText
         except (IndexError, AttributeError):
             name_text = None
+
+        birth_date: Optional[str] = None
+        death_date: Optional[str] = None
+        for fact in self.facts:
+            if fact.type == FactType.Birth and fact.date:
+                birth_date = fact.date.original
+            elif fact.type == FactType.Death and fact.date:
+                death_date = fact.date.original
+
+        if birth_date and death_date:
+            lifespan = f"{birth_date}-{death_date}"
+        elif birth_date:
+            lifespan = f"{birth_date}-"
+        elif death_date:
+            lifespan = f"-{death_date}"
+        else:
+            lifespan = None
+
         return {
-            "ascendancyNumber": "1",
-            "deathDate": "from 2001 to 2005",
-            "descendancyNumber": "1",
-            "gender": self.gender.type if self.gender else "Unknown",
-            "lifespan": "-2005",
+            "ascendancyNumber": None,
+            "deathDate": death_date,
+            "descendancyNumber": None,
+            "gender": self.gender.type if self.gender else None,
+            "lifespan": lifespan,
             "name": name_text,
         }
 
     @property
     def name(self) -> str | None:
+        """Return the full text of the primary name form, or None if unavailable."""
         try:
             return self.names[0].nameForms[0].fullText
-        except (IndexError, AttributeError):
+        except (IndexError, AttributeError) as e:
+            log.debug("Person {}: .name unavailable — {}", self.id, e)
             return None
 
 
 class QuickPerson:
+    """Convenience factory: ``QuickPerson("Jane Doe", dob="1900")`` returns a fully constructed Person."""
+
     def __new__(  # type: ignore[misc]
         cls,
         name: str,

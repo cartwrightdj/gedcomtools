@@ -39,6 +39,7 @@ from .exceptions import GedcomParseError
 
 
 def main() -> None:
+    """Run the command-line entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(

@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/subject.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Subject base class: extracted flag, identifiers, evidence, and media references
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from typing import List, Optional
@@ -14,6 +25,8 @@ log = get_logger(__name__)
 
 
 class Subject(Conclusion):
+    """A conclusion that identifies a genealogical entity (person, event, place, group, relationship)."""
+
     identifier = "http://gedcomx.org/v1/Subject"
     version = "http://gedcomx.org/conceptual-model/v1"
 
@@ -38,6 +51,7 @@ class Subject(Conclusion):
             check_instance(result, f"media[{i}]", m, SourceReference)
 
     def add_identifier(self, identifier_to_add: Identifier) -> None:
+        """Add an Identifier to this subject's identifier list if not already present."""
         if not isinstance(identifier_to_add, Identifier):
             raise ValueError("add_identifier requires an Identifier instance")
         if not self.identifiers.contains(identifier_to_add):

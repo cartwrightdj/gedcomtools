@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.zip - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -237,27 +237,39 @@
 <span class="sd"> Purpose: Read and write Gedcom-X ZIP file packages with manifest and resource entries</span>
 
 <span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
+<span class="sd"> Updated: 2026-03-27 — manifest writing, read() classmethod</span>
+<span class="sd">          2026-03-29 — GedcomX objects now written as genealogy.json (not</span>
+<span class="sd">                        tree.json); collisions produce genealogy2.json, etc.;</span>
+<span class="sd">                        _arcnames set tracks all written entries to prevent</span>
+<span class="sd">                        duplicate zip entries across all object types</span>
+<span class="sd">                      — non-GedcomX objects with a path-based _uri are written</span>
+<span class="sd">                        under the corresponding directory (e.g. persons/P1.json);</span>
+<span class="sd">                        _unique_arcname handles collision suffix for both flat</span>
+<span class="sd">                        and path-based names</span>
 
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">zipfile</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span> <span class="nn">.gedcomx</span> <span class="kn">import</span> <span class="n">GedcomX</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">SCHEMA</span>
-<span class="kn">from</span> <span class="nn">.serialization</span> <span class="kn">import</span> <span class="n">Serialization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCHEMA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serialization</span>
 
 <span class="n">GX_MANIFEST_FILE_NAME</span> <span class="o">=</span> <span class="s2">&quot;META-INF/MANIFEST.MF&quot;</span>
+<span class="n">GX_CONFORMSTO</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/file/v1&quot;</span>
+<span class="n">GX_CONTENT_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/x-gedcomx-v1+json&quot;</span>
 
 
 <div class="viewcode-block" id="GedcomHeaderField">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomHeaderField">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomHeaderField</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomHeaderField</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A key/value pair used in MANIFEST.MF entries.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span></div>
 
@@ -265,19 +277,20 @@
 
 <span class="n">X_DC_CONFORMSTO_FIELD</span> <span class="o">=</span> <span class="n">GedcomHeaderField</span><span class="p">(</span>
     <span class="n">key</span><span class="o">=</span><span class="s2">&quot;X-DC-conformsTo&quot;</span><span class="p">,</span>
-    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;http://gedcomx.org/file/v1&quot;</span><span class="p">,</span>
+    <span class="n">value</span><span class="o">=</span><span class="n">GX_CONFORMSTO</span><span class="p">,</span>
 <span class="p">)</span>
 
 
 <div class="viewcode-block" id="GedcomResource">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomResource">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomResource</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomResource</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a single resource entry in a GedcomX ZIP manifest.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GedcomHeaderField</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># placeholder for future use</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">[]</span></div>
 
@@ -285,130 +298,288 @@
 
 <div class="viewcode-block" id="GedcomManifest">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomManifest">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomManifest</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># placeholder for future use</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GedcomResource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds and renders the ``META-INF/MANIFEST.MF`` content for a GedcomX ZIP package.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GedcomResource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="GedcomManifest.add">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomManifest.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">GX_CONTENT_TYPE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a resource entry at *path* with the given content-type header.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GedcomResource</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="p">[</span>
+            <span class="n">GedcomHeaderField</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="n">content_type</span><span class="p">),</span>
+            <span class="n">GedcomHeaderField</span><span class="p">(</span><span class="s2">&quot;X-DC-conformsTo&quot;</span><span class="p">,</span> <span class="n">GX_CONFORMSTO</span><span class="p">),</span>
+        <span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="GedcomManifest.render">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomManifest.render">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Render as a MANIFEST.MF-style text block.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;Manifest-Version: 1.0&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;X-DC-conformsTo: </span><span class="si">{</span><span class="n">GX_CONFORMSTO</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="GedcomZip">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomZip</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomZip</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read and write GedcomX ZIP file packages with a MANIFEST.MF and JSON resource entries.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="GedcomZip.__init__">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize a zipfile.</span>
+<span class="sd">        Open a new GedcomX ZIP archive for writing.</span>
 
 <span class="sd">        If `path` is provided:</span>
-<span class="sd">            - Ensure directory exists or can be created</span>
-<span class="sd">            - Use that path as the zip location</span>
-<span class="sd">            - If any error occurs, fall back to a safe temp file</span>
+<span class="sd">            - The path is resolved to an absolute path to prevent traversal attacks.</span>
+<span class="sd">            - The parent directory is created only if it is a direct child of an</span>
+<span class="sd">              existing directory (no recursive ``parents=True`` on untrusted input).</span>
+<span class="sd">            - Raises ``ValueError`` for paths that contain ``..`` components.</span>
+<span class="sd">            - Raises ``OSError`` if the directory cannot be created.</span>
 <span class="sd">        If `path` is None:</span>
-<span class="sd">            - Always create a zip in the system temp directory</span>
+<span class="sd">            - Creates a zip in the system temp directory.</span>
 
 <span class="sd">        Result:</span>
 <span class="sd">            self.path  -&gt; Path to the zip file</span>
 <span class="sd">            self.zip   -&gt; zipfile.ZipFile instance (write mode)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_zip_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="p">:</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="p">:</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span>  <span class="c1"># pylint: disable=consider-using-with</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
             <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span>
             <span class="n">compression</span><span class="o">=</span><span class="n">zipfile</span><span class="o">.</span><span class="n">ZIP_DEFLATED</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span> <span class="o">=</span> <span class="n">GedcomManifest</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
 
 
     <span class="c1"># ────────────────────────────────────────────────</span>
     <span class="c1"># Internal helpers</span>
     <span class="c1"># ────────────────────────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_resolve_zip_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_entry_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize a ZIP JSON entry to the collection-shaped form expected by GedcomX.from_dict().&quot;&quot;&quot;</span>
+        <span class="n">top_level_keys</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;persons&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;relationships&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;agents&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;events&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;documents&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;places&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;groups&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">top_level_keys</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">normalized</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">normalized</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unique_arcname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``base.json``, deduplicating on collision.</span>
+
+<span class="sd">        For flat names (``genealogy``)  → ``genealogy.json``, ``genealogy2.json``, …</span>
+<span class="sd">        For path names (``persons/P1``) → ``persons/P1.json``, ``persons/P1_2.json``, …</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">.json&quot;</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">base</span><span class="p">:</span>
+            <span class="n">dir_part</span><span class="p">,</span> <span class="n">name_part</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">candidate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dir_part</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">name_part</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">.json&quot;</span>
+                <span class="k">if</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">candidate</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">candidate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">n</span><span class="si">}</span><span class="s2">.json&quot;</span>
+                <span class="k">if</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">candidate</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_zip_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_temp_zip_path</span><span class="p">()</span>
 
         <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Ensure directory exists</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="c1"># ZipFile(..., &quot;w&quot;) will create/truncate this path</span>
-            <span class="k">return</span> <span class="n">p</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="c1"># Fall back safely to temp</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_temp_zip_path</span><span class="p">()</span>
+        <span class="c1"># Reject any path containing &quot;..&quot; components before resolving</span>
+        <span class="k">if</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Path traversal detected in zip path: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;Use an absolute path or a path without &#39;..&#39; components.&quot;</span>
+            <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_create_temp_zip_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="c1"># Resolve to absolute to catch symlink-based traversal</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+        <span class="c1"># Create the immediate parent directory if it doesn&#39;t exist.</span>
+        <span class="c1"># We intentionally do NOT use parents=True to avoid creating an</span>
+        <span class="c1"># arbitrary directory tree from untrusted input.</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">p</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_temp_zip_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="n">fd</span><span class="p">,</span> <span class="n">temp_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;gedcomx_&quot;</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>  <span class="c1"># We only want the path; ZipFile will reopen it</span>
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
 
     <span class="c1"># ────────────────────────────────────────────────</span>
-    <span class="c1"># Public API</span>
+    <span class="c1"># Public API — write</span>
     <span class="c1"># ────────────────────────────────────────────────</span>
 <div class="viewcode-block" id="GedcomZip.add_object_as_resource">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.add_object_as_resource">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_object_as_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_object_as_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        If `obj` is a top-level schema object, serialize it and</span>
-<span class="sd">        store it as JSON inside the zip.</span>
+<span class="sd">        Serialize *obj* and store it as a JSON entry inside the zip.</span>
 
-<span class="sd">        Returns the internal archive name (arcname) on success,</span>
-<span class="sd">        or None if the object is not a top-level type.</span>
+<span class="sd">        - If *obj* is a ``GedcomX`` instance it is written as ``genealogy.json``</span>
+<span class="sd">          and the method returns immediately — no second serialization pass.</span>
+<span class="sd">        - For any other registered top-level type, the entry is named after</span>
+<span class="sd">          the object&#39;s ``id`` or class name.</span>
+<span class="sd">        - Returns the internal archive name on success, or ``None`` if *obj*</span>
+<span class="sd">          is not a recognised top-level type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span><span class="n">GedcomX</span><span class="p">):</span>
-            <span class="n">arcname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;tree.json&quot;</span>
-            
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">GedcomX</span><span class="p">):</span>
+            <span class="n">arcname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_arcname</span><span class="p">(</span><span class="s2">&quot;genealogy&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">writestr</span><span class="p">(</span><span class="n">arcname</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arcname</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arcname</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arcname</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">SCHEMA</span><span class="p">,</span> <span class="s2">&quot;is_toplevel_obj&quot;</span><span class="p">):</span>
-            <span class="c1"># fallback: treat as top-level if its class name is registered as toplevel</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">is_toplevel</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
-                <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">is_toplevel_obj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">is_toplevel</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">class_name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;s&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">class_name</span><span class="p">:</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span>
 
-        <span class="c1"># Prefer a URI-based filename, but sanitize it</span>
-        <span class="n">uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">class_name</span>
-        <span class="n">safe_uri</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="n">arcname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">safe_uri</span><span class="si">}</span><span class="s2">.json&quot;</span>
+        <span class="n">uri_obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">uri_obj</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">uri_obj</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">dir_part</span> <span class="o">=</span> <span class="n">uri_obj</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">name_part</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uri_obj</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">class_name</span><span class="p">)</span>
+            <span class="n">safe_name</span> <span class="o">=</span> <span class="n">name_part</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="n">arcname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_arcname</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dir_part</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">safe_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="nb">str</span><span class="p">((</span><span class="nb">getattr</span><span class="p">(</span><span class="n">uri_obj</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">uri_obj</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+                       <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">class_name</span><span class="p">)</span>
+            <span class="n">safe_base</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="n">arcname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_arcname</span><span class="p">(</span><span class="n">safe_base</span><span class="p">)</span>
 
-        <span class="c1"># Add resource to zip as JSON</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">writestr</span><span class="p">(</span><span class="n">arcname</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-
-        <span class="c1"># Optional debug:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ZIP path:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Wrote entry:&quot;</span><span class="p">,</span> <span class="n">arcname</span><span class="p">)</span>
-        <span class="c1">#print(&quot;Data:&quot;, data)</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arcname</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arcnames</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arcname</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">arcname</span></div>
+
+
+<div class="viewcode-block" id="GedcomZip.write_manifest">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.write_manifest">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write ``META-INF/MANIFEST.MF`` based on all added resources.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">writestr</span><span class="p">(</span><span class="n">GX_MANIFEST_FILE_NAME</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="o">.</span><span class="n">render</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="GedcomZip.close">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.close">[docs]</a>
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Close the underlying zip file if it&#39;s still open.</span>
-<span class="sd">        Safe to call multiple times.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the manifest and close the zip.  Safe to call multiple times.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;zip&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># zipfile.ZipFile uses .fp to track open/closed</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">fp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write_manifest</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ────────────────────────────────────────────────</span>
+    <span class="c1"># Public API — read</span>
+    <span class="c1"># ────────────────────────────────────────────────</span>
+<div class="viewcode-block" id="GedcomZip.read">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.read">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GedcomX</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read a GedcomX ZIP archive and return a merged ``GedcomX`` instance.</span>
+
+<span class="sd">        Looks for all ``.json`` entries (excluding the manifest), deserializes</span>
+<span class="sd">        each one, and merges them into a single ``GedcomX`` object.  The primary</span>
+<span class="sd">        entry ``genealogy.json`` is processed first.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If *path* does not exist.</span>
+<span class="sd">            ValueError:        If no GedcomX JSON entries are found in the archive.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+
+            <span class="c1"># Process genealogy.json first, then all other .json entries</span>
+            <span class="n">ordered</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="s2">&quot;genealogy.json&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">!=</span> <span class="s2">&quot;genealogy.json&quot;</span>
+                         <span class="ow">and</span> <span class="ow">not</span> <span class="n">n</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;META-INF/&quot;</span><span class="p">))</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ordered</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No GedcomX JSON entries found in </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">entry_name</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_normalize_entry_data</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">zf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">entry_name</span><span class="p">)))</span>
+                <span class="n">gx</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">merged</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">merged</span></div>
+
+
+<div class="viewcode-block" id="GedcomZip.list_entries">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.zip.GedcomZip.list_entries">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_entries</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list of entry info dicts from a GedcomX ZIP archive.</span>
+
+<span class="sd">        Each dict has ``name``, ``size``, ``compress_size``.</span>
+<span class="sd">        Manifest entries are included.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">file_size</span><span class="p">,</span> <span class="s2">&quot;compress_size&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">compress_size</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+            <span class="p">]</span></div>
 
 
     <span class="c1"># ────────────────────────────────────────────────</span>
     <span class="c1"># Context manager support</span>
     <span class="c1"># ────────────────────────────────────────────────</span>
-    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GedcomZip&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GedcomZip&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 </pre></div>

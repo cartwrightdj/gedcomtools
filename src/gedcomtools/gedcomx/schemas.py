@@ -1,3 +1,5 @@
+"""Schema registry and type-introspection helpers for GedcomX models."""
+
 from __future__ import annotations
 # ======================================================================
 #  Project: Gedcom-X
@@ -6,7 +8,6 @@ from __future__ import annotations
 #  Purpose: Central schema registry for field type metadata
 #  Created: 2025-08-25
 # ======================================================================
-
 import functools
 import inspect
 import operator
@@ -60,9 +61,11 @@ class Schema:
     # Bind concrete classes (optional)
     # ──────────────────────────────
     def set_uri_class(self, cls: type | None) -> None:
+        """Register the URI class used by schema helpers."""
         self._uri_cls = cls
 
     def set_resource_class(self, cls: type | None) -> None:
+        """Register the Resource class used by schema helpers."""
         self._resource_cls = cls
 
     # ──────────────────────────────
@@ -231,9 +234,11 @@ class Schema:
         return self.field_type_table.get(name)
 
     def set_toplevel(self, cls: type, *, meta: Dict[str, Any] | None = None) -> None:
+        """Register a class as a top-level GedcomX type."""
         self._toplevel[cls.__name__] = dict(meta or {})
 
     def is_toplevel(self, cls_or_name: type | str) -> bool:
+        """Return whether the class is registered as top-level."""
         name = cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
         return name in self._toplevel
 
@@ -246,6 +251,7 @@ class Schema:
         return self.is_toplevel(obj.__class__)
 
     def get_toplevel(self) -> Dict[str, Dict[str, Any]]:
+        """Return the registered top-level classes."""
         return dict(self._toplevel)
 
     def get_extras(self, cls_or_name: type | str) -> Dict[str, Any]:
@@ -263,6 +269,7 @@ class Schema:
 
     @property
     def json(self) -> dict[str, dict[str, str]]:
+        """Return a JSON-compatible representation of the current data."""
         return schema_to_jsonable(self)
 
     # ──────────────────────────────
@@ -572,6 +579,7 @@ class Schema:
 # Stringification helpers (JSON dump)
 # ──────────────────────────────
 def type_repr(tp: Any) -> str:
+    """Return a readable string representation of a type annotation."""
     if isinstance(tp, str):
         return tp
 
@@ -600,6 +608,7 @@ def type_repr(tp: Any) -> str:
 
 
 def schema_to_jsonable(schema: Schema) -> dict[str, dict[str, str]]:
+    """Convert schema metadata into JSON-serializable structures."""
     out: dict[str, dict[str, str]] = {}
     for cls_name in sorted(schema.field_type_table):
         fields = schema.field_type_table[cls_name]
@@ -703,6 +712,7 @@ def schema_property(
     return deco
 
 def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
+    """Create a plugin that binds a computed schema property."""
     def deco(fget):
         meta = {"name": name or fget.__name__, "typ": typ, "fset": None, "fdel": None}
         setattr(fget, "__schema_prop__", meta)
@@ -721,6 +731,7 @@ def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
     return deco
 
 def apply_schema_property(cls: type, fget, *, schema: Schema, overwrite: bool = False):
+    """Apply a schema-bound computed property to a class."""
     meta = getattr(fget, "__schema_prop__", None)
     if meta is None:
         raise TypeError(
@@ -826,6 +837,7 @@ def extensible(*, allow_only=None, **schema_kwargs):
     return deco
 
 def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
+    """Decorate a dataclass so it participates in the extension system."""
     from dataclasses import dataclass as _dc
     def deco(cls):
         cls = _dc(*d_args)(cls)                          # generate __init__
@@ -888,6 +900,7 @@ SCHEMA = Schema()
 
 # -------------
 def fact_from_even_tag(even_value):
+    """Return the GedcomX fact type mapped from a GEDCOM EVEN tag."""
     from .fact import FactType
     gedcom_even_to_fact = {
         # Person Fact Types
@@ -941,6 +954,7 @@ def fact_from_even_tag(even_value):
     return gedcom_even_to_fact.get(even_value,None)
 
 def event_from_even_tag(even_value):
+    """Return the GedcomX event type mapped from a GEDCOM EVEN tag."""
     from .event import EventType
     gedcom_even_to_evnt = {
         # Person Fact Types

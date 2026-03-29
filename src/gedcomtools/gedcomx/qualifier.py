@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/qualifier.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Qualifier model: key/value qualifier for conclusions and facts
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import ClassVar, Optional
 
@@ -30,6 +41,7 @@ class Qualifier(GedcomXModel):
             result.warn("name", "Qualifier.name is blank")
 
     def _append(self, value: str) -> None:
+        """Append *value* to the qualifier's value string, space-separated."""
         if value and isinstance(value, str):
             if self.value is None:
                 self.value = value

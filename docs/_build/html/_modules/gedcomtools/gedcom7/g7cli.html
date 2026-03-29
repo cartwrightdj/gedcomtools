@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.g7cli - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -275,19 +275,19 @@
 <span class="sd">quit / exit            Exit the shell.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">shlex</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
-<span class="kn">from</span> <span class="nn">.gedcom7</span> <span class="kn">import</span> <span class="n">Gedcom7</span><span class="p">,</span> <span class="n">GedcomValidationError</span>
-<span class="kn">from</span> <span class="nn">.writer</span> <span class="kn">import</span> <span class="n">Gedcom7Writer</span>
-<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">individual_detail</span><span class="p">,</span> <span class="n">family_detail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gedcom7</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom7</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom7Writer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">individual_detail</span><span class="p">,</span> <span class="n">family_detail</span>
 
 <span class="n">_VERSION</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
 
@@ -295,25 +295,31 @@
 <span class="c1"># ANSI colour helpers (disabled when not a tty)</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="k">def</span> <span class="nf">_colour_enabled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_colour_enabled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">isatty</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;WT_SESSION&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
 
 
-<span class="k">def</span> <span class="nf">_ansi</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ansi</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_colour_enabled</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">text</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\x1b</span><span class="s2">[</span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2">m</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="se">\x1b</span><span class="s2">[0m&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">_green</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;32&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_yellow</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;33&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_cyan</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>   <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;36&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_red</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;31&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_bold</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>   <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>  <span class="n">t</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_dim</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">,</span>  <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_green</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;32&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_yellow</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;33&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_cyan</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;36&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_red</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;31&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_bold</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>  <span class="n">t</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_dim</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ansi</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">,</span>  <span class="n">t</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_clip</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_clip</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">width</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">text</span>
     <span class="k">return</span> <span class="n">text</span><span class="p">[:</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;…&quot;</span>
@@ -325,10 +331,10 @@
 
 <div class="viewcode-block" id="Shell">
 <a class="viewcode-back" href="../../../api/cli.html#gedcomtools.gedcom7.g7cli.Shell">[docs]</a>
-<span class="k">class</span> <span class="nc">Shell</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Shell</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive GEDCOM 7 shell.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Gedcom7</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>          <span class="c1"># loaded file</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cur</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># current node; None = root</span>
@@ -363,7 +369,8 @@
 
 <div class="viewcode-block" id="Shell.run">
 <a class="viewcode-back" href="../../../api/cli.html#gedcomtools.gedcom7.g7cli.Shell.run">[docs]</a>
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the interactive shell loop.&quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;g7cli </span><span class="si">{</span><span class="n">_VERSION</span><span class="si">}</span><span class="s2">  —  GEDCOM 7 browser/editor  —  type &#39;help&#39; or &#39;?&#39; for commands&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">initial_file</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_do_load</span><span class="p">(</span><span class="n">initial_file</span><span class="p">)</span>
@@ -408,11 +415,11 @@
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;! </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">path_str</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path_labels</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">_bold</span><span class="p">(</span><span class="n">_cyan</span><span class="p">(</span><span class="s2">&quot;g7&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="n">_dim</span><span class="p">(</span><span class="s2">&quot;:/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_cyan</span><span class="p">(</span><span class="n">path_str</span><span class="p">)</span> <span class="o">+</span> <span class="n">_bold</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_path_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_path_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="p">:</span>
             <span class="n">part</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span>
@@ -431,13 +438,13 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Children of the current node, or top-level records.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="n">records</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur</span><span class="o">.</span><span class="n">children</span>
 
-    <span class="k">def</span> <span class="nf">_resolve_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve an index, tag name, or xref id to a child node.&quot;&quot;&quot;</span>
         <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
 
@@ -471,7 +478,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;! No child with tag </span><span class="si">{</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_find_by_xref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_by_xref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
@@ -480,7 +487,7 @@
                 <span class="k">return</span> <span class="n">result</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_walk_for_xref</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_walk_for_xref</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">xref</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">xref</span><span class="p">:</span>
@@ -491,13 +498,13 @@
                 <span class="k">return</span> <span class="n">result</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_require_file</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_file</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;! No file loaded. Use: load &lt;path.ged&gt;&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_require_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;! No node selected. Use &#39;cd&#39; to navigate into a record first.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -507,14 +514,14 @@
     <span class="c1"># Commands</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;load &lt;path&gt;  — load a GEDCOM 7 file.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;usage: load &lt;path.ged&gt;&quot;</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_do_load</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_reload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_reload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;reload  — re-read the current file from disk, discarding in-memory changes.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;! No file loaded. Use: load &lt;path.ged&gt;&quot;</span><span class="p">)</span>
@@ -524,7 +531,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_do_load</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_do_load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Unsaved changes will be lost. Continue? [y/N] &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -559,7 +566,7 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_dim</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;write &lt;path&gt;  — write the loaded records to a GEDCOM 7 file.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -572,7 +579,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Written to </span><span class="si">{</span><span class="n">_green</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;validate  — run the GEDCOM 7 validator.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -590,11 +597,11 @@
         <span class="n">status</span> <span class="o">=</span> <span class="n">_red</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> error(s)&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">errors</span> <span class="k">else</span> <span class="n">_green</span><span class="p">(</span><span class="s2">&quot;0 error(s)&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">_yellow</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">warnings</span><span class="p">)))</span><span class="si">}</span><span class="s2"> warning(s)&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;info  — file-level summary.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
-        <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
         <span class="n">ver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="n">detect_gedcom_version</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;unknown&quot;</span>
         <span class="n">counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">tag</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -603,7 +610,7 @@
         <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">tag</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_ls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_ls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;ls  — list children of the current node (or top-level records).&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -612,7 +619,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(empty)&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="kn">import</span> <span class="nn">shutil</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
         <span class="n">term_width</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">get_terminal_size</span><span class="p">((</span><span class="mi">120</span><span class="p">,</span> <span class="mi">24</span><span class="p">))</span><span class="o">.</span><span class="n">columns</span>
         <span class="n">w_idx</span>  <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
         <span class="n">w_xref</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="nb">max</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">xref_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">children</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)))</span>
@@ -644,7 +651,7 @@
             <span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_cd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_cd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;cd &lt;ref&gt;  — navigate (index, tag, xref, or &#39;..&#39; to go up).&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -673,12 +680,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cur</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cur</span> <span class="o">=</span> <span class="n">node</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_pwd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_pwd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;pwd  — print the current path.&quot;&quot;&quot;</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path_labels</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;g7:/&quot;</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;show [--all]  — show fields of the current node.  --all includes children.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -730,7 +737,7 @@
             <span class="nb">print</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_ls</span><span class="p">([])</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;find &lt;tag&gt; [--payload &lt;text&gt;]  — search the whole tree.</span>
 
 <span class="sd">        --payload &lt;text&gt;  Only show nodes whose payload contains &lt;text&gt;</span>
@@ -758,7 +765,7 @@
         <span class="n">target</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="n">results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">def</span> <span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">payload_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">payload_filter</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                     <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
@@ -783,7 +790,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  … </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">50</span><span class="si">}</span><span class="s2"> more results&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;set &lt;field&gt; &lt;value&gt;  — edit a field on the current node.</span>
 
 <span class="sd">        Fields: payload, tag, xref</span>
@@ -824,7 +831,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;! Unknown field </span><span class="si">{</span><span class="n">field</span><span class="si">!r}</span><span class="s2">. Use: payload, tag, or xref&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;add &lt;tag&gt; [payload]  — append a child to the current node.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -868,7 +875,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added child </span><span class="si">{</span><span class="n">_green</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2"> at index </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_rm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_rm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;rm &lt;index&gt;  — remove a child of the current node by index.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_file</span><span class="p">():</span>
             <span class="k">return</span>
@@ -895,7 +902,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removed </span><span class="si">{</span><span class="n">_green</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2"> (was index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_cmd_help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;help  — show available commands.&quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span></div>
 
@@ -907,7 +914,8 @@
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../api/cli.html#gedcomtools.gedcom7.g7cli.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the command-line entry point.&quot;&quot;&quot;</span>
     <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">argv</span> <span class="k">if</span> <span class="n">argv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
     <span class="n">shell</span> <span class="o">=</span> <span class="n">Shell</span><span class="p">()</span>
     <span class="n">shell</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">initial_file</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>

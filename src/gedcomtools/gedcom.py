@@ -20,6 +20,7 @@ serial_log = "gedcomx.serialization"
 #=====================================================================
 
 class Gedcom():
+    """Provide the high-level facade for loading and working with GEDCOM data."""
     def __init__(self) -> None:
         pass
 

@@ -7,6 +7,12 @@ every object through pydantic mirror models that enforce the core rules:
   - Name must have at least one nameForm
   - Relationship must reference both person1 and person2
   - Resource must have either resource or resourceId
+
+Updates:
+  2026-03-29 — added TestRelationshipPersonCrossRef: 4 tests covering
+               both Resource forms (resourceId and resource.fragment)
+               for valid and dangling person references; regression for
+               the silent-pass bug in GedcomX.validate()
 """
 from __future__ import annotations
 
@@ -223,3 +229,77 @@ class TestResourceMustHaveReference:
 
     def test_resource_id_passes(self):
         PResource.model_validate({"resourceId": "agent-1"})
+
+
+# ---------------------------------------------------------------------------
+# Cross-collection: relationship person-ref resolution (GedcomX.validate)
+# ---------------------------------------------------------------------------
+
+class TestRelationshipPersonCrossRef:
+    """GedcomX.validate() must catch dangling person refs in both Resource forms."""
+
+    def _make_gx(self):
+        from gedcomtools.gedcomx.gedcomx import GedcomX
+        from gedcomtools.gedcomx.person import Person
+        from gedcomtools.gedcomx.relationship import Relationship
+        from gedcomtools.gedcomx.resource import Resource
+        from gedcomtools.gedcomx.uri import URI
+        return GedcomX, Person, Relationship, Resource, URI
+
+    def test_valid_resource_id_form_passes(self):
+        GedcomX, Person, Relationship, Resource, _ = self._make_gx()
+        gx = GedcomX()
+        gx.add_person(Person(id="P1"))
+        gx.add_person(Person(id="P2"))
+        gx.add_relationship(Relationship(
+            person1=Resource(resourceId="P1"),
+            person2=Resource(resourceId="P2"),
+        ))
+        result = gx.validate()
+        assert not result.errors, result.errors
+
+    def test_valid_resource_fragment_form_passes(self):
+        GedcomX, Person, Relationship, Resource, URI = self._make_gx()
+        gx = GedcomX()
+        gx.add_person(Person(id="P1"))
+        gx.add_person(Person(id="P2"))
+        gx.add_relationship(Relationship(
+            person1=Resource(resource=URI(fragment="P1")),
+            person2=Resource(resource=URI(fragment="P2")),
+        ))
+        result = gx.validate()
+        assert not result.errors, result.errors
+
+    def test_inline_person_objects_pass(self):
+        GedcomX, Person, Relationship, _, _ = self._make_gx()
+        p1 = Person(id="P1")
+        p2 = Person(id="P2")
+        gx = GedcomX()
+        gx.add_person(p1)
+        gx.add_person(p2)
+        gx.add_relationship(Relationship(person1=p1, person2=p2))
+        result = gx.validate()
+        assert not result.errors, result.errors
+
+    def test_dangling_resource_id_form_fails(self):
+        GedcomX, Person, Relationship, Resource, _ = self._make_gx()
+        gx = GedcomX()
+        gx.add_person(Person(id="P1"))
+        gx.add_relationship(Relationship(
+            person1=Resource(resourceId="P1"),
+            person2=Resource(resourceId="P_MISSING"),
+        ))
+        result = gx.validate()
+        assert result.errors, "Expected validation error for missing person via resourceId"
+
+    def test_dangling_resource_fragment_form_fails(self):
+        """Bug #1 regression: Resource(resource=URI(fragment='X')) was not checked."""
+        GedcomX, Person, Relationship, Resource, URI = self._make_gx()
+        gx = GedcomX()
+        gx.add_person(Person(id="P1"))
+        gx.add_relationship(Relationship(
+            person1=Resource(resource=URI(fragment="P1")),
+            person2=Resource(resource=URI(fragment="P_MISSING")),
+        ))
+        result = gx.validate()
+        assert result.errors, "Expected validation error for missing person via resource fragment"

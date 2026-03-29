@@ -14,4 +14,5 @@
 from enum import Enum
 
 class fsIdentifierType(Enum):
+    """Define the FamilySearch identifier type extension values."""
     ChildAndParentsRelationship = "http://familysearch.org/v1/ChildAndParentsRelationship"

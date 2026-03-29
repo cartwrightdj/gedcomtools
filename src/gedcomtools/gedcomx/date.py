@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Any, ClassVar, Optional
+from typing import ClassVar, Optional
 
 from pydantic import model_validator
 
@@ -32,20 +32,24 @@ except ImportError:
 
 
 class DateFormat:
+    """Placeholder for GedcomX date format constants."""
     pass
 
 
 class DateNormalization:
+    """Placeholder for GedcomX date normalization data."""
     pass
 
 
 class Date(GedcomXModel):
+    """A GedcomX date value with optional original text and formal GedcomX-format string."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Date"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     original: Optional[str] = None
     formal: Optional[str] = None
-    normalized: Optional[Any] = None  # DateNormalization
+    normalized: Optional[DateNormalization] = None
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
@@ -72,6 +76,12 @@ class Date(GedcomXModel):
 # ---------------------------------------------------------------------------
 
 def parse_to_gedcomx_date(s: str) -> str:
+    """Parse a natural-language or standard date string into a GedcomX formal date string.
+
+    Handles approximate prefixes (``abt``, ``circa``), range expressions
+    (``between X and Y``), and before/after qualifiers.  Returns ``None`` if
+    the input cannot be parsed.
+    """
     from .exceptions import GedcomXDateParseError
 
     original = s
@@ -126,6 +136,7 @@ def parse_to_gedcomx_date(s: str) -> str:
 
 
 def _parse_simple_to_gx(s: str) -> str | None:
+    """Parse a single simple date string into a GedcomX ISO-style component string."""
     s = s.strip()
     if not s:
         return None
@@ -147,6 +158,7 @@ def _parse_simple_to_gx(s: str) -> str | None:
 
 
 def _infer_precision_from_text(s: str) -> str:
+    """Return the date precision level ('year', 'month', or 'day') implied by the text."""
     s.lower().strip()
     if re.match(r"^\d{4}$", s):
         return "year"
@@ -161,6 +173,7 @@ def _infer_precision_from_text(s: str) -> str:
 
 
 def _parse_to_datetime(s: str) -> datetime | None:
+    """Attempt to parse *s* into a datetime using dateutil or dateparser; returns None on failure."""
     if dateutil_parser:
         try:
             return dateutil_parser.parse(s, default=datetime(1, 1, 1))
@@ -177,6 +190,7 @@ def _parse_to_datetime(s: str) -> datetime | None:
 
 
 def date_to_timestamp(date_obj: Date | None) -> datetime | None:
+    """Convert a Date object to a Python datetime by parsing its formal or original value."""
     if date_obj is None:
         return None
     for attr in ("formal", "original"):

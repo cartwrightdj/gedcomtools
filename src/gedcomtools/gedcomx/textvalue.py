@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/textvalue.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX TextValue model: language-tagged text value
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import ClassVar, Optional
 
@@ -5,6 +16,8 @@ from .gx_base import GedcomXModel
 
 
 class TextValue(GedcomXModel):
+    """A language-tagged text value, used for names, titles, and descriptions."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/TextValue"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 

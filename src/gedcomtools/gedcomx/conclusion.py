@@ -1,10 +1,21 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/conclusion.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Conclusion base class with confidence, attribution, and notes
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 # GedcomX Conclusion base class.
 # Base for all genealogical assertions (Name, Fact, Relationship, etc.).
 # __hash__ = None — mutable object with value-based equality, not safely hashable.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
+from typing import Any, ClassVar, List, Optional, Union
 
 from pydantic import Field, PrivateAttr
 
@@ -17,15 +28,14 @@ from .resource import Resource
 from .source_reference import SourceReference
 from .uri import URI
 
-if TYPE_CHECKING:
-    pass
-
 
 # ---------------------------------------------------------------------------
 # ConfidenceLevel  (subclass of Qualifier — special enum-like usage)
 # ---------------------------------------------------------------------------
 
 class ConfidenceLevel(Qualifier):
+    """Qualifier subclass representing a three-level confidence assertion (High, Medium, Low)."""
+
     High: ClassVar[str] = "http://gedcomx.org/High"
     Medium: ClassVar[str] = "http://gedcomx.org/Medium"
     Low: ClassVar[str] = "http://gedcomx.org/Low"
@@ -39,6 +49,7 @@ class ConfidenceLevel(Qualifier):
 
     @classmethod
     def from_json(cls, data: Any, _context: Any = None) -> Optional["ConfidenceLevel"]:
+        """Deserialize a ConfidenceLevel from a raw value, dict, or URI string."""
         if data is None:
             return None
         if isinstance(data, cls):
@@ -66,6 +77,7 @@ class ConfidenceLevel(Qualifier):
 
     @property
     def description(self) -> str:
+        """Return a human-readable description of the confidence level."""
         descriptions = {
             self.High: "The contributor has a high degree of confidence that the assertion is true.",
             self.Medium: "The contributor has a medium degree of confidence that the assertion is true.",
@@ -90,12 +102,13 @@ class Conclusion(GedcomXModel):
     id: str = Field(default_factory=make_uid)
     lang: Optional[str] = None
     sources: List[SourceReference] = Field(default_factory=list)
-    analysis: Optional[Any] = None      # Resource | Document
+    analysis: Optional[Any] = None  # Union[Resource, Document] at runtime
     notes: List[Note] = Field(default_factory=list)
     confidence: Optional[ConfidenceLevel] = None
     attribution: Optional[Attribution] = None
 
     def model_post_init(self, __context: object) -> None:
+        """Populate derived state after model initialization."""
         self._uri = URI(fragment=self.id)
 
     # ------------------------------------------------------------------
@@ -103,6 +116,7 @@ class Conclusion(GedcomXModel):
     # ------------------------------------------------------------------
 
     def add_note(self, note: Note) -> bool:
+        """Add a Note to this conclusion, skipping duplicates.  Returns True if added."""
         if not isinstance(note, Note):
             raise ValueError("'note' must be of Type 'Note'")
         for existing in self.notes:
@@ -112,6 +126,7 @@ class Conclusion(GedcomXModel):
         return True
 
     def add_source_reference(self, source_to_add: SourceReference) -> None:
+        """Add a SourceReference to this conclusion, skipping duplicates."""
         if not isinstance(source_to_add, SourceReference):
             raise ValueError(
                 f"source_to_add must be a SourceReference, got {type(source_to_add).__name__}"
@@ -155,3 +170,5 @@ class Conclusion(GedcomXModel):
             and self.confidence == other.confidence
             and self.attribution == other.attribution
         )
+
+

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Element and record classes used by the GEDCOM 5.x parser tree."""
+
 from __future__ import annotations
 # ======================================================================
 #  Project: gedcomtools
@@ -111,6 +113,7 @@ class Element:
 
     @property
     def parent(self):
+        """Return the parent node."""
         return self.__parent
 
     @property
@@ -122,6 +125,7 @@ class Element:
 
     @level.setter
     def level(self, level):
+        """Document the `level` callable."""
         self.__level = level
 
     @property
@@ -139,13 +143,16 @@ class Element:
         return self.__tag
     @tag.setter
     def tag(self, tag):
+        """Return the tag for this node."""
         self.__tag = tag
 
     @property
     def value(self):
+        """Document the `value` callable."""
         return self.__value
 
     def describe(self) ->str:
+        """Return a human-readable summary of this object."""
         s = f"{self._line_num} [{type(self).__name__}] {self.xref} {self.level} {self.tag} {self.get_value()}"
         return s
 
@@ -254,12 +261,14 @@ class Element:
         return self.sub_record(item)
 
     def sub_record(self, tag: str):
+        """Return the first matching child record."""
         for r in self.__children:
             if r.tag == tag:
                 return r
         return None
 
     def sub_records(self, tag: str | None = None):
+        """Return all matching child records."""
         if tag is None:
             return self.__children
         return [r for r in self.__children if r.tag == tag]
@@ -371,24 +380,32 @@ class RootElement(Element):
         super().__init__(level, pointer, tag, value, crlf, multi_line)
 
 class HeaderRecord(Element):
+    """Represent the GEDCOM 5.x HEAD record."""
     pass
 
 class SubmitterRecord(Element):
+    """Represent a GEDCOM 5.x SUBM record."""
     pass
 
 class FamilyRecord(Element):
 
+    """Represent a GEDCOM 5.x family record."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_FAMILY
 
 class FileElement(Element):
 
+    """Represent a GEDCOM 5.x OBJE or file-linked element."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_FILE
 
 class IndividualRecord(Element):
 
+    """Represent a GEDCOM 5.x individual record."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_INDIVIDUAL
 
     def is_deceased(self):
@@ -468,6 +485,7 @@ class IndividualRecord(Element):
         return given_name, surname
 
     def get_all_names(self):
+        """Return all name values found on the individual record."""
         return [a.get_value() for a in self.get_child_elements() if a.tag == GEDCOM_TAG_NAME]
 
     def surname_match(self, surname_to_match):
@@ -828,6 +846,7 @@ class IndividualRecord(Element):
 
 class ObjectRecord(Element):
 
+    """Represent a GEDCOM 5.x multimedia object record."""
     def is_object(self):
         """Checks if this element is an actual object
         :rtype: bool
@@ -835,7 +854,9 @@ class ObjectRecord(Element):
         return self.tag == GEDCOM_TAG_OBJECT
 
 class RepositoryRecord(Element):
+    """Represent a GEDCOM 5.x repository record."""
     pass
 
 class SourceRecord(Element):
+    """Represent a GEDCOM 5.x source record."""
     pass

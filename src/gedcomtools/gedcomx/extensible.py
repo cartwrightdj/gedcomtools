@@ -1,3 +1,16 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/extensible.py
+ Author:  David J. Cartwright
+ Purpose: Plugin registry and trust-level security system for GedcomX extensions
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
+from __future__ import annotations
+
 # extensible.py
 """
 Extensibility framework for GedcomX models.
@@ -41,7 +54,6 @@ ALL       – everything including remote URL downloads.
 URL plugins always require an explicit ``sha256=`` checksum in ``allow()``;
 the download is rejected if the digest does not match.
 """
-from __future__ import annotations
 
 import atexit
 import hashlib
@@ -91,6 +103,7 @@ class TrustLevel(IntEnum):
 
 
 class PluginStatus(str, Enum):
+    """Capture the load status and metadata for a plugin entry."""
     PENDING = "pending"   # registered but not yet allowed
     ALLOWED = "allowed"   # explicitly allowed, not yet loaded
     LOADED  = "loaded"    # successfully imported
@@ -100,6 +113,7 @@ class PluginStatus(str, Enum):
 
 @dataclass
 class PluginEntry:
+    """Describe an allowed plugin source and its trust metadata."""
     name: str
     source: str
     status: PluginStatus = PluginStatus.PENDING
@@ -155,10 +169,12 @@ class PluginRegistry:
 
     @property
     def trust_level(self) -> TrustLevel:
+        """Return the configured plugin trust level."""
         return self._trust_level
 
     @property
     def is_locked(self) -> bool:
+        """Return whether the plugin registry has been locked by loading."""
         return self._locked
 
     def allow(
@@ -170,16 +186,10 @@ class PluginRegistry:
     ) -> None:
         """Explicitly allow a plugin to be loaded.
 
-        Args:
-            source:  Module name, local file/directory path, or https:// URL.
-            name:    Human-readable label (defaults to *source*).
-            sha256:  Required for URL sources — the expected hex SHA-256 digest
-                     of the downloaded content.  The load will fail if the
-                     digest does not match.
-
-        Raises:
-            RegistryLockedError: If called after ``load()``.
-            ValueError:          If *source* is a URL and *sha256* is omitted.
+        ``source`` may be a module name, local file or directory path, or an
+        HTTPS URL. ``sha256`` is required for URL sources and must match the
+        downloaded content. Raises :class:`RegistryLockedError` if called after
+        ``load()`` and :class:`ValueError` if a URL source omits ``sha256``.
         """
         if self._locked:
             raise RegistryLockedError("Cannot allow new plugins after load().")
@@ -209,12 +219,8 @@ class PluginRegistry:
     ) -> Dict[str, Any]:
         """Import all explicitly-allowed plugins.  May only be called once.
 
-        Returns:
-            dict with keys ``"imported"`` (list of module names) and
-            ``"errors"`` (dict mapping source → exception).
-
-        Raises:
-            RegistryLockedError: If called more than once.
+        Returns a dict with ``"imported"`` and ``"errors"`` keys. Raises
+        :class:`RegistryLockedError` if called more than once.
         """
         if self._locked:
             raise RegistryLockedError("load() has already been called.")
@@ -245,15 +251,8 @@ class PluginRegistry:
         Unlike ``load()``, this does not lock the registry, so it may be
         called multiple times for different entries.
 
-        Args:
-            name: The entry name as registered via ``allow()``.
-
-        Returns:
-            dict with keys ``"imported"`` (list of module names) and
-            ``"errors"`` (dict mapping source → exception).
-
-        Raises:
-            KeyError: If no entry with that name exists.
+        Returns a dict with ``"imported"`` and ``"errors"`` keys. Raises
+        :class:`KeyError` if no entry with the requested name exists.
         """
         entry = self._entries.get(name)
         if entry is None:
@@ -402,25 +401,14 @@ def import_plugins(
 ) -> Dict[str, Any]:
     """Scan-based plugin loader gated by trust level.
 
-    Args:
-        base_package: Package to load extensions for (e.g. ``"gedcomx"``).
-        subpackage:   Built-in subpackage name or URL.
-        local_dir:    Local directory path or URL to scan for plugins.
-        env_var:      Environment variable listing additional plugin paths/URLs.
-        recursive:    Whether to recurse into sub-packages.
-        root_package: Root package prefix.
-        registry:     Registry whose trust level to consult.  Defaults to the
-                      global ``plugin_registry``.  Pass a fresh
-                      ``PluginRegistry()`` in tests to avoid global state.
+    Returns ``{"imported": [...], "errors": {...}}``. The registry defaults
+    to the global ``plugin_registry``; pass a fresh ``PluginRegistry()`` in
+    tests to avoid global state.
 
-    Returns:
-        ``{"imported": [...], "errors": {...}}``
-
-    Trust level behaviour:
-        DISABLED → returns empty immediately.
-        BUILTIN  → loads bundled subpackage only.
-        LOCAL    → loads subpackage + local_dir + env-var local paths.
-        ALL      → loads everything including URL sources.
+    Trust level behavior:
+    ``DISABLED`` returns immediately, ``BUILTIN`` loads the bundled
+    subpackage only, ``LOCAL`` also loads local paths, and ``ALL`` permits
+    URL sources as well.
     """
     reg = registry if registry is not None else plugin_registry
     level = reg.trust_level

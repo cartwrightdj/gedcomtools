@@ -7,7 +7,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>CLI Reference - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -261,22 +261,18 @@ to determine which fields exist and how to treat collections.</p>
 <dd><p>Write an iterable of objects to a JSONL file.
 Returns the number of records written.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>top_level_collection</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a></span>) – Iterable of serializable objects.</p></li>
-<li><p><strong>output_file</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Path to the output .jsonl file.</p></li>
-<li><p><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If True, overwrite existing file. Mutually exclusive with append.</p></li>
-<li><p><strong>append</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If True, append to existing file. Mutually exclusive with overwrite.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.14)"><strong>FileExistsError</strong></a> – if file exists and neither overwrite nor append is set.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – if both overwrite and append are set.</p></li>
-</ul>
-</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>top_level_collection: Iterable of serializable objects.
+output_file: Path to the output .jsonl file.
+overwrite: If True, overwrite existing file. Mutually exclusive with append.
+append: If True, append to existing file. Mutually exclusive with overwrite.</p>
+</dd>
+<dt>Raises:</dt><dd><p>FileExistsError: if file exists and neither overwrite nor append is set.
+ValueError: if both overwrite and append are set.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -314,7 +310,8 @@ quit / exit            Exit the shell.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom7.g7cli.Shell.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/g7cli.html#Shell.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom7.g7cli.Shell.run" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Run the interactive shell loop.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
@@ -326,7 +323,8 @@ quit / exit            Exit the shell.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gedcomtools.gedcom7.g7cli.main">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom7.g7cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/g7cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom7.g7cli.main" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Run the command-line entry point.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
 </dd>

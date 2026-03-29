@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.structure - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -256,16 +256,16 @@
 <span class="sd">Sphinx Napoleon.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">.g7interop</span> <span class="kn">import</span> <span class="n">get_uri_for_tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tag_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_uri_for_tag</span>
 
 
 <div class="viewcode-block" id="GedcomStructure">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomStructure</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomStructure</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a single GEDCOM structure node.</span>
 
 <span class="sd">    Attributes:</span>
@@ -285,7 +285,7 @@
 
 <div class="viewcode-block" id="GedcomStructure.__init__">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -324,12 +324,12 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the line payload.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">payload</span>
 
     <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the line payload.</span>
 
 <span class="sd">        Args:</span>
@@ -338,25 +338,35 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">new_value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pointer_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pointer_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the payload if it is a pointer.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">payload</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="k">else</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="GedcomStructure.add_child">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.add_child">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="s2">&quot;GedcomStructure&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="s2">&quot;GedcomStructure&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a child node.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            child: Child structure to attach.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ``child.level`` is not exactly ``self.level + 1``,</span>
+<span class="sd">                which would produce an internally inconsistent tree.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">level</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cannot attach level-</span><span class="si">{</span><span class="n">child</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s2"> node </span><span class="si">{</span><span class="n">child</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;to level-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s2"> parent </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;expected child level </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
         <span class="n">child</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomStructure.get_children">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_children">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return direct children for a tag.</span>
 
 <span class="sd">        Args:</span>
@@ -371,7 +381,7 @@
 
 <div class="viewcode-block" id="GedcomStructure.first_child">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.first_child">[docs]</a>
-    <span class="k">def</span> <span class="nf">first_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">first_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first direct child matching a tag.</span>
 
 <span class="sd">        Args:</span>
@@ -385,7 +395,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the nesting depth (0 for top-level records).</span>
 
 <span class="sd">        Returns:</span>
@@ -400,7 +410,7 @@
 
 <div class="viewcode-block" id="GedcomStructure.get_path">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_path">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable path from the root to this node.</span>
 
 <span class="sd">        Returns:</span>
@@ -418,7 +428,7 @@
 
 <div class="viewcode-block" id="GedcomStructure.get_ancestor">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.get_ancestor">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_ancestor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ancestor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Walk up the tree and return the first ancestor with the given tag.</span>
 
 <span class="sd">        Args:</span>
@@ -438,7 +448,7 @@
 
 <div class="viewcode-block" id="GedcomStructure.to_dict">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.structure.GedcomStructure.to_dict">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the node and descendants to a serializable dictionary.</span>
 
 <span class="sd">        Returns:</span>
@@ -464,7 +474,7 @@
         <span class="k">return</span> <span class="n">data</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;GedcomStructure&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return direct children by tag.</span>
 
 <span class="sd">        Args:</span>
@@ -475,7 +485,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a developer-friendly representation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="s2">&quot;GedcomStructure(&quot;</span>

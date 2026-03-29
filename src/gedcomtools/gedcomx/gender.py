@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/gender.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Gender model and GenderType enum
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from enum import Enum
@@ -7,6 +18,8 @@ from .conclusion import Conclusion
 
 
 class GenderType(Enum):
+    """Enumeration of recognized GedcomX gender types."""
+
     Male = "http://gedcomx.org/Male"
     Female = "http://gedcomx.org/Female"
     Unknown = "http://gedcomx.org/Unknown"
@@ -14,6 +27,7 @@ class GenderType(Enum):
 
     @property
     def description(self) -> str:
+        """Return a human-readable description of this gender type."""
         descriptions = {
             GenderType.Male: "Male gender.",
             GenderType.Female: "Female gender.",
@@ -24,6 +38,8 @@ class GenderType(Enum):
 
 
 class Gender(Conclusion):
+    """A gender conclusion for a person."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Gender"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -41,7 +57,7 @@ class Gender(Conclusion):
         if self.type:
             try:
                 parts.append(f"type={self.type.name}")
-            except Exception:
+            except AttributeError:
                 parts.append(f"type={self.type!r}")
         if self.lang:
             parts.append(f"lang={self.lang!r}")

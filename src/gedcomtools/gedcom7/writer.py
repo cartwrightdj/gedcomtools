@@ -102,19 +102,9 @@ class Gedcom7Writer:
         that a failed write never leaves the destination file truncated or
         corrupted.
 
-        Args:
-            records: Top-level GEDCOM structures (typically HEAD … TRLR).
-            filepath: Destination file path.  Any intermediate directories
-                must already exist.
-            encoding: File encoding.  GEDCOM 7 mandates UTF-8; only change
-                this for special debugging purposes.
-
-        Returns:
-            Line-length warnings collected during serialization (same as
-            ``get_warnings()``).  An empty list means no warnings.
-
-        Raises:
-            FileNotFoundError: If the destination directory does not exist.
+        Returns the line-length warnings collected during serialization.
+        Raises :class:`FileNotFoundError` if the destination directory does
+        not exist.
         """
         dest = Path(filepath)
         content = self.serialize(records)

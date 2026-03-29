@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.source_description - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,266 +229,188 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.source_description</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.document</span> <span class="kn">import</span> <span class="n">Document</span>
-
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    SourceDescription.py</span>
+<span class="sd"> File:    gedcomx/source_description.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose: GedcomX SourceDescription model: ResourceType enum and full source metadata</span>
 
-<span class="sd"> Created: 2025-07-25</span>
+<span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-08-31: _as_dict_ refactored to ignore empty fields, changed id creation to make_uid()</span>
-<span class="sd">    - 2025-09-01: filename PEP8 standard, imports changed accordingly</span>
-<span class="sd">    - 2025-09-09: added schema_class</span>
-<span class="sd"> </span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.agent</span> <span class="kn">import</span> <span class="n">Agent</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.coverage</span> <span class="kn">import</span> <span class="n">Coverage</span>
-<span class="kn">from</span> <span class="nn">.date</span> <span class="kn">import</span> <span class="n">Date</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">make_uid</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.source_citation</span> <span class="kn">import</span> <span class="n">SourceCitation</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="kn">from</span> <span class="nn">.textvalue</span> <span class="kn">import</span> <span class="n">TextValue</span>
-<span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">serial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
-<span class="n">deserial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.deserialization&quot;</span>
-<span class="c1">#=====================================================================</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.coverage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coverage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.date</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.note</span><span class="w"> </span><span class="kn">import</span> <span class="n">Note</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_citation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceCitation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
 
 <div class="viewcode-block" id="ResourceType">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.ResourceType">[docs]</a>
-<span class="k">class</span> <span class="nc">ResourceType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResourceType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration of known GedcomX resource types for SourceDescription.resourceType.&quot;&quot;&quot;</span>
+
     <span class="n">Collection</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Collection&quot;</span>
     <span class="n">PhysicalArtifact</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/PhysicalArtifact&quot;</span>
     <span class="n">DigitalArtifact</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/DigitalArtifact&quot;</span>
     <span class="n">Record</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Record&quot;</span>
-    <span class="n">Person</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Person&quot;</span>    
-    
+    <span class="n">Person</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Person&quot;</span>
+
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable description of this resource type.&quot;&quot;&quot;</span>
         <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">ResourceType</span><span class="o">.</span><span class="n">Collection</span><span class="p">:</span> <span class="s2">&quot;A collection of genealogical resources. A collection may contain physical artifacts (such as a collection of books in a library), records (such as the 1940 U.S. Census), or digital artifacts (such as an online genealogical application).&quot;</span><span class="p">,</span>
+            <span class="n">ResourceType</span><span class="o">.</span><span class="n">Collection</span><span class="p">:</span> <span class="s2">&quot;A collection of genealogical resources.&quot;</span><span class="p">,</span>
             <span class="n">ResourceType</span><span class="o">.</span><span class="n">PhysicalArtifact</span><span class="p">:</span> <span class="s2">&quot;A physical artifact, such as a book.&quot;</span><span class="p">,</span>
-            <span class="n">ResourceType</span><span class="o">.</span><span class="n">DigitalArtifact</span><span class="p">:</span> <span class="s2">&quot;A digital artifact, such as a digital image of a birth certificate or other record.&quot;</span><span class="p">,</span>
-            <span class="n">ResourceType</span><span class="o">.</span><span class="n">Record</span><span class="p">:</span> <span class="s2">&quot;A historical record, such as a census record or a vital record.&quot;</span>
+            <span class="n">ResourceType</span><span class="o">.</span><span class="n">DigitalArtifact</span><span class="p">:</span> <span class="s2">&quot;A digital artifact, such as a digital image.&quot;</span><span class="p">,</span>
+            <span class="n">ResourceType</span><span class="o">.</span><span class="n">Record</span><span class="p">:</span> <span class="s2">&quot;A historical record.&quot;</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
 
 
+
 <div class="viewcode-block" id="SourceDescription">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription">[docs]</a>
-<span class="nd">@extensible</span><span class="p">(</span><span class="n">toplevel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    
-<span class="k">class</span> <span class="nc">SourceDescription</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Description of a genealogical information source.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceDescription</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Description of a genealogical information source.&quot;&quot;&quot;</span>
 
-<span class="sd">    See: http://gedcomx.org/v1/SourceDescription</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/SourceDescription&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        id (str | None): Unique identifier for this `SourceDescription`.</span>
-<span class="sd">        resourceType (ResourceType | None): Type/category of the resource being</span>
-<span class="sd">            described (e.g., digital artifact, physical artifact).</span>
-<span class="sd">        citations (list[SourceCitation] | None): Citations that reference or</span>
-<span class="sd">            justify this source description.</span>
-<span class="sd">        mediaType (str | None): IANA media (MIME) type of the resource</span>
-<span class="sd">            (e.g., ``&quot;application/pdf&quot;``).</span>
-<span class="sd">        about (URI | None): Canonical URI that the description is about.</span>
-<span class="sd">        mediator (Resource | None): The mediator resource (if any) involved in</span>
-<span class="sd">            providing access to the source.</span>
-<span class="sd">        publisher (Resource | Agent | None): Publisher of the resource.</span>
-<span class="sd">        authors (list[Resource] | None): Authors/creators of the resource.</span>
-<span class="sd">        sources (list[SourceReference] | None): Other sources this description</span>
-<span class="sd">            derives from or references.</span>
-<span class="sd">        analysis (Resource | None): Analysis document associated with the</span>
-<span class="sd">            resource (often a `Document`; kept generic to avoid circular imports).</span>
-<span class="sd">        componentOf (SourceReference | None): Reference to a parent/containing</span>
-<span class="sd">            source (this is a component/child of that source).</span>
-<span class="sd">        titles (list[TextValue] | None): One or more titles for the resource.</span>
-<span class="sd">        notes (list[Note] | None): Human-authored notes about the resource.</span>
-<span class="sd">        attribution (Attribution | None): Attribution metadata for who supplied</span>
-<span class="sd">            or curated this description.</span>
-<span class="sd">        rights (list[Resource] | None): Rights statements or licenses.</span>
-<span class="sd">        coverage (list[Coverage] | None): Spatial/temporal coverage of the</span>
-<span class="sd">            source’s content.</span>
-<span class="sd">        descriptions (list[TextValue] | None): Short textual summaries or</span>
-<span class="sd">            descriptions.</span>
-<span class="sd">        identifiers (IdentifierList | None): Alternative identifiers for the</span>
-<span class="sd">            resource (DOI, ARK, call numbers, etc.).</span>
-<span class="sd">        created (Date | None): Creation date of the resource.</span>
-<span class="sd">        modified (Date | None): Last modified date of the resource.</span>
-<span class="sd">        published (Date | None): Publication/release date of the resource.</span>
-<span class="sd">        repository (Agent | None): Repository or agency that holds the resource.</span>
-<span class="sd">        max_note_count (int): Maximum number of notes to retain/emit. Defaults to 20.</span>
+    <span class="n">_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">_place_holder</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If `id` is not a valid UUID.</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
+    <span class="n">resourceType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResourceType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">mediaType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">about</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mediator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">publisher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">authors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="s2">&quot;Document&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">componentOf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">titles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">coverage</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Coverage</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">descriptions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">identifiers</span><span class="p">:</span> <span class="n">IdentifierList</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IdentifierList</span><span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Date</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">modified</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Date</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">published</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Date</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">repository</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        identifier (str): Gedcom-X specification identifier for this type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SourceDescription.model_post_init">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.model_post_init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate derived state after model initialization.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
 
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/SourceDescription&quot;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
-    
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">resourceType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResourceType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">citations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">mediaType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">about</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">mediator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">publisher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">authors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">sources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Document</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  
-                 <span class="n">componentOf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">titles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">notes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">rights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">coverage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Coverage</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">descriptions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">identifiers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IdentifierList</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">created</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">modified</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">published</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">repository</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Agent</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="p">):</span>
-        
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="n">make_uid</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resourceType</span> <span class="o">=</span> <span class="n">resourceType</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">citations</span> <span class="o">=</span> <span class="n">citations</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mediaType</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">about</span> <span class="o">=</span> <span class="n">about</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mediator</span> <span class="o">=</span> <span class="n">mediator</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_publisher</span> <span class="o">=</span> <span class="n">publisher</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">authors</span> <span class="o">=</span> <span class="n">authors</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">analysis</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">componentOf</span> <span class="o">=</span> <span class="n">componentOf</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">titles</span> <span class="o">=</span> <span class="n">titles</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">notes</span> <span class="o">=</span> <span class="n">notes</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rights</span> <span class="o">=</span> <span class="n">rights</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coverage</span> <span class="o">=</span> <span class="n">coverage</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="n">descriptions</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span> <span class="o">=</span> <span class="n">identifiers</span> <span class="ow">or</span> <span class="n">IdentifierList</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">created</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="n">modified</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="n">published</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">repository</span> <span class="o">=</span> <span class="n">repository</span>
-  
-        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="kc">None</span> <span class="c1">#TODO Should i take care of this in the collections?</span>
- 
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">publisher</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the publisher (Resource or Agent) for this source.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publisher</span>
 
-    <span class="nd">@publisher</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">publisher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the publisher; must be a Resource, Agent, or None.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_publisher</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">Resource</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_publisher</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">Agent</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_publisher</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;publisher&#39; must be of type &#39;URI&#39; or &#39;Agent&#39;, type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> was provided&quot;</span><span class="p">)</span>
-    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_instance</span><span class="p">,</span> <span class="n">check_mime</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resourceType</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resourceType</span><span class="p">,</span> <span class="n">ResourceType</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;resourceType&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ResourceType, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resourceType</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resourceType</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediaType</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">check_mime</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;mediaType&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediaType</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;about&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">about</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">citations</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;citations[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">SourceCitation</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;mediator&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediator</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;publisher&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">publisher</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;repository&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">repository</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">Agent</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">authors</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;authors[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">Resource</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;attribution&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">,</span> <span class="n">Attribution</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;analysis&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span>
+
 <div class="viewcode-block" id="SourceDescription.add_description">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_description">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desccription_to_add</span><span class="p">:</span> <span class="n">TextValue</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a TextValue description to the source, skipping duplicates.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">desccription_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">desccription_to_add</span><span class="p">,</span><span class="n">TextValue</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_description</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">desccription_to_add</span> <span class="o">==</span> <span class="n">current_description</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description_to_add</span><span class="p">:</span> <span class="n">TextValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a TextValue description, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">description_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">description_to_add</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">description_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
                     <span class="k">return</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">desccription_to_add</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">description_to_add</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SourceDescription.add_identifier">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_identifier">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier_to_add</span><span class="p">:</span> <span class="n">Identifier</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append an Identifier to the source&#39;s identifier list.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">identifier_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">identifier_to_add</span><span class="p">,</span><span class="n">Identifier</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier_to_add</span><span class="p">:</span> <span class="n">Identifier</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append an Identifier to this source description&#39;s identifier list.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">identifier_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">identifier_to_add</span><span class="p">,</span> <span class="n">Identifier</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier_to_add</span><span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="SourceDescription.add_note">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_note">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note_to_add</span><span class="p">:</span> <span class="n">Note</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Note to the source, skipping duplicates and notes with no text.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">note_to_add</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">note_to_add</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">note_to_add</span><span class="o">.</span><span class="n">text</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">note_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">,</span><span class="n">Note</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">existing</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">note_to_add</span> <span class="o">==</span> <span class="n">existing</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="kc">False</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">)</span>
-            <span class="k">return</span>      </div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note_to_add</span><span class="p">:</span> <span class="n">Note</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a non-empty Note to this source description, skipping blanks and duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">note_to_add</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">note_to_add</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">note_to_add</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">,</span> <span class="n">Note</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">existing</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">note_to_add</span> <span class="o">==</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="SourceDescription.add_source_reference">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_source_reference">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_to_add</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceReference to the source, skipping duplicates.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">source_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span><span class="n">SourceReference</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">current_source</span> <span class="o">==</span> <span class="n">source_to_add</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_to_add</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceReference to this source description, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">source_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">,</span> <span class="n">SourceReference</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">current</span> <span class="o">==</span> <span class="n">source_to_add</span><span class="p">:</span>
                     <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SourceDescription.add_title">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription.add_title">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title_to_add</span><span class="p">:</span> <span class="n">TextValue</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a title (TextValue or str) to the source, skipping duplicates.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument cannot be converted to a TextValue.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">title_to_add</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span> <span class="n">title_to_add</span> <span class="o">=</span> <span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">title_to_add</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title_to_add</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TextValue</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a title (string or TextValue) to this source description, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">title_to_add</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">title_to_add</span> <span class="o">=</span> <span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">title_to_add</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">title_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">title_to_add</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_title</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">titles</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">title_to_add</span> <span class="o">==</span> <span class="n">current_title</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">titles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">title_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                    <span class="k">return</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">titles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title_to_add</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot add title of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">title_to_add</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
 
-            
+
+
+<span class="c1"># SourceDescription&#39;s &quot;Document&quot; forward ref and SourceReference&#39;s &quot;SourceDescription&quot;</span>
+<span class="c1"># forward ref are resolved from document.py after Document is fully defined.</span>
 </pre></div>
         </article>
       </div>

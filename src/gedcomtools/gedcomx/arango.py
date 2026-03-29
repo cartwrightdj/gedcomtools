@@ -18,6 +18,7 @@ from .fact import FactType
 log = get_logger(__name__)
 
 def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
+    """Write ArangoDB import files for a GedcomX graph."""
     graph_files = {
         "persons": [],
         "relationships": []
@@ -37,7 +38,7 @@ def make_arango_graph_files(gedcomx: GedcomX) -> Dict[str, list]:
         try:
             gender_type = person.gender.type if person.gender else None
             person_entry["gender"] = gender_type.value.split("/")[-1] if gender_type and gender_type.value else None
-        except Exception:
+        except (AttributeError, TypeError):
             person_entry["gender"] = None
 
         facts = []

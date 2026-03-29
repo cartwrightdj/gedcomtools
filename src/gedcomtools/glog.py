@@ -1,3 +1,5 @@
+"""Shared logging configuration, helpers, and channel routing for gedcomtools."""
+
 from __future__ import annotations
 # ======================================================================
 #  Project: gedcomtools
@@ -279,6 +281,7 @@ class LoggingHub:
 
     @log_enabled.setter
     def log_enabled(self, value: bool) -> None:
+        """Return whether logging has been configured for the named channel."""
         self._enabled = bool(value)
         if self._enabled:
             _logger.enable("")

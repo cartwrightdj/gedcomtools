@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.schemas - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,36 +229,27 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.schemas</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    gedcomx/schemas.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Central schema registry providing field type metadata for serialization and extensibility</span>
+<span></span><span class="sd">&quot;&quot;&quot;Schema registry and type-introspection helpers for GedcomX models.&quot;&quot;&quot;</span>
 
-<span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding</span>
-<span class="sd">   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict</span>
-<span class="sd">   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA</span>
-
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">operator</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">threading</span>
-<span class="kn">import</span> <span class="nn">types</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">get_type_hints</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: Gedcom-X</span>
+<span class="c1">#  File:    gedcomx/schemas.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: Central schema registry for field type metadata</span>
+<span class="c1">#  Created: 2025-08-25</span>
+<span class="c1"># ======================================================================</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">get_type_hints</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># typing.Annotated may not exist in older 3.9 without typing_extensions</span>
-    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>  <span class="c1"># type: ignore</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>  <span class="c1"># type: ignore</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">Annotated</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
@@ -269,7 +260,7 @@
 
 <div class="viewcode-block" id="Schema">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema">[docs]</a>
-<span class="k">class</span> <span class="nc">Schema</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Schema</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Central registry of fields for classes.</span>
 
@@ -279,7 +270,7 @@
 <span class="sd">    - Containers are preserved; their inner args are normalized recursively</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -296,7 +287,7 @@
     <span class="c1"># ──────────────────────────────</span>
     <span class="c1"># Utils</span>
     <span class="c1"># ──────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_cls_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cls_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
 
     <span class="c1"># ──────────────────────────────</span>
@@ -304,13 +295,15 @@
     <span class="c1"># ──────────────────────────────</span>
 <div class="viewcode-block" id="Schema.set_uri_class">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_uri_class">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_uri_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_uri_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register the URI class used by schema helpers.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span> <span class="o">=</span> <span class="bp">cls</span></div>
 
 
 <div class="viewcode-block" id="Schema.set_resource_class">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_resource_class">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_resource_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_resource_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register the Resource class used by schema helpers.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resource_cls</span> <span class="o">=</span> <span class="bp">cls</span></div>
 
 
@@ -319,7 +312,7 @@
     <span class="c1"># ──────────────────────────────</span>
 <div class="viewcode-block" id="Schema.register_class">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_class">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_class</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_class</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -344,7 +337,7 @@
         <span class="n">cname</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="n">ignore</span> <span class="o">=</span> <span class="n">ignore</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
 
-        <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
             <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">if</span> <span class="n">use_annotations</span><span class="p">:</span>
                 <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_hints_from_class</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
@@ -408,7 +401,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">toplevel_meta</span> <span class="ow">or</span> <span class="p">{})</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_propagate_extra_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_propagate_extra_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply an inherited extra to subclass and its descendants if not overridden.&quot;&quot;&quot;</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">subclass_name</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
@@ -420,7 +413,7 @@
 
 <div class="viewcode-block" id="Schema.register_extra">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.register_extra">[docs]</a>
-    <span class="k">def</span> <span class="nf">register_extra</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_extra</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -428,7 +421,11 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a single extra field (normalized) and propagate to subclasses.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a single extra field (normalized) and propagate to subclasses.</span>
+
+<span class="sd">        For pydantic GedcomXModel subclasses, also calls ``define_ext()`` so the</span>
+<span class="sd">        field becomes a proper model field (not just an ``extra``-captured value).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">nt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
@@ -440,12 +437,16 @@
 
         <span class="c1"># propagate to current subclasses</span>
         <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subclasses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cname</span><span class="p">,</span> <span class="nb">set</span><span class="p">()):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_extra_down</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">nt</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_extra_down</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">nt</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+
+        <span class="c1"># For pydantic models, also wire up as a proper model field.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;define_ext&quot;</span><span class="p">):</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">define_ext</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">typ</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Schema.normalize_all">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.normalize_all">[docs]</a>
-    <span class="k">def</span> <span class="nf">normalize_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Re-run normalization across all registered fields.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">fields</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
@@ -455,26 +456,52 @@
     <span class="c1"># lookups</span>
 <div class="viewcode-block" id="Schema.get_class_fields">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_class_fields">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_class_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_class_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return normalised field map for *type_name*.</span>
+
+<span class="sd">        Explicit registrations (via ``register_class``) take priority.  For</span>
+<span class="sd">        any ``GedcomXModel`` subclass that hasn&#39;t been explicitly registered,</span>
+<span class="sd">        the fields are auto-derived from Pydantic ``model_fields`` and cached</span>
+<span class="sd">        so that the resolver and gxcli type-inference work without needing</span>
+<span class="sd">        manual decoration on every model class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">type_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">type_name</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="c1"># Fallback: auto-register from Pydantic model_fields for GedcomXModel subclasses</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">type_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_name</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span> <span class="k">as</span> <span class="n">_GXBase</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_GXBase</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_type_table</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Schema.set_toplevel">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.set_toplevel">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a class as a top-level GedcomX type.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span></div>
 
 
 <div class="viewcode-block" id="Schema.is_toplevel">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether the class is registered as top-level.&quot;&quot;&quot;</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span></div>
 
-    
+
 <div class="viewcode-block" id="Schema.is_toplevel_obj">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.is_toplevel_obj">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_toplevel_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_toplevel_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Like is_toplevel, but takes an arbitrary object and checks its class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -485,13 +512,14 @@
 
 <div class="viewcode-block" id="Schema.get_toplevel">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_toplevel">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the registered top-level classes.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_toplevel</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Schema.get_extras">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_extras">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Direct extras declared on this class (not inherited).&quot;&quot;&quot;</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">cls_or_name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">cls_or_name</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span></div>
@@ -499,7 +527,7 @@
 
 <div class="viewcode-block" id="Schema.get_all_extras">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.Schema.get_all_extras">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_all_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls_or_name</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Direct + inherited extras for this class.&quot;&quot;&quot;</span>
         <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls_name</span><span class="p">(</span><span class="n">cls_or_name</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
@@ -509,13 +537,14 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a JSON-compatible representation of the current data.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">schema_to_jsonable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="c1"># ──────────────────────────────</span>
     <span class="c1"># Introspection helpers</span>
     <span class="c1"># ──────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_get_hints_from_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_hints_from_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
         <span class="n">gns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span> <span class="k">if</span> <span class="n">module</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="c1"># Ensure these names exist even if the module didn&#39;t import them:</span>
@@ -531,7 +560,7 @@
             <span class="c1"># fallback keeps strings — but we’ll fix those below</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
 
-    <span class="k">def</span> <span class="nf">_get_hints_from_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_hints_from_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parameter annotations from __init__ (excluding self/return/*args/**kwargs).&quot;&quot;&quot;</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__init__&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__init__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
@@ -562,14 +591,14 @@
     <span class="c1">#   strip Optional -&gt; prefer URI/Resource -&gt; collapse unions</span>
     <span class="c1">#   (recurse into containers)</span>
     <span class="c1"># ──────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_normalize_field_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_field_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
         <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
         <span class="n">tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">tp</span>
 
     <span class="c1"># 1) Remove None from unions and strip Optional[...] wrappers</span>
-    <span class="k">def</span> <span class="nf">_strip_optional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_strip_optional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional_str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
 
@@ -580,7 +609,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strip_optional</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">_UNION_ORIGINS</span><span class="p">:</span>
-            <span class="n">kept</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># noqa: E721</span>
+            <span class="n">kept</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># noqa: E721  # pylint: disable=unidiomatic-typecheck</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">kept</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">Any</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -595,7 +624,7 @@
         <span class="k">return</span> <span class="n">tp</span>
 
     <span class="c1"># 2) In any union, prefer URI (if present), else Resource (if present), else first declared</span>
-    <span class="k">def</span> <span class="nf">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prefer_uri_or_resource_or_first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="c1"># if these are strings but we know the classes, return the classes</span>
             <span class="k">if</span> <span class="n">tp</span> <span class="o">==</span> <span class="s2">&quot;URI&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_cls</span><span class="p">:</span>
@@ -636,7 +665,7 @@
 
 
     <span class="c1"># 3) If any union still remains (it shouldn&#39;t after step 2), collapse to first</span>
-    <span class="k">def</span> <span class="nf">_collapse_unions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_unions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_unions_str</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
 
@@ -658,7 +687,7 @@
     <span class="c1"># ──────────────────────────────</span>
     <span class="c1"># Helpers: typing objects</span>
     <span class="c1"># ──────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_name_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_name_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
@@ -666,15 +695,14 @@
         <span class="c1"># typing objects: str(...) fallback</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_rebuild_union_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_union_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="c1"># Prefer PEP 604 A|B|C; fall back to typing.Union</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">or_</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>  <span class="c1"># e.g., A | B | C</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span> <span class="k">as</span> <span class="n">_TypingUnion</span>
-            <span class="k">return</span> <span class="n">_TypingUnion</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># typing.Union[A, B, C]</span>
+            <span class="k">return</span> <span class="n">Union</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]  # typing.Union[A, B, C]</span>
 
-    <span class="k">def</span> <span class="nf">_rebuild_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">sub</span><span class="p">]</span> <span class="k">if</span> <span class="n">sub</span> <span class="k">else</span> <span class="n">origin</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
@@ -683,7 +711,7 @@
     <span class="c1"># ──────────────────────────────</span>
     <span class="c1"># Helpers: strings</span>
     <span class="c1"># ──────────────────────────────</span>
-    <span class="k">def</span> <span class="nf">_strip_optional_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_strip_optional_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="c1"># peel Optional[...] wrappers</span>
         <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Optional[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
@@ -723,7 +751,7 @@
 
         <span class="k">return</span> <span class="n">s</span>
 
-    <span class="k">def</span> <span class="nf">_prefer_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prefer_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="c1"># Union[...] form</span>
         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
@@ -765,7 +793,7 @@
 
         <span class="k">return</span> <span class="n">s</span>
 
-    <span class="k">def</span> <span class="nf">_collapse_unions_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_unions_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">):</span>
             <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Union[&quot;</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -795,7 +823,7 @@
                     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span>
         <span class="k">return</span> <span class="n">s</span>
 
-    <span class="k">def</span> <span class="nf">_split_top_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_split_top_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Split `s` by single-char separator (&#39;,&#39; or &#39;|&#39;) at top level (not inside brackets).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -822,7 +850,8 @@
 <span class="c1"># ──────────────────────────────</span>
 <div class="viewcode-block" id="type_repr">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.type_repr">[docs]</a>
-<span class="k">def</span> <span class="nf">type_repr</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">type_repr</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a readable string representation of a type annotation.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">tp</span>
 
@@ -853,7 +882,8 @@
 
 <div class="viewcode-block" id="schema_to_jsonable">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_to_jsonable">[docs]</a>
-<span class="k">def</span> <span class="nf">schema_to_jsonable</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_to_jsonable</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert schema metadata into JSON-serializable structures.&quot;&quot;&quot;</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">cls_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">):</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">field_type_table</span><span class="p">[</span><span class="n">cls_name</span><span class="p">]</span>
@@ -864,7 +894,7 @@
 
 <div class="viewcode-block" id="schema_class">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_class">[docs]</a>
-<span class="k">def</span> <span class="nf">schema_class</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_class</span><span class="p">(</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">include_bases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -876,7 +906,7 @@
     <span class="n">toplevel_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to register a class with SCHEMA at import time.&quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
         <span class="n">SCHEMA</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span>
             <span class="bp">cls</span><span class="p">,</span>
             <span class="n">mapping</span><span class="o">=</span><span class="n">mapping</span><span class="p">,</span>
@@ -894,7 +924,7 @@
 
 <div class="viewcode-block" id="bind_schema_property">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.bind_schema_property">[docs]</a>
-<span class="k">def</span> <span class="nf">bind_schema_property</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bind_schema_property</span><span class="p">(</span>
     <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="n">fget</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
@@ -930,7 +960,7 @@
 
 <div class="viewcode-block" id="schema_property">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property">[docs]</a>
-<span class="k">def</span> <span class="nf">schema_property</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_property</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span>
     <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -944,10 +974,10 @@
 <span class="sd">        @schema_property(schema=SCHEMA)</span>
 <span class="sd">        def display_name(self) -&gt; str: ...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deco</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
         <span class="n">prop_name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span>
 
-        <span class="k">def</span> <span class="nf">_register</span><span class="p">(</span><span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_register</span><span class="p">(</span><span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
             <span class="k">nonlocal</span> <span class="n">typ</span>
             <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -957,8 +987,8 @@
         <span class="n">p</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
         <span class="c1"># Hook: when class is created, Python calls __set_name__ on descriptors.</span>
-        <span class="k">class</span> <span class="nc">_RegisteredProperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
-            <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">_RegisteredProperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">_register</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">_RegisteredProperty</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fget</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fset</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">fdel</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
@@ -968,16 +998,17 @@
 
 <div class="viewcode-block" id="schema_property_plugin">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.schema_property_plugin">[docs]</a>
-<span class="k">def</span> <span class="nf">schema_property_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="n">fget</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_property_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a plugin that binds a computed schema property.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deco</span><span class="p">(</span><span class="n">fget</span><span class="p">):</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">fget</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">&quot;typ&quot;</span><span class="p">:</span> <span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;fset&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;fdel&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
         <span class="nb">setattr</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="s2">&quot;__schema_prop__&quot;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="n">fset</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">setter</span><span class="p">(</span><span class="n">fset</span><span class="p">):</span>
             <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fset</span>
             <span class="k">return</span> <span class="n">fget</span>   <span class="c1"># &lt;-- IMPORTANT: keep name bound to getter (like @property.setter does)</span>
 
-        <span class="k">def</span> <span class="nf">deleter</span><span class="p">(</span><span class="n">fdel</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">deleter</span><span class="p">(</span><span class="n">fdel</span><span class="p">):</span>
             <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fdel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdel</span>
             <span class="k">return</span> <span class="n">fget</span>
 
@@ -989,7 +1020,8 @@
 
 <div class="viewcode-block" id="apply_schema_property">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.apply_schema_property">[docs]</a>
-<span class="k">def</span> <span class="nf">apply_schema_property</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">fget</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_schema_property</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">fget</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a schema-bound computed property to a class.&quot;&quot;&quot;</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fget</span><span class="p">,</span> <span class="s2">&quot;__schema_prop__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
@@ -1012,7 +1044,7 @@
 <span class="c1"># ──────────────────────────────</span>
 <div class="viewcode-block" id="accept_extras">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.accept_extras">[docs]</a>
-<span class="k">def</span> <span class="nf">accept_extras</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_extras&quot;</span><span class="p">,</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">accept_extras</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">stash_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_extras&quot;</span><span class="p">,</span>
                   <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span>  <span class="c1"># e.g., lambda cls: set(SCHEMA.get_all_extras(cls).keys())</span>
                  <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1024,7 +1056,7 @@
     <span class="n">WRAPPED_FLAG</span> <span class="o">=</span> <span class="s2">&quot;__extras_wrapped__&quot;</span>
     <span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_wrap_init</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_init</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">WRAPPED_FLAG</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
                 <span class="k">return</span>
@@ -1032,10 +1064,10 @@
             <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">orig</span><span class="p">)</span>
 
             <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">orig</span><span class="p">)</span>
-            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
                 <span class="c1"># Split known from extras using THIS class&#39;s signature</span>
                 <span class="n">known</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;self&quot;</span><span class="p">:</span>
                         <span class="k">continue</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -1064,7 +1096,7 @@
             <span class="n">klass</span><span class="o">.</span><span class="fm">__init__</span> <span class="o">=</span> <span class="fm">__init__</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">WRAPPED_FLAG</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_decorator</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decorator</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
         <span class="c1"># wrap the base class now</span>
         <span class="n">_wrap_init</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
 
@@ -1073,9 +1105,9 @@
         <span class="n">prev_func</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="vm">__func__</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="nb">classmethod</span><span class="p">)</span> <span class="k">else</span> <span class="n">prev</span>
 
         <span class="nd">@classmethod</span>
-        <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="n">subcls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="n">subcls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">prev_func</span><span class="p">:</span>
-                <span class="n">prev_func</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>  <span class="c1"># call original</span>
+                <span class="n">prev_func</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]  # call original</span>
             <span class="n">_wrap_init</span><span class="p">(</span><span class="n">subcls</span><span class="p">)</span>   <span class="c1"># wrap subclass&#39; __init__ too</span>
 
         <span class="n">klass</span><span class="o">.</span><span class="n">__init_subclass__</span> <span class="o">=</span> <span class="n">__init_subclass__</span>  <span class="c1"># propagate to future subclasses</span>
@@ -1086,12 +1118,12 @@
 
 <div class="viewcode-block" id="extensible">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible">[docs]</a>
-<span class="k">def</span> <span class="nf">extensible</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extensible</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply schema_class then accept_extras in the right order.</span>
 <span class="sd">    Example: @extensible(toplevel=True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="c1"># 1) register class with schema (inner)</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">schema_class</span><span class="p">(</span><span class="o">**</span><span class="n">schema_kwargs</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="c1"># 2) wrap for extras (outer) using an effective allow_only</span>
@@ -1103,9 +1135,10 @@
 
 <div class="viewcode-block" id="extensible_dataclass">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.extensible_dataclass">[docs]</a>
-<span class="k">def</span> <span class="nf">extensible_dataclass</span><span class="p">(</span><span class="o">*</span><span class="n">d_args</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span> <span class="k">as</span> <span class="n">_dc</span>
-    <span class="k">def</span> <span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extensible_dataclass</span><span class="p">(</span><span class="o">*</span><span class="n">d_args</span><span class="p">,</span> <span class="n">allow_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">schema_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorate a dataclass so it participates in the extension system.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span> <span class="k">as</span> <span class="n">_dc</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deco</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">_dc</span><span class="p">(</span><span class="o">*</span><span class="n">d_args</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>                          <span class="c1"># generate __init__</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">schema_class</span><span class="p">(</span><span class="o">**</span><span class="n">schema_kwargs</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>         <span class="c1"># register with SCHEMA</span>
         <span class="n">eff_allow</span> <span class="o">=</span> <span class="n">allow_only</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
@@ -1114,21 +1147,19 @@
     <span class="k">return</span> <span class="n">deco</span></div>
 
 
-<span class="c1"># put this in your schemas.py (or a shared helpers module)</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
 
 <div class="viewcode-block" id="ExtrasAwareMeta">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.ExtrasAwareMeta">[docs]</a>
-<span class="k">class</span> <span class="nc">ExtrasAwareMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExtrasAwareMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.</span>
 
 <span class="sd">    - Only passes constructor-known kwargs into ``__init__``.</span>
 <span class="sd">    - Allowed extras (from SCHEMA) are attached after construction.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># what extras are allowed for this class?</span>
         <span class="n">allow_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__extras_allow__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">)</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">)</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c1"># type: ignore[arg-type]</span>
 
         <span class="c1"># inspect the CURRENT __init__ (dataclass/custom OK)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -1173,11 +1204,11 @@
 <span class="c1"># -------------</span>
 <div class="viewcode-block" id="fact_from_even_tag">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.fact_from_even_tag">[docs]</a>
-<span class="k">def</span> <span class="nf">fact_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">FactType</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fact_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the GedcomX fact type mapped from a GEDCOM EVEN tag.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactType</span>
     <span class="n">gedcom_even_to_fact</span> <span class="o">=</span> <span class="p">{</span>
         <span class="c1"># Person Fact Types</span>
-        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
         <span class="s2">&quot;CHR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
         <span class="s2">&quot;EVEN&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Amnesty</span><span class="p">,</span>  <span class="c1"># and other FactTypes with no direct GEDCOM tag</span>
         <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
@@ -1230,8 +1261,9 @@
 
 <div class="viewcode-block" id="event_from_even_tag">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.event_from_even_tag">[docs]</a>
-<span class="k">def</span> <span class="nf">event_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span> 
-    <span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">EventType</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">event_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the GedcomX event type mapped from a GEDCOM EVEN tag.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventType</span>
     <span class="n">gedcom_even_to_evnt</span> <span class="o">=</span> <span class="p">{</span>
         <span class="c1"># Person Fact Types</span>
         <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
@@ -1243,7 +1275,7 @@
         <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
         <span class="s2">&quot;BLES&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
         <span class="s2">&quot;BURI&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
-        
+
         <span class="s2">&quot;CENS&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
         <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
         <span class="s2">&quot;CONF&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
@@ -1252,13 +1284,13 @@
         <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
         <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
         <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
-        
+
         <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
-        
+
         <span class="s2">&quot;NATU&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
-        
+
         <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
-        
+
 
         <span class="c1"># Couple Relationship Fact Types</span>
         <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
@@ -1266,7 +1298,7 @@
         <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
         <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
         <span class="s2">&quot;MARR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Marriage</span>
-        
+
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">gedcom_even_to_evnt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">even_value</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span></div>
 

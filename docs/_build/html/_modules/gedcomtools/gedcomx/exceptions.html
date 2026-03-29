@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.exceptions - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -234,53 +234,52 @@
 <span class="sd"> Project: Gedcom-X</span>
 <span class="sd"> File:    exceptions.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose:</span>
 
 <span class="sd"> Created: 2025-09-12</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   </span>
-<span class="sd">   </span>
+
+
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># GEDCOM Module Types</span>
 
 <div class="viewcode-block" id="GedcomXError">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomXError">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base for all app-specific errors.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="GedcomClassAttributeError">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomClassAttributeError">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomClassAttributeError</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;This class need more information to be created: </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomClassAttributeError</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Document the GedcomClassAttributeError type.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;This class needs more information to be created: </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="TagConversionError">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.exceptions.TagConversionError">[docs]</a>
-<span class="k">class</span> <span class="nc">TagConversionError</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span><span class="n">levelstack</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TagConversionError</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Document the TagConversionError type.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span><span class="n">levelstack</span><span class="p">):</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Cannot convert: #</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">line</span><span class="si">}</span><span class="s2"> TAG: </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">xref</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">record</span><span class="o">.</span><span class="n">xref</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> Value:</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> STACK: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">levelstack</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
-        
+
 <div class="viewcode-block" id="ConversionErrorDump">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.exceptions.ConversionErrorDump">[docs]</a>
-<span class="k">class</span> <span class="nc">ConversionErrorDump</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConversionErrorDump</span><span class="p">(</span><span class="n">GedcomXError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Document the ConversionErrorDump type.&quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="GedcomXDateParseError">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.exceptions.GedcomXDateParseError">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXDateParseError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXDateParseError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when we cannot parse a date string into GEDCOM X Date format.&quot;&quot;&quot;</span></div>
 
 </pre></div>

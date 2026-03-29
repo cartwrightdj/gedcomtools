@@ -7,6 +7,14 @@
 
  Created: 2025-08-25
  Updated: 2026-03-27 — manifest writing, read() classmethod
+          2026-03-29 — GedcomX objects now written as genealogy.json (not
+                        tree.json); collisions produce genealogy2.json, etc.;
+                        _arcnames set tracks all written entries to prevent
+                        duplicate zip entries across all object types
+                      — non-GedcomX objects with a path-based _uri are written
+                        under the corresponding directory (e.g. persons/P1.json);
+                        _unique_arcname handles collision suffix for both flat
+                        and path-based names
 
 ======================================================================
 """
@@ -26,6 +34,8 @@ GX_CONTENT_TYPE = "application/x-gedcomx-v1+json"
 
 
 class GedcomHeaderField:
+    """A key/value pair used in MANIFEST.MF entries."""
+
     def __init__(self, key: str, value: str) -> None:
         self.key = key
         self.value = value
@@ -38,6 +48,8 @@ X_DC_CONFORMSTO_FIELD = GedcomHeaderField(
 
 
 class GedcomResource:
+    """Represents a single resource entry in a GedcomX ZIP manifest."""
+
     def __init__(
         self,
         path: str,
@@ -48,10 +60,13 @@ class GedcomResource:
 
 
 class GedcomManifest:
+    """Builds and renders the ``META-INF/MANIFEST.MF`` content for a GedcomX ZIP package."""
+
     def __init__(self) -> None:
         self.resources: list[GedcomResource] = []
 
     def add(self, path: str, content_type: str = GX_CONTENT_TYPE) -> None:
+        """Register a resource entry at *path* with the given content-type header."""
         self.resources.append(GedcomResource(path, [
             GedcomHeaderField("Content-Type", content_type),
             GedcomHeaderField("X-DC-conformsTo", GX_CONFORMSTO),
@@ -73,6 +88,8 @@ class GedcomManifest:
 
 
 class GedcomZip:
+    """Read and write GedcomX ZIP file packages with a MANIFEST.MF and JSON resource entries."""
+
     def __init__(self, path: str | None = None) -> None:
         """
         Open a new GedcomX ZIP archive for writing.
@@ -97,10 +114,55 @@ class GedcomZip:
             compression=zipfile.ZIP_DEFLATED,
         )
         self._manifest = GedcomManifest()
+        self._arcnames: set[str] = set()
 
     # ────────────────────────────────────────────────
     # Internal helpers
     # ────────────────────────────────────────────────
+    @staticmethod
+    def _normalize_entry_data(data: dict) -> dict:
+        """Normalize a ZIP JSON entry to the collection-shaped form expected by GedcomX.from_dict()."""
+        top_level_keys = (
+            "persons",
+            "relationships",
+            "sourceDescriptions",
+            "agents",
+            "events",
+            "documents",
+            "places",
+            "groups",
+        )
+        normalized = dict(data)
+        for key in top_level_keys:
+            value = normalized.get(key)
+            if value is not None and not isinstance(value, list):
+                normalized[key] = [value]
+        return normalized
+
+    def _unique_arcname(self, base: str) -> str:
+        """Return ``base.json``, deduplicating on collision.
+
+        For flat names (``genealogy``)  → ``genealogy.json``, ``genealogy2.json``, …
+        For path names (``persons/P1``) → ``persons/P1.json``, ``persons/P1_2.json``, …
+        """
+        candidate = f"{base}.json"
+        if candidate not in self._arcnames:
+            return candidate
+        n = 2
+        if "/" in base:
+            dir_part, name_part = base.rsplit("/", 1)
+            while True:
+                candidate = f"{dir_part}/{name_part}_{n}.json"
+                if candidate not in self._arcnames:
+                    return candidate
+                n += 1
+        else:
+            while True:
+                candidate = f"{base}{n}.json"
+                if candidate not in self._arcnames:
+                    return candidate
+                n += 1
+
     def _resolve_zip_path(self, path: str | None) -> Path:
         if path is None:
             return self._create_temp_zip_path()
@@ -138,7 +200,7 @@ class GedcomZip:
         """
         Serialize *obj* and store it as a JSON entry inside the zip.
 
-        - If *obj* is a ``GedcomX`` instance it is written as ``tree.json``
+        - If *obj* is a ``GedcomX`` instance it is written as ``genealogy.json``
           and the method returns immediately — no second serialization pass.
         - For any other registered top-level type, the entry is named after
           the object's ``id`` or class name.
@@ -146,9 +208,10 @@ class GedcomZip:
           is not a recognised top-level type.
         """
         if isinstance(obj, GedcomX):
-            arcname = "tree.json"
+            arcname = self._unique_arcname("genealogy")
             self.zip.writestr(arcname, obj.json)
             self._manifest.add(arcname)
+            self._arcnames.add(arcname)
             return arcname
 
         if not SCHEMA.is_toplevel(obj.__class__):
@@ -157,12 +220,21 @@ class GedcomZip:
         class_name = obj.__class__.__name__.lower() + "s"
         data = {class_name: Serialization.serialize(obj)}
 
-        uri = getattr(obj, "_uri", None) or getattr(obj, "id", None) or class_name
-        safe_uri = str(uri).replace("/", "_").replace("\\", "_")
-        arcname = f"{safe_uri}.json"
+        uri_obj = getattr(obj, "_uri", None)
+        if uri_obj and getattr(uri_obj, "path", None):
+            dir_part = uri_obj.path.strip("/")
+            name_part = str(uri_obj.fragment or getattr(obj, "id", None) or class_name)
+            safe_name = name_part.replace("\\", "_")
+            arcname = self._unique_arcname(f"{dir_part}/{safe_name}")
+        else:
+            base = str((getattr(uri_obj, "fragment", None) if uri_obj else None)
+                       or getattr(obj, "id", None) or class_name)
+            safe_base = base.replace("/", "_").replace("\\", "_")
+            arcname = self._unique_arcname(safe_base)
 
         self.zip.writestr(arcname, json.dumps(data, ensure_ascii=False, indent=2))
         self._manifest.add(arcname)
+        self._arcnames.add(arcname)
         return arcname
 
     def write_manifest(self) -> None:
@@ -186,7 +258,7 @@ class GedcomZip:
 
         Looks for all ``.json`` entries (excluding the manifest), deserializes
         each one, and merges them into a single ``GedcomX`` object.  The primary
-        entry ``tree.json`` is processed first.
+        entry ``genealogy.json`` is processed first.
 
         Raises:
             FileNotFoundError: If *path* does not exist.
@@ -201,10 +273,10 @@ class GedcomZip:
         with zipfile.ZipFile(p, "r") as zf:
             names = zf.namelist()
 
-            # Process tree.json first, then all other .json entries
+            # Process genealogy.json first, then all other .json entries
             ordered = (
-                [n for n in names if n == "tree.json"]
-                + sorted(n for n in names if n.endswith(".json") and n != "tree.json"
+                [n for n in names if n == "genealogy.json"]
+                + sorted(n for n in names if n.endswith(".json") and n != "genealogy.json"
                          and not n.startswith("META-INF/"))
             )
 
@@ -212,7 +284,7 @@ class GedcomZip:
                 raise ValueError(f"No GedcomX JSON entries found in {p}")
 
             for entry_name in ordered:
-                data = json.loads(zf.read(entry_name))
+                data = cls._normalize_entry_data(json.loads(zf.read(entry_name)))
                 gx = GedcomX.from_dict(data)
                 merged.extend(gx)
 

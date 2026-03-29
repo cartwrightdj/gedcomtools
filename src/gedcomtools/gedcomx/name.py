@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/name.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Name model: Name, NameForm, NamePart, NameType, and NamePartType
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 import re
@@ -12,6 +23,8 @@ from .gx_base import GedcomXModel
 
 
 class NameType(Enum):
+    """Enumeration of name classification types (birth, married, nickname, etc.)."""
+
     BirthName = "http://gedcomx.org/BirthName"
     MarriedName = "http://gedcomx.org/MarriedName"
     AlsoKnownAs = "http://gedcomx.org/AlsoKnownAs"
@@ -23,6 +36,8 @@ class NameType(Enum):
 
 
 class NamePartQualifier(Enum):
+    """Enumeration of qualifiers that further describe a NamePart (e.g. Primary, Maiden)."""
+
     Title = "http://gedcomx.org/Title"
     Primary = "http://gedcomx.org/Primary"
     Secondary = "http://gedcomx.org/Secondary"
@@ -42,6 +57,8 @@ class NamePartQualifier(Enum):
 
 
 class NamePartType(Enum):
+    """Enumeration of structural name part types (Prefix, Suffix, Given, Surname)."""
+
     Prefix = "http://gedcomx.org/Prefix"
     Suffix = "http://gedcomx.org/Suffix"
     Given = "http://gedcomx.org/Given"
@@ -49,6 +66,8 @@ class NamePartType(Enum):
 
 
 class NamePart(GedcomXModel):
+    """A single structural component of a name form (e.g. a given name or surname)."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/NamePart"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -86,6 +105,8 @@ class NamePart(GedcomXModel):
 
 
 class NameForm(GedcomXModel):
+    """One script/language representation of a name, consisting of full text and optional parts."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/NameForm"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -105,6 +126,8 @@ class NameForm(GedcomXModel):
 
 
 class Name(Conclusion):
+    """A name conclusion for a person, comprising one or more NameForm representations."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Name"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -170,11 +193,14 @@ class Name(Conclusion):
 
 
 class QuickName:
+    """Convenience factory: ``QuickName("John Smith")`` returns a Name with a single NameForm."""
+
     def __new__(cls, name: str) -> Name:  # type: ignore[misc]
         return Name(nameForms=[NameForm(fullText=name)])
 
 
 def ensure_list(val: Any) -> list:
+    """Wrap *val* in a list if it is not already one; returns ``[]`` for None."""
     if val is None:
         return []
     return val if isinstance(val, list) else [val]

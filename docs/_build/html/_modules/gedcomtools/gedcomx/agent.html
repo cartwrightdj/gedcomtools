@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.agent - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,215 +229,190 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.agent</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.person</span> <span class="kn">import</span> <span class="n">Person</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    agent.py</span>
+<span class="sd"> File:    gedcomx/agent.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose: GedcomX Agent model: person, organisation, or software that created or modified data</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># GedcomX Agent model.</span>
+<span class="c1"># Represents a person, organisation, or software that created or modified data.</span>
+<span class="c1"># Equality is semantic: person reference takes priority; falls back to name overlap.</span>
+<span class="c1"># __hash__ = None — mutable object, not safely hashable.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Type Imports</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.address</span> <span class="kn">import</span> <span class="n">Address</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span>
-<span class="kn">from</span> <span class="nn">.online_account</span> <span class="kn">import</span> <span class="n">OnlineAccount</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.textvalue</span> <span class="kn">import</span> <span class="n">TextValue</span>
-<span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">make_uid</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#=====================================================================</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.person</span><span class="w"> </span><span class="kn">import</span> <span class="n">Person</span>
+    <span class="n">_PersonOrResource</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Person</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span><span class="p">,</span> <span class="n">field_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.address</span><span class="w"> </span><span class="kn">import</span> <span class="n">Address</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.online_account</span><span class="w"> </span><span class="kn">import</span> <span class="n">OnlineAccount</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
+
 
 <div class="viewcode-block" id="Agent">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent">[docs]</a>
-<span class="nd">@extensible</span><span class="p">(</span><span class="n">toplevel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">Agent</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A GedcomX Agent Data Type.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Agent</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A GedcomX Agent — a person, organisation, or software that created/modified data.&quot;&quot;&quot;</span>
 
-<span class="sd">    Represents an agent entity such as a person, organization, or software </span>
-<span class="sd">    responsible for creating or modifying genealogical data, as defined in </span>
-<span class="sd">    the GedcomX conceptual model.</span>
+    <span class="c1"># Internal URI (not serialized)</span>
+    <span class="n">_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-<span class="sd">    Static Methods:</span>
-<span class="sd">    </span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
+    <span class="n">identifiers</span><span class="p">:</span> <span class="n">IdentifierList</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IdentifierList</span><span class="p">)</span>
+    <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">homepage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">openid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accounts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OnlineAccount</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">emails</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">phones</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">addresses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Address</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># TYPE_CHECKING branch: gives type checkers Union[Person, Resource] / Attribution.</span>
+    <span class="c1"># Runtime branch: keeps Any so Pydantic never tries to resolve Person/Attribution</span>
+    <span class="c1"># before they exist (circular build chain:</span>
+    <span class="c1"># attribution.py → agent.py ← person.py ← fact.py ← conclusion.py → attribution.py).</span>
+    <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+        <span class="n">person</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Person</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">person</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;addresses&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_drop_none_addresses</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">v</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        id (str, optional): A unique identifier for this agent. If not provided, </span>
-<span class="sd">            one may be generated automatically using `default_id_generator()`.</span>
-<span class="sd">        identifiers (IdentifierList, optional): A list of alternate identifiers for this agent.</span>
-<span class="sd">        names (List[TextValue], optional): Names associated with the agent. Defaults to an empty list.</span>
-<span class="sd">        homepage (URI, optional): A link to the agent&#39;s homepage or primary website.</span>
-<span class="sd">        openid (URI, optional): The OpenID identifier for the agent.</span>
-<span class="sd">        accounts (List[OnlineAccount], optional): Online accounts associated with the agent.</span>
-<span class="sd">            Defaults to an empty list.</span>
-<span class="sd">        emails (List[URI], optional): Email addresses associated with the agent.</span>
-<span class="sd">            Defaults to an empty list.</span>
-<span class="sd">        phones (List[Resource], optional): Phone numbers associated with the agent.</span>
-<span class="sd">            Defaults to an empty list.</span>
-<span class="sd">        addresses (List[Address], optional): Postal addresses associated with the agent.</span>
-<span class="sd">            Defaults to an empty list.</span>
-<span class="sd">        person (Person, optional): A reference to the person represented </span>
-<span class="sd">            by the agent. Accepts a `Person` object or a `Resource` reference. </span>
-<span class="sd">            Declared as `object` to avoid circular imports.</span>
-<span class="sd">        attribution (Attribution, optional): Attribution information related to the agent.</span>
-<span class="sd">        uri (Resource, optional): A URI reference for this agent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-        
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">identifiers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IdentifierList</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-                    <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">homepage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">openid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">accounts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">OnlineAccount</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">emails</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">URI</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">phones</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">URI</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">addresses</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Address</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-                    <span class="n">person</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Person</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="c1"># should be of Type &#39;Person&#39;, &#39;object&#39; to avoid circular imports</span>
-                    <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="c1"># Added for compatibility with GEDCOM5/7 Imports</span>
-                    <span class="p">):</span> 
-        
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="n">make_uid</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span> <span class="o">=</span> <span class="n">identifiers</span> <span class="ow">or</span> <span class="n">IdentifierList</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">names</span> <span class="k">if</span> <span class="n">names</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">homepage</span> <span class="o">=</span> <span class="n">homepage</span> <span class="ow">or</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">openid</span> <span class="o">=</span> <span class="n">openid</span> <span class="ow">or</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">accounts</span> <span class="o">=</span> <span class="n">accounts</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emails</span> <span class="o">=</span> <span class="n">emails</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">phones</span> <span class="o">=</span> <span class="n">phones</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span> <span class="k">if</span> <span class="n">addresses</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">person</span> <span class="o">=</span> <span class="n">person</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xnotes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span> <span class="ow">or</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="k">else</span> <span class="kc">None</span>
-  
-    <span class="k">def</span> <span class="nf">_append_to_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_append</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.model_post_init">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.model_post_init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate derived state after model initialization.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Mutation helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_append_to_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_to_append</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">text_to_append</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">text_to_append</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span> <span class="c1">#TODO</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Agent has no names to append to&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Agent.add_address">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_address">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address_to_add</span><span class="p">:</span> <span class="n">Address</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an Address to the agent, skipping exact duplicates.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address_to_add</span><span class="p">:</span> <span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an Address to this agent, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">,</span> <span class="n">Address</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;address must be of type Address, not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">address_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">)</span></div>
 
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not an Address instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">address_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">,</span> <span class="n">Address</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_address</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">address_to_add</span> <span class="o">==</span> <span class="n">current_address</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="kc">False</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;address must be of type Address, not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">address_to_add</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-        
 <div class="viewcode-block" id="Agent.add_name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_to_add</span><span class="p">:</span> <span class="n">TextValue</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a name (TextValue or str) to the agent, skipping duplicates.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_to_add</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TextValue</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a name to this agent, skipping duplicates.  Accepts a string or TextValue.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">name_to_add</span> <span class="o">=</span> <span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">name_to_add</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name must be str or TextValue, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name_to_add</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_to_add</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;name value must not be empty&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">)</span></div>
 
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not a str or TextValue, or the value is empty.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span> <span class="n">name_to_add</span> <span class="o">=</span> <span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">name_to_add</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">,</span><span class="n">TextValue</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">name_to_add</span> <span class="o">==</span> <span class="n">current_name</span><span class="p">:</span>
-                    <span class="k">return</span>
-            <span class="k">if</span> <span class="n">name_to_add</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_to_add</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;name value must not be empty&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;name must be of type str or TextValue, recived </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
-    
-<div class="viewcode-block" id="Agent.add_note">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_note">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note_to_add</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append a Note to the agent&#39;s note list.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not a Note instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-        <span class="k">if</span> <span class="n">note_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">,</span><span class="n">Note</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">xnotes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;note must be of type Note, recived </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">note_to_add</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
-
-    
 <div class="viewcode-block" id="Agent.add_identifier">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.add_identifier">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier_to_add</span><span class="p">:</span> <span class="n">Identifier</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append an Identifier to the agent&#39;s identifier list.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier_to_add</span><span class="p">:</span> <span class="n">Identifier</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append an Identifier to this agent&#39;s identifier list.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier_to_add</span><span class="p">)</span></div>
 
-    
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return a human-readable string representation of the Agent.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            str: A concise description including ID, primary name (if any), and type of agent.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_instance</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;names&quot;</span><span class="p">,</span> <span class="s2">&quot;Agent has no names&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tv</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;names[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">tv</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;homepage&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">homepage</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;openid&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">openid</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emails</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;emails[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phones</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;phones[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">URI</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accounts</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;accounts[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">OnlineAccount</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">addr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addresses</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;addresses[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">Address</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">person</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.person</span><span class="w"> </span><span class="kn">import</span> <span class="n">Person</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;person&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">person</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Resource</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;attribution&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">,</span> <span class="n">Attribution</span><span class="p">)</span>
+    <span class="c1"># Dunder methods</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">primary_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="k">else</span> <span class="s2">&quot;Unnamed Agent&quot;</span>
         <span class="n">homepage_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, homepage=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">homepage</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">homepage</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Agent(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">, name=&#39;</span><span class="si">{</span><span class="n">primary_name</span><span class="si">}</span><span class="s2">&#39;</span><span class="si">{</span><span class="n">homepage_str</span><span class="si">}</span><span class="s2">)&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># mutable object with semantic equality — not safely hashable</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Agent</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">NotImplemented</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">identifiers</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">names</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">homepage</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">homepage</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">openid</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">openid</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">accounts</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">accounts</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">emails</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">emails</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">phones</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">phones</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">addresses</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">person</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">person</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">attribution</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">uri</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">person</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">person</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">person</span>
+        <span class="n">self_values</span> <span class="o">=</span> <span class="p">{(</span><span class="n">tv</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="k">if</span> <span class="n">tv</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+        <span class="n">other_values</span> <span class="o">=</span> <span class="p">{(</span><span class="n">tv</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">names</span> <span class="k">if</span> <span class="n">tv</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">self_values</span> <span class="o">&amp;</span> <span class="n">other_values</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sorted_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return names sorted alphabetically by value (primary name order preserved in self.names).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tv</span><span class="p">:</span> <span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">())</span>
 
 <div class="viewcode-block" id="Agent.shares_name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent.shares_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">shares_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Agent&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if this agent and other share at least one name value.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shares_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Agent&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if this agent and *other* share at least one name value.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Agent</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="n">self_names</span>  <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span>  <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+        <span class="n">self_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
         <span class="n">other_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">names</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">self_names</span> <span class="o">&amp;</span> <span class="n">other_names</span><span class="p">)</span></div>
 </div>
+
+
 
 </pre></div>
         </article>

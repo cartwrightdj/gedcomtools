@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom5.helpers - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -230,18 +230,15 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcom5.helpers</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: gedcomtools</span>
-<span class="sd"> File:    gedcom5/helpers.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Helper utilities for GEDCOM 5.x parsing and element handling</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: gedcomtools</span>
+<span class="c1">#  File:    gedcom5/helpers.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: Helper utilities for GEDCOM 5.x parsing and element handling</span>
+<span class="c1">#  Created: 2026-01-01</span>
+<span class="c1"># ======================================================================</span>
+<span class="sd">&quot;&quot;&quot;Shared helper functions for GEDCOM 5.x parsing and record traversal.&quot;&quot;&quot;</span>
 
-<span class="sd"> Created: 2026-01-01</span>
-<span class="sd"> Updated:</span>
-
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Python GEDCOM Parser</span>
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)</span>
@@ -267,26 +264,24 @@
 <span class="c1">#</span>
 <span class="c1"># Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Helper methods.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># Helper methods.</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 
 
 <div class="viewcode-block" id="deprecated">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.helpers.deprecated">[docs]</a>
-<span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">deprecated</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is a decorator which can be used to mark functions</span>
 <span class="sd">    as deprecated. It will result in a warning being emitted</span>
 <span class="sd">    when the function is used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">new_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">new_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
         <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>  <span class="c1"># turn off filter</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Call to deprecated function </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Call to deprecated function </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
                       <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
                       <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>  <span class="c1"># reset filter</span>

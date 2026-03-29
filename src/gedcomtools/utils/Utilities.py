@@ -13,6 +13,7 @@
 from enum import Enum
 
 def combine_enums(name: str, *enums, allow_aliases=False, prefix_on_conflict=False) -> Enum:
+    """Combine enum-like classes into a single iterable mapping."""
     items: dict[str, object] = {}
     seen_values: set[object] = set()
 

@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.serialization - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,29 +229,27 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.serialization</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    gedcomx/serialization.py</span>
-<span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON</span>
+<span></span><span class="sd">&quot;&quot;&quot;Serialize, deserialize, and resolve references across GedcomX object graphs.&quot;&quot;&quot;</span>
 
-<span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
-<span class="sd">   - 2025-08-31: cleaned up imports and documentation</span>
-
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sized</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">import</span> <span class="nn">enum</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter</span>
-<span class="kn">import</span> <span class="nn">types</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Annotated</span><span class="p">,</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: Gedcom-X</span>
+<span class="c1">#  File:    gedcomx/serialization.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON</span>
+<span class="c1">#  Created: 2025-08-25</span>
+<span class="c1">#  Updated: 2026-03-24 — restored Resource reference serialization; removed</span>
+<span class="c1">#                         _GXModel short-circuit; added _RESOURCE_REF_FIELDS</span>
+<span class="c1">#                         with MRO walk; fixed _normalize_field_type for unions;</span>
+<span class="c1">#                         added _to_dict dispatch for GedcomX container</span>
+<span class="c1"># ======================================================================</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sized</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">perf_counter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
@@ -264,39 +262,94 @@
     <span class="n">get_origin</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.address</span> <span class="kn">import</span> <span class="n">Address</span>
-<span class="kn">from</span> <span class="nn">.agent</span> <span class="kn">import</span> <span class="n">Agent</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.conclusion</span> <span class="kn">import</span> <span class="n">ConfidenceLevel</span>
-<span class="kn">from</span> <span class="nn">.date</span> <span class="kn">import</span> <span class="n">Date</span>
-<span class="kn">from</span> <span class="nn">.document</span> <span class="kn">import</span> <span class="n">Document</span><span class="p">,</span> <span class="n">DocumentType</span><span class="p">,</span> <span class="n">TextType</span>
-<span class="kn">from</span> <span class="nn">.evidence_reference</span> <span class="kn">import</span> <span class="n">EvidenceReference</span>
-<span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span><span class="p">,</span> <span class="n">EventRole</span><span class="p">,</span> <span class="n">EventRoleType</span>
-<span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span><span class="p">,</span> <span class="n">FactQualifier</span>
-<span class="kn">from</span> <span class="nn">.gedcomx</span> <span class="kn">import</span> <span class="n">TypeCollection</span>
-<span class="kn">from</span> <span class="nn">.gender</span> <span class="kn">import</span> <span class="n">Gender</span><span class="p">,</span> <span class="n">GenderType</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">Identifier</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">hub</span>
-<span class="kn">from</span> <span class="nn">.name</span> <span class="kn">import</span> <span class="n">Name</span><span class="p">,</span> <span class="n">NameType</span><span class="p">,</span> <span class="n">NameForm</span><span class="p">,</span> <span class="n">NamePart</span><span class="p">,</span> <span class="n">NamePartType</span><span class="p">,</span> <span class="n">NamePartQualifier</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.online_account</span> <span class="kn">import</span> <span class="n">OnlineAccount</span>
-<span class="kn">from</span> <span class="nn">.person</span> <span class="kn">import</span> <span class="n">Person</span>
-<span class="kn">from</span> <span class="nn">.place_description</span> <span class="kn">import</span> <span class="n">PlaceDescription</span>
-<span class="kn">from</span> <span class="nn">.place_reference</span> <span class="kn">import</span> <span class="n">PlaceReference</span>
-<span class="kn">from</span> <span class="nn">.qualifier</span> <span class="kn">import</span> <span class="n">Qualifier</span>
-<span class="kn">from</span> <span class="nn">.relationship</span> <span class="kn">import</span> <span class="n">Relationship</span><span class="p">,</span> <span class="n">RelationshipType</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span>  <span class="kn">import</span> <span class="n">SCHEMA</span>
-<span class="kn">from</span> <span class="nn">.source_description</span> <span class="kn">import</span> <span class="n">SourceDescription</span><span class="p">,</span> <span class="n">ResourceType</span><span class="p">,</span> <span class="n">SourceCitation</span><span class="p">,</span> <span class="n">Coverage</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="kn">from</span> <span class="nn">.textvalue</span> <span class="kn">import</span> <span class="n">TextValue</span>
-<span class="kn">from</span> <span class="nn">.uri</span> <span class="kn">import</span> <span class="n">URI</span>
-<span class="c1">#======================================================================</span>
+<span class="c1"># GEDCOM Module Types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeCollection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">IdentifierList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">hub</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span> <span class="k">as</span> <span class="n">_GXModel</span>
+
+
+<span class="c1"># Fields typed Optional[Any] during the pydantic migration that should still be</span>
+<span class="c1"># serialized as resource references ({&quot;resource&quot;: &quot;#id&quot;}).  Keyed by class name</span>
+<span class="c1"># so the lookup is O(1) and import-free.  MRO is walked so subclass fields are</span>
+<span class="c1"># covered automatically (see _get_resource_overrides).</span>
+<span class="n">_RESOURCE_REF_FIELDS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Conclusion&quot;</span><span class="p">:</span>        <span class="p">{</span><span class="s2">&quot;analysis&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;Relationship&quot;</span><span class="p">:</span>      <span class="p">{</span><span class="s2">&quot;person1&quot;</span><span class="p">,</span> <span class="s2">&quot;person2&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;EventRole&quot;</span><span class="p">:</span>         <span class="p">{</span><span class="s2">&quot;person&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;GroupRole&quot;</span><span class="p">:</span>         <span class="p">{</span><span class="s2">&quot;person&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;SourceReference&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">},</span>   <span class="c1"># URI | SourceDescription → resource ref</span>
+    <span class="s2">&quot;SourceDescription&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;analysis&quot;</span><span class="p">},</span>       <span class="c1"># Resource | Document → resource ref</span>
+    <span class="s2">&quot;PlaceReference&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;descriptionRef&quot;</span><span class="p">},</span> <span class="c1"># Resource | URI | PlaceDescription → resource ref</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_field_type</span><span class="p">(</span><span class="n">tp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Strip Optional, then prefer Resource over URI over first type in a Union.&quot;&quot;&quot;</span>
+    <span class="c1"># Strip Optional[X] → X</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Union</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+    <span class="c1"># Union[A, B, ...] → prefer Resource &gt; URI &gt; first</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Union</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">preferred</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Resource</span><span class="p">,):</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span> <span class="ow">is</span> <span class="n">preferred</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">preferred</span>
+        <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="n">tp</span>
+
+    <span class="k">return</span> <span class="n">tp</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_resource_overrides</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulate resource-reference field names across the full MRO.&quot;&quot;&quot;</span>
+    <span class="n">overrides</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>
+        <span class="n">overrides</span> <span class="o">|=</span> <span class="n">_RESOURCE_REF_FIELDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">overrides</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_class_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return {field_name: normalised_type} for pydantic GedcomXModel subclasses.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_GXModel</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">resource_overrides</span> <span class="o">=</span> <span class="n">_get_resource_overrides</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">resource_overrides</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">Resource</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">_normalize_field_type</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_SchemaBridge</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SCHEMA compatibility shim: normalised field types from pydantic model_fields.&quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_class_fields</span><span class="p">(</span><span class="n">name_or_cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return normalized schema field metadata for the given class.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_or_cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">_get_class_fields</span><span class="p">(</span><span class="n">name_or_cls</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span> <span class="k">if</span> <span class="n">f</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">_SchemaBridge</span><span class="p">()</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
+<span class="c1"># ======================================================================</span>
+<span class="c1">#  Project: Gedcom-X</span>
+<span class="c1">#  File:    serialization.py</span>
+<span class="c1">#  Author:  David J. Cartwright</span>
+<span class="c1">#  Purpose: Serialize / deserialize GedcomX objects to/from JSON dicts</span>
+<span class="c1">#  Updated: 2026-03-29 — serialize(dict): filter None values after</span>
+<span class="c1">#                         recursive serialization; previously empty list</span>
+<span class="c1">#                         fields produced &quot;key&quot;: null in output</span>
+<span class="c1"># ======================================================================</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -306,7 +359,8 @@
 <div class="viewcode-block" id="ResolveStats">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ResolveStats</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolveStats</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Telemetry counters and details collected during a reference-resolution pass.&quot;&quot;&quot;</span>
     <span class="c1"># high-level counters</span>
     <span class="n">total_refs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">cache_hits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -323,48 +377,55 @@
     <span class="n">attempts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>     <span class="c1"># [{key, ref_type, path, cache_hit}]</span>
     <span class="n">resolver_time_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">_bump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span>
 
 <div class="viewcode-block" id="ResolveStats.note_attempt">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_attempt">[docs]</a>
-    <span class="k">def</span> <span class="nf">note_attempt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">cache_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">note_attempt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">cache_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a resolution attempt, incrementing total and cache hit/miss counters.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">total_refs</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="n">cache_hit</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_hits</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">else</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">cache_misses</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">cache_hit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache_hits</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache_misses</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">by_ref_type</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ref_type&quot;</span><span class="p">:</span> <span class="n">ref_type</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;cache_hit&quot;</span><span class="p">:</span> <span class="n">cache_hit</span><span class="p">})</span></div>
 
 
 <div class="viewcode-block" id="ResolveStats.note_success">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_success">[docs]</a>
-    <span class="k">def</span> <span class="nf">note_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">note_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a successful resolution and increment the target-type counter.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_ok</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">by_target_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ResolveStats.note_failure">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_failure">[docs]</a>
-    <span class="k">def</span> <span class="nf">note_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">note_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a failed resolution with the failure reason.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_fail</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ref_type&quot;</span><span class="p">:</span> <span class="n">ref_type</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span><span class="p">})</span></div>
 
 
 <div class="viewcode-block" id="ResolveStats.note_resolver_time">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.ResolveStats.note_resolver_time">[docs]</a>
-    <span class="k">def</span> <span class="nf">note_resolver_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">note_resolver_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Accumulate resolver wall-clock time in milliseconds.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolver_time_ms</span> <span class="o">+=</span> <span class="n">dt_ms</span></div>
 </div>
 
 
 <div class="viewcode-block" id="Serialization">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization">[docs]</a>
-<span class="k">class</span> <span class="nc">Serialization</span><span class="p">:</span>
- 
+<span class="k">class</span><span class="w"> </span><span class="nc">Serialization</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Static utilities for serializing GedcomX objects to JSON-compatible dicts and deserializing them back.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="Serialization.serialize">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.serialize">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize a GedcomX object (or primitive) to a JSON-compatible dict/value.</span>
 
 <span class="sd">        Returns:</span>
@@ -372,17 +433,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">hub</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">serial_log</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span><span class="s1">&#39;_serializer&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;_serializer&#39;</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">_serializer</span>
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))):</span>
                     <span class="k">return</span> <span class="n">obj</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="n">r</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-                    <span class="k">return</span> <span class="n">r</span> <span class="k">if</span> <span class="n">r</span> <span class="o">!=</span> <span class="p">{}</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">sv</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="p">(</span><span class="n">sv</span> <span class="o">:=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+                    <span class="k">return</span> <span class="n">r</span> <span class="k">if</span> <span class="n">r</span> <span class="k">else</span> <span class="kc">None</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">URI</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">value</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">TypeCollection</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="n">TypeCollection</span><span class="p">)):</span>
                     <span class="n">seq</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">TypeCollection</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="k">return</span> <span class="kc">None</span>
@@ -391,44 +452,47 @@
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
+                <span class="c1"># Walk schema fields, handling Resource and URI specially.</span>
+                <span class="c1"># Pydantic models fall through to model_dump only when no fields found.</span>
                 <span class="n">type_as_dict</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
                             <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                                <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">Resource</span> <span class="ow">or</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;Resource&#39;</span><span class="p">:</span>
-                                    <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;Resource&#39;</span><span class="p">:</span>
-                                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;SCHEMA field &#39;</span><span class="si">%s</span><span class="s2">&#39; has unresolved string type &#39;Resource&#39; on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">type_</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Resource</span><span class="p">,</span> <span class="s1">&#39;Resource&#39;</span><span class="p">):</span>
                                     <span class="n">res</span> <span class="o">=</span> <span class="n">Resource</span><span class="o">.</span><span class="n">_of_object</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
-                                    <span class="n">type_as_dict</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                                <span class="k">elif</span> <span class="n">type_</span> <span class="o">==</span> <span class="n">URI</span> <span class="ow">or</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;URI&#39;</span><span class="p">:</span>
-                                    <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;URI&#39;</span><span class="p">:</span>
-                                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;SCHEMA field &#39;</span><span class="si">%s</span><span class="s2">&#39; has unresolved string type &#39;URI&#39; on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-                                    <span class="n">uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                        <span class="n">type_as_dict</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                                <span class="k">elif</span> <span class="n">type_</span> <span class="ow">in</span> <span class="p">(</span><span class="n">URI</span><span class="p">,</span> <span class="s1">&#39;URI&#39;</span><span class="p">):</span>
+                                    <span class="n">uri</span> <span class="o">=</span> <span class="n">URI</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">})</span>
                                     <span class="n">type_as_dict</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="n">value</span>
                                 <span class="k">elif</span> <span class="p">(</span><span class="n">sv</span> <span class="o">:=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                                     <span class="n">type_as_dict</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sv</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> missing expected field &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">type_as_dict</span> <span class="k">if</span> <span class="n">type_as_dict</span> <span class="o">!=</span> <span class="p">{}</span> <span class="k">else</span> <span class="kc">None</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No SCHEMA fields found for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> missing expected field &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">type_as_dict</span> <span class="k">if</span> <span class="n">type_as_dict</span> <span class="k">else</span> <span class="kc">None</span>
+
+                <span class="c1"># Fallback for pydantic models with no registered schema fields</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">_GXModel</span><span class="p">):</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No SCHEMA fields found for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_serialize_dict</span><span class="p">(</span><span class="n">dict_to_serialize</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_dict</span><span class="p">(</span><span class="n">dict_to_serialize</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Walk a dict and serialize nested GedcomX objects to JSON-compatible values.</span>
 <span class="sd">        - Uses `to_dict` on your objects when present</span>
 <span class="sd">        - Recurse into dicts / lists / sets / tuples</span>
 <span class="sd">        - Drops None and empty containers</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">def</span> <span class="nf">_serialize</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_serialize</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))):</span>
                 <span class="k">return</span> <span class="n">value</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">fields</span> <span class="o">:=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_fields</span> <span class="o">:=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># Expect your objects expose a snapshot via to_dict</span>
                 <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -453,19 +517,43 @@
         <span class="k">return</span> <span class="p">{}</span>
 
     <span class="c1"># --- tiny helpers --------------------------------------------------------</span>
-       
+
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_as_concrete_class</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_as_concrete_class</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;If T resolves to an actual class type, return it; else None.&quot;&quot;&quot;</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_forward</span><span class="p">(</span><span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">U</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_reference</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_reference</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if *x* is a Resource or URI (i.e. a reference, not an inline value).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">Resource</span><span class="p">,</span> <span class="n">URI</span><span class="p">))</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_has_reference_value</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_external_reference</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if x points to an external (non-local) resource.</span>
+
+<span class="sd">        External references have an authority (e.g. ``example.com``) or use a</span>
+<span class="sd">        network scheme (``http``, ``https``, ``ftp`` …).  Fragment-only and</span>
+<span class="sd">        resourceId references are always local and return False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_EXTERNAL_SCHEMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">,</span> <span class="s2">&quot;ftp&quot;</span><span class="p">,</span> <span class="s2">&quot;ftps&quot;</span><span class="p">,</span> <span class="s2">&quot;urn&quot;</span><span class="p">}</span>
+        <span class="n">uri</span><span class="p">:</span> <span class="n">URI</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Resource</span><span class="p">):</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">resource</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">URI</span><span class="p">):</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="n">uri</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">authority</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">and</span> <span class="n">uri</span><span class="o">.</span><span class="n">scheme</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_EXTERNAL_SCHEMES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_reference_value</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if *x* or any nested element is a Resource or URI reference.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_is_reference</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
@@ -477,7 +565,7 @@
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_resolve_structure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_structure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
                         <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
                         <span class="o">*</span><span class="p">,</span>
                         <span class="n">_seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -501,16 +589,23 @@
 
             <span class="c1"># Direct reference?</span>
             <span class="k">if</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_is_reference</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="c1"># Skip external references — only resolve local (fragment/ID) refs</span>
+                <span class="k">if</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_is_external_reference</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;skipping external reference: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">x</span>
+
                 <span class="n">ref_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;resourceId&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">cache_hit</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_cache</span>
+                <span class="n">raw_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;resourceId&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="c1"># Normalise to a hashable string so URI objects (Pydantic, not hashable) work as cache keys</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">raw_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">cache_hit</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_cache</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
                 <span class="k">if</span> <span class="n">stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">stats</span><span class="o">.</span><span class="n">note_attempt</span><span class="p">(</span><span class="n">ref_type</span><span class="o">=</span><span class="n">ref_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">_path</span><span class="p">,</span> <span class="n">cache_hit</span><span class="o">=</span><span class="n">cache_hit</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="n">cache_hit</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;looking up: </span><span class="si">%s</span><span class="s2"> from </span><span class="si">%s</span><span class="s2"> at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_path</span><span class="p">))</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;looking up: </span><span class="si">{}</span><span class="s2"> from </span><span class="si">{}</span><span class="s2"> at </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ref_type</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_path</span><span class="p">))</span>
 
                 <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
                 <span class="k">try</span><span class="p">:</span>
@@ -568,7 +663,7 @@
                 <span class="p">]</span>
 
             <span class="c1"># Model objects registered in SCHEMA: walk their fields</span>
-            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="ow">or</span> <span class="p">{}</span>
             <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fname</span><span class="p">):</span>
@@ -580,7 +675,22 @@
                         <span class="k">try</span><span class="p">:</span>
                             <span class="nb">setattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
                         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; field &#39;</span><span class="si">%s</span><span class="s2">&#39; did not resolve&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; field &#39;</span><span class="si">{}</span><span class="s2">&#39; did not resolve&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">x</span>
+
+            <span class="c1"># Plain Python objects (e.g. GedcomX root): walk public __dict__ attrs so</span>
+            <span class="c1"># that nested TypeCollections and Pydantic models are reached by the resolver.</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;__dict__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">fname</span><span class="p">,</span> <span class="n">fval</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                    <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">new</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_structure</span><span class="p">(</span><span class="n">fval</span><span class="p">,</span> <span class="n">resolver</span><span class="p">,</span> <span class="n">_seen</span><span class="o">=</span><span class="n">_seen</span><span class="p">,</span> <span class="n">_cache</span><span class="o">=</span><span class="n">_cache</span><span class="p">,</span>
+                                                        <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">,</span> <span class="n">_path</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">_path</span><span class="p">,</span> <span class="n">fname</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">new</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">fval</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="nb">setattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; field &#39;</span><span class="si">{}</span><span class="s2">&#39; did not resolve&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">x</span>
 
             <span class="c1"># Anything else: leave as-is</span>
@@ -589,9 +699,9 @@
 <div class="viewcode-block" id="Serialization.apply_resource_resolutions">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.apply_resource_resolutions">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">apply_resource_resolutions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inst</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_resource_resolutions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inst</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve any queued attribute setters stored on the instance.&quot;&quot;&quot;</span>
-        <span class="n">setters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">&quot;_resource_setters&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">setters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">&quot;_resource_setters&quot;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">for</span> <span class="n">set_fn</span> <span class="ow">in</span> <span class="n">setters</span><span class="p">:</span>
             <span class="n">set_fn</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">resolver</span><span class="p">)</span>
         <span class="c1"># Optional: clear after applying</span>
@@ -599,11 +709,11 @@
 
 
     <span class="c1"># --- your deserialize with setters --------------------------------------</span>
-    
+
 <div class="viewcode-block" id="Serialization.deserialize">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.deserialize">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">deserialize</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">class_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
@@ -613,19 +723,29 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize a JSON dict into an instance of ``class_type``.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            data: A JSON-compatible dict whose keys correspond to ``class_type`` fields.</span>
-<span class="sd">            class_type: The target class to instantiate.</span>
-<span class="sd">            resolver: Optional callable to immediately resolve Resource/URI references.</span>
-<span class="sd">            queue_setters: If True, unresolved references are stored as lazy setters</span>
-<span class="sd">                on the instance for deferred resolution.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            An instance of ``class_type`` populated from ``data``.</span>
+<span class="sd">        ``data`` should contain keys that correspond to ``class_type`` fields.</span>
+<span class="sd">        If ``resolver`` is provided, Resource and URI references are resolved</span>
+<span class="sd">        immediately; otherwise unresolved references may be queued as lazy</span>
+<span class="sd">        setters when ``queue_setters`` is true.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="n">hub</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">deserial_log</span><span class="p">):</span>
             <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-            <span class="n">class_fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+            <span class="c1"># Pydantic models: delegate to model_validate</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">class_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">class_type</span><span class="p">,</span> <span class="n">_GXModel</span><span class="p">):</span>
+                <span class="n">inst</span> <span class="o">=</span> <span class="n">class_type</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: pydantic model_validate </span><span class="si">%.3f</span><span class="s2"> ms&quot;</span><span class="p">,</span>
+                          <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">inst</span>
+
+            <span class="c1"># Plain classes with a from_dict classmethod (e.g. GedcomX)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">class_type</span><span class="p">,</span> <span class="s2">&quot;from_dict&quot;</span><span class="p">):</span>
+                <span class="n">inst</span> <span class="o">=</span> <span class="n">class_type</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: from_dict </span><span class="si">%.3f</span><span class="s2"> ms&quot;</span><span class="p">,</span>
+                          <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">inst</span>
+
+            <span class="n">class_fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="n">class_type</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
 
             <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">pending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -641,7 +761,7 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">val</span> <span class="o">=</span> <span class="n">_coerce</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">%s</span><span class="s2">]: coercion failed for field &#39;</span><span class="si">%s</span><span class="s2">&#39; raw=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: coercion failed for field &#39;</span><span class="si">{}</span><span class="s2">&#39; raw=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span>
                                 <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">raw</span><span class="p">)</span>
                     <span class="k">raise</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
@@ -652,7 +772,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">inst</span> <span class="o">=</span> <span class="n">class_type</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">%s</span><span class="s2">]: __init__ failed with kwargs=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: __init__ failed with kwargs=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
                             <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
                 <span class="k">raise</span>
 
@@ -663,7 +783,7 @@
                         <span class="n">resolved</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_structure</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">resolver</span><span class="p">)</span>  <span class="c1"># deep-resolve Resources</span>
                         <span class="nb">setattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">%s</span><span class="s2">]: resolver failed for &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: resolver failed for &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
                         <span class="k">raise</span>
 
             <span class="c1"># queue setters as callables for later resolution</span>
@@ -671,23 +791,23 @@
                 <span class="n">existing</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">&quot;_resource_setters&quot;</span><span class="p">,</span> <span class="p">[])</span>
                 <span class="n">fns</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">pending</span><span class="p">:</span>
-                    <span class="k">def</span> <span class="nf">_make</span><span class="p">(</span><span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">):</span>
-                        <span class="k">def</span> <span class="nf">_set</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">resolver_</span><span class="p">):</span>
+                    <span class="k">def</span><span class="w"> </span><span class="nf">_make</span><span class="p">(</span><span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">):</span>
+                        <span class="k">def</span><span class="w"> </span><span class="nf">_set</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">resolver_</span><span class="p">):</span>
                             <span class="n">resolved</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_structure</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">resolver_</span><span class="p">)</span>
                             <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
                         <span class="k">return</span> <span class="n">_set</span>
                     <span class="n">fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_make</span><span class="p">())</span>
                 <span class="n">inst</span><span class="o">.</span><span class="n">_resource_setters</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">existing</span><span class="p">,</span> <span class="o">*</span><span class="n">fns</span><span class="p">]</span>
 
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">%s</span><span class="s2">]: </span><span class="si">%.3f</span><span class="s2"> ms (resolved=</span><span class="si">%s</span><span class="s2">, queued=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;deserialize[</span><span class="si">{}</span><span class="s2">]: </span><span class="si">%.3f</span><span class="s2"> ms (resolved=</span><span class="si">{}</span><span class="s2">, queued=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span>
                     <span class="n">class_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span>
                     <span class="nb">int</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">resolver</span><span class="p">))</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">&quot;_resource_setters&quot;</span><span class="p">,</span> <span class="p">[])))</span>
             <span class="k">return</span> <span class="n">inst</span></div>
 
 
-  
+
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_coerce_value</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_value</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Typ</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Coerce `value` into `Typ` using the registry (recursively).&quot;&quot;&quot;</span>
         <span class="c1"># Enums</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_enum_type</span><span class="p">(</span><span class="n">Typ</span><span class="p">):</span>
@@ -695,12 +815,11 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">U</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: failed to cast </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: failed to cast </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="c1"># Unwrap typing once</span>
         <span class="n">T</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_forward</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">Typ</span><span class="p">))</span>
-        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="n">T</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
 
         <span class="c1"># Strings to Resource/URI</span>
@@ -709,13 +828,13 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">Resource</span><span class="p">(</span><span class="n">resourceId</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: str-&gt;Resource failed for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: str-&gt;Resource failed for </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">value</span>
             <span class="k">if</span> <span class="n">T</span> <span class="ow">is</span> <span class="n">URI</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">URI</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: str-&gt;URI failed for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: str-&gt;URI failed for </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">value</span>
             <span class="k">return</span> <span class="n">value</span>
 
@@ -724,7 +843,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">Resource</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">),</span> <span class="n">resourceId</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resourceId&quot;</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: dict-&gt;Resource failed for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: dict-&gt;Resource failed for </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="c1"># IdentifierList</span>
@@ -732,14 +851,14 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">IdentifierList</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: IdentifierList.from_json failed for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: IdentifierList.from_json failed for </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="c1"># Containers</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_typecollection_annot</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
             <span class="n">elem_t</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_typecollection_elem_type</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="n">TypeCollection</span><span class="p">))</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;coerce: TypeCollection expected list-like, got </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;coerce: TypeCollection expected list-like, got </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">src_iter</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span><span class="p">)</span>
@@ -749,7 +868,7 @@
                 <span class="n">coll</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">coll</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: TypeCollection failed for </span><span class="si">%r</span><span class="s2"> elem_t=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: TypeCollection failed for </span><span class="si">{!r}</span><span class="s2"> elem_t=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_list_like</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
@@ -757,7 +876,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">_coerce_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="p">[])]</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: list failed for </span><span class="si">%r</span><span class="s2"> elem_t=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: list failed for </span><span class="si">{!r}</span><span class="s2"> elem_t=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_set_like</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
@@ -765,7 +884,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">_coerce_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="p">[])}</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: set failed for </span><span class="si">%r</span><span class="s2"> elem_t=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: set failed for </span><span class="si">{!r}</span><span class="s2"> elem_t=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_tuple_like</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
@@ -777,7 +896,7 @@
                     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_coerce_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">elem_t</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="p">()))</span>
                 <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_coerce_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: tuple failed for </span><span class="si">%r</span><span class="s2"> args=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: tuple failed for </span><span class="si">{!r}</span><span class="s2"> args=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_dict_like</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
@@ -789,12 +908,12 @@
                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="p">}</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: dict failed for </span><span class="si">%r</span><span class="s2"> k_t=</span><span class="si">%r</span><span class="s2"> v_t=</span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">k_t</span><span class="p">,</span> <span class="n">v_t</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: dict failed for </span><span class="si">{!r}</span><span class="s2"> k_t=</span><span class="si">{!r}</span><span class="s2"> v_t=</span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">k_t</span><span class="p">,</span> <span class="n">v_t</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
 
         <span class="c1"># Objects via registry</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
             <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">for</span> <span class="n">fname</span><span class="p">,</span> <span class="n">ftype</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -803,11 +922,11 @@
                         <span class="k">try</span><span class="p">:</span>
                             <span class="n">kwargs</span><span class="p">[</span><span class="n">fname</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_coerce_value</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">fname</span><span class="p">],</span> <span class="n">resolved</span><span class="p">)</span>
                         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2"> field coercion failed&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+                            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;coerce: </span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2"> field coercion failed&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">T</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;coerce: instantiate </span><span class="si">%s</span><span class="s2"> failed kwargs=</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">e</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;coerce: instantiate </span><span class="si">{}</span><span class="s2"> failed kwargs=</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">e</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">kwargs</span>
 
         <span class="c1"># Already correct type?</span>
@@ -817,13 +936,13 @@
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
             <span class="k">pass</span>
 
-        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;coerce: fallback — returning original value=</span><span class="si">%r</span><span class="s2"> (type=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;coerce: fallback — returning original value=</span><span class="si">{!r}</span><span class="s2"> (type=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="Serialization.resolve_references_recursive">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.serialization.Serialization.resolve_references_recursive">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">resolve_references_recursive</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_references_recursive</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Walk the graph rooted at `root` and resolve all gedcomx.Resource</span>
 <span class="sd">        instances in-place (or by replacing container elements).</span>
@@ -837,7 +956,7 @@
         <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="k">def</span> <span class="nf">resolve_resource</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">resolve_resource</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="c1"># Key by resourceId or value; fall back to id(r)</span>
             <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;resourceId&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">id</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
@@ -846,7 +965,7 @@
             <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
             <span class="k">return</span> <span class="n">out</span>
 
-        <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">visit</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="n">oid</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">node</span>
@@ -877,13 +996,13 @@
                 <span class="k">return</span> <span class="n">node</span>
 
             <span class="c1"># Your model objects (registered in SCHEMA)</span>
-            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_class_fields</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">))</span> <span class="ow">or</span> <span class="p">{}</span>
             <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="c1"># Apply any queued per-instance setters first (lazy references)</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">cls</span><span class="o">.</span><span class="n">apply_resource_resolutions</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">resolve_resource</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;resolve_references_recursive: apply_resource_resolutions failed for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;resolve_references_recursive: apply_resource_resolutions failed for </span><span class="si">{!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
                 <span class="c1"># Walk fields according to SCHEMA</span>
                 <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="k">try</span><span class="p">:</span>
@@ -893,7 +1012,7 @@
                             <span class="k">if</span> <span class="n">new</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">cur</span><span class="p">:</span>
                                 <span class="nb">setattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;resolve_references_recursive: failed visiting </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;resolve_references_recursive: failed visiting </span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">node</span>
 
             <span class="c1"># Everything else: leave as-is</span>
@@ -902,12 +1021,14 @@
         <span class="k">return</span> <span class="n">visit</span><span class="p">(</span><span class="n">root</span><span class="p">)</span></div>
 
 
-        
+
     <span class="c1"># -------------------------- TYPE HELPERS --------------------------</span>
 
-    
+
+    <span class="nd">@staticmethod</span>
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Strip Optional/Annotated wrappers and flatten single-member Unions.&quot;&quot;&quot;</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">T</span>
@@ -915,13 +1036,14 @@
             <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="n">Any</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Union</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">UnionType</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># pylint: disable=unidiomatic-typecheck</span>
             <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">T</span>
 
     <span class="nd">@staticmethod</span>
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_resolve_forward</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_forward</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve a ForwardRef or string type annotation to the actual class if available.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">ForwardRef</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">__forward_arg__</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -930,7 +1052,8 @@
 
     <span class="nd">@staticmethod</span>
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_is_enum_type</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_enum_type</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if the resolved type is an Enum subclass.&quot;&quot;&quot;</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_forward</span><span class="p">(</span><span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">)</span>
@@ -938,29 +1061,33 @@
             <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_list_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_list_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if T is a list or List annotation.&quot;&quot;&quot;</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="n">T</span>
         <span class="k">return</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_set_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_set_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if T is a set or Set annotation.&quot;&quot;&quot;</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="n">T</span>
         <span class="k">return</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="n">Set</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_tuple_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_tuple_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if T is a tuple or Tuple annotation.&quot;&quot;&quot;</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="n">T</span>
         <span class="k">return</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_dict_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_dict_like</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if T is a dict or Dict annotation.&quot;&quot;&quot;</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="ow">or</span> <span class="n">T</span>
         <span class="k">return</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">)</span>
-    
+
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_is_typecollection_annot</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_typecollection_annot</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True iff the annotation is TypeCollection[...] or TypeCollection.&quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.gedcomx</span> <span class="kn">import</span> <span class="n">TypeCollection</span> <span class="k">as</span> <span class="n">_TC</span>  <span class="c1"># class, not factory</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeCollection</span> <span class="k">as</span> <span class="n">_TC</span>  <span class="c1"># class, not factory</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_forward</span><span class="p">(</span><span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -968,14 +1095,12 @@
         <span class="k">return</span> <span class="n">U</span> <span class="ow">is</span> <span class="n">_TC</span>  <span class="c1"># bare TypeCollection (no param)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_typecollection_elem_type</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_typecollection_elem_type</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the element type from TypeCollection[Elem], or Any if unspecified.&quot;&quot;&quot;</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">_resolve_forward</span><span class="p">(</span><span class="n">Serialization</span><span class="o">.</span><span class="n">_unwrap</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="n">Any</span></div>
 
-
-    
 </pre></div>
         </article>
       </div>

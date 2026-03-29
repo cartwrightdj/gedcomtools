@@ -7,7 +7,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>GEDCOM 5.x API - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -237,6 +237,7 @@
         <article role="main" id="furo-main-content">
           <section id="module-gedcomtools.gedcom5.parser">
 <span id="gedcom-5-x-api"></span><h1>GEDCOM 5.x API<a class="headerlink" href="#module-gedcomtools.gedcom5.parser" title="Link to this heading">¶</a></h1>
+<p>Parse GEDCOM 5.x files into the project’s element tree representation.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.GedcomFormatViolationError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.parser.</span></span><span class="sig-name descname"><span class="pre">GedcomFormatViolationError</span></span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/parser.html#GedcomFormatViolationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.parser.GedcomFormatViolationError" title="Link to this definition">¶</a></dt>
@@ -256,37 +257,44 @@ outputs consumed by <code class="xref py py-class docutils literal notranslate">
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.individuals">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">individuals</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.IndividualRecord" title="gedcomtools.gedcom5.elements.IndividualRecord"><span class="pre">IndividualRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.individuals" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the individual records.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.families">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">families</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.FamilyRecord" title="gedcomtools.gedcom5.elements.FamilyRecord"><span class="pre">FamilyRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.families" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the family records.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.sources">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sources</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.SourceRecord" title="gedcomtools.gedcom5.elements.SourceRecord"><span class="pre">SourceRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.sources" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the source records.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.repositories">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">repositories</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.RepositoryRecord" title="gedcomtools.gedcom5.elements.RepositoryRecord"><span class="pre">RepositoryRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.repositories" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the repository records.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.objects">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.ObjectRecord" title="gedcomtools.gedcom5.elements.ObjectRecord"><span class="pre">ObjectRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.objects" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the multimedia object records.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.header">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">header</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.HeaderRecord" title="gedcomtools.gedcom5.elements.HeaderRecord"><span class="pre">HeaderRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.header" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the header record.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.submitters">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">submitters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom5.elements.SubmitterRecord" title="gedcomtools.gedcom5.elements.SubmitterRecord"><span class="pre">SubmitterRecord</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.submitters" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the submitter records.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.get_element_dictionary">
@@ -357,7 +365,8 @@ outputs consumed by <code class="xref py py-class docutils literal notranslate">
 
 </dd></dl>
 
-<dl class="py class" id="module-gedcomtools.gedcom5.elements">
+<p id="module-gedcomtools.gedcom5.elements">Element and record classes used by the GEDCOM 5.x parser tree.</p>
+<dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">Element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#Element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
@@ -383,7 +392,8 @@ child.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.parent">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">parent</span></span><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element.parent" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the parent node.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.level">
@@ -409,12 +419,14 @@ child.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.value">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element.value" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Document the <cite>value</cite> callable.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.describe">
 <span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#Element.describe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element.describe" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return a human-readable summary of this object.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
 </dd>
@@ -458,12 +470,14 @@ child.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.sub_record">
 <span class="sig-name descname"><span class="pre">sub_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#Element.sub_record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element.sub_record" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the first matching child record.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.sub_records">
 <span class="sig-name descname"><span class="pre">sub_records</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#Element.sub_records"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.Element.sub_records" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return all matching child records.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.Element.get_child_elements">
@@ -537,22 +551,26 @@ child.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.HeaderRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">HeaderRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#HeaderRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.HeaderRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent the GEDCOM 5.x HEAD record.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.SubmitterRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">SubmitterRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#SubmitterRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.SubmitterRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x SUBM record.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.FamilyRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">FamilyRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#FamilyRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.FamilyRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x family record.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.FamilyRecord.get_tag">
 <span class="sig-name descname"><span class="pre">get_tag</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#FamilyRecord.get_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.FamilyRecord.get_tag" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the GEDCOM tag associated with this record type.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -560,10 +578,12 @@ child.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.FileElement">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">FileElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#FileElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.FileElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x OBJE or file-linked element.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.FileElement.get_tag">
 <span class="sig-name descname"><span class="pre">get_tag</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#FileElement.get_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.FileElement.get_tag" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the GEDCOM tag associated with this record type.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -571,10 +591,12 @@ child.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.IndividualRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">IndividualRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#IndividualRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.IndividualRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x individual record.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.IndividualRecord.get_tag">
 <span class="sig-name descname"><span class="pre">get_tag</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#IndividualRecord.get_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.IndividualRecord.get_tag" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return the GEDCOM tag associated with this record type.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.IndividualRecord.is_deceased">
@@ -607,7 +629,8 @@ child.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.IndividualRecord.get_all_names">
 <span class="sig-name descname"><span class="pre">get_all_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#IndividualRecord.get_all_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.IndividualRecord.get_all_names" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return all name values found on the individual record.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.IndividualRecord.surname_match">
@@ -793,6 +816,7 @@ Includes name, gender, birth/death data, and occupation if available.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.ObjectRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">ObjectRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#ObjectRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.ObjectRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x multimedia object record.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.ObjectRecord.is_object">
 <span class="sig-name descname"><span class="pre">is_object</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#ObjectRecord.is_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.ObjectRecord.is_object" title="Link to this definition">¶</a></dt>
@@ -806,15 +830,18 @@ Includes name, gender, birth/death data, and occupation if available.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.RepositoryRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">RepositoryRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#RepositoryRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.RepositoryRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x repository record.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.elements.SourceRecord">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.elements.</span></span><span class="sig-name descname"><span class="pre">SourceRecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crlf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\n'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/elements.html#SourceRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.elements.SourceRecord" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcom5.elements.Element" title="gedcomtools.gedcom5.elements.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represent a GEDCOM 5.x source record.</p>
 </dd></dl>
 
-<dl class="py function" id="module-gedcomtools.gedcom5.helpers">
+<p id="module-gedcomtools.gedcom5.helpers">Shared helper functions for GEDCOM 5.x parsing and record traversal.</p>
+<dl class="py function">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.helpers.deprecated">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.helpers.</span></span><span class="sig-name descname"><span class="pre">deprecated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/helpers.html#deprecated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.helpers.deprecated" title="Link to this definition">¶</a></dt>
 <dd><p>This is a decorator which can be used to mark functions
@@ -822,404 +849,245 @@ as deprecated. It will result in a warning being emitted
 when the function is used.</p>
 </dd></dl>
 
-<dl class="py data" id="module-gedcomtools.gedcom5.tags">
-<span id="module-gedcomtools.gedcom5.source"></span><dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL">
+<p id="module-gedcomtools.gedcom5.tags"><span id="module-gedcomtools.gedcom5.source"></span>Constants and tag metadata used throughout GEDCOM 5.x parsing.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_PROGRAM_DEFINED_TAG_MREL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'_MREL'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_MREL" title="Link to this definition">¶</a></dt>
-<dd><p><cite>_MREL</cite></p>
+<dd><p>Value: <cite>_MREL</cite></p>
 <p>Relationship to a mother.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_FREL">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_PROGRAM_DEFINED_TAG_FREL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'_FREL'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_PROGRAM_DEFINED_TAG_FREL" title="Link to this definition">¶</a></dt>
-<dd><p><cite>_FREL</cite></p>
+<dd><p>Value: <cite>_FREL</cite></p>
 <p>Relationship to a father.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_BIRTH">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_BIRTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BIRT'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_BIRTH" title="Link to this definition">¶</a></dt>
-<dd><p><cite>BIRT</cite></p>
+<dd><p>Value: <cite>BIRT</cite></p>
 <p>The event of entering into life.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_BURIAL">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_BURIAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BURI'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_BURIAL" title="Link to this definition">¶</a></dt>
-<dd><p><cite>BURI</cite></p>
+<dd><p>Value: <cite>BURI</cite></p>
 <p>The event of the proper disposing of the mortal remains of a deceased person.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_CENSUS">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_CENSUS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CENS'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_CENSUS" title="Link to this definition">¶</a></dt>
-<dd><p><cite>CENS</cite>.</p>
+<dd><p>Value: <cite>CENS</cite>.</p>
 <p>The event of the periodic count of the population for a designated locality, such as a national or state Census.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_CHANGE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_CHANGE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CHAN'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_CHANGE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>CHAN</cite></p>
+<dd><p>Value: <cite>CHAN</cite></p>
 <p>Indicates a change, correction, or modification. Typically used in connection
 with a <cite>gedcom.tags.GEDCOM_TAG_DATE</cite> to specify when a change in information occurred.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_CHILD">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_CHILD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CHIL'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_CHILD" title="Link to this definition">¶</a></dt>
-<dd><p><cite>CHIL</cite></p>
+<dd><p>Value: <cite>CHIL</cite></p>
 <p>The natural, adopted, or sealed (LDS) child of a father and a mother.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_CONCATENATION">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_CONCATENATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONC'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_CONCATENATION" title="Link to this definition">¶</a></dt>
-<dd><p><cite>CONC</cite></p>
+<dd><p>Value: <cite>CONC</cite></p>
 <p>An indicator that additional data belongs to the superior value. The information from the <cite>CONC</cite> value is to
 be connected to the value of the superior preceding line without a space and without a carriage return and/or
 new line character. Values that are split for a <cite>CONC</cite> tag must always be split at a non-space. If the value is
 split on a space the space will be lost when concatenation takes place. This is because of the treatment that
 spaces get as a GEDCOM delimiter, many GEDCOM values are trimmed of trailing spaces and some systems look for
 the first non-space starting after the tag to determine the beginning of the value.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_CONTINUED">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_CONTINUED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONT'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_CONTINUED" title="Link to this definition">¶</a></dt>
-<dd><p><cite>CONT</cite></p>
+<dd><p>Value: <cite>CONT</cite></p>
 <p>An indicator that additional data belongs to the superior value. The information from the <cite>CONT</cite> value is to be
 connected to the value of the superior preceding line with a carriage return and/or new line character.
 Leading spaces could be important to the formatting of the resultant text. When importing values from <cite>CONT</cite> lines
 the reader should assume only one delimiter character following the <cite>CONT</cite> tag. Assume that the rest of the leading
 spaces are to be a part of the value.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_DATE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_DATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DATE'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_DATE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>DATE</cite></p>
+<dd><p>Value: <cite>DATE</cite></p>
 <p>The time of an event in a calendar format.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_DEATH">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_DEATH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DEAT'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_DEATH" title="Link to this definition">¶</a></dt>
-<dd><p><cite>DEAT</cite></p>
+<dd><p>Value: <cite>DEAT</cite></p>
 <p>The event when mortal life terminates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_FAMILY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FAM'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY" title="Link to this definition">¶</a></dt>
-<dd><p><cite>FAM</cite>.</p>
+<dd><p>Value: <cite>FAM</cite>.</p>
 <p>Identifies a legal, common law, or other customary relationship of man and woman and their children,
 if any, or a family created by virtue of the birth of a child to its biological father and mother.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_CHILD">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_FAMILY_CHILD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FAMC'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_CHILD" title="Link to this definition">¶</a></dt>
-<dd><p><cite>FAMC</cite></p>
+<dd><p>Value: <cite>FAMC</cite></p>
 <p>Identifies the family in which an individual appears as a child.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_SPOUSE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_FAMILY_SPOUSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FAMS'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_FAMILY_SPOUSE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>FAMS</cite></p>
+<dd><p>Value: <cite>FAMS</cite></p>
 <p>Identifies the family in which an individual appears as a spouse.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_FILE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_FILE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FILE'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_FILE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>FILE</cite></p>
+<dd><p>Value: <cite>FILE</cite></p>
 <p>An information storage place that is ordered and arranged for preservation and reference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_GIVEN_NAME">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_GIVEN_NAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GIVN'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_GIVEN_NAME" title="Link to this definition">¶</a></dt>
-<dd><p><cite>GIVN</cite></p>
+<dd><p>Value: <cite>GIVN</cite></p>
 <p>A given or earned name used for official identification of a person.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_HEADER">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_HEADER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'HEAD'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_HEADER" title="Link to this definition">¶</a></dt>
-<dd><p><cite>HEAD</cite></p>
+<dd><p>Value: <cite>HEAD</cite></p>
 <p>gedcom Header information.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_HUSBAND">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_HUSBAND</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'HUSB'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_HUSBAND" title="Link to this definition">¶</a></dt>
-<dd><p><cite>HUSB</cite></p>
+<dd><p>Value: <cite>HUSB</cite></p>
 <p>An individual in the family role of a married man or father.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_INDIVIDUAL">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_INDIVIDUAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INDI'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_INDIVIDUAL" title="Link to this definition">¶</a></dt>
-<dd><p><cite>INDI</cite></p>
+<dd><p>Value: <cite>INDI</cite></p>
 <p>A person.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_MARRIAGE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_MARRIAGE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MARR'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_MARRIAGE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>MARR</cite>.</p>
+<dd><p>Value: <cite>MARR</cite>.</p>
 <p>A legal, common-law, or customary event of creating a family unit of a man and a woman as husband and wife.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_NAME">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_NAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NAME'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_NAME" title="Link to this definition">¶</a></dt>
-<dd><p><cite>NAME</cite>.</p>
+<dd><p>Value: <cite>NAME</cite>.</p>
 <p>A word or combination of words used to help identify an individual, title, or other item.
 More than one NAME line should be used for people who were known by multiple names.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_OBJECT">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_OBJECT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'OBJE'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_OBJECT" title="Link to this definition">¶</a></dt>
-<dd><p><cite>OBJE</cite></p>
+<dd><p>Value: <cite>OBJE</cite></p>
 <p>Pertaining to a grouping of attributes used in describing something. Usually referring to the data required
 to represent a multimedia object, such an audio recording, a photograph of a person, or an image of a document.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_OCCUPATION">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_OCCUPATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'OCCU'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_OCCUPATION" title="Link to this definition">¶</a></dt>
-<dd><p><cite>OCCU</cite></p>
+<dd><p>Value: <cite>OCCU</cite></p>
 <p>The type of work or profession of an individual.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_PEDI">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_PEDI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PEDI'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_PEDI" title="Link to this definition">¶</a></dt>
-<dd><p><cite>PEDI</cite></p>
+<dd><p>Value: <cite>PEDI</cite></p>
 <p>Information pertaining to the pedigree (lineage) of an individual.
 Common values: birth, adopted, foster, sealing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_PLACE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_PLACE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PLAC'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_PLACE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>PLAC</cite></p>
+<dd><p>Value: <cite>PLAC</cite></p>
 <p>A jurisdictional name to identify the place or location of an event.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_PRIVATE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_PRIVATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PRIV'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_PRIVATE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>PRIV</cite></p>
+<dd><p>Value: <cite>PRIV</cite></p>
 <p>Flag for private address or event.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_SEX">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_SEX</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SEX'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_SEX" title="Link to this definition">¶</a></dt>
-<dd><p><cite>SEX</cite></p>
+<dd><p>Value: <cite>SEX</cite></p>
 <p>Indicates the sex of an individual–male or female.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_SOURCE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_SOURCE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SOUR'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_SOURCE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>SOUR</cite></p>
+<dd><p>Value: <cite>SOUR</cite></p>
 <p>The initial or original material from which information was obtained.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_SURNAME">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_SURNAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SURN'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_SURNAME" title="Link to this definition">¶</a></dt>
-<dd><p><cite>SURN</cite></p>
+<dd><p>Value: <cite>SURN</cite></p>
 <p>A family name passed on or used by members of a family.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_SUBMITTER">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_SUBMITTER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SUBM'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_SUBMITTER" title="Link to this definition">¶</a></dt>
-<dd><p><cite>SUBM</cite></p>
+<dd><p>Value: <cite>SUBM</cite></p>
 <p>A submitter record identifying the person or organization that contributed
 the genealogical data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_REPOSITORY">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_REPOSITORY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'REPO'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_REPOSITORY" title="Link to this definition">¶</a></dt>
-<dd><p><cite>REPO</cite></p>
+<dd><p>Value: <cite>REPO</cite></p>
 <p>A repository record identifying where a source is stored
 (archive, library, etc.).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.tags.GEDCOM_TAG_WIFE">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom5.tags.</span></span><span class="sig-name descname"><span class="pre">GEDCOM_TAG_WIFE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WIFE'</span></span><a class="headerlink" href="#gedcomtools.gedcom5.tags.GEDCOM_TAG_WIFE" title="Link to this definition">¶</a></dt>
-<dd><p><cite>WIFE</cite></p>
+<dd><p>Value: <cite>WIFE</cite></p>
 <p>An individual in the role as a mother and/or married woman.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Value</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>

@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.person - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,115 +229,71 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.person</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urljoin</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    Person.py</span>
+<span class="sd"> File:    gedcomx/person.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: Python Object representation of GedcomX Person Type</span>
+<span class="sd"> Purpose: GedcomX Person model with facts, names, gender, and display helpers</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="kn">from</span> <span class="nn">.conclusion</span> <span class="kn">import</span> <span class="n">ConfidenceLevel</span>
-<span class="kn">from</span> <span class="nn">.date</span> <span class="kn">import</span> <span class="n">Date</span>
-<span class="kn">from</span> <span class="nn">.evidence_reference</span> <span class="kn">import</span> <span class="n">EvidenceReference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">.extensible</span> <span class="kn">import</span> <span class="n">Extensible</span>
-<span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
-<span class="kn">from</span> <span class="nn">.gender</span> <span class="kn">import</span> <span class="n">Gender</span><span class="p">,</span> <span class="n">GenderType</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">IdentifierList</span>
-<span class="kn">from</span> <span class="nn">..glog</span> <span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span> <span class="nn">.name</span> <span class="kn">import</span> <span class="n">Name</span><span class="p">,</span> <span class="n">QuickName</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="kn">from</span> <span class="nn">.subject</span> <span class="kn">import</span> <span class="n">Subject</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gender</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.name</span><span class="w"> </span><span class="kn">import</span> <span class="n">Name</span><span class="p">,</span> <span class="n">QuickName</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.subject</span><span class="w"> </span><span class="kn">import</span> <span class="n">Subject</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">deserial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.deserialization&quot;</span>
 
 
 <div class="viewcode-block" id="Person">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person">[docs]</a>
-<span class="nd">@extensible</span><span class="p">(</span><span class="n">toplevel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">Extensible</span><span class="p">,</span><span class="n">Subject</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A person in the system.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="p">(</span><span class="n">Subject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A person in the GedcomX model.&quot;&quot;&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        id (str):      Unique identifier for this person.</span>
-<span class="sd">        name (str):    Full name.</span>
-<span class="sd">        birth (date):  Birth date (YYYY-MM-DD).</span>
-<span class="sd">        friends (List[Person], optional): List of friends. Defaults to None.</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Person&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If `id` is not a valid UUID.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/Person&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
+    <span class="n">_relationships</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">lang</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">sources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">notes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConfidenceLevel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">extracted</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">evidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">EvidenceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">media</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">identifiers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IdentifierList</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">private</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">gender</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Gender</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Name</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">facts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Fact</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">living</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,):</span>
-             <span class="c1">#links: Optional[_rsLinks] = None,) -&gt; None:</span>
-        <span class="c1"># Call superclass initializer if needed</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">sources</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="n">attribution</span><span class="p">,</span> <span class="n">extracted</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">identifiers</span><span class="p">)</span>
-        
-        <span class="c1"># Initialize mutable attributes to empty lists if None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="k">if</span> <span class="n">sources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">notes</span> <span class="o">=</span> <span class="n">notes</span> <span class="k">if</span> <span class="n">notes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span> <span class="k">if</span> <span class="n">evidence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">media</span> <span class="o">=</span> <span class="n">media</span> <span class="k">if</span> <span class="n">media</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">names</span> <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">facts</span> <span class="o">=</span> <span class="n">facts</span> <span class="k">if</span> <span class="n">facts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">private</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">gender</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Gender</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">facts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Fact</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">living</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">private</span> <span class="o">=</span> <span class="n">private</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gender</span> <span class="o">=</span> <span class="n">gender</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_instance</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;names&quot;</span><span class="p">,</span> <span class="s2">&quot;Person has no names&quot;</span><span class="p">)</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;gender&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gender</span><span class="p">,</span> <span class="n">Gender</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">private</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected bool, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">living</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">living</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;living&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected bool, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">living</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;names[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">Name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="p">):</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;facts[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">f_</span><span class="p">,</span> <span class="n">Fact</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">living</span> <span class="o">=</span> <span class="n">living</span>       <span class="c1">#TODO This is from familysearch API</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_relationships</span> <span class="o">=</span> <span class="p">[]</span>
-          
 <div class="viewcode-block" id="Person.add_fact">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person.add_fact">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fact_to_add</span><span class="p">:</span> <span class="n">Fact</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Fact to the person, skipping exact duplicates.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            True if the fact was added, False if it was a duplicate or invalid.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">fact_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fact_to_add</span><span class="p">,</span><span class="n">Fact</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_fact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">fact_to_add</span> <span class="o">==</span> <span class="n">current_fact</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_fact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fact_to_add</span><span class="p">:</span> <span class="n">Fact</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Fact to this person, skipping duplicates.  Returns True if the fact was added.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fact_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fact_to_add</span><span class="p">,</span> <span class="n">Fact</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fact_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
                     <span class="k">return</span> <span class="kc">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fact_to_add</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -346,119 +302,89 @@
 
 <div class="viewcode-block" id="Person.add_name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person.add_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_to_add</span><span class="p">:</span> <span class="n">Name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Name to the person, skipping exact duplicates.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            True if the name was added, False if it was a duplicate or invalid.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_to_add</span><span class="p">:</span> <span class="n">Name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Name to this person, skipping duplicates.  Returns True if the name was added.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">name_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">,</span> <span class="n">Name</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">name_to_add</span> <span class="o">==</span> <span class="n">current_name</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
                     <span class="k">return</span> <span class="kc">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name_to_add</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
-    
-    <span class="k">def</span> <span class="nf">_add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship_to_add</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">.relationship</span> <span class="kn">import</span> <span class="n">Relationship</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship_to_add</span><span class="p">,</span><span class="n">Relationship</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship_to_add</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">Relationship</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">relationship_to_add</span><span class="p">,</span> <span class="n">Relationship</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_relationships</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">relationship_to_add</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
-    
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expected a Relationship instance&quot;</span><span class="p">)</span>
+
 <div class="viewcode-block" id="Person.display">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person.display">[docs]</a>
-    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a display summary dict with basic person information.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a display-summary dict with name, gender, lifespan, birth date, and death date.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">name_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">nameForms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fullText</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="n">name_text</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">display</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;ascendancyNumber&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;deathDate&quot;</span><span class="p">:</span> <span class="s2">&quot;from 2001 to 2005&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;descendancyNumber&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gender</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gender</span> <span class="k">else</span> <span class="s1">&#39;Unknown&#39;</span><span class="p">,</span>
-            <span class="s2">&quot;lifespan&quot;</span><span class="p">:</span> <span class="s2">&quot;-2005&quot;</span><span class="p">,</span>
+
+        <span class="n">birth_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">death_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">fact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span> <span class="ow">and</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+                <span class="n">birth_date</span> <span class="o">=</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">original</span>
+            <span class="k">elif</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span> <span class="ow">and</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+                <span class="n">death_date</span> <span class="o">=</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">original</span>
+
+        <span class="k">if</span> <span class="n">birth_date</span> <span class="ow">and</span> <span class="n">death_date</span><span class="p">:</span>
+            <span class="n">lifespan</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">birth_date</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">death_date</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="n">birth_date</span><span class="p">:</span>
+            <span class="n">lifespan</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">birth_date</span><span class="si">}</span><span class="s2">-&quot;</span>
+        <span class="k">elif</span> <span class="n">death_date</span><span class="p">:</span>
+            <span class="n">lifespan</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="n">death_date</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lifespan</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;ascendancyNumber&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;deathDate&quot;</span><span class="p">:</span> <span class="n">death_date</span><span class="p">,</span>
+            <span class="s2">&quot;descendancyNumber&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gender</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gender</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;lifespan&quot;</span><span class="p">:</span> <span class="n">lifespan</span><span class="p">,</span>
             <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name_text</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">display</span></div>
+        <span class="p">}</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the fullText of the first name form, or None if unavailable.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full text of the primary name form, or None if unavailable.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">nameForms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fullText</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Person </span><span class="si">{}</span><span class="s2">: .name unavailable — </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="Person.from_familysearch">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person.from_familysearch">[docs]</a>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_familysearch</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">base_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Fetch a single person by PID from FamilySearch and return a Person.</span>
-<span class="sd">        - pid: e.g. &quot;KPHP-4B4&quot;</span>
-<span class="sd">        - token: OAuth2 access token (Bearer)</span>
-<span class="sd">        - base_url: override API base (defaults to settings.FS_API_BASE or prod)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.serialization</span> <span class="kn">import</span> <span class="n">Serialization</span>
-        <span class="kn">import</span> <span class="nn">requests</span>
-        <span class="n">default_base</span> <span class="o">=</span> <span class="s2">&quot;https://apibeta.familysearch.org/platform/&quot;</span>
-
-        <span class="n">base</span> <span class="o">=</span> <span class="p">(</span><span class="n">base_url</span> <span class="ow">or</span> <span class="n">default_base</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">urljoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;tree/persons/</span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="p">}</span>
-
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
-        <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-        <span class="n">persons</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
-
-        <span class="c1"># Prefer exact match on PID, else first item if present</span>
-        <span class="n">person_json</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">persons</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">pid</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">persons</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">persons</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">person_json</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FamilySearch returned no person for PID </span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">person_json</span><span class="p">,</span> <span class="n">Person</span><span class="p">)</span></div>
-</div>
 
 
 <div class="viewcode-block" id="QuickPerson">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.QuickPerson">[docs]</a>
-<span class="k">class</span> <span class="nc">QuickPerson</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A GedcomX Person Data Type created with basic information.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuickPerson</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience factory: ``QuickPerson(&quot;Jane Doe&quot;, dob=&quot;1900&quot;)`` returns a fully constructed Person.&quot;&quot;&quot;</span>
 
-<span class="sd">    Underlying GedcomX Types are created for you.</span>
-<span class="sd">        </span>
-<span class="sd">    Args:</span>
-<span class="sd">        name (str):    Full name.</span>
-<span class="sd">        birth (date,Optional):  Birth date (YYYY-MM-DD).</span>
-<span class="sd">        death (date, Optional)</span>
-
-<span class="sd">        </span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If `id` is not a valid UUID.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dob</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">dod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="c1"># Build facts from args</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">dob</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Person</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.date</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span>
         <span class="n">facts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">dob</span><span class="p">:</span>
             <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">Date</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">dob</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">dod</span><span class="p">:</span>
             <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="n">Date</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">dod</span><span class="p">)))</span>
-
-        <span class="c1"># Return the different class instance</span>
-        <span class="k">return</span> <span class="n">Person</span><span class="p">(</span><span class="n">facts</span><span class="o">=</span><span class="n">facts</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">QuickName</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)]</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">Person</span><span class="p">(</span><span class="n">facts</span><span class="o">=</span><span class="n">facts</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">QuickName</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)]</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="p">[])</span></div>
 
 </pre></div>
         </article>

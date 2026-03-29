@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.writer - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -252,8 +252,13 @@
 <span class="sd">- The parser merges CONT lines into the parent payload using ``\\n`` as a</span>
 <span class="sd">  separator.  The writer splits those embedded newlines back into CONT</span>
 <span class="sd">  substructures at ``level + 1``.</span>
-<span class="sd">- CONC is not emitted; it was removed in GEDCOM 7.0.  Very long single-line</span>
-<span class="sd">  payloads are written as-is with a warning returned to the caller.</span>
+<span class="sd">- CONC is not emitted; it was removed in GEDCOM 7.0.</span>
+<span class="sd">- Long single-line values that exceed 255 chars are emitted as-is with a</span>
+<span class="sd">  warning.  GEDCOM 7 removed CONC, so there is no standard way to split a</span>
+<span class="sd">  non-multiline value without changing its semantics: every CONT continuation</span>
+<span class="sd">  merges back as ``\\n`` on re-parse, which would corrupt URLs, PAGE refs,</span>
+<span class="sd">  and even free-text NOTE values (a paragraph break != a line-wrap).</span>
+<span class="sd">  The 255-char limit is a SHOULD, not a MUST.</span>
 <span class="sd">- The class is intentionally stateless between calls so that a single writer</span>
 <span class="sd">  instance can be re-used for many files or round-trip conversions.</span>
 <span class="sd">- Future converters (GEDCOM 5 → 7, GEDCOMx → 7) build a</span>
@@ -263,18 +268,18 @@
 <span class="sd">Sphinx Napoleon.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">io</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomStructure</span>
 
 
 <div class="viewcode-block" id="Gedcom7Writer">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer">[docs]</a>
-<span class="k">class</span> <span class="nc">Gedcom7Writer</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Gedcom7Writer</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize :class:`GedcomStructure` trees to GEDCOM 7 text.</span>
 
 <span class="sd">    Args:</span>
@@ -295,7 +300,7 @@
 <span class="sd">        text = writer.serialize(g.records)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">line_ending</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -311,7 +316,7 @@
 
 <div class="viewcode-block" id="Gedcom7Writer.get_warnings">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.get_warnings">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return line-length warnings from the last serialize() or write() call.</span>
 
 <span class="sd">        Returns:</span>
@@ -322,34 +327,43 @@
 
 <div class="viewcode-block" id="Gedcom7Writer.write">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.write">[docs]</a>
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">],</span>
         <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write *records* to a file.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write *records* to a file atomically.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            records: Top-level GEDCOM structures (typically HEAD … TRLR).</span>
-<span class="sd">            filepath: Destination file path.  Any intermediate directories</span>
-<span class="sd">                must already exist.</span>
-<span class="sd">            encoding: File encoding.  GEDCOM 7 mandates UTF-8; only change</span>
-<span class="sd">                this for special debugging purposes.</span>
+<span class="sd">        Serializes to a ``.tmp`` sibling first, then renames it into place so</span>
+<span class="sd">        that a failed write never leaves the destination file truncated or</span>
+<span class="sd">        corrupted.</span>
+
+<span class="sd">        Returns the line-length warnings collected during serialization.</span>
+<span class="sd">        Raises :class:`FileNotFoundError` if the destination directory does</span>
+<span class="sd">        not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="n">dest</span><span class="o">.</span><span class="n">suffix</span> <span class="o">+</span> <span class="s2">&quot;.tmp&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">dest</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Cannot write to </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">: parent directory does not exist.&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span></div>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_warnings</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7Writer.serialize">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.writer.Gedcom7Writer.serialize">[docs]</a>
-    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize *records* to a GEDCOM 7 string.</span>
 
 <span class="sd">        Args:</span>
@@ -373,7 +387,7 @@
     <span class="c1"># Internal rendering helpers</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span> <span class="nf">_render_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_render_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield rendered GEDCOM lines for all *records*.</span>
 
 <span class="sd">        Args:</span>
@@ -385,25 +399,68 @@
         <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_node</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_render_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">_MAX_DEPTH</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># GEDCOM 7 structures are rarely deeper than ~10 levels</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_render_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield rendered GEDCOM lines for *node* and all descendants.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            node: Root node to render.</span>
+<span class="sd">            _depth: Current recursion depth (used for cycle detection).</span>
 
 <span class="sd">        Yields:</span>
 <span class="sd">            GEDCOM line strings without line endings.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RecursionError: If nesting exceeds ``_MAX_DEPTH`` (indicates a</span>
+<span class="sd">                cycle in the child list).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">_depth</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAX_DEPTH</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RecursionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;GEDCOM tree depth limit (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAX_DEPTH</span><span class="si">}</span><span class="s2">) exceeded at &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;tag </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2"> — possible circular child reference.&quot;</span>
+            <span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_lines</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_node</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_node</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_format_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">_MAX_LINE</span> <span class="o">=</span> <span class="mi">255</span>  <span class="c1"># GEDCOM 7 recommended line-length limit</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_emit_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">line_prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">warn_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield one line for *text*, warning if it exceeds the line-length limit.</span>
+
+<span class="sd">        A CONT newline is a semantic paragraph-break, not a mere line-wrap.</span>
+<span class="sd">        Inserting CONT mid-segment would change the payload value on re-parse</span>
+<span class="sd">        (every CONT merges back as ``\\n``).  Therefore this method always emits</span>
+<span class="sd">        exactly one line; long values generate a warning.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text:        Payload text for this logical segment (no embedded newlines).</span>
+<span class="sd">            line_prefix: ``&quot;level [xref] tag&quot;`` string for the first line.</span>
+<span class="sd">            warn_tag:    Tag name used in the warning message.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            A single GEDCOM line string without a line ending.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">line_prefix</span>
+            <span class="k">return</span>
+
+        <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">line_prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAX_LINE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Line exceeds </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_MAX_LINE</span><span class="si">}</span><span class="s2"> chars (tag=</span><span class="si">{</span><span class="n">warn_tag</span><span class="si">!r}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;len=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">line</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span><span class="si">!r}</span><span class="s2">…&quot;</span>
+            <span class="p">)</span>
+        <span class="k">yield</span> <span class="n">line</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_format_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Format one node as one or more GEDCOM line strings.</span>
 
-<span class="sd">        If the node&#39;s payload contains embedded ``\\n`` characters (created</span>
-<span class="sd">        during parsing when CONT lines were merged), they are re-emitted as</span>
-<span class="sd">        ``CONT`` substructures at ``level + 1``.</span>
+<span class="sd">        Embedded ``\\n`` characters (merged from CONT lines during parsing)</span>
+<span class="sd">        are re-split into CONT substructures.  Any segment that would exceed</span>
+<span class="sd">        ``_MAX_LINE`` characters is additionally wrapped into further CONT</span>
+<span class="sd">        lines so the output always stays within the recommended limit.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            node: Node to format.</span>
@@ -416,42 +473,24 @@
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">xref_id</span><span class="p">)</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
-        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        <span class="n">line_prefix</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        <span class="n">cont_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">level</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> CONT&quot;</span>
 
         <span class="n">payload</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">payload</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">prefix</span>
+            <span class="k">yield</span> <span class="n">line_prefix</span>
             <span class="k">return</span>
 
-        <span class="c1"># Re-split on embedded newlines that the parser merged from CONT lines.</span>
+        <span class="c1"># Re-split on embedded newlines from CONT merging, then emit each</span>
+        <span class="c1"># segment as a single line.  CONT is a semantic paragraph separator —</span>
+        <span class="c1"># inserting it mid-segment would add a spurious \n on re-parse.</span>
         <span class="n">segments</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">first</span> <span class="o">=</span> <span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">first_emitted</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">first</span> <span class="k">else</span> <span class="n">prefix</span>
-        <span class="k">yield</span> <span class="n">first_emitted</span>
-
-        <span class="c1"># Warn if any emitted line exceeds 255 chars (GEDCOM 7 SHOULD limit).</span>
-        <span class="n">_MAX_LINE</span> <span class="o">=</span> <span class="mi">255</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">first_emitted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_LINE</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Line for </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> at source line </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">line_num</span><span class="si">}</span><span class="s2"> is &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">first_emitted</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars (&gt;</span><span class="si">{</span><span class="n">_MAX_LINE</span><span class="si">}</span><span class="s2">); &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 recommends </span><span class="se">\u2264</span><span class="si">{</span><span class="n">_MAX_LINE</span><span class="si">}</span><span class="s2">.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">cont_level</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">cont_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cont_level</span><span class="si">}</span><span class="s2"> CONT&quot;</span>
-            <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-                <span class="n">cont_line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cont_prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">seg</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">seg</span> <span class="k">else</span> <span class="n">cont_prefix</span>
-                <span class="k">yield</span> <span class="n">cont_line</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cont_line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_LINE</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;CONT line for </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> at source line </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">line_num</span><span class="si">}</span><span class="s2"> is &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cont_line</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars (&gt;</span><span class="si">{</span><span class="n">_MAX_LINE</span><span class="si">}</span><span class="s2">); &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 recommends </span><span class="se">\u2264</span><span class="si">{</span><span class="n">_MAX_LINE</span><span class="si">}</span><span class="s2">.&quot;</span>
-                    <span class="p">)</span></div>
+        <span class="n">first_prefix</span> <span class="o">=</span> <span class="n">line_prefix</span>
+        <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_emit_segment</span><span class="p">(</span><span class="n">seg</span><span class="p">,</span> <span class="n">first_prefix</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+            <span class="c1"># All segments after the first are continuations.</span>
+            <span class="n">first_prefix</span> <span class="o">=</span> <span class="n">cont_prefix</span></div>
 
 </pre></div>
         </article>

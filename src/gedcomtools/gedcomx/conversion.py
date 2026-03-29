@@ -7,6 +7,7 @@
 #  Updated: 2026-03-24 — accept Gedcom5 facade in Gedcom5x_GedcomX (unwrap ._parser)
 #  Updated: 2026-03-28 — fix handle_even: wrong object_map index; add SourceDescription branch for unknown EVEN type; cache clean_str() results via walrus operator
 # ======================================================================
+"""Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models."""
 
 # GEDCOM Module Types
 
@@ -137,6 +138,13 @@ class GxoObjectStack:
         return f"GxoObjectStack(levels=[{keys}])"
 
 class GedcomConverter:
+    """Converts a parsed Gedcom5x object graph into a GedcomX genealogy.
+
+    Uses a tag-dispatch table (``handle_<TAG>`` methods) to walk every GEDCOM
+    element and produce the equivalent GedcomX objects.  Call
+    :meth:`Gedcom5x_GedcomX` to run the full conversion.
+    """
+
     type_name_type = {"aka": NameType.AlsoKnownAs}
 
     # Maps GEDCOM5 OBJE TYPE values to GedcomX ResourceType.
@@ -460,6 +468,7 @@ class GedcomConverter:
 
 
     def handle__apid(self, record: Element):
+        """Handle _APID tag: store an Ancestry PID as an identifier on the parent SourceReference or SourceDescription."""
         if not record.value:
             return
         parent = self.object_map.get(record.level-1)
@@ -471,6 +480,7 @@ class GedcomConverter:
             log.debug(f"Skipping _APID — parent {type(parent).__name__} does not accept identifiers")
 
     def handle__meta(self, record: Element):
+        """Handle _META tag: add its value as a Note to the parent SourceDescription or DocumentParsingContainer."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
             self.object_map[record.level-1].add_note(gxobject)
@@ -485,9 +495,11 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle__wlnk(self, record: Element):
+        """Handle _WLNK tag: delegate to the SOUR handler."""
         return self.handle_sour(record)
 
     def handle_adop(self, record: Element):
+        """Handle ADOP tag: add an Adoption fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Adoption)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -498,6 +510,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_addr(self, record: Element):
+        """Handle ADDR tag: add an Address to the parent Agent."""
         if isinstance(self.object_map[record.level-1], Agent):
             # TODO CHeck if URL?
             if v := self.clean_str(record.value):
@@ -510,6 +523,7 @@ class GedcomConverter:
             raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
 
     def handle_adr1(self, record: Element):
+        """Handle ADR1 tag: set street on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street = v
@@ -519,6 +533,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_adr2(self, record: Element):
+        """Handle ADR2 tag: set street2 on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street2 = v
@@ -528,6 +543,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_adr3(self, record: Element):
+        """Handle ADR3 tag: set street3 on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street3 = v
@@ -537,6 +553,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_adr4(self, record: Element):
+        """Handle ADR4 tag: set street4 on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street4 = v
@@ -544,6 +561,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_adr5(self, record: Element):
+        """Handle ADR5 tag: set street5 on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street5 = v
@@ -551,6 +569,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_adr6(self, record: Element):
+        """Handle ADR6 tag: set street6 on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].street6 = v
@@ -558,6 +577,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_abbr(self, record: Element):
+        """Handle ABBR tag: add an abbreviation note to the parent SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceDescription) and record.value:
             from ..gedcomx.note import Note
             self.object_map[record.level-1].add_note(Note(text=f"Abbreviation: {self.clean_str(record.value)}"))
@@ -565,6 +585,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_agnc(self, record: Element):
+        """Handle AGNC tag: add an agency note to the parent Fact or SourceDescription."""
         parent = self.object_map[record.level-1]
         if record.value and isinstance(parent, (Fact, SourceDescription)):
             from ..gedcomx.note import Note
@@ -573,6 +594,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_auth(self, record: Element):
+        """Handle AUTH tag: find or create an Agent for the author and attach to the parent SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             existing_agents = self.gedcomx.agents.by_name(record.value) if record.value else None
             if existing_agents:
@@ -588,6 +610,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_phon(self, record: Element):
+        """Handle PHON tag: append a phone URI to the parent Agent."""
         if isinstance(self.object_map[record.level-1], Agent):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].phones.append(v)
@@ -595,6 +618,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_email(self, record: Element):
+        """Handle EMAIL tag: append an email URI to the parent Agent."""
         if isinstance(self.object_map[record.level-1], Agent):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].emails.append(v)
@@ -602,6 +626,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_fax(self, record: Element):
+        """Handle FAX tag: append a FAX:-prefixed URI to the parent Agent's emails list."""
         if isinstance(self.object_map[record.level-1], Agent):
             if v := self.clean_str(record.value):
                 self.object_map[record.level-1].emails.append('FAX:' + v)
@@ -610,6 +635,7 @@ class GedcomConverter:
 
 
     def handle_bapm(self, record: Element):
+        """Handle BAPM tag: add a Baptism fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Baptism)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -620,6 +646,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_birt(self, record: Element):
+        """Handle BIRT tag: add a Birth fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Birth)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -628,6 +655,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_buri(self, record: Element):
+        """Handle BURI tag: add a Burial fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Burial)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -638,6 +666,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_caln(self, record: Element):
+        """Handle CALN tag: add a call-number identifier to the parent SourceReference or SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceReference):
             self.object_map[record.level-1].description.add_identifier(Identifier(type=IdentifierType.Other, values=[URI.from_url('Call Number:' + record.value if record.value else '')])) # type: ignore
         elif isinstance(self.object_map[record.level-1], SourceDescription):
@@ -649,6 +678,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_chan(self, record: Element):
+        """Handle CHAN tag: set a change date or Attribution on the parent SourceDescription, Agent, or Person."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             date = record.sub_record('DATE')
             if date is not None:
@@ -671,6 +701,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_chr(self, record: Element):
+        """Handle CHR tag: add a Christening fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Christening)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -681,6 +712,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_city(self, record: Element):
+        """Handle CITY tag: set the city field on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if record.value is not None:
                 self.object_map[record.level-1].city = self.clean_str(record.value)
@@ -689,6 +721,7 @@ class GedcomConverter:
             raise ValueError(f"I do not know how to handle an 'CITY' tag for a {type(self.object_map[record.level-1])}")
 
     def handle_conc(self, record: Element):
+        """Handle CONC tag: concatenate the value onto the parent object's text or name field."""
         obj_map = sorted(self.object_map.items(), reverse=True)
         obj_map = dict(obj_map)
         if isinstance(self.object_map[record.level-1], Note):
@@ -714,6 +747,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_cont(self, record: Element):
+        """Handle CONT tag: append a continuation line to the parent object's text or value field."""
         if isinstance(self.object_map[record.level-1], Note):
             gxobject = str(" " + record.value if record.value else '')
             if gxobject:
@@ -738,6 +772,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_crea(self, record: Element):
+        """Handle CREA tag: set the creation date on the parent SourceDescription or Agent Attribution."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             date = record.sub_record('DATE')
             if  date is not None:
@@ -756,12 +791,14 @@ class GedcomConverter:
             raise ValueError(f"Could not handle '{record.tag}' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
 
     def handle__crea(self, record: Element):
+        """Handle _CREA tag: set the created date on the parent SourceDescription from the record value."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             if  record.value is not None:
                 self.object_map[record.level-1].created = Date(original=record.value)
             else: raise ValueError('DATE had not value')
 
     def handle_ctry(self, record: Element):
+        """Handle CTRY tag: set the country on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             if record.value is not None:
                 self.object_map[record.level-1].country = self.clean_str(record.value)
@@ -771,9 +808,11 @@ class GedcomConverter:
             raise ValueError(f"I do not know how to handle an '{record.tag}' tag for a {type(self.object_map[record.level-1])}")
 
     def handle_data(self, record: Element) -> None:
+        """Handle DATA tag: forward the parent object to the same stack level (pass-through)."""
         self.object_map[record.level] = self.object_map[record.level-1]
 
     def handle_date(self, record: Element):
+        """Handle DATE tag: set the date on the parent Fact, Event, SourceDescription, or Attribution."""
         if record.parent is not None and record.parent.tag == 'PUBL':
             #gxobject = Date(original=record.value) #TODO Make a parser for solid timestamps
             #self.object_map[0].published = gxobject
@@ -816,6 +855,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_deat(self, record: Element):
+        """Handle DEAT tag: add a Death fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Death)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -826,6 +866,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_pevent(self, record: Element):
+        """Handle personal event tags (BARM, BASM, etc.) that map to FactType via fact_from_even_tag."""
         # EVEN (Fact) specific to INDI (Person)
         if (fact_type := fact_from_even_tag(record.tag)) is not None:
             if isinstance(self.object_map[record.level-1], Person):
@@ -834,6 +875,7 @@ class GedcomConverter:
                 self.object_map[record.level] = gxobject
 
     def handle_even(self, record: Element):
+        """Handle EVEN tag: create a Fact or Event on the parent Person or SourceDescription based on the event type."""
         # TODO If events in a @S, check if only 1 person matches?
         # TODO, how to deal with and diferentiate Events
         if record.value and (not record.value.strip() == ''):
@@ -898,6 +940,7 @@ class GedcomConverter:
                 self.convert_exception_dump(record=record)
 
     def handle_exid(self,record: Element):
+        """Handle EXID tag: add an External identifier to the parent subject."""
         if record.value:
             gxobject = Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)
@@ -905,10 +948,12 @@ class GedcomConverter:
         else: raise ValueError('Record had no value')
 
     def handle_fam(self, record: Element) -> None:
+        """Handle FAM tag: reset the family parser for a new family record."""
         self._family_parser.reset()
         self.object_map[record.level] = self._family_parser
 
     def handle_husb(self, record: Element):
+        """Handle HUSB tag: resolve the husband Person and register them on the family parser."""
         if record is not None:
             obj_id = record.value
             if obj_id:
@@ -919,6 +964,7 @@ class GedcomConverter:
                 self.object_map[record.level] = husband
 
     def handle_wife(self, record: Element):
+        """Handle WIFE tag: resolve the wife Person and register them on the family parser."""
         if record is not None:
             obj_id = record.value
             if obj_id:
@@ -929,6 +975,7 @@ class GedcomConverter:
                 self.object_map[record.level] = wife
 
     def handle_chil(self, record: Element):
+        """Handle CHIL tag: resolve the child Person and add them to the family parser."""
         if record is not None:
             obj_id = record.value
             if obj_id:
@@ -939,14 +986,17 @@ class GedcomConverter:
                 self.object_map[record.level] = child
 
     def handle_famc(self, _record: Element) -> None:
+        """Handle FAMC tag: child-to-family link (not yet implemented; placeholder)."""
         #TODO
         return
 
     def handle_fams(self, _record: Element) -> None:
+        """Handle FAMS tag: spouse-to-family link (not yet implemented; placeholder)."""
         #TODO
         return
 
     def handle_file(self, record: Element):
+        """Handle FILE tag: set the resource URL on the parent SourceDescription or DocumentParsingContainer."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             sd = self.object_map[record.level-1]
             sd.resourceType = ResourceType.DigitalArtifact
@@ -977,6 +1027,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_form(self, record: Element):
+        """Handle FORM tag: map media format to MIME type on a SourceDescription, or place name on a PlaceDescription."""
         parent_obj = self.object_map.get(record.level-2)
         if record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, SourceDescription):
             if record.value and record.value.strip():
@@ -1033,7 +1084,8 @@ class GedcomConverter:
             sd.add_note(Note(text=f"Media type: {record.value}"))
         # else: MEDI under REPO.CALN or other contexts — no mapping, skip silently
 
-    def handle_fsid(self,record: Element):
+    def handle_fsid(self, record: Element):
+        """Handle FSID tag: add a FamilySearch identifier to the parent subject."""
         if record.value:
             gxobject = Identifier(type=IdentifierType.FamilySearchId, values=[URI.from_url(record.value)]) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)
@@ -1042,18 +1094,21 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_givn(self, record: Element):
+        """Handle GIVN tag: add a Given name part to the parent Name."""
         if isinstance(self.object_map[record.level-1], Name):
             given_name = NamePart(value=record.value, type=NamePartType.Given)
             self.object_map[record.level-1]._add_name_part(given_name)
         else:
             self.convert_exception_dump(record=record)
 
-    def handle_head(self,record: Element):
+    def handle_head(self, record: Element):
+        """Handle HEAD tag: create the top-level Attribution block for the GedcomX document."""
         attribution = Attribution()
         self.gedcomx.attribution = attribution
         self.object_map[record.level] = attribution
 
     def handle_indi(self, record: Element):
+        """Handle INDI tag: look up or create a Person for this individual record."""
         person = self.gedcomx.persons.by_id(record.xref)
         if person is None:
             log.warning('Had to create person with id {recrod.xref}')
@@ -1065,6 +1120,7 @@ class GedcomConverter:
         self.object_map[record.level] = person
 
     def handle_immi(self, record: Element):
+        """Handle IMMI tag: add an Immigration Fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Immigration)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -1075,12 +1131,18 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_map(self, record: Element):
+        """Handle MAP tag: descend into the PlaceDescription's coordinates block."""
         if isinstance(self.object_map[record.level-1],PlaceReference):
             self.object_map[record.level] = self.object_map[record.level-1].descriptionRef
         else:
             self.convert_exception_dump(record=record)
 
     def handle_marr(self, record: Element):
+        """Handle MARR tag: add a Marriage Fact via the family parser (FAM context) or directly on the parent subject.
+
+        When the parent tag is FAM the family parser is reused; otherwise add_fact is
+        called directly on the parent object.
+        """
         """
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Marriage)
@@ -1103,18 +1165,21 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_lati(self, record: Element):
+        """Handle LATI tag: set the latitude on the parent PlaceDescription."""
         if isinstance(self.object_map[record.level-1], PlaceDescription):
             self.object_map[record.level-1].latitude = record.value
         else:
             self.convert_exception_dump(record=record)
 
     def handle_long(self, record: Element):
+        """Handle LONG tag: set the longitude on the parent PlaceDescription."""
         if isinstance(self.object_map[record.level-1], PlaceDescription):
             self.object_map[record.level-1].longitude = record.value
         else:
             self.convert_exception_dump(record=record)
 
-    def handle__link(self,record: Element):
+    def handle__link(self, record: Element):
+        """Handle _LINK tag: add an External identifier URL to the description of the parent SourceReference."""
         if isinstance(self.object_map[record.level-1], SourceReference):
             gxobject = Identifier(values=[URI.from_url(record.value)], type=IdentifierType.External) # type: ignore
             self.object_map[record.level-1].description.add_identifier(gxobject)
@@ -1123,6 +1188,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle__milt(self, record: Element):
+        """Handle _MILT tag: add a MilitaryService Fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.MilitaryService)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -1131,6 +1197,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_name(self, record: Element):
+        """Handle NAME tag: add a Name to a Person, or a name TextValue to an Agent."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Name.simple(record.value if record.value else 'WARNING: NAME had no value')
             #gxobject = Name(nameForms=[NameForm(fullText=record.value)], type=NameType.BirthName)
@@ -1143,6 +1210,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_note(self, record: Element):
+        """Handle NOTE tag: add a Note to the appropriate parent object (SourceDescription, Conclusion, Agent, etc.)."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             gxobject = Note(text=self.clean_str(record.value))
             self.object_map[record.level-1].add_note(gxobject)
@@ -1203,6 +1271,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_nsfx(self, record: Element):
+        """Handle NSFX tag: add a Suffix name part to the parent Name."""
         if isinstance(self.object_map[record.level-1], Name):
             surname = NamePart(value=record.value, type=NamePartType.Suffix)
             self.object_map[record.level-1]._add_name_part(surname)
@@ -1210,6 +1279,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_occu(self, record: Element):
+        """Handle OCCU tag: add an Occupation Fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Occupation)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -1220,6 +1290,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_obje(self, record: Element):
+        """Handle OBJE tag: create or look up a SourceDescription for a multimedia object record."""
         if record.level == 0:
             # Use DocumentParser to Create Documnet and Update Underlying SourceDescription Made from OBJE tags
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
@@ -1238,6 +1309,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
 
     def handle_page(self, record: Element):
+        """Handle PAGE tag: add a Page qualifier to the parent SourceReference."""
         if isinstance(self.object_map[record.level-1], SourceReference):
             #self.object_map[record.level-1].descriptionId = record.value
             gx_object = Qualifier(name=KnownSourceReference.Page,value=record.value)
@@ -1247,6 +1319,7 @@ class GedcomConverter:
             pass
 
     def handle_plac(self, record: Element):
+        """Handle PLAC tag: create or look up a PlaceDescription and attach it to the parent Fact, Event, or SourceDescription."""
         if isinstance(self.object_map[record.level-1], Agent):
             gxobject = Address.model_validate({"value": record.value})
             self.object_map[record.level-1].add_address(gxobject)
@@ -1301,12 +1374,14 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_post(self, record: Element):
+        """Handle POST tag: set the postal code on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             self.object_map[record.level-1].postalCode = self.clean_str(record.value)
         else:
             self.convert_exception_dump(record=record)
 
     def handle_publ(self, record: Element):
+        """Handle PUBL tag: set the publisher Agent (or publication date) on the parent SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             if record.value is None or record.value.strip() == '':
                 #check for date
@@ -1325,6 +1400,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_prob(self, record: Element):
+        """Handle PROB tag: add a Probate Fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Probate)
             self.object_map[record.level-1].add_fact(gxobject)
@@ -1335,6 +1411,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_uid(self, record: Element):
+        """Handle UID tag: add a Primary identifier (UID URI) to the parent subject."""
         parent_obj = self.object_map.get(record.level-1)
         if record.value and hasattr(parent_obj, 'add_identifier'):
             gxobject = Identifier(values=[URI.from_url('UID:' + record.value)], type=IdentifierType.Primary) # type: ignore
@@ -1344,6 +1421,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_refn(self, record: Element):
+        """Handle REFN tag: add a Reference Number External identifier to the parent Person, SourceDescription, or Agent."""
         if isinstance(self.object_map[record.level-1], (Person, SourceDescription)):
             gxobject = Identifier(values=[URI.from_url('Reference Number:' + record.value)] if record.value else [], type=IdentifierType.External) # type: ignore
             self.object_map[record.level-1].add_identifier(gxobject)
@@ -1357,6 +1435,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_repo(self, record: Element):
+        """Handle REPO tag: create or look up a repository Agent, or link it to a SourceDescription."""
         if record.level == 0:
             if record.value is not None and self.gedcomx.agents.by_name(record.value):
                 gxobject = self.gedcomx.agents.by_id(record.xref)
@@ -1376,6 +1455,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_resi(self, record: Element):
+        """Handle RESI tag: add a Residence Fact to the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             gxobject = Fact(type=FactType.Residence)
             if record.value and record.value.strip() != '':
@@ -1388,6 +1468,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_rin(self, record: Element):
+        """Handle RIN tag: add a Record Identification Number as an External identifier note on the parent SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
             self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)] if record.value else [])) # type: ignore
             self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
@@ -1399,6 +1480,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_sex(self, record: Element):
+        """Handle SEX tag: set the Gender (Male/Female/Unknown) on the parent Person."""
         if isinstance(self.object_map[record.level-1], Person):
             if record.value == 'M':
                 gxobject = Gender(type=GenderType.Male)
@@ -1412,7 +1494,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_sour(self, record: Element):
-
+        """Handle SOUR tag: create or look up a SourceDescription (level 0) or add a SourceReference to the parent conclusion."""
         if record.level == 0 and (record.tag in ['SOUR','OBJE','_WLNK']):
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
@@ -1458,12 +1540,14 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_stae(self, record: Element):
+        """Handle STAE tag: set the state or province on the parent Address."""
         if isinstance(self.object_map[record.level-1], Address):
             self.object_map[record.level-1].stateOrProvince = self.clean_str(record.value)
         else:
             raise ValueError(f"I do not know how to handle an 'STAE' tag for a {type(self.object_map[record.level-1])}")
 
     def handle_subm(self, record: Element):
+        """Handle SUBM tag: create or look up a submitter Agent and optionally set it as the Attribution contributor."""
         if record.level == 0:
             existing = self.gedcomx.agents.by_id(record.xref)
             if existing is not None:
@@ -1486,6 +1570,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
 
     def handle_surn(self, record: Element):
+        """Handle SURN tag: add a Surname name part to the parent Name."""
         if isinstance(self.object_map[record.level-1], Name):
             surname = NamePart(value=record.value, type=NamePartType.Surname)
             self.object_map[record.level-1]._add_name_part(surname)
@@ -1493,6 +1578,7 @@ class GedcomConverter:
             self.convert_exception_dump(record=record)
 
     def handle_text(self, record: Element):
+        """Handle TEXT tag: add transcribed text as a TextValue on a SourceReference's description or as a Document on a SourceDescription."""
         if record.parent is not None and record.parent.tag == 'DATA':
             if isinstance(self.object_map[record.level-2], SourceReference):
                 gxobject = TextValue(value=record.value)
@@ -1506,6 +1592,7 @@ class GedcomConverter:
             raise TagConversionError(record, self.object_map)
 
     def handle_titl(self, record: Element):
+        """Handle TITL tag: add a title TextValue to the parent SourceDescription, or a Title name part to a Name."""
         if isinstance(self.object_map[record.level-1], SourceDescription):
 
             gxobject = TextValue(value=self.clean_str(record.value))
@@ -1565,6 +1652,7 @@ class GedcomConverter:
             log.debug("handle_lang: parent {} has no lang attribute", type(parent).__name__)
 
     def handle_type(self, record: Element):
+        """Handle TYPE tag: refine the type of the parent Event, Fact, Identifier, or Name."""
         # peek to see if event or fact
         parent_obj = self.object_map.get(record.level-1)
         if record.parent is not None and record.parent.tag == 'FORM':
@@ -1620,12 +1708,14 @@ class GedcomConverter:
             raise TagConversionError(record, self.object_map)
 
     def handle__url(self, record: Element):
+        """Handle _URL tag: set the about URL on the grandparent SourceDescription."""
         if isinstance(self.object_map[record.level-2], SourceDescription):
             self.object_map[record.level-2].about = URI.from_url(record.value) if record.value else None
         else:
             raise ValueError(f"Could not handle '_URL' tag in record {record.describe()}, last stack object {self.object_map[record.level-1]}")
 
     def handle_www(self, record: Element):
+        """Handle WWW tag: set the homepage on an Agent, or add a URL identifier to a SourceReference's description."""
         if isinstance(self.object_map[record.level-1], Agent):
             self.object_map[record.level-1].homepage = self.clean_str(record.value)
         elif isinstance(self.object_map[record.level-2], SourceReference):

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Interactive command-line shell for browsing, editing, and exporting GedcomX data."""
+
 from __future__ import annotations
 
 # ======================================================================
@@ -8,7 +10,6 @@ from __future__ import annotations
 #  Purpose: cli to inspect GedcomX objects
 #  Created: 2026-02-01
 # ======================================================================
-
 import argparse
 import ast
 import dataclasses
@@ -43,6 +44,7 @@ _LOG_MGR = None
 
 
 def init_logging(app_name: str = "gedcomtools"):
+    """Initialize CLI logging configuration."""
     global _LOG_MGR  # pylint: disable=global-statement
     if _LOG_MGR is None:
         _LOG_MGR = setup_logging(app_name=app_name)
@@ -243,6 +245,7 @@ _PRIMITIVES = (str, int, float, bool, type(None))
 
 
 def is_primitive(x: Any) -> bool:
+    """Return whether the value should be treated as a primitive shell value."""
     return isinstance(x, _PRIMITIVES)
 
 def _maybe_as_dict(obj: Any) -> Any:
@@ -263,6 +266,7 @@ def _maybe_as_dict(obj: Any) -> Any:
     return obj
 
 def to_plain(obj: Any, *, max_depth: int = 6, _seen: set[int] | None = None) -> Any:
+    """Convert nested objects into plain Python data structures."""
     if _seen is None:
         _seen = set()
     oid = id(obj)
@@ -289,6 +293,7 @@ def to_plain(obj: Any, *, max_depth: int = 6, _seen: set[int] | None = None) -> 
     return to_plain(obj2, max_depth=max_depth, _seen=_seen)
 
 def short_preview(val: Any, max_len: int = 80) -> str:
+    """Return a short preview string for a value."""
     if is_primitive(val):
         s = repr(val)
         return s if len(s) <= max_len else s[: max_len - 1] + "…"
@@ -305,6 +310,7 @@ def short_preview(val: Any, max_len: int = 80) -> str:
         return f"<{type(val).__name__}>"
 
 def list_fields(obj: Any) -> list[tuple[str, Any]]:
+    """Return the visible fields for a shell node."""
     if isinstance(obj, dict):
         return [(str(k), v) for k, v in obj.items()]
     if isinstance(obj, (list, tuple)):
@@ -327,10 +333,12 @@ def list_fields(obj: Any) -> list[tuple[str, Any]]:
     return []
 
 def type_of(obj: Any) -> str:
+    """Return a readable type name for the given value."""
     return getattr(obj, "__name__", None) or obj.__class__.__name__
 
 # ── Collection detection ─────────────────────────────────────────────────────
 def as_indexable_list(obj: Any) -> list[Any] | None:
+    """Return the value as an indexable sequence when possible."""
     if obj is None or isinstance(obj, (str, bytes, bytearray, dict)):
         return None
     if isinstance(obj, (list, tuple, set)):
@@ -376,6 +384,7 @@ def _get_item_id(obj: Any) -> Any | None:
     return None
 
 def get_child(parent: Any, key: int | str) -> Any:
+    """Return the named or indexed child value from a node."""
     if isinstance(parent, dict):
         return parent[key]
 
@@ -411,6 +420,7 @@ def get_child(parent: Any, key: int | str) -> Any:
     raise KeyError(f"Cannot access key/attr {key!r} on {type(parent).__name__}")
 
 def resolve_path(root: Any, cur: Any, path: str) -> tuple[Any, list[str]]:
+    """Resolve a shell path expression against the current root."""
     if not path or path == ".":
         return cur, []
     node = root if path.startswith("/") else cur
@@ -576,6 +586,7 @@ def _names_match(expected: Any | None, value: Any) -> bool:
 
 # ── Smart getattr ────────────────────────────────────────────────────────────
 def smart_getattr(obj: Any, name: str, default=None) -> tuple[Any, str]:
+    """Safely fetch an attribute without triggering shell-hostile behavior."""
     cls = type(obj)
 
     if hasattr(obj, "__dict__") and name in obj.__dict__:
@@ -651,6 +662,7 @@ def _grep_node(
 
 # ── Shell / REPL ─────────────────────────────────────────────────────────────
 class Shell:
+    """Implement the interactive GedcomX shell interface."""
     def __init__(self, root: Any | None = None):
         self.gedcomx: Any | None = None
         self.root = root
@@ -716,6 +728,7 @@ class Shell:
         }
 
     def prompt(self) -> str:
+        """Return the current shell prompt string."""
         return "gx:/" + "/".join(self.path) + "> "
 
     def _make_tab_completer(self):
@@ -764,6 +777,7 @@ class Shell:
         return completer
 
     def run(self) -> None:
+        """Run the interactive shell loop."""
         self._interactive = sys.stdin.isatty()
 
         # Disable ANSI escape codes when stdout is piped (not a real terminal).
@@ -3653,6 +3667,7 @@ class Shell:
 
 # ── Entrypoint ───────────────────────────────────────────────────────────────
 def main(argv: list[str] | None = None) -> int:
+    """Run the command-line entry point."""
     init_logging(app_name="gedcomtools")
     parser = argparse.ArgumentParser(description="GEDCOM-X Inspector (schema-aware, cleaned)")
     parser.add_argument("path", nargs="?", help="optional file to load at start (.ged or .json)")

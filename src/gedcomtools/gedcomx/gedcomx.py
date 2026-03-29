@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional, Union, Generic, TypeVar, Iterable
+"""Core GedcomX container types, collections, validation, and serialization entry points."""
+
+from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
 
 import orjson
 
@@ -10,8 +12,15 @@ import orjson
 #  Created: 2025-07-25
 #  Updated: 2026-03-24 — removed _serializer/_as_dict; json property now
 #                         delegates to _to_dict() via Serialization.serialize
+#           2026-03-29 — validate(): fixed cross-ref check to extract person id
+#                         from Resource.resource.fragment (URI form), not only
+#                         resourceId; fixes silent pass for dangling refs
+#                       — from_dict(): now restores attribution and groups;
+#                         previously both were silently dropped on deserialization
+#                       — TypeCollection.append(): no longer stamps type path onto
+#                         _uri; uses URI(fragment=id) only so resource refs serialize
+#                         as #id (same-document); explicit path URIs are preserved
 # ======================================================================
-
 # GEDCOM Module Types
 from .agent import Agent
 from .attribution import Attribution
@@ -53,31 +62,38 @@ class TypeCollection(Generic[T]):
 
     # --- core container protocol ---
     def __iter__(self):
+        """Iterate over items in insertion order."""
         return iter(self._items)
 
     def __len__(self) -> int:
+        """Return the number of items in the collection."""
         return len(self._items)
 
-    def __getitem__(self, index: int) -> T:
+    def __getitem__(self, index: Union[int, slice]) -> Union[T, List[T]]:
+        """Return the item or slice of items at the given index."""
         return self._items[index]
 
     def __contains__(self, item: object) -> bool:
+        """Return True if the item is present in the collection."""
         return item in self._items
 
     def __repr__(self) -> str:
         return f"Collection<{self.item_type.__name__}>({len(self)} items)"
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index: Union[int, slice]) -> None:
         """
-        Delete an item at the given index, updating all secondary indexes.
-        Supports negative indices like a normal list.
+        Delete item(s) at the given index or slice, updating all secondary indexes.
+        Supports negative indices and slices like a normal list.
         """
-        # Let list semantics raise IndexError if out of range
-        item = self._items[index]
-        # Remove from primary storage first
-        del self._items[index]
-        # Then clean up indexes
-        self._remove_from_indexes(item)
+        if isinstance(index, slice):
+            items_to_remove = self._items[index]
+            del self._items[index]
+            for item in items_to_remove:
+                self._remove_from_indexes(item)
+        else:
+            item = self._items[index]
+            del self._items[index]
+            self._remove_from_indexes(item)
 
     def pop(self, index: int = -1) -> T:
         """
@@ -154,13 +170,10 @@ class TypeCollection(Generic[T]):
         if not isinstance(item, self.item_type):
             raise TypeError(f"Expected {self.item_type.__name__}, got {type(item).__name__} {item}")
 
-        # ensure/normalize item.uri
-        u = getattr(item, "_uri", None)
-        if u is None:
-            setattr(item, "_uri", URI(path=f"/{self.item_type.__name__.lower()}s/", fragment=getattr(item, "id", None)))
-        else:
-            if not getattr(u, "path", None):
-                u.path = f"/{self.item_type.__name__.lower()}s/"
+        # ensure item has a _uri; only set it if absent — never overwrite an
+        # explicitly assigned path-based URI (e.g. /persons/#P1 for zip layout)
+        if getattr(item, "_uri", None) is None:
+            setattr(item, "_uri", URI(fragment=getattr(item, "id", None)))
 
         self._items.append(item)
         self._update_indexes(item)
@@ -466,6 +479,15 @@ class GedcomX:
     def extend(self, gedcomx: 'GedcomX'):
         """Merge all top-level objects from another GedcomX instance into this one."""
         if gedcomx is not None:
+            if self.id is None and gedcomx.id is not None:
+                self.id = gedcomx.id
+            if self.description is None and gedcomx.description is not None:
+                self.description = gedcomx.description
+            if self.attribution is None and gedcomx.attribution is not None:
+                self.attribution = gedcomx.attribution
+            for group in gedcomx.groups:
+                if group.id is None or self.groups.by_id(group.id) is None:
+                    self.groups.append(group)
             for person in gedcomx.persons:
                 self.add_person(person)
             for agent in gedcomx.agents:
@@ -520,7 +542,12 @@ class GedcomX:
             for pnum, pfield in (("person1", rel.person1), ("person2", rel.person2)):
                 if pfield is None:
                     continue
-                ref_id = getattr(pfield, "id", None) or getattr(pfield, "resourceId", None)
+                if isinstance(pfield, Person):
+                    ref_id = pfield.id
+                elif isinstance(pfield, Resource):
+                    ref_id = pfield.resourceId or (pfield.resource.fragment if pfield.resource else None)
+                else:
+                    ref_id = getattr(pfield, "id", None)
                 if ref_id and ref_id not in person_ids:
                     result.error(
                         f"relationships[{i}].{pnum}",
@@ -552,6 +579,16 @@ class GedcomX:
             id=data.get("id"),
             description=data.get("description"),
         )
+        if ad := data.get("attribution"):
+            try:
+                gx.attribution = Attribution.model_validate(ad)
+            except Exception as e:
+                log.warning("Skipping invalid attribution: {}", e)
+        for gd in data.get("groups", []):
+            try:
+                gx.groups.append(item=Group.model_validate(gd))
+            except Exception as e:
+                log.warning("Skipping invalid group record: {}", e)
         for pd in data.get("persons", []):
             try:
                 gx.add_person(Person.model_validate(pd))
@@ -648,6 +685,7 @@ class GedcomX:
         return orjson.dumps(self._to_dict(), option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
 
     def _resolve(self, resource_reference: Union[URI, Resource]):
+        """Resolve a Resource or URI reference to the matching top-level object, or None."""
         #TODO indept URI search, URI index in collections
         if resource_reference:
             if isinstance(resource_reference, Resource):

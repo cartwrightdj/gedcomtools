@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/relationship.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Relationship model: RelationshipType enum and Relationship class
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 # GedcomX Relationship model.
 # person1/person2 typed as Union[Person, Resource]; circular import resolved via
 # bottom-of-file import and model_rebuild().
@@ -18,11 +29,14 @@ if TYPE_CHECKING:
 
 
 class RelationshipType(Enum):
+    """Enumeration of known GedcomX relationship types."""
+
     Couple = "http://gedcomx.org/Couple"
     ParentChild = "http://gedcomx.org/ParentChild"
 
     @property
     def description(self) -> str:
+        """Return a human-readable description of this relationship type."""
         descriptions = {
             RelationshipType.Couple: "A relationship of a pair of persons.",
             RelationshipType.ParentChild: "A relationship from a parent to a child.",
@@ -68,6 +82,7 @@ class Relationship(Subject):
             check_instance(result, f"facts[{i}]", f_, Fact)
 
     def add_fact(self, fact: Fact) -> None:
+        """Add a Fact to this relationship, skipping duplicates."""
         if fact is not None and isinstance(fact, Fact):
             for existing in self.facts:
                 if fact == existing:
@@ -97,7 +112,7 @@ class Relationship(Subject):
                 if pname:
                     parts.append(f"name={Relationship._short(pname)}")
                 return f"Person({', '.join(parts)})"
-        except Exception:
+        except (AttributeError, ValueError, TypeError):
             pass
         for attr in ("resource", "resourceId"):
             val = getattr(p, attr, None)

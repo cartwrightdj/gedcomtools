@@ -1,7 +1,18 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/document.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Document model: abstract, transcription, translation, or analysis text
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from enum import Enum
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Union
 
 
 from .conclusion import Conclusion
@@ -9,6 +20,8 @@ from .source_description import SourceDescription
 
 
 class DocumentType(Enum):
+    """Enumeration of recognized GedcomX document types."""
+
     Abstract = "http://gedcomx.org/Abstract"
     Transcription = "http://gedcomx.org/Transcription"
     Translation = "http://gedcomx.org/Translation"
@@ -16,6 +29,7 @@ class DocumentType(Enum):
 
     @property
     def description(self) -> str:
+        """Return a human-readable description of this document type."""
         descriptions = {
             DocumentType.Abstract: "The document is an abstract of a record or document.",
             DocumentType.Transcription: "The document is a transcription of a record or document.",
@@ -26,6 +40,8 @@ class DocumentType(Enum):
 
 
 class TextType(Enum):
+    """Enumeration of text content types for Document.textType."""
+
     plain = "plain"
     xhtml = "xhtml"
 
@@ -58,3 +74,9 @@ class DocumentParsingContainer:
 
     def __init__(self, source: SourceDescription) -> None:
         self.sourceDescription = source
+
+
+# Resolve forward references that point back to Document or SourceDescription.
+from .source_reference import SourceReference  # noqa: E402
+# Include SourceDescription so the cascade rebuild of SourceReference also resolves.
+SourceDescription.model_rebuild(_types_namespace={"Document": Document, "SourceDescription": SourceDescription})

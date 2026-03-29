@@ -20,6 +20,8 @@ from .source_reference import SourceReference
 from .textvalue import TextValue
 
 class FamilyParser:
+    """Stateful parser that accumulates FAM record fields and commits couple and parent-child relationships to a GedcomX object."""
+
     def __init__(self,gx: GedcomX) -> None:
         self.gedcomx: GedcomX = gx
         self.parent1: Optional[Person] = None
