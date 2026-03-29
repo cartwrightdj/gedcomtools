@@ -1,0 +1,1953 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="CLI Reference" href="api/cli.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>gxcli — GEDCOM-X Interactive Inspector - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/gxcli.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="gxcli-gedcom-x-interactive-inspector">
+<h1>gxcli — GEDCOM-X Interactive Inspector<a class="headerlink" href="#gxcli-gedcom-x-interactive-inspector" title="Link to this heading">¶</a></h1>
+<p>A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version <strong>0.7.1</strong>.</p>
+<hr class="docutils" />
+<section id="overview">
+<h2>1. Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">gxcli</span></code> is an interactive REPL (read-eval-print loop) for browsing and editing <a class="reference external" href="https://gedcomx.org">GEDCOM-X</a> object graphs. It provides:</p>
+<ul class="simple">
+<li><p><strong>Schema awareness</strong> — knows expected field types from the project’s <code class="docutils literal notranslate"><span class="pre">SCHEMA</span></code> registry; flags mismatches in red.</p></li>
+<li><p><strong>Filesystem-style navigation</strong> — navigate with <code class="docutils literal notranslate"><span class="pre">cd</span></code>, <code class="docutils literal notranslate"><span class="pre">pwd</span></code>, <code class="docutils literal notranslate"><span class="pre">back</span></code>, and bookmarks.</p></li>
+<li><p><strong>Rich inspection</strong> — <code class="docutils literal notranslate"><span class="pre">ls</span></code>, <code class="docutils literal notranslate"><span class="pre">show</span></code>, <code class="docutils literal notranslate"><span class="pre">grep</span></code>, <code class="docutils literal notranslate"><span class="pre">stats</span></code>, <code class="docutils literal notranslate"><span class="pre">validate</span></code>, <code class="docutils literal notranslate"><span class="pre">diff</span></code>.</p></li>
+<li><p><strong>Live object introspection</strong> — <code class="docutils literal notranslate"><span class="pre">props</span></code>, <code class="docutils literal notranslate"><span class="pre">methods</span></code>, <code class="docutils literal notranslate"><span class="pre">call</span></code>, <code class="docutils literal notranslate"><span class="pre">getattr</span></code>, <code class="docutils literal notranslate"><span class="pre">getprop</span></code>.</p></li>
+<li><p><strong>Ahnentafel pedigree builder</strong> — build and visualise an ancestor chart directly from the REPL, then convert it to a GedcomX graph.</p></li>
+<li><p><strong>Extension/plugin management</strong> — discover, authorise, and load Python extension modules.</p></li>
+<li><p><strong>Persistent settings and readline history</strong> — stored under <code class="docutils literal notranslate"><span class="pre">~/.config/gedcomtools/</span></code>.</p></li>
+</ul>
+<p>Typical uses:</p>
+<ul class="simple">
+<li><p>Inspect a family tree converted from GEDCOM 5.x or 7.x.</p></li>
+<li><p>Verify field types and data integrity.</p></li>
+<li><p>Resolve cross-references.</p></li>
+<li><p>Build a quick ancestor list without an external file.</p></li>
+<li><p>Export to GEDCOM-X JSON, ZIP, JSONL, or ArangoDB graph files.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="launching-gxcli">
+<h2>2. Launching gxcli<a class="headerlink" href="#launching-gxcli" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start empty</span>
+python<span class="w"> </span>-m<span class="w"> </span>gedcomtools.gedcomx.gxcli
+
+<span class="c1"># Or run the file directly</span>
+python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py
+
+<span class="c1"># Load a file on startup</span>
+python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> </span>path/to/tree.json<span class="w">    </span><span class="c1"># GEDCOM-X JSON</span>
+python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> </span>path/to/tree.ged<span class="w">     </span><span class="c1"># GEDCOM 5.x / 7.x (auto-detected)</span>
+python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> </span>path/to/archive.zip<span class="w">  </span><span class="c1"># GEDCOM-X ZIP</span>
+</pre></div>
+</div>
+<p>On startup, an interactive session prints:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Entering</span> <span class="n">GEDCOM</span><span class="o">-</span><span class="n">X</span> <span class="n">browser</span> <span class="p">(</span><span class="mf">0.7.1</span><span class="p">)</span> <span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">commands</span><span class="p">,</span> <span class="s1">&#39;quit&#39;</span> <span class="n">to</span> <span class="n">exit</span><span class="o">.</span>
+<span class="n">gx</span><span class="p">:</span><span class="o">/&gt;</span>
+</pre></div>
+</div>
+<p>When piped (non-interactive), the prompt is suppressed and output is line-buffered. <code class="docutils literal notranslate"><span class="pre">EOF</span></code> on stdin causes a clean exit.</p>
+<p><strong>Optional dependencies:</strong></p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Package</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">orjson</span></code></p></td>
+<td><p>Faster JSON serialisation/deserialisation</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">colorama</span></code></p></td>
+<td><p>ANSI colour on Windows</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">readline</span></code></p></td>
+<td><p>Tab completion and persistent history (standard library on Linux/macOS; <code class="docutils literal notranslate"><span class="pre">pyreadline3</span></code> on Windows)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr class="docutils" />
+<section id="shell-mechanics">
+<h2>3. Shell Mechanics<a class="headerlink" href="#shell-mechanics" title="Link to this heading">¶</a></h2>
+<p>The prompt reflects the current location in the object graph:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gx</span><span class="p">:</span><span class="o">/</span><span class="n">persons</span><span class="o">/</span><span class="mi">0</span><span class="o">/</span><span class="n">names</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Input is tokenised with <code class="docutils literal notranslate"><span class="pre">shlex.split</span></code>, so:</p>
+<ul class="simple">
+<li><p>Quoted strings preserve spaces: <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">&quot;given</span> <span class="pre">name&quot;</span></code></p></li>
+<li><p>Single quotes work too: <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">'given</span> <span class="pre">name'</span></code></p></li>
+</ul>
+<p>Unknown commands produce a suggestion to run <code class="docutils literal notranslate"><span class="pre">help</span></code>. Command errors print a <code class="docutils literal notranslate"><span class="pre">!</span></code> prefix with the source location.</p>
+<p>Settings and history persist across sessions in:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">~/.config/gedcomtools/gxcli.json</span></code></p></td>
+<td><p>Shell settings (<code class="docutils literal notranslate"><span class="pre">cfg</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">~/.config/gedcomtools/gxcli_history</span></code></p></td>
+<td><p>Readline history</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr class="docutils" />
+<section id="load-and-write-formats">
+<h2>4. Load and Write Formats<a class="headerlink" href="#load-and-write-formats" title="Link to this heading">¶</a></h2>
+<section id="load-ld">
+<h3>4.1 load / ld<a class="headerlink" href="#load-ld" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">load</span> <span class="n">PATH</span>
+<span class="n">ld</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Loads a file and sets it as the root of the current session. Navigation history and path are reset. Supports three formats, detected by extension:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Extension</p></th>
+<th class="head"><p>Behaviour</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.ged</span></code></p></td>
+<td><p>Auto-detect GEDCOM 5.x or 7.x. GEDCOM 5 is parsed, validated, then converted to GEDCOM-X. GEDCOM 7 is parsed and validated; conversion to GEDCOM-X is not yet implemented.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">.json</span></code></p></td>
+<td><p>Loaded as GEDCOM-X JSON via the project serialisation layer. Falls back to raw dict if the file is not a well-formed GEDCOM-X document.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.zip</span></code></p></td>
+<td><p>Loaded as a GEDCOM-X ZIP archive.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Loading a <code class="docutils literal notranslate"><span class="pre">.ged</span></code> file prints validation results (errors and warnings) before conversion.</p>
+<p><strong>extend PATH</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">extend</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Same format support as <code class="docutils literal notranslate"><span class="pre">load</span></code>, but <em>merges</em> the loaded data into the current root by calling <code class="docutils literal notranslate"><span class="pre">root.extend()</span></code>. The root must support <code class="docutils literal notranslate"><span class="pre">.extend()</span></code>. Useful for combining multiple sources into one session.</p>
+</section>
+<section id="write">
+<h3>4.2 write<a class="headerlink" href="#write" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">write</span> <span class="n">FORMAT</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Serialises and saves the current root. <code class="docutils literal notranslate"><span class="pre">FORMAT</span></code> is one of:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gx</span></code></p></td>
+<td><p>GEDCOM-X JSON (indented, UTF-8). Writes the root object via <code class="docutils literal notranslate"><span class="pre">_to_dict()</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">zip</span></code></p></td>
+<td><p>GEDCOM-X ZIP archive. A <code class="docutils literal notranslate"><span class="pre">.zip</span></code> extension is appended if the path does not already have one.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jsonl</span></code></p></td>
+<td><p>JSON Lines. Serialises the <strong>current node</strong> (not necessarily root), one record per line.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">adbg</span></code></p></td>
+<td><p>ArangoDB graph files. <code class="docutils literal notranslate"><span class="pre">PATH</span></code> is a <strong>directory</strong>; writes <code class="docutils literal notranslate"><span class="pre">persons.jsonl</span></code> and <code class="docutils literal notranslate"><span class="pre">person_to_person.jsonl</span></code> into it.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Examples:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>write gx output/tree.json
+write zip output/tree
+write jsonl output/persons.jsonl
+write adbg output/arango/
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="navigation-system">
+<h2>5. Navigation System<a class="headerlink" href="#navigation-system" title="Link to this heading">¶</a></h2>
+<section id="path-syntax">
+<h3>5.1 Path syntax<a class="headerlink" href="#path-syntax" title="Link to this heading">¶</a></h3>
+<p>Paths follow a filesystem metaphor:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Syntax</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/</span></code></p></td>
+<td><p>Root of the loaded object graph</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">.</span></code></p></td>
+<td><p>Current node (no-op segment)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">..</span></code></p></td>
+<td><p>Parent node</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">persons</span></code></p></td>
+<td><p>Named field or attribute</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">-1</span></code></p></td>
+<td><p>Integer index into a collection</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">P001</span></code></p></td>
+<td><p>ID string — navigates to the collection item whose <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">xref_id</span></code>, or <code class="docutils literal notranslate"><span class="pre">identifier</span></code> matches</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Paths can be chained with <code class="docutils literal notranslate"><span class="pre">/</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>cd persons/0/names/1
+</pre></div>
+</div>
+<p>Absolute paths start with <code class="docutils literal notranslate"><span class="pre">/</span></code>; relative paths resolve from the current node.</p>
+</section>
+<section id="cd">
+<h3>5.2 cd<a class="headerlink" href="#cd" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="p">[</span><span class="n">PATH</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Changes the current node. With no argument, resets to root. Every successful <code class="docutils literal notranslate"><span class="pre">cd</span></code> pushes the previous location onto the navigation history stack (used by <code class="docutils literal notranslate"><span class="pre">back</span></code>).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>cd /persons
+cd 0/names
+cd ..
+cd /
+cd &quot;given name&quot;
+</pre></div>
+</div>
+</section>
+<section id="pwd">
+<h3>5.3 pwd<a class="headerlink" href="#pwd" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pwd</span>
+</pre></div>
+</div>
+<p>Prints the current path as an absolute string, e.g. <code class="docutils literal notranslate"><span class="pre">/persons/0/names</span></code>.</p>
+</section>
+<section id="back">
+<h3>5.4 back<a class="headerlink" href="#back" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">back</span>
+</pre></div>
+</div>
+<p>Returns to the previous location by popping the navigation history stack. Reports the new path. Prints a message if history is empty.</p>
+</section>
+<section id="goto">
+<h3>5.5 goto<a class="headerlink" href="#goto" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">goto</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Jumps directly to any top-level object by its <code class="docutils literal notranslate"><span class="pre">id</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">P001</span></code>, <code class="docutils literal notranslate"><span class="pre">R023</span></code>). Searches all top-level collections in order: persons, relationships, agents, sourceDescriptions, places, events, documents, groups. Pushes the current location onto navigation history first. Tab-completion is available for IDs in the current <code class="docutils literal notranslate"><span class="pre">id_index</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>goto P001
+goto R012
+</pre></div>
+</div>
+</section>
+<section id="find">
+<h3>5.6 find<a class="headerlink" href="#find" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">find</span> <span class="n">PATTERN</span> <span class="p">[</span><span class="o">--</span><span class="nb">type</span> <span class="n">persons</span><span class="o">|</span><span class="n">agents</span><span class="o">|</span><span class="n">places</span><span class="o">|</span><span class="n">sources</span><span class="o">|</span><span class="n">events</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Searches by name or title using a case-insensitive regex. Default collection is <code class="docutils literal notranslate"><span class="pre">persons</span></code>. Results are printed as a two-column table of <code class="docutils literal notranslate"><span class="pre">id</span></code> and display label. When exactly one result is found, a <code class="docutils literal notranslate"><span class="pre">goto</span></code> tip is shown.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>find Smith
+find &quot;Mary.*Jones&quot; --type persons
+find London --type places
+</pre></div>
+</div>
+<p>After finding a result, navigate to it with <code class="docutils literal notranslate"><span class="pre">goto</span> <span class="pre">ID</span></code>.</p>
+</section>
+<section id="bookmark-bm-go">
+<h3>5.7 bookmark / bm / go<a class="headerlink" href="#bookmark-bm-go" title="Link to this heading">¶</a></h3>
+<p><strong>Save a bookmark:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bookmark</span> <span class="n">NAME</span>
+<span class="n">bm</span> <span class="n">NAME</span>
+</pre></div>
+</div>
+<p>Saves the current location (node and path) under <code class="docutils literal notranslate"><span class="pre">NAME</span></code>. <code class="docutils literal notranslate"><span class="pre">bookmark</span></code> and <code class="docutils literal notranslate"><span class="pre">bm</span></code> are aliases.</p>
+<p><strong>List bookmarks:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bookmark</span> <span class="n">ls</span>
+<span class="n">bm</span> <span class="n">ls</span>
+<span class="n">bookmark</span>        <span class="c1"># (no args also shows list)</span>
+</pre></div>
+</div>
+<p><strong>Remove a bookmark:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bookmark</span> <span class="n">rm</span> <span class="n">NAME</span>
+</pre></div>
+</div>
+<p><strong>Navigate to a bookmark:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">go</span> <span class="n">NAME</span>
+</pre></div>
+</div>
+<p>Navigates to the saved location. Pushes the current location onto navigation history. Tab-completion cycles through bookmark names for <code class="docutils literal notranslate"><span class="pre">go</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="data-inspection-commands">
+<h2>6. Data Inspection Commands<a class="headerlink" href="#data-inspection-commands" title="Link to this heading">¶</a></h2>
+<section id="ls">
+<h3>6.1 ls<a class="headerlink" href="#ls" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls</span> <span class="p">[</span><span class="n">PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">full</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Lists the fields or indexed items of a node. If <code class="docutils literal notranslate"><span class="pre">PATH</span></code> is given, lists that node instead of the current one.</p>
+<p>Output columns:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Field name or collection index</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p>Runtime Python type (shown in <strong>red</strong> if it does not match the schema)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">schema</span></code></p></td>
+<td><p>Declared schema type for the field</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">preview</span></code></p></td>
+<td><p>Short human-readable summary of the value</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For collections (TypeCollection, list, tuple, set), consecutive runs of three or more items of the same type are collapsed into a single elision row (<code class="docutils literal notranslate"><span class="pre">…</span> <span class="pre">TypeName</span> <span class="pre">×</span> <span class="pre">N</span></code>) to keep output readable. <code class="docutils literal notranslate"><span class="pre">--full</span></code> disables this collapsing and shows every element.</p>
+<p><code class="docutils literal notranslate"><span class="pre">NoneType</span></code> is stripped from union types: <code class="docutils literal notranslate"><span class="pre">str</span> <span class="pre">|</span> <span class="pre">NoneType</span></code> appears as <code class="docutils literal notranslate"><span class="pre">str?</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ls
+ls /persons/0
+ls names --full
+</pre></div>
+</div>
+</section>
+<section id="show">
+<h3>6.2 show<a class="headerlink" href="#show" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">show</span> <span class="p">[</span><span class="n">PATH</span><span class="p">]</span>
+<span class="n">show</span> <span class="n">COLLECTION_NAME</span>
+</pre></div>
+</div>
+<p>Two modes:</p>
+<ul class="simple">
+<li><p><strong>Normal path or no argument</strong> — pretty-prints the resolved node as indented JSON.</p></li>
+<li><p><strong>Top-level collection name</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">persons</span></code>, <code class="docutils literal notranslate"><span class="pre">agents</span></code>) — prints a three-column table: <code class="docutils literal notranslate"><span class="pre">idx</span></code>, <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code>/preview.</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>show
+show /persons/0/names/0
+show persons
+show agents
+</pre></div>
+</div>
+</section>
+<section id="dump">
+<h3>6.3 dump<a class="headerlink" href="#dump" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dump</span> <span class="p">[</span><span class="n">PATH</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Always prints the node as JSON regardless of type, with no table shortcut. Equivalent to <code class="docutils literal notranslate"><span class="pre">show</span></code> but forces JSON output.</p>
+</section>
+<section id="stats">
+<h3>6.4 stats<a class="headerlink" href="#stats" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stats</span>
+</pre></div>
+</div>
+<p>Prints counts for all eight top-level GEDCOM-X collections and a grand total:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Collection</span>            <span class="n">Count</span>
+<span class="o">------------------------------</span>
+<span class="n">Persons</span>               <span class="mi">412</span>
+<span class="n">Relationships</span>         <span class="mi">398</span>
+<span class="n">Agents</span>                  <span class="mi">3</span>
+<span class="n">Source</span> <span class="n">Descriptions</span>    <span class="mi">17</span>
+<span class="n">Places</span>                 <span class="mi">28</span>
+<span class="n">Events</span>                  <span class="mi">0</span>
+<span class="n">Documents</span>               <span class="mi">0</span>
+<span class="n">Groups</span>                  <span class="mi">0</span>
+<span class="o">------------------------------</span>
+<span class="n">Total</span>                 <span class="mi">858</span>
+</pre></div>
+</div>
+<p>Requires a GedcomX object to be loaded.</p>
+</section>
+<section id="grep">
+<h3>6.5 grep<a class="headerlink" href="#grep" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">grep</span> <span class="n">PATTERN</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">depth</span> <span class="n">N</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Recursively searches field values (strings and numbers) for a case-insensitive regex pattern, starting from the current node.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--all</span></code></p></td>
+<td><p>Start from root instead of the current node</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--depth</span> <span class="pre">N</span></code></p></td>
+<td><p>Maximum recursion depth (default <code class="docutils literal notranslate"><span class="pre">6</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Prints up to 50 matches as <code class="docutils literal notranslate"><span class="pre">path:</span> <span class="pre">value</span></code>. If there are more, a count of the remainder is shown.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>grep &quot;Smith&quot;
+grep &quot;1850&quot; --all
+grep &quot;New York&quot; --depth 10
+</pre></div>
+</div>
+</section>
+<section id="validate">
+<h3>6.6 validate<a class="headerlink" href="#validate" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">validate</span>
+</pre></div>
+</div>
+<p>Runs the built-in GEDCOM-X validation on the loaded data. Prints a summary count of errors and warnings, then lists each issue with severity, path, and message. Errors are shown in red.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Validation</span><span class="p">:</span> <span class="mi">2</span> <span class="n">error</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="mi">1</span> <span class="n">warning</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+  <span class="n">ERROR</span>  <span class="o">/</span><span class="n">persons</span><span class="o">/</span><span class="mi">0</span><span class="p">:</span> <span class="n">missing</span> <span class="n">required</span> <span class="n">field</span> <span class="s1">&#39;gender&#39;</span>
+  <span class="n">WARN</span>   <span class="o">/</span><span class="n">relationships</span><span class="o">/</span><span class="mi">3</span><span class="p">:</span> <span class="n">person1</span> <span class="n">reference</span> <span class="ow">not</span> <span class="n">resolved</span>
+</pre></div>
+</div>
+</section>
+<section id="diff">
+<h3>6.7 diff<a class="headerlink" href="#diff" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">diff</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Compares the current root against another file (<code class="docutils literal notranslate"><span class="pre">.ged</span></code>, <code class="docutils literal notranslate"><span class="pre">.json</span></code>, or <code class="docutils literal notranslate"><span class="pre">.zip</span></code>) by object ID. For each top-level collection, reports:</p>
+<ul class="simple">
+<li><p>IDs present in the other file but not the current root (added).</p></li>
+<li><p>IDs present in the current root but not the other file (removed).</p></li>
+<li><p>IDs in common (field-level diff is not yet implemented).</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>diff backup/tree_20250101.json
+diff archive.zip
+</pre></div>
+</div>
+</section>
+<section id="type">
+<h3>6.8 type<a class="headerlink" href="#type" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">type</span> <span class="p">[</span><span class="n">PATH</span><span class="o">|</span><span class="n">ATTR</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">fields</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mro</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">c</span><span class="o">|--</span><span class="k">class</span><span class="w"> </span><span class="nc">ClassName</span><span class="p">]</span>
+<span class="nb">type</span> <span class="k">class</span><span class="w"> </span><span class="nc">ClassName</span> <span class="p">[</span><span class="o">--</span><span class="n">fields</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mro</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Reports runtime and schema type information.</p>
+<p><strong>No argument</strong> — describes the current node.</p>
+<p><strong>With a path or attribute name</strong> — describes that child. If the name is a simple attribute of the current object, schema field type and match status are shown.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">class</span> <span class="pre">ClassName</span></code></strong> — looks up a class in the schema registry directly and prints its bases, subclasses, and optionally its full field table.</p>
+<p>Flags:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--fields</span></code></p></td>
+<td><p>Print the class field table</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--mro</span></code></p></td>
+<td><p>Show Python method resolution order</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-c</span></code> / <code class="docutils literal notranslate"><span class="pre">--class</span></code></p></td>
+<td><p>Force a specific schema class name for the current/target node</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>type
+type names
+type /persons/0/names
+type class Person --fields
+type class Name --mro
+</pre></div>
+</div>
+</section>
+<section id="schema">
+<h3>6.9 schema<a class="headerlink" href="#schema" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">schema</span> <span class="n">SUBCOMMAND</span> <span class="p">[</span><span class="n">args</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Interrogates the project’s schema registry. Subcommands:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Subcommand</p></th>
+<th class="head"><p>Syntax</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">help</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">help</span></code></p></td>
+<td><p>Show the subcommand list</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">here</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">here</span></code></p></td>
+<td><p>Field table for the current node’s class</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">class</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">class</span> <span class="pre">ClassName</span></code></p></td>
+<td><p>Field table for a named class</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">extras</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">extras</span> <span class="pre">[ClassName]</span> <span class="pre">[--all|--direct]</span></code></p></td>
+<td><p>Extra (non-core) fields; <code class="docutils literal notranslate"><span class="pre">--all</span></code> includes inherited, <code class="docutils literal notranslate"><span class="pre">--direct</span></code> direct only</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">find</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">find</span> <span class="pre">FIELD</span></code></p></td>
+<td><p>All classes that define <code class="docutils literal notranslate"><span class="pre">FIELD</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">where</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">where</span> <span class="pre">TypeExpr</span></code></p></td>
+<td><p>All fields whose declared type string contains <code class="docutils literal notranslate"><span class="pre">TypeExpr</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bases</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">bases</span> <span class="pre">ClassName</span></code></p></td>
+<td><p>Base classes and subclasses</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">toplevel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">toplevel</span></code></p></td>
+<td><p>All top-level classes in the schema</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">json</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">json</span> <span class="pre">[ClassName]</span></code></p></td>
+<td><p>Dump the schema mapping as formatted JSON</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">diff</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">diff</span> <span class="pre">[PATH]</span></code></p></td>
+<td><p>Compare runtime vs. schema for a node; mismatches shown in red/yellow</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">diff</span></code> columns: <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">schema</span></code> (declared type), <code class="docutils literal notranslate"><span class="pre">runtime</span></code> (actual type), <code class="docutils literal notranslate"><span class="pre">status</span></code> (ok / mismatch / missing / extra).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>schema here
+schema class Person
+schema extras Person --all
+schema find id
+schema where TypeCollection
+schema bases ExtensibleData
+schema toplevel
+schema json Person
+schema diff /persons/0
+</pre></div>
+</div>
+</section>
+<section id="extras">
+<h3>6.10 extras<a class="headerlink" href="#extras" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">extras</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span><span class="o">|--</span><span class="n">direct</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">filter</span> <span class="n">SUBSTR</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Lists dynamic extra fields across <strong>all</strong> schema classes (not just the current node). Use <code class="docutils literal notranslate"><span class="pre">--all</span></code> (default) to include inherited extras, <code class="docutils literal notranslate"><span class="pre">--direct</span></code> for only directly-declared extras. <code class="docutils literal notranslate"><span class="pre">--filter</span> <span class="pre">SUBSTR</span></code> restricts output to rows where the class name, field name, or type contains <code class="docutils literal notranslate"><span class="pre">SUBSTR</span></code>.</p>
+<p>Output columns: <code class="docutils literal notranslate"><span class="pre">class</span></code>, <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">source</span></code> (direct / inherited).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>extras
+extras --direct
+extras --filter Note
+</pre></div>
+</div>
+</section>
+<section id="resolve">
+<h3>6.11 resolve<a class="headerlink" href="#resolve" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resolve</span>
+</pre></div>
+</div>
+<p>Resolves all <code class="docutils literal notranslate"><span class="pre">Resource</span></code>/<code class="docutils literal notranslate"><span class="pre">URI</span></code> cross-references within the loaded GedcomX graph and prints resolver statistics:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">total</span> <span class="n">refs</span><span class="p">:</span> <span class="mi">842</span>
+<span class="n">cache</span> <span class="n">hits</span><span class="p">:</span> <span class="mi">631</span>  <span class="n">misses</span><span class="p">:</span> <span class="mi">211</span>
+<span class="n">ok</span><span class="p">:</span> <span class="mi">839</span>  <span class="n">fail</span><span class="p">:</span> <span class="mi">3</span>
+<span class="n">by</span> <span class="n">ref</span> <span class="nb">type</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ResourceReference&#39;</span><span class="p">:</span> <span class="mi">839</span><span class="p">,</span> <span class="o">...</span><span class="p">}</span>
+<span class="n">by</span> <span class="n">target</span> <span class="nb">type</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Person&#39;</span><span class="p">:</span> <span class="mi">412</span><span class="p">,</span> <span class="o">...</span><span class="p">}</span>
+<span class="n">resolver</span> <span class="n">time</span> <span class="p">(</span><span class="n">ms</span><span class="p">):</span> <span class="mf">14.72</span>
+<span class="n">FAIL</span> <span class="o">/</span><span class="n">relationships</span><span class="o">/</span><span class="mi">5</span><span class="o">/</span><span class="n">person1</span><span class="p">:</span> <span class="n">unresolved</span> <span class="n">ref</span> <span class="s1">&#39;#P999&#39;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="object-introspection-commands">
+<h2>7. Object Introspection Commands<a class="headerlink" href="#object-introspection-commands" title="Link to this heading">¶</a></h2>
+<section id="props">
+<h3>7.1 props<a class="headerlink" href="#props" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">props</span> <span class="p">[</span><span class="o">--</span><span class="n">instance</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">class</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">private</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Lists instance attributes and class-level <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code> descriptors with their current values.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--instance</span></code></p></td>
+<td><p>Show only instance <code class="docutils literal notranslate"><span class="pre">__dict__</span></code> entries (suppress class-level)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--class</span></code></p></td>
+<td><p>Show only class-level properties and attributes (suppress instance data)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--private</span></code></p></td>
+<td><p>Include names that start with <code class="docutils literal notranslate"><span class="pre">_</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Output columns: <code class="docutils literal notranslate"><span class="pre">scope</span></code> (instance / class), <code class="docutils literal notranslate"><span class="pre">kind</span></code> (data / property / attr), <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">value</span></code> (short preview).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>props
+props --class
+props --private
+</pre></div>
+</div>
+</section>
+<section id="methods">
+<h3>7.2 methods<a class="headerlink" href="#methods" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">methods</span> <span class="p">[</span><span class="o">--</span><span class="n">private</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">own</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">match</span> <span class="n">SUBSTR</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Lists all callable methods on the current node, walking the MRO.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--private</span></code></p></td>
+<td><p>Include <code class="docutils literal notranslate"><span class="pre">_</span></code>-prefixed methods</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--own</span></code></p></td>
+<td><p>Only methods defined directly on the current class (no inheritance)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--match</span> <span class="pre">SUBSTR</span></code></p></td>
+<td><p>Case-insensitive substring filter on method names</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Output columns: <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">signature</span></code> (parameters and return type if annotated), <code class="docutils literal notranslate"><span class="pre">defined</span> <span class="pre">in</span></code> (declaring class), <code class="docutils literal notranslate"><span class="pre">doc</span></code> (first line of the docstring).</p>
+<p>Methods defined on the current class are sorted before inherited ones.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>methods
+methods --own
+methods --match fact
+methods --private --match _resolve
+</pre></div>
+</div>
+</section>
+<section id="call">
+<h3>7.3 call<a class="headerlink" href="#call" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">args</span><span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="n">key</span><span class="o">=</span><span class="n">value</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Calls a method on the current node. Positional and keyword arguments are type-coerced:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Input token</p></th>
+<th class="head"><p>Coerced to</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">true</span></code> / <code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code> / <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Numeric string</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>JSON-like <code class="docutils literal notranslate"><span class="pre">{...}</span></code> / <code class="docutils literal notranslate"><span class="pre">[...]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict</span></code> / <code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Anything else</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Arguments are validated against the method’s signature before calling. On success, prints <code class="docutils literal notranslate"><span class="pre">Result:</span> <span class="pre">&lt;short</span> <span class="pre">preview&gt;</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>call fullName
+call age 1950
+call addFact {&quot;type&quot;: &quot;http://gedcomx.org/Birth&quot;} date=&quot;1901-01-01&quot;
+</pre></div>
+</div>
+</section>
+<section id="getattr">
+<h3>7.4 getattr<a class="headerlink" href="#getattr" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">getattr</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">NAME</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For each name, prints the value and how it was found: <code class="docutils literal notranslate"><span class="pre">instance</span></code> (in <code class="docutils literal notranslate"><span class="pre">__dict__</span></code>), <code class="docutils literal notranslate"><span class="pre">property</span></code> (via <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code>), <code class="docutils literal notranslate"><span class="pre">class_attr</span></code> (non-callable class attribute), or <code class="docutils literal notranslate"><span class="pre">missing</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>getattr id lang
+getattr names facts
+</pre></div>
+</div>
+</section>
+<section id="getprop">
+<h3>7.5 getprop<a class="headerlink" href="#getprop" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">getprop</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">NAME</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For each name, checks whether it is a <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code> on the class and prints its current value. If the name exists but is not a property, explains what kind it is (method or attribute). Useful for properties that are not visible in <code class="docutils literal notranslate"><span class="pre">__dict__</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>getprop displayName
+getprop fullText
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="editing-commands">
+<h2>8. Editing Commands<a class="headerlink" href="#editing-commands" title="Link to this heading">¶</a></h2>
+<section id="set">
+<h3>8.1 set<a class="headerlink" href="#set" title="Link to this heading">¶</a></h3>
+<p>Three forms:</p>
+<p><strong>Set a single field to a primitive value:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">NAME</span> <span class="n">VALUE</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">VALUE</span></code> is the remainder of the line after <code class="docutils literal notranslate"><span class="pre">NAME</span></code>; whitespace is preserved. The value is type-coerced (same rules as <code class="docutils literal notranslate"><span class="pre">call</span></code>). Refuses to overwrite a non-primitive value; refuses to create new attributes that don’t already exist on the object.</p>
+<p><strong>Set multiple fields using <code class="docutils literal notranslate"><span class="pre">=</span></code> syntax:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">NAME</span><span class="o">=</span><span class="n">VALUE</span> <span class="n">NAME2</span><span class="o">=</span><span class="n">VALUE2</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><strong>Create and append new instances (<code class="docutils literal notranslate"><span class="pre">--n</span></code> mode):</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="o">--</span><span class="n">n</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">NAME2</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For each field name, instantiates a new object of the declared schema element type. If the field is a collection (has <code class="docutils literal notranslate"><span class="pre">.append()</span></code>), the new instance is appended; otherwise, the field is replaced. Uses <code class="docutils literal notranslate"><span class="pre">SCHEMA</span></code> to determine the correct type. Refuses to operate on private fields.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>set id P999
+set lang=en confidence=2
+set --n names
+set --n facts
+</pre></div>
+</div>
+</section>
+<section id="del">
+<h3>8.2 del<a class="headerlink" href="#del" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">NAME2</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Deletes attributes, dictionary keys, or collection indices on the current node.</p>
+<ul class="simple">
+<li><p><strong>Dict keys</strong>: <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">keyname</span></code> removes the key.</p></li>
+<li><p><strong>Collection indices</strong>: <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">3</span></code> removes element at index 3 (supports negative indices); uses <code class="docutils literal notranslate"><span class="pre">__delitem__</span></code> or <code class="docutils literal notranslate"><span class="pre">pop</span></code>.</p></li>
+<li><p><strong>Object attributes</strong>: <code class="docutils literal notranslate"><span class="pre">delattr</span></code> is called; handles writable properties.</p></li>
+<li><p>Refuses to delete private (<code class="docutils literal notranslate"><span class="pre">_</span></code>-prefixed) names.</p></li>
+<li><p>Refuses to delete read-only properties.</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>del confidence
+del 2
+del lang notes
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="ahnentafel-system">
+<h2>9. Ahnentafel System<a class="headerlink" href="#ahnentafel-system" title="Link to this heading">¶</a></h2>
+<p>The Ahnentafel system is a built-in scratch-pad for building a pedigree chart directly inside the REPL without loading a file. Entries are keyed by <strong>Ahnentafel number</strong> (<code class="docutils literal notranslate"><span class="pre">ahnen</span></code> or <code class="docutils literal notranslate"><span class="pre">ahnentafel</span></code> are aliases for the command).</p>
+<section id="numbering-scheme">
+<h3>9.1 Numbering scheme<a class="headerlink" href="#numbering-scheme" title="Link to this heading">¶</a></h3>
+<p>The Ahnentafel (German: “ancestor table”) system assigns integers to ancestors:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Number</p></th>
+<th class="head"><p>Person</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>Proband (subject)</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>Father of 1</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>Mother of 1</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>Paternal grandfather</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>Paternal grandmother</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>Maternal grandfather</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>Maternal grandmother</p></td>
+</tr>
+<tr class="row-odd"><td><p>2N</p></td>
+<td><p>Father of N</p></td>
+</tr>
+<tr class="row-even"><td><p>2N+1</p></td>
+<td><p>Mother of N</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>In general, for any person N &gt; 1:</p>
+<ul class="simple">
+<li><p>Their father is <code class="docutils literal notranslate"><span class="pre">2N</span></code></p></li>
+<li><p>Their mother is <code class="docutils literal notranslate"><span class="pre">2N</span> <span class="pre">+</span> <span class="pre">1</span></code></p></li>
+<li><p>They are a child of <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&gt;&gt;</span> <span class="pre">1</span></code> (integer division by 2)</p></li>
+<li><p>Even numbers are male ancestors, odd numbers (except 1) are female ancestors</p></li>
+</ul>
+<p>Generation of person N = <code class="docutils literal notranslate"><span class="pre">floor(log2(N))</span></code>. Generation 0 = proband, generation 1 = parents, generation 2 = grandparents, and so on.</p>
+<p>The relationship label is computed by walking from N back toward 1 to determine the paternal/maternal line prefix, then prefixing <code class="docutils literal notranslate"><span class="pre">great-</span></code> for each generation beyond grandparents.</p>
+</section>
+<section id="ahnen-set">
+<h3>9.2 ahnen set<a class="headerlink" href="#ahnen-set" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="nb">set</span> <span class="n">N</span> <span class="n">NAME</span> <span class="p">[</span><span class="n">key</span><span class="o">=</span><span class="n">value</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Add or update a person. <code class="docutils literal notranslate"><span class="pre">N</span></code> must be ≥ 1.</p>
+<p>Key aliases for life events:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Short</p></th>
+<th class="head"><p>Long alias</p></th>
+<th class="head"><p>Field</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">b</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">born</span></code>, <code class="docutils literal notranslate"><span class="pre">birth</span></code></p></td>
+<td><p>Birth date</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bplace</span></code>, <code class="docutils literal notranslate"><span class="pre">birth_place</span></code></p></td>
+<td><p>Birth place</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">d</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">died</span></code>, <code class="docutils literal notranslate"><span class="pre">death</span></code></p></td>
+<td><p>Death date</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dplace</span></code>, <code class="docutils literal notranslate"><span class="pre">death_place</span></code></p></td>
+<td><p>Death place</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">m</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">married</span></code>, <code class="docutils literal notranslate"><span class="pre">marriage</span></code></p></td>
+<td><p>Marriage date</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mplace</span></code>, <code class="docutils literal notranslate"><span class="pre">marriage_place</span></code></p></td>
+<td><p>Marriage place</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>After setting, prints the entry summary and its relationship label.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ahnen set 1 &quot;John Smith&quot; b=1850 bp=&quot;New York&quot; d=1920 dp=&quot;Brooklyn&quot;
+ahnen set 2 &quot;William Smith&quot; b=1820 d=1895 m=1845 mp=&quot;Albany&quot;
+ahnen set 3 &quot;Mary Jones&quot; b=1822 bp=&quot;Boston&quot;
+ahnen set 4 &quot;Thomas Smith&quot; b=1795 d=1870
+</pre></div>
+</div>
+</section>
+<section id="ahnen-get">
+<h3>9.3 ahnen get<a class="headerlink" href="#ahnen-get" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">get</span> <span class="n">N</span>
+</pre></div>
+</div>
+<p>Shows full details for person N, including all life event fields and relationship context (child of, father/mother).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ahnen get 1
+#1  proband
+  Name        : John Smith
+  Born        : 1850
+  Birth place : New York
+  Died        : 1920
+  Death place : Brooklyn
+  Father      : #2 (William Smith)
+  Mother      : #3 (Mary Jones)
+</pre></div>
+</div>
+</section>
+<section id="ahnen-ls">
+<h3>9.4 ahnen ls<a class="headerlink" href="#ahnen-ls" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">ls</span>
+</pre></div>
+</div>
+<p>Lists all entries as a table with columns: <code class="docutils literal notranslate"><span class="pre">#</span></code>, <code class="docutils literal notranslate"><span class="pre">Name</span></code>, <code class="docutils literal notranslate"><span class="pre">Relation</span></code>, <code class="docutils literal notranslate"><span class="pre">Born</span></code>, <code class="docutils literal notranslate"><span class="pre">Died</span></code>, <code class="docutils literal notranslate"><span class="pre">Married</span></code>.</p>
+</section>
+<section id="ahnen-tree">
+<h3>9.5 ahnen tree<a class="headerlink" href="#ahnen-tree" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">tree</span> <span class="p">[</span><span class="n">DEPTH</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Prints a Unicode box-drawing pedigree chart rooted at person 1. Default depth is 3 (shows up to great-grandparents). Each node shows Ahnentafel number, name (with birth/death dates), and relationship label.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ahnen tree
+Pedigree  (7 entries, 3 generation(s))
+
+#1  John Smith  b.1850  d.1920  [proband]
+├── #2  William Smith  b.1820  d.1895  [father]
+│   ├── #4  Thomas Smith  b.1795  [paternal grandfather]
+│   └── #5  —  [paternal grandmother]
+└── #3  Mary Jones  b.1822  [mother]
+    ├── #6  —  [maternal grandfather]
+    └── #7  —  [maternal grandmother]
+</pre></div>
+</div>
+</section>
+<section id="ahnen-clear">
+<h3>9.6 ahnen clear<a class="headerlink" href="#ahnen-clear" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">clear</span> <span class="p">[</span><span class="n">N</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Removes person N, or clears all entries if N is omitted.</p>
+</section>
+<section id="ahnen-build">
+<h3>9.7 ahnen build<a class="headerlink" href="#ahnen-build" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">build</span>
+</pre></div>
+</div>
+<p>Converts all Ahnentafel entries to a live GedcomX object and loads it as the current root. This is a non-destructive operation — it does not overwrite any file.</p>
+<p>What is created:</p>
+<ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Person</span></code> object for each entry, with ID <code class="docutils literal notranslate"><span class="pre">P{N}</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">P1</span></code>, <code class="docutils literal notranslate"><span class="pre">P2</span></code>).</p></li>
+<li><p>Gender is inferred: even N → Male, odd N → Female, N=1 → Unknown.</p></li>
+<li><p>Birth and death facts are created where dates or places are set.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Couple</span></code> relationship for each pair of parents (2N, 2N+1) where both exist. Marriage facts are attached if <code class="docutils literal notranslate"><span class="pre">m</span></code> or <code class="docutils literal notranslate"><span class="pre">mp</span></code> data is set on either parent.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParentChild</span></code> relationships from father and mother to each child.</p></li>
+</ul>
+<p>After build, the standard navigation and inspection commands work on the generated data.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ahnen build
+# Built GedcomX: 7 person(s), 9 relationship(s). Loaded as root.
+write gx output/family.json
+</pre></div>
+</div>
+</section>
+<section id="ahnen-import-export">
+<h3>9.8 ahnen import / export<a class="headerlink" href="#ahnen-import-export" title="Link to this heading">¶</a></h3>
+<p><strong>Import from a text file:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="kn">import</span><span class="w"> </span><span class="nn">FILE</span>
+</pre></div>
+</div>
+<p>Each non-blank, non-comment line has the format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">N</span>  <span class="n">Name</span> <span class="n">Words</span>  <span class="n">key</span><span class="p">:</span><span class="n">value</span> <span class="n">key</span><span class="p">:</span><span class="n">value</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Key-value pairs use <code class="docutils literal notranslate"><span class="pre">:</span></code> (not <code class="docutils literal notranslate"><span class="pre">=</span></code>). Key names use the short aliases (<code class="docutils literal notranslate"><span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">bp</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">dp</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>, <code class="docutils literal notranslate"><span class="pre">mp</span></code>). Comment lines start with <code class="docutils literal notranslate"><span class="pre">#</span></code>. Example file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># My family tree</span>
+<span class="mi">1</span>  <span class="n">John</span> <span class="n">Smith</span>  <span class="n">b</span><span class="p">:</span><span class="mi">1850</span>  <span class="n">bp</span><span class="p">:</span><span class="n">New</span> <span class="n">York</span>  <span class="n">d</span><span class="p">:</span><span class="mi">1920</span>
+<span class="mi">2</span>  <span class="n">William</span> <span class="n">Smith</span>  <span class="n">b</span><span class="p">:</span><span class="mi">1820</span>  <span class="n">m</span><span class="p">:</span><span class="mi">1845</span>
+<span class="mi">3</span>  <span class="n">Mary</span> <span class="n">Jones</span>  <span class="n">b</span><span class="p">:</span><span class="mi">1822</span>  <span class="n">bp</span><span class="p">:</span><span class="n">Boston</span>
+</pre></div>
+</div>
+<p><strong>Export to a text file:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ahnen</span> <span class="n">export</span> <span class="n">FILE</span>
+</pre></div>
+</div>
+<p>Writes all current entries in the import format, with a comment header. The file can be round-tripped with <code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">import</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="extension-management">
+<h2>10. Extension Management<a class="headerlink" href="#extension-management" title="Link to this heading">¶</a></h2>
+<p>Extensions are Python modules that augment gxcli’s behaviour at runtime. The system uses a <code class="docutils literal notranslate"><span class="pre">PluginRegistry</span></code> with a <code class="docutils literal notranslate"><span class="pre">TrustLevel</span></code> gating which extensions may load.</p>
+<p>Trust levels (in increasing permissiveness):</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Level</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DISABLED</span></code></p></td>
+<td><p>No extensions may load</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BUILTIN</span></code></p></td>
+<td><p>Only bundled (package-internal) extensions</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LOCAL</span></code></p></td>
+<td><p>Bundled plus extensions from the local filesystem</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ALL</span></code></p></td>
+<td><p>All sources including URLs</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="ext-ls">
+<h3>10.1 ext ls<a class="headerlink" href="#ext-ls" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">ls</span> <span class="p">[</span><span class="nb">all</span><span class="o">|</span><span class="n">NAME</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Lists registered extensions as a table: <code class="docutils literal notranslate"><span class="pre">NAME</span></code>, <code class="docutils literal notranslate"><span class="pre">LOCATION</span></code> (resolved file path), <code class="docutils literal notranslate"><span class="pre">STATUS</span></code>. Status values:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Status</p></th>
+<th class="head"><p>Colour</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LOADED</span></code></p></td>
+<td><p>green</p></td>
+<td><p>Successfully imported</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ALLOWED</span></code></p></td>
+<td><p>yellow</p></td>
+<td><p>Registered but not yet loaded</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PENDING</span></code></p></td>
+<td><p>dim</p></td>
+<td><p>Discovered, not yet allowed</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FAILED</span></code></p></td>
+<td><p>red</p></td>
+<td><p>Import attempted but raised an error</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BLOCKED</span></code></p></td>
+<td><p>red</p></td>
+<td><p>Blocked by trust level</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>With no argument or <code class="docutils literal notranslate"><span class="pre">all</span></code>, lists all. With a name fragment, filters by substring match on name or source.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ext ls
+ext ls analytics
+</pre></div>
+</div>
+</section>
+<section id="ext-show">
+<h3>10.2 ext show<a class="headerlink" href="#ext-show" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">show</span> <span class="p">[</span><span class="nb">all</span><span class="o">|</span><span class="n">NAME</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Prints full details for one or more extensions: name, source, resolved location, status, expected and actual SHA-256 (for URL sources), and error message if failed.</p>
+</section>
+<section id="ext-scan">
+<h3>10.3 ext scan<a class="headerlink" href="#ext-scan" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">scan</span> <span class="p">[</span><span class="n">PACKAGE</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Discovers sub-modules within a Python package and registers them in the extension registry. Default package: <code class="docutils literal notranslate"><span class="pre">gedcomtools.gedcomx.extensions</span></code>. Run this before <code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">load</span></code> to populate the registry. Reports how many extensions were found and registered.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ext scan
+ext scan myproject.plugins
+</pre></div>
+</div>
+</section>
+<section id="ext-authorize">
+<h3>10.4 ext authorize<a class="headerlink" href="#ext-authorize" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">authorize</span> <span class="n">SOURCE</span> <span class="p">[</span><span class="n">NAME</span><span class="p">]</span> <span class="p">[</span><span class="n">sha256</span><span class="o">=</span><span class="n">HASH</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Adds <code class="docutils literal notranslate"><span class="pre">SOURCE</span></code> to the allow-list. <code class="docutils literal notranslate"><span class="pre">SOURCE</span></code> is a Python dotted module name, a file path, or a URL. <code class="docutils literal notranslate"><span class="pre">NAME</span></code> is an optional human-readable label. For URL sources, <code class="docutils literal notranslate"><span class="pre">sha256=HASH</span></code> is required for verification.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ext authorize gedcomtools.gedcomx.extensions.analytics
+ext authorize /opt/plugins/custom.py custom_plugin
+ext authorize https://example.com/plugin.py my_plugin sha256=abc123...
+</pre></div>
+</div>
+</section>
+<section id="ext-load">
+<h3>10.5 ext load<a class="headerlink" href="#ext-load" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">load</span> <span class="p">[</span><span class="n">NAME</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Imports all allowed extensions (or only those matching the <code class="docutils literal notranslate"><span class="pre">NAME</span></code> substring). Reports how many were loaded and any errors.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ext load
+ext load analytics
+</pre></div>
+</div>
+</section>
+<section id="ext-trust">
+<h3>10.6 ext trust<a class="headerlink" href="#ext-trust" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ext</span> <span class="n">trust</span> <span class="p">[</span><span class="n">DISABLED</span><span class="o">|</span><span class="n">BUILTIN</span><span class="o">|</span><span class="n">LOCAL</span><span class="o">|</span><span class="n">ALL</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>With no argument, shows the current trust level. With an argument, sets it. The registry must not yet be locked (i.e., <code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">load</span></code> must not have run).</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ext trust
+ext trust BUILTIN
+ext trust LOCAL
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="shell-quality">
+<h2>11. Shell Quality<a class="headerlink" href="#shell-quality" title="Link to this heading">¶</a></h2>
+<section id="cfg">
+<h3>11.1 cfg<a class="headerlink" href="#cfg" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span>
+<span class="n">cfg</span> <span class="n">NAME</span>
+<span class="n">cfg</span> <span class="n">NAME</span> <span class="n">VALUE</span>
+<span class="n">cfg</span> <span class="n">reset</span>
+</pre></div>
+</div>
+<p>Shows or sets persistent shell settings, stored in <code class="docutils literal notranslate"><span class="pre">~/.config/gedcomtools/gxcli.json</span></code>.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Setting</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">page_size</span></code></p></td>
+<td><p>int</p></td>
+<td><p>20</p></td>
+<td><p>Rows per page in paginated output</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p>str</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">auto</span></code></p></td>
+<td><p>ANSI colour mode: <code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">on</span></code>, or <code class="docutils literal notranslate"><span class="pre">off</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">history_size</span></code></p></td>
+<td><p>int</p></td>
+<td><p>200</p></td>
+<td><p>Maximum readline history entries</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">cfg</span> <span class="pre">reset</span></code> restores all settings to defaults. Changes are saved immediately.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>cfg
+cfg page_size 40
+cfg color off
+cfg history_size 500
+cfg reset
+</pre></div>
+</div>
+</section>
+<section id="history">
+<h3>11.2 history<a class="headerlink" href="#history" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">history</span> <span class="p">[</span><span class="n">N</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Shows the last N commands from the readline history (default 20). Requires the <code class="docutils literal notranslate"><span class="pre">readline</span></code> module. Each line is prefixed with its history index.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>history
+history 50
+</pre></div>
+</div>
+</section>
+<section id="log">
+<h3>11.3 log<a class="headerlink" href="#log" title="Link to this heading">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">log</span> <span class="p">[</span><span class="nb">list</span><span class="p">]</span>
+<span class="n">log</span> <span class="n">show</span> <span class="n">CHANNEL</span>
+<span class="n">log</span> <span class="n">enable</span> <span class="n">CHANNEL</span> <span class="p">[</span><span class="n">LEVEL</span><span class="p">]</span>
+<span class="n">log</span> <span class="n">level</span> <span class="n">CHANNEL</span> <span class="n">LEVEL</span>
+<span class="n">log</span> <span class="n">console</span> <span class="n">LEVEL</span>
+<span class="n">log</span> <span class="n">files</span> <span class="n">on</span> <span class="p">[</span><span class="n">DIR</span><span class="p">]</span>
+<span class="n">log</span> <span class="n">files</span> <span class="n">off</span>
+</pre></div>
+</div>
+<p>Controls the application’s logging system at runtime.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Subcommand</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log</span></code> / <code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">list</span></code></p></td>
+<td><p>List all configured loggers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">show</span> <span class="pre">CHANNEL</span></code></p></td>
+<td><p>Show one logger’s level, propagation, and handlers</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">enable</span> <span class="pre">CHANNEL</span> <span class="pre">[LEVEL]</span></code></p></td>
+<td><p>Configure a channel (console-only) and optionally set its level</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">level</span> <span class="pre">CHANNEL</span> <span class="pre">LEVEL</span></code></p></td>
+<td><p>Set logger level for a channel (creates it if needed)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">console</span> <span class="pre">LEVEL</span></code></p></td>
+<td><p>Set the console handler level for all configured loggers simultaneously</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">files</span> <span class="pre">on</span> <span class="pre">[DIR]</span></code></p></td>
+<td><p>Set <code class="docutils literal notranslate"><span class="pre">LOG_FILES=1</span></code> (and optionally <code class="docutils literal notranslate"><span class="pre">LOG_DIR</span></code>) for the next run</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">files</span> <span class="pre">off</span></code></p></td>
+<td><p>Set <code class="docutils literal notranslate"><span class="pre">LOG_FILES=0</span></code> for the next run</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Valid <code class="docutils literal notranslate"><span class="pre">LEVEL</span></code> values: <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">WARNING</span></code>, <code class="docutils literal notranslate"><span class="pre">WARN</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>, <code class="docutils literal notranslate"><span class="pre">CRITICAL</span></code>, <code class="docutils literal notranslate"><span class="pre">NOTSET</span></code>.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">files</span></code> changes environment variables for future sessions; enabling file logging at runtime requires restarting the logging manager.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>log
+log show gedcomtools
+log level gedcomtools DEBUG
+log console WARNING
+log files on /var/log/gedcomtools
+</pre></div>
+</div>
+</section>
+<section id="tab-completion">
+<h3>11.4 Tab completion<a class="headerlink" href="#tab-completion" title="Link to this heading">¶</a></h3>
+<p>Tab completion is active in interactive sessions when <code class="docutils literal notranslate"><span class="pre">readline</span></code> is available. Completion behaviour depends on context:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Completes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>(empty / first word)</p></td>
+<td><p>All command names</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cd</span></code>, <code class="docutils literal notranslate"><span class="pre">show</span></code>, <code class="docutils literal notranslate"><span class="pre">dump</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">grep</span></code>, <code class="docutils literal notranslate"><span class="pre">ls</span></code></p></td>
+<td><p>Field names of the current node</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">go</span></code></p></td>
+<td><p>Saved bookmark names</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">goto</span></code></p></td>
+<td><p>IDs in the current <code class="docutils literal notranslate"><span class="pre">id_index</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">extend</span></code>, <code class="docutils literal notranslate"><span class="pre">diff</span></code></p></td>
+<td><p>Filesystem paths (glob)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">write</span></code></p></td>
+<td><p>Format names (<code class="docutils literal notranslate"><span class="pre">gx</span> </code>, <code class="docutils literal notranslate"><span class="pre">zip</span> </code>, <code class="docutils literal notranslate"><span class="pre">jsonl</span> </code>, <code class="docutils literal notranslate"><span class="pre">adbg</span> </code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span></code> / <code class="docutils literal notranslate"><span class="pre">extension</span></code></p></td>
+<td><p>Subcommand names (<code class="docutils literal notranslate"><span class="pre">ls</span></code>, <code class="docutils literal notranslate"><span class="pre">show</span></code>, <code class="docutils literal notranslate"><span class="pre">scan</span></code>, <code class="docutils literal notranslate"><span class="pre">authorize</span></code>, <code class="docutils literal notranslate"><span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">trust</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cfg</span></code></p></td>
+<td><p>Setting key names</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bookmark</span></code></p></td>
+<td><p>Subcommand names (<code class="docutils literal notranslate"><span class="pre">ls</span></code>, <code class="docutils literal notranslate"><span class="pre">rm</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Completer delimiters are set to <code class="docutils literal notranslate"><span class="pre">space</span></code>, <code class="docutils literal notranslate"><span class="pre">tab</span></code>, <code class="docutils literal notranslate"><span class="pre">newline</span></code> only, so paths with <code class="docutils literal notranslate"><span class="pre">/</span></code> are completed as a single token.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="miscellaneous-commands">
+<h2>12. Miscellaneous Commands<a class="headerlink" href="#miscellaneous-commands" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">help</span></code></p></td>
+<td><p>Show the command overview. <code class="docutils literal notranslate"><span class="pre">help</span> <span class="pre">COMMAND</span></code> shows the docstring for that command.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">?</span></code></p></td>
+<td><p>Alias for <code class="docutils literal notranslate"><span class="pre">help</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ver</span></code></p></td>
+<td><p>Print the shell version string</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">agentstbl</span></code></p></td>
+<td><p>Print a paginated schema table for all agents in the loaded data</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quit</span></code></p></td>
+<td><p>Exit the REPL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">exit</span></code></p></td>
+<td><p>Exit the REPL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr class="docutils" />
+<section id="command-quick-reference">
+<h2>13. Command Quick Reference<a class="headerlink" href="#command-quick-reference" title="Link to this heading">¶</a></h2>
+<section id="load-save">
+<h3>Load / Save<a class="headerlink" href="#load-save" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">load</span> <span class="pre">PATH</span></code> / <code class="docutils literal notranslate"><span class="pre">ld</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Load <code class="docutils literal notranslate"><span class="pre">.ged</span></code>, <code class="docutils literal notranslate"><span class="pre">.json</span></code>, or <code class="docutils literal notranslate"><span class="pre">.zip</span></code>; set as root</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">extend</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Load and merge into the current root</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">gx</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Save as GEDCOM-X JSON</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">zip</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Save as GEDCOM-X ZIP archive</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">jsonl</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Save current node as JSON Lines</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">adbg</span> <span class="pre">DIR</span></code></p></td>
+<td><p>Write ArangoDB graph files to a directory</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="navigation">
+<h3>Navigation<a class="headerlink" href="#navigation" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">[PATH]</span></code></p></td>
+<td><p>Change current node</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">back</span></code></p></td>
+<td><p>Return to previous location</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pwd</span></code></p></td>
+<td><p>Print current path</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">goto</span> <span class="pre">ID</span></code></p></td>
+<td><p>Jump to any object by id</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">find</span> <span class="pre">PATTERN</span> <span class="pre">[--type</span> <span class="pre">T]</span></code></p></td>
+<td><p>Search by name/title</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bookmark</span> <span class="pre">NAME</span></code> / <code class="docutils literal notranslate"><span class="pre">bm</span> <span class="pre">NAME</span></code></p></td>
+<td><p>Save current location</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bookmark</span> <span class="pre">ls</span></code></p></td>
+<td><p>List bookmarks</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bookmark</span> <span class="pre">rm</span> <span class="pre">NAME</span></code></p></td>
+<td><p>Remove bookmark</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">go</span> <span class="pre">NAME</span></code></p></td>
+<td><p>Navigate to a saved bookmark</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="inspection">
+<h3>Inspection<a class="headerlink" href="#inspection" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">[PATH]</span> <span class="pre">[--full]</span></code></p></td>
+<td><p>List fields/items (schema-aware, with run/schema type columns)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">show</span> <span class="pre">[PATH|COLL]</span></code></p></td>
+<td><p>Pretty-print node as JSON, or tabulate a top-level collection</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dump</span> <span class="pre">[PATH]</span></code></p></td>
+<td><p>Print node as JSON (always)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">stats</span></code></p></td>
+<td><p>Count all top-level GEDCOM-X collections</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">grep</span> <span class="pre">PATTERN</span> <span class="pre">[--all]</span> <span class="pre">[--depth</span> <span class="pre">N]</span></code></p></td>
+<td><p>Search field values by regex</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">validate</span></code></p></td>
+<td><p>Run GEDCOM-X validation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">diff</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Compare current root against another file by ID</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">type</span> <span class="pre">[opts]</span> <span class="pre">[PATH|ATTR]</span></code></p></td>
+<td><p>Runtime and schema type info</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">schema</span> <span class="pre">...</span></code></p></td>
+<td><p>Interrogate schema registry (see §6.9)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">extras</span> <span class="pre">[opts]</span></code></p></td>
+<td><p>List extras across all schema classes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resolve</span></code></p></td>
+<td><p>Resolve resource references and print stats</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="object-introspection">
+<h3>Object Introspection<a class="headerlink" href="#object-introspection" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">props</span> <span class="pre">[--instance]</span> <span class="pre">[--class]</span> <span class="pre">[--private]</span></code></p></td>
+<td><p>List instance attrs and <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code> values</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">methods</span> <span class="pre">[--private]</span> <span class="pre">[--own]</span> <span class="pre">[--match</span> <span class="pre">S]</span></code></p></td>
+<td><p>List callable methods</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">call</span> <span class="pre">NAME</span> <span class="pre">[args]</span> <span class="pre">[k=v</span> <span class="pre">...]</span></code></p></td>
+<td><p>Call a method with type-coerced arguments</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">getattr</span> <span class="pre">NAME</span> <span class="pre">[...]</span></code></p></td>
+<td><p>Value and kind (instance / property / class_attr / missing)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">getprop</span> <span class="pre">NAME</span> <span class="pre">[...]</span></code></p></td>
+<td><p>Value of <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code> descriptors</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="editing">
+<h3>Editing<a class="headerlink" href="#editing" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">NAME</span> <span class="pre">VALUE</span></code></p></td>
+<td><p>Set a primitive field on the current node</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">NAME=V</span> <span class="pre">NAME2=V2</span> <span class="pre">...</span></code></p></td>
+<td><p>Set multiple primitive fields</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">--n</span> <span class="pre">NAME</span> <span class="pre">[NAME2...]</span></code></p></td>
+<td><p>Create and append new schema-typed instances</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">NAME</span> <span class="pre">[NAME2...]</span></code></p></td>
+<td><p>Delete attributes, dict keys, or collection indices</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="ahnentafel">
+<h3>Ahnentafel<a class="headerlink" href="#ahnentafel" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">set</span> <span class="pre">N</span> <span class="pre">NAME</span> <span class="pre">[key=val...]</span></code></p></td>
+<td><p>Add or update an ancestor</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">get</span> <span class="pre">N</span></code></p></td>
+<td><p>Show full details for person N</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">ls</span></code></p></td>
+<td><p>List all entries as a table</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">tree</span> <span class="pre">[DEPTH]</span></code></p></td>
+<td><p>Print pedigree chart</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">clear</span> <span class="pre">[N]</span></code></p></td>
+<td><p>Remove person N or clear all</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">build</span></code></p></td>
+<td><p>Convert entries to GedcomX and load as root</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">import</span> <span class="pre">FILE</span></code></p></td>
+<td><p>Import from text file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ahnen</span> <span class="pre">export</span> <span class="pre">FILE</span></code></p></td>
+<td><p>Export to text file</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="extensions">
+<h3>Extensions<a class="headerlink" href="#extensions" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">ls</span> <span class="pre">[NAME]</span></code></p></td>
+<td><p>List registered extensions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">show</span> <span class="pre">[NAME]</span></code></p></td>
+<td><p>Show full extension details</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">scan</span> <span class="pre">[PACKAGE]</span></code></p></td>
+<td><p>Discover extensions in a package</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">authorize</span> <span class="pre">SOURCE</span> <span class="pre">[NAME]</span> <span class="pre">[sha256=H]</span></code></p></td>
+<td><p>Add a source to the allow-list</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">load</span> <span class="pre">[NAME]</span></code></p></td>
+<td><p>Import allowed extensions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ext</span> <span class="pre">trust</span> <span class="pre">[LEVEL]</span></code></p></td>
+<td><p>Show or set the plugin trust level</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="shell">
+<h3>Shell<a class="headerlink" href="#shell" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cfg</span> <span class="pre">[NAME</span> <span class="pre">[VALUE]]</span></code></p></td>
+<td><p>Show or set persistent settings</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cfg</span> <span class="pre">reset</span></code></p></td>
+<td><p>Reset all settings to defaults</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">history</span> <span class="pre">[N]</span></code></p></td>
+<td><p>Show last N commands</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">...</span></code></p></td>
+<td><p>Logging controls</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ver</span></code></p></td>
+<td><p>Print shell version</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">help</span> <span class="pre">[COMMAND]</span></code></p></td>
+<td><p>General help or help for a specific command</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quit</span></code> / <code class="docutils literal notranslate"><span class="pre">exit</span></code></p></td>
+<td><p>Exit gxcli</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="api/cli.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">CLI Reference</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">gxcli — GEDCOM-X Interactive Inspector</a><ul>
+<li><a class="reference internal" href="#overview">1. Overview</a></li>
+<li><a class="reference internal" href="#launching-gxcli">2. Launching gxcli</a></li>
+<li><a class="reference internal" href="#shell-mechanics">3. Shell Mechanics</a></li>
+<li><a class="reference internal" href="#load-and-write-formats">4. Load and Write Formats</a><ul>
+<li><a class="reference internal" href="#load-ld">4.1 load / ld</a></li>
+<li><a class="reference internal" href="#write">4.2 write</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#navigation-system">5. Navigation System</a><ul>
+<li><a class="reference internal" href="#path-syntax">5.1 Path syntax</a></li>
+<li><a class="reference internal" href="#cd">5.2 cd</a></li>
+<li><a class="reference internal" href="#pwd">5.3 pwd</a></li>
+<li><a class="reference internal" href="#back">5.4 back</a></li>
+<li><a class="reference internal" href="#goto">5.5 goto</a></li>
+<li><a class="reference internal" href="#find">5.6 find</a></li>
+<li><a class="reference internal" href="#bookmark-bm-go">5.7 bookmark / bm / go</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-inspection-commands">6. Data Inspection Commands</a><ul>
+<li><a class="reference internal" href="#ls">6.1 ls</a></li>
+<li><a class="reference internal" href="#show">6.2 show</a></li>
+<li><a class="reference internal" href="#dump">6.3 dump</a></li>
+<li><a class="reference internal" href="#stats">6.4 stats</a></li>
+<li><a class="reference internal" href="#grep">6.5 grep</a></li>
+<li><a class="reference internal" href="#validate">6.6 validate</a></li>
+<li><a class="reference internal" href="#diff">6.7 diff</a></li>
+<li><a class="reference internal" href="#type">6.8 type</a></li>
+<li><a class="reference internal" href="#schema">6.9 schema</a></li>
+<li><a class="reference internal" href="#extras">6.10 extras</a></li>
+<li><a class="reference internal" href="#resolve">6.11 resolve</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#object-introspection-commands">7. Object Introspection Commands</a><ul>
+<li><a class="reference internal" href="#props">7.1 props</a></li>
+<li><a class="reference internal" href="#methods">7.2 methods</a></li>
+<li><a class="reference internal" href="#call">7.3 call</a></li>
+<li><a class="reference internal" href="#getattr">7.4 getattr</a></li>
+<li><a class="reference internal" href="#getprop">7.5 getprop</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#editing-commands">8. Editing Commands</a><ul>
+<li><a class="reference internal" href="#set">8.1 set</a></li>
+<li><a class="reference internal" href="#del">8.2 del</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ahnentafel-system">9. Ahnentafel System</a><ul>
+<li><a class="reference internal" href="#numbering-scheme">9.1 Numbering scheme</a></li>
+<li><a class="reference internal" href="#ahnen-set">9.2 ahnen set</a></li>
+<li><a class="reference internal" href="#ahnen-get">9.3 ahnen get</a></li>
+<li><a class="reference internal" href="#ahnen-ls">9.4 ahnen ls</a></li>
+<li><a class="reference internal" href="#ahnen-tree">9.5 ahnen tree</a></li>
+<li><a class="reference internal" href="#ahnen-clear">9.6 ahnen clear</a></li>
+<li><a class="reference internal" href="#ahnen-build">9.7 ahnen build</a></li>
+<li><a class="reference internal" href="#ahnen-import-export">9.8 ahnen import / export</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#extension-management">10. Extension Management</a><ul>
+<li><a class="reference internal" href="#ext-ls">10.1 ext ls</a></li>
+<li><a class="reference internal" href="#ext-show">10.2 ext show</a></li>
+<li><a class="reference internal" href="#ext-scan">10.3 ext scan</a></li>
+<li><a class="reference internal" href="#ext-authorize">10.4 ext authorize</a></li>
+<li><a class="reference internal" href="#ext-load">10.5 ext load</a></li>
+<li><a class="reference internal" href="#ext-trust">10.6 ext trust</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#shell-quality">11. Shell Quality</a><ul>
+<li><a class="reference internal" href="#cfg">11.1 cfg</a></li>
+<li><a class="reference internal" href="#history">11.2 history</a></li>
+<li><a class="reference internal" href="#log">11.3 log</a></li>
+<li><a class="reference internal" href="#tab-completion">11.4 Tab completion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#miscellaneous-commands">12. Miscellaneous Commands</a></li>
+<li><a class="reference internal" href="#command-quick-reference">13. Command Quick Reference</a><ul>
+<li><a class="reference internal" href="#load-save">Load / Save</a></li>
+<li><a class="reference internal" href="#navigation">Navigation</a></li>
+<li><a class="reference internal" href="#inspection">Inspection</a></li>
+<li><a class="reference internal" href="#object-introspection">Object Introspection</a></li>
+<li><a class="reference internal" href="#editing">Editing</a></li>
+<li><a class="reference internal" href="#ahnentafel">Ahnentafel</a></li>
+<li><a class="reference internal" href="#extensions">Extensions</a></li>
+<li><a class="reference internal" href="#shell">Shell</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

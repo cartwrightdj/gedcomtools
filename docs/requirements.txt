@@ -12,3 +12,4 @@ furo
 
 # Extensions
 sphinx-autodoc-typehints
+myst-parser
