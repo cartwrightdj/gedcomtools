@@ -11,6 +11,8 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+test/
+test (2)/
 .claude/
 .venv/
 Makefile
