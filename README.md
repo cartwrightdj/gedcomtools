@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.3-dev**
+> **ALPHA SOFTWARE — v0.7.0.4-dev**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
@@ -14,6 +14,20 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 ---
 
 ## What's New (development)
+
+### Updates from 2026-03-29
+
+- Fixed `GedcomX.validate()` relationship cross-reference checking so both `resourceId`
+  references and `Resource(resource=URI(fragment="..."))` references are validated correctly.
+- Fixed `GedcomX.from_dict()` round-trips so root-level `attribution` and `groups` are no
+  longer dropped during deserialization.
+- Fixed `Serialization.serialize(dict)` so empty-list and `None` values do not leak into
+  output as unwanted `null` fields.
+- Updated `GedcomZip` naming to use `genealogy.json` instead of `tree.json`, and added
+  collision-safe archive naming for repeated top-level resources.
+- Fixed `TypeCollection.append()` and ZIP path handling so same-document resource references
+  serialize as `#P1` when appropriate, while explicit path-based URIs still preserve directory
+  structure inside the archive.
 
 ### GML graph export
 
@@ -681,3 +695,13 @@ David J. Cartwright
 ---
 
 > Build genealogy tooling like infrastructure: structured, observable, extensible.
+
+---
+
+## Changes Since v0.7.3-dev
+
+Note: there is no Git tag named `0.7.3-dev` in this repository. This summary is based on changes since commit `a8f2f57`, which introduced the `v0.7.3-dev` version marker in this README.
+
+- Integrated the dedicated `gxcli` Markdown guide into the Sphinx documentation as a subsection of the CLI docs.
+- Cleaned up the Sphinx configuration and docs dependencies so the HTML documentation build completes cleanly.
+- Removed the accidentally tracked `test/` and `test (2)/` ZIP artifact remnants from the repository and added ignore rules to keep them out going forward.
