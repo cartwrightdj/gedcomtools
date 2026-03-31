@@ -6,7 +6,9 @@
  Purpose: GedcomX Event model: Event, EventType, and EventRole types
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-31 — replaced bare bottom-of-file circular-import pattern with
+                        explicit _types_namespace={"Person": ...} rebuild call;
+                        adds del to keep Person out of module's public namespace
 ======================================================================
 """
 # GedcomX Event and EventRole models.
@@ -148,6 +150,7 @@ class EventType(Enum):
     Ordination = "http://gedcomx.org/Ordination"
     Retirement = "http://gedcomx.org/Retirement"
     MarriageSettlment = "https://gedcom.io/terms/v7/MARS"
+    UnknowUserCreated = "https://gedcom.io/terms/v1/UUCE"
 
     @property
     def description(self):
@@ -260,6 +263,10 @@ class Event(Subject):
             check_instance(result, f"roles[{i}]", role, EventRole)
 
 
-# Break the Person ↔ EventRole circular reference.
-from .person import Person  # noqa: E402
-EventRole.model_rebuild()
+# Resolve the Person ↔ EventRole forward reference.
+# person.py does not import event.py at module level, so this deferred import
+# is safe.  _types_namespace makes the resolution explicit and keeps 'Person'
+# out of event.py's public namespace.
+from .person import Person as _Person_rebuild  # noqa: E402
+EventRole.model_rebuild(_types_namespace={"Person": _Person_rebuild})
+del _Person_rebuild

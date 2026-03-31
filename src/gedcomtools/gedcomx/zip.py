@@ -21,6 +21,8 @@
 import json
 import os
 import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -289,6 +291,46 @@ class GedcomZip:
                 merged.extend(gx)
 
         return merged
+
+    @classmethod
+    def load_url(cls, url: str) -> GedcomX:
+        """Download a GedcomX ZIP archive from an HTTP/HTTPS URL and return a merged ``GedcomX`` instance.
+
+        The archive is written to a temporary file, then passed to :meth:`read`.
+        The temporary file is deleted after parsing.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a GedcomX ZIP file.
+
+        Raises:
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+            ValueError:             If the archive contains no GedcomX JSON entries.
+        """
+        try:
+            with urllib.request.urlopen(url) as resp:
+                data = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GedcomX ZIP from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GedcomX ZIP from {url}: {exc.reason}"
+            ) from exc
+
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".gdxz")
+        try:
+            with os.fdopen(tmp_fd, "wb") as f:
+                f.write(data)
+            return cls.read(tmp_path)
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
     @classmethod
     def list_entries(cls, path: str | Path) -> list[dict]:

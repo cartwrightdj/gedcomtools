@@ -26,8 +26,8 @@ class GedcomClassAttributeError(GedcomXError):
 
 class TagConversionError(GedcomXError):
     """Document the TagConversionError type."""
-    def __init__(self, record,levelstack):
-        msg = f"Cannot convert: #{record.line} TAG: {record.tag} {record.xref if record.xref else ''} Value:{record.value} STACK: {type(levelstack[record.level-1]).__name__}"
+    def __init__(self, record,levelstack,line=None):
+        msg = f"Cannot convert: #{line} TAG: {record.tag} {record.xref if record.xref else ''} Value:{record.value} STACK: {type(levelstack[record.level-1]).__name__}"
         super().__init__(msg)
 
 class ConversionErrorDump(GedcomXError):

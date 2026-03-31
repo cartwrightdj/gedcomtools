@@ -153,6 +153,14 @@ class SourceDescription(GedcomXModel):
         else:
             raise ValueError(f"Cannot add title of type {type(title_to_add)}")
 
+class ObjectParsingContainer:
+    """Thin wrapper used during GEDCOM parsing to associate OBJE sub-records."""
+
+    def __init__(self, source: SourceDescription) -> None:
+        self.sourceDescription = source
+
+    def add_title(self, title_to_add: Union[TextValue, str]) -> None:
+        self.sourceDescription.add_title(title_to_add)
 
 # SourceDescription's "Document" forward ref and SourceReference's "SourceDescription"
 # forward ref are resolved from document.py after Document is fully defined.

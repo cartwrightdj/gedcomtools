@@ -44,6 +44,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
 from collections import defaultdict
+import urllib.error
+import urllib.request
 
 from .structure import GedcomStructure
 from . import specification as g7specs
@@ -260,6 +262,42 @@ class Gedcom7:
 
         ext_tag, uri = parts
         g7specs.register_extension_tag(ext_tag, uri)
+
+    def load_url(self, url: str) -> None:
+        """Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.
+
+        The response body is decoded as UTF-8 (required by the GEDCOM 7
+        specification) and passed to :meth:`parse_string`.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a GEDCOM 7 file.
+
+        Raises:
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+            GedcomParseError:       If the response body is not valid UTF-8.
+        """
+        try:
+            with urllib.request.urlopen(url) as resp:
+                raw = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise GedcomParseError(
+                f"Response from {url} is not valid UTF-8. "
+                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
+            ) from exc
+        self.parse_string(text)
 
     def loadfile(self, filepath: Union[str, Path]) -> None:
         """Load and parse a GEDCOM file.

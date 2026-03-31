@@ -4,6 +4,74 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## Code Quality Refactor (2026-03-31)
+
+### Overview
+Structural refactor addressing five code-quality issues identified in a full codebase review:
+bare exception handling, a 3 700-line monolithic CLI file, duplicate lookup tables in the
+wrong module, absent converter abstraction, and undocumented circular-import workarounds.
+
+### 1 — Bare exception handling
+
+Replaced all `except Exception:` blocks that silently swallowed errors across four files.
+Each site now catches only the specific exception types that the underlying call can raise
+and logs failures at `DEBUG` level via `loguru` where appropriate.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom5/g5tog7.py` | Added `get_logger`; 9 bare `except Exception:` → `except (AttributeError, TypeError)` with `log.debug()` |
+| `src/gedcomtools/gedcomx/conversion.py` | Uncommented `ConversionErrorDump` re-raise (prevents re-catching dump signals); `str()` fallback narrowed to `(TypeError, AttributeError, RecursionError)` |
+| `src/gedcomtools/gctool.py` | Added `get_logger` + `importlib.metadata` import; 20 bare excepts → specific types (`AttributeError`, `KeyError`, `ValueError`, `NotImplementedError`, `PackageNotFoundError`) with `log.debug()` |
+| `src/gedcomtools/gedcomx/gxcli.py` | `except Exception:` → `except ImportError:` for colorama guard; JSON helpers narrowed to `orjson.JSONDecodeError`/`ValueError`; display helpers, settings I/O, tab completer, and readline setup all narrowed |
+
+### 2 — Split `gxcli.py` (3 734 LOC → 5 modules)
+
+| New file | Contents |
+|----------|----------|
+| `gxcli_output.py` | All standalone helpers, constants (`ANSI`, `SHELL_VERSION`), settings I/O, `resolve_path`, `list_fields`, etc. |
+| `gxcli_commands.py` | Five `_cmd_*` mixin classes: `_InfoMixin`, `_AhnenMixin`, `_NavMixin`, `_LoadMixin`, `_DataMixin` |
+| `gxcli_schema.py` | `_SchemaMixin` — `_cmd_schema`, `_cmd_extras`, `_cmd_type` |
+| `gxcli_core.py` | `Shell` class assembled via multiple inheritance + REPL loop |
+| `gxcli.py` | Thin entry point — re-exports `Shell`, `main()`, and all public helpers; existing `from gedcomtools.gedcomx.gxcli import Shell, main` imports unchanged |
+
+### 3 — Move EVEN-tag lookup tables out of `schemas.py`
+
+`fact_from_even_tag()` and `event_from_even_tag()` were defined in the schema-registry
+module but used only in the converter.  Moved to `conversion.py` alongside their only
+call sites; type annotations added.  Backward-compat stubs retained in `schemas.py`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/conversion.py` | Added `fact_from_even_tag()` and `event_from_even_tag()` as module-level functions; removed `from .schemas import fact_from_even_tag` |
+| `src/gedcomtools/gedcomx/schemas.py` | Added comment noting the move; stubs kept for external callers |
+
+### 4 — Converter abstract base class
+
+Both converters previously had no shared interface.  A minimal ABC was added so callers
+can type-annotate against `GxConverterBase` regardless of source format.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/converter_base.py` | **New** — `GxConverterBase(ABC)` with single abstract `convert(source) -> GedcomX` method |
+| `src/gedcomtools/gedcomx/conversion.py` | `GedcomConverter(GxConverterBase)` + `convert()` alias for `Gedcom5x_GedcomX()` |
+| `src/gedcomtools/gedcom7/g7togx.py` | `Gedcom7Converter(GxConverterBase)` (already had `convert()`) |
+| `src/gedcomtools/gedcomx/__init__.py` | Exports `GxConverterBase`; adds `G5ToGxConverter = GedcomConverter` preferred alias |
+
+### 5 — Circular import cleanup
+
+The bottom-of-file `from .person import Person` in `event.py` and `relationship.py` was
+undocumented and left `Person` in both modules' public namespace unintentionally.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/event.py` | Replaced bare `model_rebuild()` with `model_rebuild(_types_namespace={"Person": _Person_rebuild})`; `del _Person_rebuild` cleans up namespace |
+| `src/gedcomtools/gedcomx/relationship.py` | Same treatment |
+| `src/gedcomtools/gedcomx/__init__.py` | Added belt-and-suspenders `model_rebuild()` calls at end of `__init__.py` so any import path (direct submodule or via `__init__`) produces a complete model |
+
+Test count: **1 161 passed, 7 xfailed** (unchanged pass rate).
+
+---
+
 ## Plugin Security System (2026-03-21)
 
 ### Overview

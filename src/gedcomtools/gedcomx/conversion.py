@@ -1,12 +1,18 @@
-# ======================================================================
-#  Project: Gedcom-X
+"""
+======================================================================
+#  Project: gedcomtools
 #  File:    conversion.py
 #  Author:  David J. Cartwright
 #  Purpose: convert gedcom versions
 #  Created: 2025-08-25
 #  Updated: 2026-03-24 — accept Gedcom5 facade in Gedcom5x_GedcomX (unwrap ._parser)
 #  Updated: 2026-03-28 — fix handle_even: wrong object_map index; add SourceDescription branch for unknown EVEN type; cache clean_str() results via walrus operator
-# ======================================================================
+#  Updated: 2026-03-31 — fix handle_addr: was not converting ADDR under FACT;
+#                         moved fact_from_even_tag/event_from_even_tag here from schemas.py;
+#                         added GxConverterBase inheritance + convert() alias;
+#                         uncommented ConversionErrorDump re-raise; narrowed bare excepts
+======================================================================
+"""
 """Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models."""
 
 # GEDCOM Module Types
@@ -55,7 +61,7 @@ from .agent import Agent
 from .attribution import Attribution
 from .conclusion import Conclusion
 from .date import Date
-from .document import Document, DocumentParsingContainer
+from .document import Document
 from .event import Event, EventType, EventRole, EventRoleType
 from .exceptions import TagConversionError, ConversionErrorDump
 from .fact import Fact, FactType
@@ -69,8 +75,8 @@ from .person import Person
 from .place_description import PlaceDescription
 from .place_reference import PlaceReference
 from .qualifier import Qualifier
-from .schemas import fact_from_even_tag
-from .source_description import SourceDescription, ResourceType
+from .converter_base import GxConverterBase
+from .source_description import SourceDescription, ResourceType, ObjectParsingContainer
 from .source_reference import SourceReference, KnownSourceReference
 from .textvalue import TextValue
 from .uri import URI
@@ -78,6 +84,91 @@ log = get_logger(__name__)
 
 T = TypeVar("T")
 K = TypeVar("K", bound=Hashable)
+
+
+# ---------------------------------------------------------------------------
+# GEDCOM EVEN tag → GedcomX type lookup tables
+# (moved here from schemas.py; schemas.py retains the Schema infrastructure)
+# ---------------------------------------------------------------------------
+
+def fact_from_even_tag(even_value: str) -> Optional[FactType]:
+    """Return the GedcomX FactType mapped from a GEDCOM EVEN tag, or None."""
+    _map: dict[str, FactType] = {
+        "CHR":       FactType.AdultChristening,
+        "EVEN":      FactType.Amnesty,
+        "BAPM":      FactType.Baptism,
+        "BARM":      FactType.BarMitzvah,
+        "BASM":      FactType.BatMitzvah,
+        "BIRT":      FactType.Birth,
+        "BIRT, CHR": FactType.Birth,
+        "BLES":      FactType.Blessing,
+        "BURI":      FactType.Burial,
+        "CAST":      FactType.Caste,
+        "CENS":      FactType.Census,
+        "CIRC":      FactType.Circumcision,
+        "CONF":      FactType.Confirmation,
+        "CREM":      FactType.Cremation,
+        "DEAT":      FactType.Death,
+        "EDUC":      FactType.Education,
+        "EMIG":      FactType.Emigration,
+        "FCOM":      FactType.FirstCommunion,
+        "GRAD":      FactType.Graduation,
+        "IMMI":      FactType.Immigration,
+        "MIL":       FactType.MilitaryService,
+        "NATI":      FactType.Nationality,
+        "NATU":      FactType.Naturalization,
+        "OCCU":      FactType.Occupation,
+        "ORDN":      FactType.Ordination,
+        "DSCR":      FactType.PhysicalDescription,
+        "PROB":      FactType.Probate,
+        "PROP":      FactType.Property,
+        "RELI":      FactType.Religion,
+        "RESI":      FactType.Residence,
+        "WILL":      FactType.Will,
+        "ANUL":      FactType.Annulment,
+        "DIV":       FactType.Divorce,
+        "DIVF":      FactType.DivorceFiling,
+        "ENGA":      FactType.Engagement,
+        "MARR":      FactType.Marriage,
+        "MARB":      FactType.MarriageBanns,
+        "MARC":      FactType.MarriageContract,
+        "MARL":      FactType.MarriageLicense,
+        "SEPA":      FactType.Separation,
+        "ADOP":      FactType.AdoptiveParent,
+    }
+    return _map.get(even_value)
+
+
+def event_from_even_tag(even_value: str) -> Optional[EventType]:
+    """Return the GedcomX EventType mapped from a GEDCOM EVEN tag, or None."""
+    _map: dict[str, EventType] = {
+        "ADOP":      EventType.Adoption,
+        "CHR":       EventType.AdultChristening,
+        "BAPM":      EventType.Baptism,
+        "BARM":      EventType.BarMitzvah,
+        "BASM":      EventType.BatMitzvah,
+        "BIRT":      EventType.Birth,
+        "BIRT, CHR": EventType.Birth,
+        "BLES":      EventType.Blessing,
+        "BURI":      EventType.Burial,
+        "CENS":      EventType.Census,
+        "CIRC":      EventType.Circumcision,
+        "CONF":      EventType.Confirmation,
+        "CREM":      EventType.Cremation,
+        "DEAT":      EventType.Death,
+        "EDUC":      EventType.Education,
+        "EMIG":      EventType.Emigration,
+        "FCOM":      EventType.FirstCommunion,
+        "IMMI":      EventType.Immigration,
+        "NATU":      EventType.Naturalization,
+        "ORDN":      EventType.Ordination,
+        "ANUL":      EventType.Annulment,
+        "DIV":       EventType.Divorce,
+        "DIVF":      EventType.DivorceFiling,
+        "ENGA":      EventType.Engagement,
+        "MARR":      EventType.Marriage,
+    }
+    return _map.get(even_value)
 
 
 class GxoObjectStack:
@@ -137,12 +228,13 @@ class GxoObjectStack:
         keys = ", ".join(str(k) for k in sorted(self._data.keys()))
         return f"GxoObjectStack(levels=[{keys}])"
 
-class GedcomConverter:
+class GedcomConverter(GxConverterBase):
     """Converts a parsed Gedcom5x object graph into a GedcomX genealogy.
 
     Uses a tag-dispatch table (``handle_<TAG>`` methods) to walk every GEDCOM
     element and produce the equivalent GedcomX objects.  Call
-    :meth:`Gedcom5x_GedcomX` to run the full conversion.
+    :meth:`Gedcom5x_GedcomX` (or the :meth:`convert` alias) to run the full
+    conversion.
     """
 
     type_name_type = {"aka": NameType.AlsoKnownAs}
@@ -287,8 +379,13 @@ class GedcomConverter:
         except ConversionErrorDump:
             raise
         except Exception as exc:
-            # Force a consistent diagnostic dump, then re-raise as your dump exception
-            self.convert_exception_dump(record, note=f"Unhandled exception: {exc!r}")
+            import traceback
+            tb = traceback.format_exc()
+
+            self.convert_exception_dump(
+                record,
+                note=f"Unhandled exception:\n{tb}"
+            )
 
     # ------------------------------------------------------------------
     # Diagnostics / reporting
@@ -306,8 +403,8 @@ class GedcomConverter:
         for level, obj in self.object_map.items_desc():
             try:
                 s = str(obj)
-            except Exception:
-                s = "<str() failed>"
+            except (TypeError, AttributeError, RecursionError) as exc:
+                s = f"<str() failed: {exc}>"
             log.error("STACK level={} type={} repr={!r} str={}", level, type(obj).__name__, obj, s[:200])
 
         raise ConversionErrorDump()
@@ -466,6 +563,9 @@ class GedcomConverter:
 
         return self.gedcomx
 
+    def convert(self, source: Gedcom5x) -> GedcomX:
+        """Alias for :meth:`Gedcom5x_GedcomX` satisfying :class:`GxConverterBase`."""
+        return self.Gedcom5x_GedcomX(source)
 
     def handle__apid(self, record: Element):
         """Handle _APID tag: store an Ancestry PID as an identifier on the parent SourceReference or SourceDescription."""
@@ -486,7 +586,7 @@ class GedcomConverter:
             self.object_map[record.level-1].add_note(gxobject)
 
             self.object_map[record.level] = gxobject
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             gxobject = Note(text=self.clean_str(record.value if record.value else 'Warning: This NOTE had not content.'))
             self.object_map[record.level-1].sourceDescription.add_note(gxobject)
 
@@ -519,6 +619,10 @@ class GedcomConverter:
                 gxobject = Address()
             self.object_map[record.level-1].add_address(gxobject)
             self.object_map[record.level] = gxobject
+        elif isinstance(self.object_map[record.level-1], Fact):
+            gxobject = TextValue(value = record.value)
+            self.object_map[record.level] = gxobject     
+
         else:
             raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
 
@@ -833,7 +937,7 @@ class GedcomConverter:
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], SourceDescription):
             self.object_map[record.level-1].created = record.value
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             self.object_map[record.level-1].sourceDescription.created = record.value
         elif isinstance(self.object_map[record.level-1], Attribution):
             if record.parent is not None and record.parent.tag == 'CREA':
@@ -878,7 +982,7 @@ class GedcomConverter:
         """Handle EVEN tag: create a Fact or Event on the parent Person or SourceDescription based on the event type."""
         # TODO If events in a @S, check if only 1 person matches?
         # TODO, how to deal with and diferentiate Events
-        if record.value and (not record.value.strip() == ''):
+        if record.value and (not record.value.strip() == '') and (not record.value.strip() == 'Yes'):
             values = [value.strip() for value in record.value.split(",")]
             for value in values:
                 if (fact_type := fact_from_even_tag(value)) is not None:
@@ -890,6 +994,15 @@ class GedcomConverter:
                     elif isinstance(self.object_map[record.level-1], SourceDescription):
                         sd = self.object_map[record.level-1]
                         source_ref = SourceReference(description=sd)
+                        try:
+                            event_type = EventType(fact_type.value)
+                        except ValueError:
+                            event_type = None
+                        gxobject = Event(type=event_type, sources=[source_ref])
+                        self.gedcomx.add_event(gxobject)
+                        self.object_map[record.level] = gxobject
+                    elif isinstance(self.object_map[record.level-1], SourceReference):
+                        source_ref = self.object_map[record.level-1]
                         try:
                             event_type = EventType(fact_type.value)
                         except ValueError:
@@ -936,7 +1049,15 @@ class GedcomConverter:
 
                     self.object_map[record.level] = gxobject
                     return
-
+                log.warning(f"EVEN type '{record.tag}' is not known and could not be guessed")
+                gxobject = Event(type=EventType.UnknowUserCreated)
+                if isinstance(self.object_map[record.level-1], FamilyParser):
+                    self.object_map[record.level] = self.object_map[record.level-1].add_event(gxobject)
+                    return
+                
+                self.gedcomx.add_event(gxobject)
+                self.object_map[record.level] = gxobject
+                return
                 self.convert_exception_dump(record=record)
 
     def handle_exid(self,record: Element):
@@ -1007,7 +1128,7 @@ class GedcomConverter:
                     # Multiple FILE entries: store extras as notes (about is singular)
                     sd.add_note(Note(text=f"Additional file: {record.value}"))
 
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             container = self.object_map[record.level-1]
             container.sourceDescription.resourceType = ResourceType.DigitalArtifact
             if record.value:
@@ -1036,7 +1157,7 @@ class GedcomConverter:
                     parent_obj.mediaType = mime_type
                 else:
                     log.error("Could not determine mime type from {}", record.value)
-        elif record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, DocumentParsingContainer):
+        elif record.parent is not None and record.parent.tag == 'FILE' and isinstance(parent_obj, ObjectParsingContainer):
             if record.value and record.value.strip():
                 mime_type = _form_to_mime(record.value)
                 if mime_type:
@@ -1045,7 +1166,7 @@ class GedcomConverter:
                     log.error("Could not determine mime type from {}", record.value)
         elif isinstance(self.object_map[record.level-1], PlaceDescription):
             self.object_map[record.level-1].names.append(TextValue(value=record.value))
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             container = self.object_map[record.level-1]
             if record.value and record.value.strip():
                 mime_type = _form_to_mime(record.value)
@@ -1078,7 +1199,7 @@ class GedcomConverter:
         sd = None
         if isinstance(parent, SourceDescription):
             sd = parent
-        elif isinstance(parent, DocumentParsingContainer):
+        elif isinstance(parent, ObjectParsingContainer):
             sd = parent.sourceDescription
         if sd is not None and record.value:
             sd.add_note(Note(text=f"Media type: {record.value}"))
@@ -1263,7 +1384,7 @@ class GedcomConverter:
             gxobject = Note(text=self.clean_str(record.value))
             self.object_map[record.level-1].add_note(gxobject)
             self.object_map[record.level] = gxobject
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             gxobject = Note(text=self.clean_str(record.value if record.value else ''))
             self.object_map[record.level-1].sourceDescription.add_note(gxobject)
             self.object_map[record.level] = gxobject
@@ -1298,14 +1419,15 @@ class GedcomConverter:
                 log.debug(f"Creating SourceDescription from Object {record.tag} {record.describe()}")
                 gxobject = SourceDescription(id=record.xref if record.xref else None)
                 self.object_map[record.level-1].add_source_description(gxobject)
-                gxobject = DocumentParsingContainer(source=gxobject)
+                gxobject = ObjectParsingContainer(source=gxobject)
             else:
                 log.debug(f"Found SourceDescription with id:{record.xref}")
-                gxobject = DocumentParsingContainer(source=gxobject)
+                gxobject = ObjectParsingContainer(source=gxobject)
             self.object_map[record.level] = gxobject
 
+        # TODO, tie in with SOurceReference, description?
         if isinstance(self.object_map[record.level-1],SourceReference) and record.level > 0:
-            gxobject = DocumentParsingContainer(source=self.object_map[record.level-1].description)
+            gxobject = ObjectParsingContainer(source=self.object_map[record.level-1].description)
             self.object_map[record.level] = gxobject
 
     def handle_page(self, record: Element):
@@ -1318,25 +1440,40 @@ class GedcomConverter:
         else:
             pass
 
+    def jls_extract_def(self):
+        
+        return 
+
     def handle_plac(self, record: Element):
         """Handle PLAC tag: create or look up a PlaceDescription and attach it to the parent Fact, Event, or SourceDescription."""
         if isinstance(self.object_map[record.level-1], Agent):
             gxobject = Address.model_validate({"value": record.value})
             self.object_map[record.level-1].add_address(gxobject)
             self.object_map[record.level] = gxobject
-        elif isinstance(self.object_map[record.level-1], FamilyParser):
-            self.object_map[record.level-1].set_marr_date(record)
 
-        elif isinstance(self.object_map[record.level-1], Event):
-            existing_place = self.gedcomx.places.by_name(record.value)
-            if existing_place:
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, descriptionRef=existing_place[0])
+        elif isinstance(self.object_map[record.level-1], FamilyParser):
+            # 3/30 why was this pointng to set_date and not updating stack?
+            self.object_map[record.level] = self.object_map[record.level-1].set_marr_plac(record)
+
+        # 3/30 unsure how this was missed, but PLAC is not being built out for EVEN
+        elif isinstance(self.object_map[record.level - 1], Event):
+            if existing := self.gedcomx.places.by_name(record.value):
+                gx_object = existing[0]
             else:
-                place_des = PlaceDescription(names=[TextValue(value=record.value)])
-                self.gedcomx.add_place_description(place_des)
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, descriptionRef=place_des)
-                if (record.sub_records() is not None) and len(record.sub_records()) > 0: # type: ignore
-                    self.object_map[record.level]= place_des
+                gx_object = PlaceDescription(names=[TextValue(value=record.value)])
+                self.gedcomx.add_place_description(gx_object)
+
+                if record.sub_records():
+                    self.object_map[record.level] = gx_object
+
+            gx_object = PlaceReference(
+                original=record.value,
+                descriptionRef=gx_object,
+            )
+            self.object_map[record.level - 1].place = gx_object
+            self.object_map[record.level] = gx_object
+            print(f"gx_object type: {type(gx_object)}")
+
 
         elif isinstance(self.object_map[record.level-1], Fact):
             existing_place = self.gedcomx.places.by_name(record.value)
@@ -1358,7 +1495,7 @@ class GedcomConverter:
             self.object_map[record.level-1].add_note(gxobject)
 
             self.object_map[record.level] = place
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             existing = self.gedcomx.places.by_name(record.value)
             if existing:
                 place = existing[0] if isinstance(existing, list) else existing
@@ -1472,7 +1609,7 @@ class GedcomConverter:
         if isinstance(self.object_map[record.level-1], SourceDescription):
             self.object_map[record.level-1].add_identifier(Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)] if record.value else [])) # type: ignore
             self.object_map[record.level-1].add_note(Note(text=f"Source had RIN: of {record.value}"))
-        elif isinstance(self.object_map[record.level-1], DocumentParsingContainer):
+        elif isinstance(self.object_map[record.level-1], ObjectParsingContainer):
             self.object_map[record.level-1].sourceDescription.add_identifier(Identifier(type=IdentifierType.External, values=[URI.from_url(record.value)] if record.value else [])) # type: ignore
             self.object_map[record.level-1].sourceDescription.add_note(Note(text=f"Source had RIN: of {record.value}"))
 
@@ -1593,7 +1730,7 @@ class GedcomConverter:
 
     def handle_titl(self, record: Element):
         """Handle TITL tag: add a title TextValue to the parent SourceDescription, or a Title name part to a Name."""
-        if isinstance(self.object_map[record.level-1], SourceDescription):
+        if isinstance(self.object_map[record.level-1], SourceDescription) or isinstance(self.object_map[record.level-1], ObjectParsingContainer):
 
             gxobject = TextValue(value=self.clean_str(record.value))
             self.object_map[record.level-1].add_title(gxobject)
@@ -1662,7 +1799,7 @@ class GedcomConverter:
             level0 = self.object_map.get(0)
             sd = (
                 level0.sourceDescription
-                if isinstance(level0, DocumentParsingContainer)
+                if isinstance(level0, ObjectParsingContainer)
                 else level0
                 if isinstance(level0, SourceDescription)
                 else None
@@ -1689,7 +1826,7 @@ class GedcomConverter:
         elif isinstance(parent_obj, Document):
             parent_obj.values.append(self.clean_str(record.value))
             parent_obj.type = IdentifierType.Other  # type: ignore
-        elif isinstance(parent_obj, DocumentParsingContainer):
+        elif isinstance(parent_obj, ObjectParsingContainer):
             container = parent_obj
             val = (record.value or "").strip()
             if val:

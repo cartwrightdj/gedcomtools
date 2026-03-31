@@ -2,7 +2,7 @@
 
 
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    desc_ext.py
 #  Author:  David J. Cartwright
 #  Purpose: Extension to add human-readable fields to complex Gedcom-X Objects

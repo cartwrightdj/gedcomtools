@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    gedcomx/serialization.py
 #  Author:  David J. Cartwright
 #  Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
@@ -111,7 +111,7 @@ class _SchemaBridge:
 SCHEMA = _SchemaBridge()
 from .uri import URI
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    serialization.py
 #  Author:  David J. Cartwright
 #  Purpose: Serialize / deserialize GedcomX objects to/from JSON dicts

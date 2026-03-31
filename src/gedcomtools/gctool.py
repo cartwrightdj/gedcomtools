@@ -8,6 +8,8 @@
  Created: 2026-03-22
  Updated: 2026-03-24 — dispatch table refactor (examine + interactive REPLs);
                         merge, diff, export, repair subcommands
+ Updated: 2026-03-31 — added get_logger; replaced bare except Exception blocks
+                        with specific exception types; added importlib.metadata import
 ======================================================================
 
 gctool — inspect and manipulate GEDCOM 5 and GEDCOM 7 files.
@@ -44,13 +46,21 @@ interactive   Drop into an interactive REPL for the loaded file.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import os
 import re
 import sys
+import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from gedcomtools.glog import get_logger
+
+log = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # ANSI colour helpers
@@ -114,6 +124,38 @@ def _sniff(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # Unified loader
 # ---------------------------------------------------------------------------
+
+def _is_url(s: str) -> bool:
+    """Return True if *s* looks like an HTTP/HTTPS URL."""
+    return s.startswith("http://") or s.startswith("https://")
+
+
+def _load_url(url: str) -> Tuple[str, Any]:
+    """Download a GEDCOM file from *url* to a temp file and call :func:`_load`."""
+    print(f"Fetching {url} …")
+    try:
+        with urllib.request.urlopen(url) as resp:
+            data = resp.read()
+    except urllib.error.HTTPError as exc:
+        print(f"error: HTTP {exc.code} fetching {url}: {exc.reason}", file=sys.stderr)
+        sys.exit(1)
+    except urllib.error.URLError as exc:
+        print(f"error: cannot fetch {url}: {exc.reason}", file=sys.stderr)
+        sys.exit(1)
+
+    # Preserve the filename/extension so _sniff() works correctly.
+    suffix = Path(url.split("?")[0]).suffix or ".ged"
+    fd, tmp = tempfile.mkstemp(suffix=suffix)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        return _load(Path(tmp))
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+
 
 def _load(path: Path) -> Tuple[str, Any]:
     """Return ``(fmt, obj)`` where *obj* is a ``Gedcom5`` or ``Gedcom7`` instance."""
@@ -235,7 +277,7 @@ def cmd_info(args) -> int:
             items = getattr(obj, method)()
             if items:
                 counts[tag] = len(items)
-        except Exception:
+        except (AttributeError, NotImplementedError):
             pass
 
     if args.json:
@@ -398,7 +440,7 @@ def cmd_show(args) -> int:
     for tag, getter in lookup:
         try:
             detail = getter(xref)
-        except Exception:
+        except (AttributeError, KeyError, ValueError):
             continue
         if detail is None:
             continue
@@ -514,7 +556,7 @@ def cmd_find(args) -> int:
             val = ""
             try:
                 val = elem.get_value() or ""
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
             if tag == target:
                 p_str = str(val).replace("\n", "↵")
@@ -527,14 +569,15 @@ def cmd_find(args) -> int:
                     })
             try:
                 children = elem.get_child_elements()
-            except Exception:
+            except (AttributeError, TypeError):
                 children = []
             for child in children:
                 _walk_g5(child, record_label, path_parts + [tag])
 
         try:
             roots = obj._parser.get_root_child_elements()
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_root_child_elements failed in cmd_find: {}", exc)
             roots = []
         for root in roots:
             label = getattr(root, "xref_id", None) or getattr(root, "tag", "?")
@@ -575,7 +618,7 @@ def cmd_tree(args) -> int:
                 born = str(d.birth_year or "?")
                 died = str(d.death_year or "?") if not d.is_living else "living"
                 return f"{d.full_name}  {_dim(x)}  {_dim(f'({born}–{died})')}"
-        except Exception:
+        except (AttributeError, KeyError, ValueError):
             pass
         return x
 
@@ -587,7 +630,7 @@ def cmd_tree(args) -> int:
         print(prefix + conn + _label(x))
         try:
             parents = obj.get_parents(x)
-        except Exception:
+        except (AttributeError, KeyError, ValueError):
             parents = []
         for i, p in enumerate(parents):
             _draw_ancestors(p.xref_id or "", depth + 1, prefix + ext,
@@ -601,7 +644,7 @@ def cmd_tree(args) -> int:
         print(prefix + conn + _label(x))
         try:
             children = obj.get_children_of(x)
-        except Exception:
+        except (AttributeError, KeyError, ValueError):
             children = []
         for i, c in enumerate(children):
             _draw_descendants(c.xref_id or "", depth + 1, prefix + ext,
@@ -610,7 +653,7 @@ def cmd_tree(args) -> int:
     detail = None
     try:
         detail = obj.get_individual_detail(xref)
-    except Exception:
+    except (AttributeError, KeyError, ValueError):
         pass
     if detail is None:
         print(f"error: individual {xref!r} not found", file=sys.stderr)
@@ -621,7 +664,7 @@ def cmd_tree(args) -> int:
     print(_bold("Ancestors"))
     try:
         parents = obj.get_parents(xref)
-    except Exception:
+    except (AttributeError, KeyError, ValueError):
         parents = []
     if parents:
         for i, p in enumerate(parents):
@@ -633,7 +676,7 @@ def cmd_tree(args) -> int:
     print(_bold("Descendants"))
     try:
         children = obj.get_children_of(xref)
-    except Exception:
+    except (AttributeError, KeyError, ValueError):
         children = []
     if children:
         for i, c in enumerate(children):
@@ -749,7 +792,7 @@ def _package_version() -> str:
     try:
         from importlib.metadata import version
         return version("gedcomtools")
-    except Exception:
+    except importlib.metadata.PackageNotFoundError:
         pass
     # Fallback for editable installs where metadata may not be present
     try:
@@ -1276,7 +1319,7 @@ def _attribution(fmt: str, obj: Any) -> List[str]:
                 try:
                     sd = obj.get_submitter_detail(subm_xref)
                     subm_name = sd.name if sd else None
-                except Exception:
+                except (AttributeError, KeyError):
                     pass
 
             if src:
@@ -1322,16 +1365,16 @@ def _attribution(fmt: str, obj: Any) -> List[str]:
                                         subm = subm_xref
                                 else:
                                     subm = subm_xref
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as exc:
+                log.debug("HEAD parsing failed in _header_lines: {}", exc)
             if src:
                 lines.append(f"  {'Source':<12} {src}")
             if subm:
                 lines.append(f"  {'Submitter':<12} {subm}")
             if date:
                 lines.append(f"  {'Date':<12} {date}")
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        log.debug("_header_lines failed: {}", exc)
     return lines
 
 
@@ -1394,13 +1437,18 @@ def cmd_interactive(args) -> int:
     def _icmd_load(tokens: List[str]) -> bool:
         nonlocal path, fmt, obj
         if len(tokens) < 2:
-            print("usage: load FILE")
+            print("usage: load FILE|URL")
             return False
-        new_path = Path(tokens[1])
+        src = tokens[1]
         try:
-            new_fmt, new_obj = _load(new_path)
+            if _is_url(src):
+                new_fmt, new_obj = _load_url(src)
+                new_path = Path(src.split("?")[0].split("/")[-1] or "remote.ged")
+            else:
+                new_path = Path(src)
+                new_fmt, new_obj = _load(new_path)
         except SystemExit:
-            return False  # _load already printed the error
+            return False  # _load/_load_url already printed the error
         path, fmt, obj = new_path, new_fmt, new_obj
         _print_status(path, fmt, obj)
         return False
@@ -1736,7 +1784,7 @@ def _repair_walk_g5(el: Any, counts: Dict[str, int]) -> None:
     tag = (getattr(el, "tag", None) or "").upper()
     try:
         val = el.get_value() or ""
-    except Exception:
+    except (AttributeError, TypeError):
         val = ""
     new_val = val
 
@@ -1765,12 +1813,12 @@ def _repair_walk_g5(el: Any, counts: Dict[str, int]) -> None:
     if new_val != val:
         try:
             el.set_value(new_val)
-        except Exception:
+        except (AttributeError, TypeError):
             pass
 
     try:
         children = el.get_child_elements()
-    except Exception:
+    except (AttributeError, TypeError):
         children = []
     for child in children:
         _repair_walk_g5(child, counts)
@@ -1796,7 +1844,8 @@ def cmd_repair(args) -> int:
     else:
         try:
             roots = obj._parser.get_root_child_elements()
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_root_child_elements failed in cmd_repair: {}", exc)
             roots = []
         for el in roots:
             _repair_walk_g5(el, counts)

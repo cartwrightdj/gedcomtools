@@ -6,7 +6,9 @@
  Purpose: GedcomX Relationship model: RelationshipType enum and Relationship class
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-31 — replaced bare bottom-of-file circular-import pattern with
+                        explicit _types_namespace={"Person": ...} rebuild call;
+                        adds del to keep Person out of module's public namespace
 ======================================================================
 """
 # GedcomX Relationship model.
@@ -140,8 +142,11 @@ class Relationship(Subject):
         )
 
 
-# Break the Person ↔ Relationship circular reference by rebuilding after both
-# classes are fully defined.
-from .person import Person  # noqa: E402
-Relationship.model_rebuild()
-Person.model_rebuild()
+# Resolve the Person ↔ Relationship forward reference.
+# person.py does not import relationship.py at module level, so this deferred
+# import is safe.  _types_namespace makes the resolution explicit and keeps
+# 'Person' out of relationship.py's public namespace.
+from .person import Person as _Person_rebuild  # noqa: E402
+Relationship.model_rebuild(_types_namespace={"Person": _Person_rebuild})
+_Person_rebuild.model_rebuild()
+del _Person_rebuild

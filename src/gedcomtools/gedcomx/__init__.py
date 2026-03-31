@@ -6,7 +6,8 @@
  Purpose: Package initializer for the Gedcom-X module exposing all public classes
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-31 — added GxConverterBase, G5ToGxConverter alias; added
+                        belt-and-suspenders model_rebuild() calls after all imports
 
 ======================================================================
 """
@@ -29,7 +30,9 @@ from .agent import Agent
 from .address import Address
 from .attribution import Attribution
 from .conclusion import Conclusion
+from .converter_base import GxConverterBase
 from .conversion import GedcomConverter
+G5ToGxConverter = GedcomConverter  # preferred alias; GedcomConverter kept for backward compat
 from .coverage import Coverage
 from .date import Date
 from .document import Document
@@ -71,3 +74,10 @@ from .uri import URI
 from .validation import ValidationIssue, ValidationResult
 
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
+
+# Belt-and-suspenders: ensure forward references are resolved for any import
+# path (direct submodule imports bypass the bottom-of-file rebuilds in
+# event.py and relationship.py).  model_rebuild() is idempotent in pydantic v2.
+EventRole.model_rebuild(_types_namespace={"Person": Person})
+Relationship.model_rebuild(_types_namespace={"Person": Person})
+Person.model_rebuild()

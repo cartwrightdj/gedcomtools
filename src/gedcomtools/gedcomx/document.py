@@ -69,11 +69,7 @@ class Document(Conclusion):
             result.warn("text", "Document has no text")
 
 
-class DocumentParsingContainer:
-    """Thin wrapper used during GEDCOM parsing to associate OBJE sub-records."""
 
-    def __init__(self, source: SourceDescription) -> None:
-        self.sourceDescription = source
 
 
 # Resolve forward references that point back to Document or SourceDescription.

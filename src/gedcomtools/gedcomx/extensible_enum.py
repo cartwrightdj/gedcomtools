@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Literal
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    ExtensibleEnum.py
 #  Author:  David J. Cartwright
 #  Purpose: Create a class that can act like an enum but be extended at runtime.

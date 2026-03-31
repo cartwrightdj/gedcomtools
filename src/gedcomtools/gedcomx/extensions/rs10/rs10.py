@@ -6,7 +6,7 @@ from typing import Callable, Optional, List
 from dataclasses import dataclass
 
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    rsLink.py
 #  Author:  David J. Cartwright
 #  Purpose: Link type of GedcomX RS 1.0 (Extension)

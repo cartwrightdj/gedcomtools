@@ -18,6 +18,7 @@ from .fact import Fact, FactType
 from .note import Note
 from .source_reference import SourceReference
 from .textvalue import TextValue
+from .event import Event
 
 class FamilyParser:
     """Stateful parser that accumulates FAM record fields and commits couple and parent-child relationships to a GedcomX object."""
@@ -67,6 +68,7 @@ class FamilyParser:
             place_des = PlaceDescription(names=[TextValue(value=record.value)])
             self.gedcomx.add_place_description(place_des)
             self.marr_fact.place = PlaceReference(original=record.value, descriptionRef=place_des)
+        return self.marr_fact.place
 
     def set_husband(self, husband: Optional[Person]):
         """Assign the husband (person1) of the couple relationship."""
@@ -110,3 +112,7 @@ class FamilyParser:
             if self.parent2 is not None:
                 p2child = Relationship(person1=self.parent2,person2=child,type=RelationshipType.ParentChild)
                 self.gedcomx.add_relationship(p2child)
+    
+    def add_event(self, event: Event):
+        return event
+        # TODO, create base event, as Persons are Added, add them to event

@@ -8,6 +8,8 @@
  Updated: 2026-03-24 — added unknown_tags='drop'|'convert' option;
                         _handle_vendor_child; _ALWAYS_DROP/_VENDOR_TAGS
                         split; OBJE handler uses vendor-tag split
+ Updated: 2026-03-31 — added get_logger; replaced bare except Exception blocks
+                        with specific exception types and log.debug() messages
 ======================================================================
 
 Walks the raw G5 element tree and builds a ``List[GedcomStructure]``
@@ -47,6 +49,9 @@ import re
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 from gedcomtools.gedcom7.structure import GedcomStructure
+from gedcomtools.glog import get_logger
+
+log = get_logger(__name__)
 
 
 _POINTER_RE = re.compile(r"^@[^@\s]+@$")
@@ -349,7 +354,8 @@ class Gedcom5to7:
         parser = getattr(g5_or_parser, "_parser", g5_or_parser)
         try:
             roots = list(parser.get_root_child_elements())
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_root_child_elements failed: {}", exc)
             roots = []
 
         g5_head = next(
@@ -420,12 +426,12 @@ class Gedcom5to7:
                     if ctag == "CHAR":
                         try:
                             char_val = child.get_value() or ""
-                        except Exception:
-                            pass
+                        except (AttributeError, TypeError) as exc:
+                            log.debug("HEAD.CHAR get_value failed: {}", exc)
                     continue  # GEDC replaced; CHAR, FILE, SUBN dropped
                 self._convert_element(child, level=1, parent=head, parent_tag="HEAD")
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as exc:
+            log.debug("_build_head iteration failed: {}", exc)
 
         if char_val and char_val.upper() not in ("UTF-8", "UTF8", "UNICODE"):
             self.warnings.append(
@@ -491,21 +497,23 @@ class Gedcom5to7:
         """Return element value with CONC/CONT children folded in."""
         try:
             base = el.get_value() or ""
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_value failed in _merged_payload: {}", exc)
             base = ""
         try:
             for child in el.get_child_elements():
                 ctag = (child.tag or "").upper()
                 try:
                     cval = child.get_value() or ""
-                except Exception:
+                except (AttributeError, TypeError) as exc:
+                    log.debug("child.get_value failed: {}", exc)
                     cval = ""
                 if ctag == "CONC":
                     base += cval
                 elif ctag == "CONT":
                     base += "\n" + cval
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_child_elements failed in _merged_payload: {}", exc)
         return base
 
     def _note_drop(self, tag: str) -> None:
@@ -557,15 +565,16 @@ class Gedcom5to7:
                 if (child.tag or "").upper() == "FORM":
                     try:
                         g5_form = child.get_value() or ""
-                    except Exception:
-                        pass
+                    except (AttributeError, TypeError) as exc:
+                        log.debug("OBJE FORM get_value failed: {}", exc)
                     break
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_child_elements failed scanning OBJE FORM: {}", exc)
 
         try:
             children = el.get_child_elements()
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_child_elements failed in _convert_obje: {}", exc)
             children = []
 
         for child in children:
@@ -647,7 +656,8 @@ class Gedcom5to7:
 
         try:
             children = el.get_child_elements()
-        except Exception:
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_child_elements failed in _convert_element: {}", exc)
             children = []
 
         for child in children:

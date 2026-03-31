@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
 import orjson
 
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    GedcomX.py
 #  Author:  David J. Cartwright
 #  Purpose: Object for working with Gedcom-X Data

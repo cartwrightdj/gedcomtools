@@ -50,6 +50,7 @@ import os
 import re
 import shlex
 import sys
+import urllib.error
 from pathlib import Path
 from typing import List, Optional
 
@@ -279,9 +280,9 @@ class Shell:
     # ------------------------------------------------------------------
 
     def _cmd_load(self, args: List[str]) -> None:
-        """load <path>  — load a GEDCOM 7 file."""
+        """load <path|url>  — load a GEDCOM 7 file from disk or an HTTP/HTTPS URL."""
         if len(args) != 1:
-            print("usage: load <path.ged>")
+            print("usage: load <path.ged|url>")
             return
         self._do_load(args[0])
 
@@ -295,6 +296,10 @@ class Shell:
         self._dirty = False
         self._do_load(str(path))
 
+    @staticmethod
+    def _is_url(s: str) -> bool:
+        return s.startswith("http://") or s.startswith("https://")
+
     def _do_load(self, path: str) -> None:
         if self._dirty:
             try:
@@ -305,6 +310,31 @@ class Shell:
             if answer not in ("y", "yes"):
                 print("Load cancelled.")
                 return
+
+        if self._is_url(path):
+            print(f"Fetching {path} …")
+            g = Gedcom7()
+            try:
+                g.load_url(path)
+            except urllib.error.HTTPError as exc:
+                print(f"! HTTP {exc.code}: {exc.reason}")
+                return
+            except urllib.error.URLError as exc:
+                print(f"! Cannot fetch URL: {exc.reason}")
+                return
+            self.g = g
+            self._dirty = False
+            self.filepath = None
+            self.cur = None
+            self._stack = []
+            ver = g.detect_gedcom_version() or "?"
+            print(
+                f"  Loaded {_green(str(len(g.records)))} records  "
+                f"GEDCOM {_bold(ver)}  "
+                f"{_dim(path)}"
+            )
+            return
+
         p = Path(path)
         if not p.exists():
             print(f"! File not found: {p}")

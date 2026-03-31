@@ -10,7 +10,7 @@ import re
 from collections import defaultdict
 from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    gedcom5x.py
 #  Author:  David J. Cartwright
 #  Purpose:

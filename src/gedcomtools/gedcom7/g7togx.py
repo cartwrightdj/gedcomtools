@@ -11,6 +11,7 @@
           already aggregate all sub-structures into typed Python fields.
 
  Created: 2026-03-24
+ Updated: 2026-03-31 — added GxConverterBase inheritance
 ======================================================================
 """
 
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+from ..gedcomx.converter_base import GxConverterBase
 from ..glog import get_logger
 
 if TYPE_CHECKING:
@@ -108,7 +110,7 @@ _PEDI_FACT_MAP: Dict[str, str] = {
 # Converter
 # ---------------------------------------------------------------------------
 
-class Gedcom7Converter:
+class Gedcom7Converter(GxConverterBase):
     """Convert a :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object to GedcomX.
 
     Usage::

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 # ======================================================================
-#  Project: Gedcom-X
+#  Project: gedcomtools
 #  File:    gedcomx/schemas.py
 #  Author:  David J. Cartwright
 #  Purpose: Central schema registry for field type metadata
 #  Created: 2025-08-25
+#  Updated: 2026-03-31 — fact_from_even_tag/event_from_even_tag moved to
+#                         conversion.py; stubs retained for backward compat
 # ======================================================================
 import functools
 import inspect
@@ -898,7 +900,11 @@ class ExtrasAwareMeta(type):
 # Singleton instance
 SCHEMA = Schema()
 
-# -------------
+# ---------------------------------------------------------------------------
+# NOTE: fact_from_even_tag and event_from_even_tag have been moved to
+# conversion.py where they are used.  The stubs below are kept for any
+# external callers that imported them from here.
+# ---------------------------------------------------------------------------
 def fact_from_even_tag(even_value):
     """Return the GedcomX fact type mapped from a GEDCOM EVEN tag."""
     from .fact import FactType

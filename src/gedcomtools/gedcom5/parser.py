@@ -36,7 +36,10 @@
 # All high-level analysis lives in Gedcom5.
 # This module is the raw parsing engine only.
 
+import io
 import re as regex
+import urllib.error
+import urllib.request
 from typing import List, Union
 
 from .elements import (
@@ -88,6 +91,7 @@ class Gedcom5x:
         self.__repositories: List[RepositoryRecord] = []
         self.__objects: List[ObjectRecord] = []
         self.__root_element: RootElement = RootElement()
+        self.violations: List[str] = []
 
     # ------------------------------------------------------------------
     # Typed record collections
@@ -151,6 +155,31 @@ class Gedcom5x:
     # Parsing
     # ------------------------------------------------------------------
 
+    def load_url(self, url: str, strict: bool = True) -> None:
+        """Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.
+
+        Args:
+            url:    HTTP or HTTPS URL pointing to a GEDCOM file.
+            strict: Passed through to :meth:`parse`.
+
+        Raises:
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+        """
+        try:
+            with urllib.request.urlopen(url) as resp:
+                self.parse(io.BytesIO(resp.read()), strict)
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
+
     def parse_file(self, file_path: str, strict: bool = True) -> None:
         """Open and parse a GEDCOM 5.x file.
 
@@ -176,6 +205,7 @@ class Gedcom5x:
         self.__repositories = []
         self.__objects = []
         self.__root_element = RootElement()
+        self.violations = []
 
         record_map: dict[int, Union[Element, None]] = {
             -1: self.__root_element,
@@ -184,7 +214,7 @@ class Gedcom5x:
 
         line_number = 1
         for line in gedcom_stream:
-            element = self.__parse_line(line_number, line.decode('utf-8-sig'), strict)
+            element = self.__parse_line(line_number, line.decode('utf-8-sig'), strict, self.violations)
             element._line_num = line_number
 
             if isinstance(element, HeaderRecord):
@@ -208,7 +238,7 @@ class Gedcom5x:
             line_number += 1
 
     @staticmethod
-    def __parse_line(line_number: int, line: str, strict: bool = True) -> Element:
+    def __parse_line(line_number: int, line: str, strict: bool = True, violations: list = None) -> Element:
         """Parse one GEDCOM line and return the appropriate Element subclass."""
 
         level_regex = '^(0|[1-9]+[0-9]*) '
@@ -226,6 +256,8 @@ class Gedcom5x:
                     f"Line <{line_number}:{line}> violates GEDCOM format 5.5\n"
                     "See: https://chronoplexsoftware.com/gedcomvalidator/gedcom/gedcom-5.5.pdf"
                 )
+            if violations is not None:
+                violations.append(f"line {line_number}: {line.rstrip()}")
             # Quirk: last line may be missing CRLF
             last_line_regex = level_regex + pointer_regex + tag_regex + value_regex
             regex_match = regex.match(last_line_regex, line)
