@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.4-dev1**
+> **ALPHA SOFTWARE — v0.7.4-dev2**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
@@ -14,6 +14,21 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 ---
 
 ## What's New (development)
+
+### Updates from 2026-03-31
+
+- Refactored code quality hotspots across the codebase by replacing silent bare `except Exception`
+  blocks with narrower exception handling and debug logging in the GEDCOM 5 converter,
+  GedcomX conversion layer, `gctool`, and `gxcli`.
+- Split the large `gxcli.py` implementation into focused modules for output helpers, command
+  mixins, schema tools, and REPL core, while preserving the existing public `Shell` and
+  `main()` entry points.
+- Moved GEDCOM `EVEN` tag lookup helpers out of `schemas.py` and into the conversion layer,
+  keeping compatibility stubs for external callers.
+- Added a shared `GxConverterBase` abstract base class so GEDCOM 5 and GEDCOM 7 converters
+  now expose a common `convert()` interface.
+- Cleaned up circular-import model rebuild handling for GedcomX `event` and `relationship`
+  models so rebuild workarounds are explicit and do not leak `Person` into module namespaces.
 
 ### Updates from 2026-03-29
 
