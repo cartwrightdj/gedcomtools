@@ -23,16 +23,11 @@ from unittest.mock import patch
 
 import pytest
 
-from gedcomtools.gctool import (
-    _Node,
-    _build_label,
-    _ls,
-    _norm_xref,
-    _package_version,
-    _path_str,
-    _sniff,
-    main,
-)
+from gedcomtools.gctool import main
+from gedcomtools.gctool_commands import _package_version
+from gedcomtools.gctool_examine import _Node, _build_label, _ls, _path_str
+from gedcomtools.gctool_load import _sniff
+from gedcomtools.gctool_output import _norm_xref
 
 # ---------------------------------------------------------------------------
 # Paths to sample data

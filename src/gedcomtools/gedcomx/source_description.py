@@ -160,6 +160,7 @@ class ObjectParsingContainer:
         self.sourceDescription = source
 
     def add_title(self, title_to_add: Union[TextValue, str]) -> None:
+        """Forward title additions to the wrapped source description."""
         self.sourceDescription.add_title(title_to_add)
 
 # SourceDescription's "Document" forward ref and SourceReference's "SourceDescription"

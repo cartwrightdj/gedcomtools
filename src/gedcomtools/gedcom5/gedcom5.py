@@ -23,6 +23,11 @@
 
  Created: 2026-03-16
  Updated: 2026-03-24 — added to_gedcom7() and to_gedcomx() conversion helpers
+ Updated: 2026-03-31 — added _rel_cache; get_parents/get_children_of/get_spouses
+                        now cache results and invalidate on loadfile()
+ Updated: 2026-03-31 — URL support in __init__ and load_url(); .ged extension check
+ Updated: 2026-04-01 — use RelationshipCacheMixin; replace _rel_cache
+                        direct access with _cache_get/_cache_set/_cache_clear
 ======================================================================
 """
 
@@ -30,6 +35,24 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional, Union
+import io
+import urllib.error
+import urllib.parse
+import urllib.request
+
+
+def _is_url(s: str) -> bool:
+    """Return True if *s* looks like an HTTP/HTTPS URL."""
+    return s.startswith(("http://", "https://"))
+
+
+def _check_ged_url(url: str) -> None:
+    """Raise :class:`ValueError` if the URL path does not end in ``.ged``."""
+    path = urllib.parse.urlparse(url).path
+    if Path(path).suffix.lower() != ".ged":
+        raise ValueError(
+            f"URL does not point to a .ged file: {url!r}"
+        )
 
 from .elements import (
     FamilyRecord,
@@ -57,9 +80,10 @@ from ..gedcom7.models import (
     SourceDetail,
     SubmitterDetail,
 )
+from ..rel_cache import RelationshipCacheMixin
 
 
-class Gedcom5:
+class Gedcom5(RelationshipCacheMixin):
     """Parse GEDCOM 5.x files and expose a :class:`Gedcom7`-compatible API.
 
     **Two access tiers:**
@@ -81,13 +105,22 @@ class Gedcom5:
         """Initialise the parser.
 
         Args:
-            filepath: Optional path to a GEDCOM 5.x file to load immediately.
+            filepath: Optional path to a GEDCOM 5.x file **or** HTTP/HTTPS
+                URL to load immediately.  URLs must end in ``.ged``.
         """
-        self.filepath: Optional[Path] = Path(filepath) if filepath else None
         self._parser = Gedcom5x()
+        self._rel_cache: dict[str, list] = {}
 
-        if self.filepath:
-            self.loadfile(self.filepath)
+        if filepath is not None:
+            s = str(filepath)
+            if _is_url(s):
+                self.filepath: Optional[Path] = None
+                self.load_url(s)
+            else:
+                self.filepath = Path(s)
+                self.loadfile(self.filepath)
+        else:
+            self.filepath = None
 
     # ------------------------------------------------------------------
     # Loading
@@ -102,7 +135,39 @@ class Gedcom5:
                 than tolerating minor deviations.
         """
         self.filepath = Path(path)
+        self._cache_clear()
         self._parser.parse_file(str(self.filepath), strict=strict)
+
+    def load_url(self, url: str) -> None:
+        """Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.
+
+        The response body is decoded as UTF-8.  Use :meth:`loadfile` for
+        local files.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a ``.ged`` file.
+
+        Raises:
+            ValueError:             If the URL does not end in ``.ged``.
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+        """
+        _check_ged_url(url)
+        try:
+            with urllib.request.urlopen(url) as resp:
+                raw = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
+        self._cache_clear()
+        self._parser.parse(io.BytesIO(raw))
 
     # ------------------------------------------------------------------
     # Version detection
@@ -309,6 +374,9 @@ class Gedcom5:
         Returns:
             Raw :class:`IndividualRecord` for each parent found.
         """
+        cached = self._cache_get("p", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         el = self._lookup(indi_xref)
         if el is None or el.tag != "INDI":
             return []
@@ -325,6 +393,7 @@ class Gedcom5:
                     parent_el = self._lookup(ptr.value)
                     if parent_el and parent_el.tag == "INDI":
                         result.append(parent_el)
+        self._cache_set("p", indi_xref, result)
         return result
 
     def get_children_of(self, indi_xref: str) -> List[IndividualRecord]:
@@ -338,6 +407,9 @@ class Gedcom5:
         Returns:
             Raw :class:`IndividualRecord` for each child found.
         """
+        cached = self._cache_get("c", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         el = self._lookup(indi_xref)
         if el is None or el.tag != "INDI":
             return []
@@ -353,6 +425,7 @@ class Gedcom5:
                     child_el = self._lookup(chil.value)
                     if child_el and child_el.tag == "INDI":
                         result.append(child_el)
+        self._cache_set("c", indi_xref, result)
         return result
 
     def get_spouses(self, indi_xref: str) -> List[IndividualRecord]:
@@ -366,10 +439,13 @@ class Gedcom5:
         Returns:
             Raw :class:`IndividualRecord` for each spouse found.
         """
+        norm = _normalize_xref(indi_xref)
+        cached = self._cache_get("s", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         el = self._lookup(indi_xref)
         if el is None or el.tag != "INDI":
             return []
-        norm = _normalize_xref(indi_xref)
         result: List[IndividualRecord] = []
         for fams in el.get_child_elements():
             if fams.tag != "FAMS" or not fams.value:
@@ -383,6 +459,7 @@ class Gedcom5:
                     spouse_el = self._lookup(ptr.value)
                     if spouse_el and spouse_el.tag == "INDI":
                         result.append(spouse_el)
+        self._cache_set("s", indi_xref, result)
         return result
 
     # ------------------------------------------------------------------

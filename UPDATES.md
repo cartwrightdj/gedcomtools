@@ -4,6 +4,119 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## RelationshipCacheMixin + gctool.py split (2026-04-01)
+
+### Issue 1 — RelationshipCacheMixin
+Extracted the duplicated cache check/store/clear logic from `Gedcom5` and
+`Gedcom7` into a shared `RelationshipCacheMixin` in `rel_cache.py`.
+
+Both facade classes now inherit the mixin and use `_cache_get`, `_cache_set`,
+and `_cache_clear` instead of direct `_rel_cache` dict access.  Eliminates the
+`# type: ignore[return-value]` comments and makes the caching contract explicit.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/rel_cache.py` | New — `RelationshipCacheMixin` |
+| `src/gedcomtools/gedcom5/gedcom5.py` | Inherit mixin; use `_cache_*` helpers |
+| `src/gedcomtools/gedcom7/gedcom7.py` | Inherit mixin; use `_cache_*` helpers |
+
+### Issue 10 — gctool.py split
+`gctool.py` (2,324 lines) split into six focused modules.  `gctool.py` is now a
+~120-line thin entry point containing only `main()` and the argparse setup.
+
+| New file | Contents | Lines |
+|----------|----------|-------|
+| `gctool_output.py` | ANSI colour helpers, `_table`, `_kv`, `_norm_xref` | ~90 |
+| `gctool_load.py` | `_sniff`, `_is_url`, `_load_url`, `_load` | ~146 |
+| `gctool_commands.py` | `cmd_info/validate/list/show/find/tree/stats/convert/version/spec` | ~598 |
+| `gctool_examine.py` | `_Node`, `_FileRoot`, `_run_examine` and helpers | ~455 |
+| `gctool_interactive.py` | `cmd_interactive`, `_attribution`, `_print_status` | ~361 |
+| `gctool_dataops.py` | `cmd_repair/export/diff/merge` and data helpers | ~608 |
+
+`tests/test_gctool.py` updated to import private helpers from their new home modules.
+
+---
+
+## Sample Data Round-Trip Test Suite (2026-03-31)
+
+### Overview
+Added `tests/test_sample_data_roundtrip.py` — a parametrized test module that
+exercises the full read → write → read → convert → write → read pipeline for
+**every** file in `.sample_data/{gedcom5,gedcom70,gedcomx}`.
+
+### Coverage (294 new tests across 36 files)
+
+| Format | Files | Pipeline |
+|--------|-------|---------|
+| GEDCOM 5 | 11 `.ged` files | read G5 → to_gedcom7 → write G7 → read G7; G5 → to_gedcomx → JSON → GX |
+| GEDCOM 7 | 23 `.ged`/`.gdz` files | read G7 → write G7 → read G7; G7 → to_gedcomx → JSON → GX |
+| GedcomX  | 2 `.gedx`/`.gedcomx` files | read GX → JSON → GX → JSON → GX (double round-trip) |
+
+### Notes
+* UTF-16 encoded G5 files handled transparently via `io.BytesIO`.
+* `.gdz` archives unzipped inline via `zipfile`.
+* `gedcom5_all_tags_ascii.ged` → GedcomX conversion is `xfail` (known
+  `ConversionErrorDump` on embedded OBJE/FORM tag).
+* All record counts (individuals, persons, relationships) are asserted equal
+  through every step.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `tests/test_sample_data_roundtrip.py` | New file — 294 tests |
+
+---
+
+## URL Loading Support (2026-03-31)
+
+### Overview
+Both `Gedcom5` and `Gedcom7` constructors now accept an HTTP/HTTPS URL in place
+of a file path, so callers can load remote GEDCOM files without a separate step.
+
+### Behaviour
+* Passing an `http://` or `https://` string to the constructor (or calling
+  `load_url()` directly) downloads the file via `urllib.request.urlopen`.
+* The URL path **must** end in `.ged`; a `ValueError` is raised otherwise.
+* `Gedcom7` decodes the response as UTF-8 (required by the spec) and calls
+  `parse_string()`.  `Gedcom5` wraps the raw bytes in `io.BytesIO` and passes
+  them directly to the parser's `parse()` method.
+* `self.filepath` is set to `None` when loaded from a URL.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom7/gedcom7.py` | Added `_is_url()`, `_check_ged_url()` module helpers; `__init__` detects URLs; `load_url()` calls `_check_ged_url()`; added `urllib.parse` import |
+| `src/gedcomtools/gedcom5/gedcom5.py` | Same module helpers; `__init__` detects URLs; new `load_url()` method; added `io`, `urllib.*` imports |
+
+---
+
+## Relationship Traversal Caching (2026-03-31)
+
+### Overview
+`get_parents()`, `get_children_of()`, and `get_spouses()` previously walked the full
+element tree on every call (O(n) per query).  For files with thousands of records,
+repeated traversal in tree rendering or conversion loops was the main hotspot.
+
+### Fix
+Added `_rel_cache: dict[str, list]` to both `Gedcom5` and `Gedcom7`.  Each traversal
+method checks the cache before walking the tree and stores its result on first call.
+The cache is cleared automatically whenever new data is loaded, so callers that reload
+a file (e.g. `loadfile()` / `parse_string()`) always get fresh results.
+
+Cache keys use a short prefix + normalized xref (`p:`, `c:`, `s:`) to avoid collisions
+between the three methods for the same individual.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom5/gedcom5.py` | `__init__`: added `_rel_cache = {}`; `loadfile()`: calls `_rel_cache.clear()`; `get_parents`, `get_children_of`, `get_spouses`: check/populate cache |
+| `src/gedcomtools/gedcom7/gedcom7.py` | `__init__`: added `_rel_cache = {}`; `parse_lines()` (called by both `loadfile` and `parse_string`): calls `_rel_cache.clear()`; `get_parents`, `get_children_of`, `get_spouses`: check/populate cache |
+
+---
+
 ## Code Quality Refactor (2026-03-31)
 
 ### Overview

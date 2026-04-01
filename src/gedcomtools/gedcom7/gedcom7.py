@@ -17,6 +17,10 @@
                  relationship traversal helpers
    - 2026-03-16: import updated GedcomStructure.py → structure.py
    - 2026-03-24: added to_gedcomx() conversion helper
+   - 2026-03-31: added _rel_cache; get_parents/get_children_of/get_spouses
+                 now cache results and invalidate via parse_lines()
+   - 2026-03-31: URL support in __init__ and load_url(); .ged extension check
+   - 2026-04-01: use RelationshipCacheMixin; _rel_cache access via _cache_get/_cache_set/_cache_clear
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -45,7 +49,22 @@ from pathlib import Path
 from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
 from collections import defaultdict
 import urllib.error
+import urllib.parse
 import urllib.request
+
+
+def _is_url(s: str) -> bool:
+    """Return True if *s* looks like an HTTP/HTTPS URL."""
+    return s.startswith(("http://", "https://"))
+
+
+def _check_ged_url(url: str) -> None:
+    """Raise :class:`ValueError` if the URL path does not end in ``.ged``."""
+    path = urllib.parse.urlparse(url).path
+    if Path(path).suffix.lower() != ".ged":
+        raise ValueError(
+            f"URL does not point to a .ged file: {url!r}"
+        )
 
 from .structure import GedcomStructure
 from . import specification as g7specs
@@ -58,6 +77,7 @@ from .models import (
     individual_detail, family_detail, source_detail, repository_detail,
     media_detail, shared_note_detail, submitter_detail,
 )
+from ..rel_cache import RelationshipCacheMixin
 
 
 @dataclass(slots=True)
@@ -79,22 +99,31 @@ class GedcomValidationError:
     severity: str = "error"
 
 
-class Gedcom7:
+class Gedcom7(RelationshipCacheMixin):
     """Parse and validate GEDCOM 7 files."""
 
     def __init__(self, filepath: Optional[Union[str, Path]] = None) -> None:
         """Initialize the parser.
 
         Args:
-            filepath: Optional GEDCOM file path to load immediately.
+            filepath: Optional GEDCOM file path **or** HTTP/HTTPS URL to load
+                immediately.  URLs must end in ``.ged``.
         """
-        self.filepath: Optional[Path] = Path(filepath) if filepath else None
         self.records: List[GedcomStructure] = []
         self.errors: List[GedcomValidationError] = []
         self._tag_index: DefaultDict[str, List[int]] = defaultdict(list)
+        self._rel_cache: dict[str, list] = {}
 
-        if self.filepath:
-            self.loadfile(self.filepath)
+        if filepath is not None:
+            s = str(filepath)
+            if _is_url(s):
+                self.filepath: Optional[Path] = None
+                self.load_url(s)
+            else:
+                self.filepath = Path(s)
+                self.loadfile(self.filepath)
+        else:
+            self.filepath = None
 
     @staticmethod
     def _norm_tag(tag: str) -> str:
@@ -270,13 +299,15 @@ class Gedcom7:
         specification) and passed to :meth:`parse_string`.
 
         Args:
-            url: HTTP or HTTPS URL pointing to a GEDCOM 7 file.
+            url: HTTP or HTTPS URL pointing to a ``.ged`` file.
 
         Raises:
+            ValueError:             If the URL does not end in ``.ged``.
             urllib.error.URLError:  If the URL cannot be reached.
             urllib.error.HTTPError: If the server returns an error status.
             GedcomParseError:       If the response body is not valid UTF-8.
         """
+        _check_ged_url(url)
         try:
             with urllib.request.urlopen(url) as resp:
                 raw = resp.read()
@@ -349,6 +380,7 @@ class Gedcom7:
         self.records = []
         self.errors = []
         self._tag_index.clear()
+        self._cache_clear()
 
         context: Dict[int, GedcomStructure] = {}
 
@@ -706,6 +738,9 @@ class Gedcom7:
         Returns:
             Raw :class:`GedcomStructure` for each parent found.
         """
+        cached = self._cache_get("p", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         indi_node = self._record_by_xref("INDI", indi_xref)
         if indi_node is None:
             return []
@@ -722,6 +757,7 @@ class Gedcom7:
                     parent = self._record_by_xref("INDI", ptr_node.payload)
                     if parent:
                         result.append(parent)
+        self._cache_set("p", indi_xref, result)
         return result
 
     def get_children_of(self, indi_xref: str) -> List[GedcomStructure]:
@@ -735,6 +771,9 @@ class Gedcom7:
         Returns:
             Raw :class:`GedcomStructure` for each child found.
         """
+        cached = self._cache_get("c", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         indi_node = self._record_by_xref("INDI", indi_xref)
         if indi_node is None:
             return []
@@ -750,6 +789,7 @@ class Gedcom7:
                     child_node = self._record_by_xref("INDI", chil.payload)
                     if child_node:
                         result.append(child_node)
+        self._cache_set("c", indi_xref, result)
         return result
 
     def get_spouses(self, indi_xref: str) -> List[GedcomStructure]:
@@ -763,10 +803,13 @@ class Gedcom7:
         Returns:
             Raw :class:`GedcomStructure` for each spouse found.
         """
+        norm_xref = indi_xref.upper()
+        cached = self._cache_get("s", indi_xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
         indi_node = self._record_by_xref("INDI", indi_xref)
         if indi_node is None:
             return []
-        norm_xref = indi_xref.upper()
         result: List[GedcomStructure] = []
         for fams in indi_node.get_children("FAMS"):
             if not fams.payload_is_pointer or not fams.payload:
@@ -781,6 +824,7 @@ class Gedcom7:
                     spouse_node = self._record_by_xref("INDI", ptr_node.payload)
                     if spouse_node:
                         result.append(spouse_node)
+        self._cache_set("s", indi_xref, result)
         return result
 
     # ------------------------------------------------------------------

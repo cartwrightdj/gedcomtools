@@ -1441,7 +1441,7 @@ class GedcomConverter(GxConverterBase):
             pass
 
     def jls_extract_def(self):
-        
+        """Placeholder for future JLS-specific extraction support."""
         return 
 
     def handle_plac(self, record: Element):

@@ -12,6 +12,7 @@ from __future__ import annotations
 import inspect
 import json
 import logging
+import io
 import os
 import re
 import shutil
@@ -1316,7 +1317,12 @@ class _LoadMixin:
             from gedcomtools.gedcom5.validator5 import Gedcom5Validator
             print("  Parsing GEDCOM 5…")
             g5 = Gedcom5x()
-            g5.parse_file(str(path), strict=False)
+            raw = Path(path).read_bytes()
+            if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+                # UTF-16 LE or BE — transcode to UTF-8 for the parser
+                g5.parse(io.BytesIO(raw.decode("utf-16").encode("utf-8")))
+            else:
+                g5.parse_file(str(path), strict=False)
             if g5.violations:
                 print(f"  {len(g5.violations)} format violation(s):")
                 for v in g5.violations:

@@ -114,5 +114,6 @@ class FamilyParser:
                 self.gedcomx.add_relationship(p2child)
     
     def add_event(self, event: Event):
+        """Return the family event placeholder until full event wiring is implemented."""
         return event
         # TODO, create base event, as Persons are Added, add them to event
