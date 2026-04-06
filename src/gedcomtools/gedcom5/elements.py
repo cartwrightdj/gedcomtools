@@ -366,12 +366,8 @@ class Element:
 
         return result
 
-    def __str__(self):
-        """:rtype: str"""
-        if version_info[0] >= 3:
-            return self.to_gedcom_string()
-
-        return self.to_gedcom_string().encode('utf-8-sig')
+    def __str__(self) -> str:
+        return self.to_gedcom_string()
 
 class RootElement(Element):
     """Virtual GEDCOM root element containing all logical records as children"""

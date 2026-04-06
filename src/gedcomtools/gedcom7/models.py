@@ -713,8 +713,8 @@ def individual_detail(node: GedcomStructure) -> IndividualDetail:
         FamcLink(
             xref=c.payload,
             pedigree=(
-                c.first_child("PEDI").payload.strip().upper()
-                if c.first_child("PEDI") and c.first_child("PEDI").payload
+                pedi.payload.strip().upper()
+                if (pedi := c.first_child("PEDI")) and pedi.payload
                 else None
             ),
         )

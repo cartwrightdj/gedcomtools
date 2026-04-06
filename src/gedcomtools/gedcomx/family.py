@@ -63,11 +63,11 @@ class FamilyParser:
         from .place_description import PlaceDescription
         existing_places = self.gedcomx.places.by_name(record.value)
         if existing_places:
-            self.marr_fact.place = PlaceReference(original=record.value, descriptionRef=existing_places[0])
+            self.marr_fact.place = PlaceReference(original=record.value, descriptionRef=existing_places[0])  # type: ignore[call-arg]
         else:
             place_des = PlaceDescription(names=[TextValue(value=record.value)])
             self.gedcomx.add_place_description(place_des)
-            self.marr_fact.place = PlaceReference(original=record.value, descriptionRef=place_des)
+            self.marr_fact.place = PlaceReference(original=record.value, descriptionRef=place_des)  # type: ignore[call-arg]
         return self.marr_fact.place
 
     def set_husband(self, husband: Optional[Person]):
@@ -98,8 +98,8 @@ class FamilyParser:
         if self.couple_added:
             return
         if self.couple.person1 is not None and self.couple.person2 is not None:
-            self.couple.person1.add_fact(self.marr_fact)
-            self.couple.person2.add_fact(self.marr_fact)
+            self.couple.person1.add_fact(self.marr_fact)  # type: ignore[union-attr]
+            self.couple.person2.add_fact(self.marr_fact)  # type: ignore[union-attr]
             self.gedcomx.add_relationship(self.couple)
             self.couple_added = True
 

@@ -24,6 +24,7 @@ from pydantic import Field, field_validator
 
 from .fact import Fact
 from .resource import Resource
+from .uri import URI
 from .subject import Subject
 
 if TYPE_CHECKING:
@@ -63,7 +64,7 @@ class Relationship(Subject):
         if isinstance(v, dict):
             return Resource.model_validate(v)
         if isinstance(v, str):
-            return Resource(resource=v)
+            return Resource(resource=URI(target=v))  # type: ignore[call-arg]
         return v
 
     def _validate_self(self, result) -> None:

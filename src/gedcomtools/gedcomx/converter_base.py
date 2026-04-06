@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .gedcomx import GedcomX
@@ -25,6 +25,6 @@ class GxConverterBase(ABC):
     """
 
     @abstractmethod
-    def convert(self, source) -> "GedcomX":
+    def convert(self, source: Any) -> "GedcomX":
         """Convert *source* and return a populated :class:`GedcomX` object."""
         ...

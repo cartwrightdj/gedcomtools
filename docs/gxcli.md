@@ -22,7 +22,7 @@ Typical uses:
 - Verify field types and data integrity.
 - Resolve cross-references.
 - Build a quick ancestor list without an external file.
-- Export to GEDCOM-X JSON, ZIP, JSONL, or ArangoDB graph files.
+- Export to GEDCOM-X JSON, ZIP, or JSONL.
 
 ---
 
@@ -124,7 +124,6 @@ Serialises and saves the current root. `FORMAT` is one of:
 | `gx` | GEDCOM-X JSON (indented, UTF-8). Writes the root object via `_to_dict()`. |
 | `zip` | GEDCOM-X ZIP archive. A `.zip` extension is appended if the path does not already have one. |
 | `jsonl` | JSON Lines. Serialises the **current node** (not necessarily root), one record per line. |
-| `adbg` | ArangoDB graph files. `PATH` is a **directory**; writes `persons.jsonl` and `person_to_person.jsonl` into it. |
 
 Examples:
 
@@ -132,7 +131,6 @@ Examples:
 write gx output/tree.json
 write zip output/tree
 write jsonl output/persons.jsonl
-write adbg output/arango/
 ```
 
 ---
@@ -1043,7 +1041,6 @@ Completer delimiters are set to `space`, `tab`, `newline` only, so paths with `/
 | `write gx PATH` | Save as GEDCOM-X JSON |
 | `write zip PATH` | Save as GEDCOM-X ZIP archive |
 | `write jsonl PATH` | Save current node as JSON Lines |
-| `write adbg DIR` | Write ArangoDB graph files to a directory |
 
 ### Navigation
 

@@ -232,13 +232,16 @@ class Gedcom5x:
             elif isinstance(element, SubmitterRecord):
                 self.__submitters.append(element)
 
-            element._set_parent(record_map[element.level - 1])
+            parent = record_map.get(element.level - 1)
+            if parent is not None:
+                element._set_parent(parent)
             record_map[element.level] = element
-            record_map[element.level - 1].add_child_element(element)
+            if parent is not None:
+                parent.add_child_element(element)
             line_number += 1
 
     @staticmethod
-    def __parse_line(line_number: int, line: str, strict: bool = True, violations: list = None) -> Element:
+    def __parse_line(line_number: int, line: str, strict: bool = True, violations: list | None = None) -> Element:
         """Parse one GEDCOM line and return the appropriate Element subclass."""
 
         level_regex = '^(0|[1-9]+[0-9]*) '
@@ -273,6 +276,10 @@ class Gedcom5x:
                 # treat as CONC so text is not silently dropped.
                 cont_line_regex = '([^\n\r]*|)' + end_of_line_regex
                 regex_match = regex.match(cont_line_regex, line)
+                if regex_match is None:
+                    raise GedcomFormatViolationError(
+                        f"Line <{line_number}> could not be parsed even in recovery mode"
+                    )
                 line_parts = regex_match.groups()
                 level = 1
                 pointer = ""

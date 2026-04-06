@@ -9,6 +9,7 @@ from __future__ import annotations
 #  Created: 2025-08-25
 #  Updated: 2026-03-31 — fact_from_even_tag/event_from_even_tag moved to
 #                         conversion.py; stubs retained for backward compat
+#  Updated: 2026-04-03 — narrow bare except Exception to ImportError / (NameError, AttributeError, TypeError)
 # ======================================================================
 import functools
 import inspect
@@ -21,7 +22,7 @@ from typing import Any, Callable, Dict, Union, get_args, get_origin, get_type_hi
 try:
     # typing.Annotated may not exist in older 3.9 without typing_extensions
     from typing import Annotated  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     Annotated = None  # type: ignore
 
 _UNION_ORIGINS = tuple(
@@ -289,7 +290,7 @@ class Schema:
         lns = dict(vars(cls))
         try:
             return get_type_hints(cls, include_extras=True, globalns=gns, localns=lns)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             # fallback keeps strings — but we’ll fix those below
             return dict(getattr(cls, "__annotations__", {}) or {})
 
@@ -308,7 +309,7 @@ class Schema:
         lns = dict(vars(cls))
         try:
             hints = get_type_hints(fn, include_extras=True, globalns=gns, localns=lns)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             hints = dict(getattr(fn, "__annotations__", {}) or {})
         hints.pop("return", None)
         hints.pop("self", None)

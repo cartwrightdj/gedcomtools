@@ -85,7 +85,7 @@ class NamePart(GedcomXModel):
             if not isinstance(q, NamePartQualifier):
                 result.error(f"qualifiers[{i}]", f"Expected NamePartQualifier, got {type(q).__name__}")
 
-    __hash__ = object.__hash__
+    __hash__ = object.__hash__  # type: ignore[assignment]
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, NamePart):

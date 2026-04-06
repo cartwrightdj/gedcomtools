@@ -37,7 +37,7 @@ class PlaceReference(GedcomXModel):
         if isinstance(v, dict):
             return Resource.model_validate(v)
         if isinstance(v, str):
-            return URI(value=v)
+            return URI(target=v)  # type: ignore[call-arg]
         return v
 
     def _validate_self(self, result) -> None:

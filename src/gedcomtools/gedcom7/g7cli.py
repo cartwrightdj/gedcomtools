@@ -15,6 +15,7 @@
                  show command displays model summary for INDI/FAM top-level nodes;
                  find results show full node path via get_path()
    - 2026-03-16: import updated GedcomStructure.py → structure.py
+   - 2026-04-03: _is_url moved to utils.Utilities; removed Shell._is_url staticmethod
 ======================================================================
 
 g7cli — interactive GEDCOM 7 browser / editor.
@@ -54,6 +55,7 @@ import urllib.error
 from pathlib import Path
 from typing import List, Optional
 
+from ..utils.Utilities import _is_url
 from .structure import GedcomStructure
 from .gedcom7 import Gedcom7
 from .writer import Gedcom7Writer
@@ -296,10 +298,6 @@ class Shell:
         self._dirty = False
         self._do_load(str(path))
 
-    @staticmethod
-    def _is_url(s: str) -> bool:
-        return s.startswith("http://") or s.startswith("https://")
-
     def _do_load(self, path: str) -> None:
         if self._dirty:
             try:
@@ -311,7 +309,7 @@ class Shell:
                 print("Load cancelled.")
                 return
 
-        if self._is_url(path):
+        if _is_url(path):
             print(f"Fetching {path} …")
             g = Gedcom7()
             try:
@@ -364,6 +362,7 @@ class Shell:
         """write <path>  — write the loaded records to a GEDCOM 7 file."""
         if not self._require_file():
             return
+        assert self.g is not None
         if len(args) != 1:
             print("usage: write <path.ged>")
             return
@@ -377,6 +376,7 @@ class Shell:
         """validate  — run the GEDCOM 7 validator."""
         if not self._require_file():
             return
+        assert self.g is not None
         issues = self.g.validate()
         errors   = [i for i in issues if i.severity == "error"]
         warnings = [i for i in issues if i.severity == "warning"]
@@ -395,6 +395,7 @@ class Shell:
         """info  — file-level summary."""
         if not self._require_file():
             return
+        assert self.g is not None
         from collections import Counter
         ver = self.g.detect_gedcom_version() or "unknown"
         counts = Counter(r.tag for r in self.g.records)
@@ -483,6 +484,7 @@ class Shell:
         """show [--all]  — show fields of the current node.  --all includes children."""
         if not self._require_file():
             return
+        assert self.g is not None
 
         show_all = "--all" in args
 
@@ -557,6 +559,7 @@ class Shell:
             return
 
         target = pos[0].upper()
+        assert self.g is not None
         results: List[GedcomStructure] = []
 
         def _walk(node: GedcomStructure) -> None:
@@ -591,6 +594,7 @@ class Shell:
         """
         if not self._require_node():
             return
+        assert self.cur is not None
         if len(args) < 1:
             print("usage: set payload|tag|xref <value>")
             return
@@ -629,6 +633,7 @@ class Shell:
         """add <tag> [payload]  — append a child to the current node."""
         if not self._require_file():
             return
+        assert self.g is not None
         if not args:
             print("usage: add <tag> [payload]")
             return
@@ -673,6 +678,7 @@ class Shell:
         """rm <index>  — remove a child of the current node by index."""
         if not self._require_file():
             return
+        assert self.g is not None
         if not args or not re.fullmatch(r"\d+", args[0]):
             print("usage: rm <index>")
             return

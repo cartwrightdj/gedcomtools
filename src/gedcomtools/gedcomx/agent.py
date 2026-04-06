@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, List, Optional, Union
 if TYPE_CHECKING:
     from .attribution import Attribution
     from .person import Person
-    _PersonOrResource = Union[Person, Resource]
 
 from pydantic import Field, PrivateAttr, field_validator
 

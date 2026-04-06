@@ -42,7 +42,7 @@ from typing import Dict, Generator, Optional, Sequence, Union
 
 from dotenv import load_dotenv
 from loguru import logger as _logger
-from loguru import _Logger as Logger
+from loguru import _Logger as Logger  # type: ignore[attr-defined]
 
 # Load .env from the project root (or CWD) so env vars are available before
 # any module-level code reads them.  override=False means real env vars win.
@@ -518,46 +518,50 @@ def setup_logging(
 
     run_dir: Optional[Path] = None
     if eff_files:
-        if env_file:
-            # LOG_FILE: single named file, no run-subdirectory
-            log_path = Path(env_file)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            sid = _logger.add(
-                str(log_path),
-                format=_FILE_FMT,
-                level=eff_level,
-                rotation=rotation_max_bytes,
-                retention=rotation_backup_count,
-                encoding="utf-8",
-            )
-            sink_ids.append(sid)
-        else:
-            run_dir = eff_base_dir / f"run-{_new_run_id()}"
-            run_dir.mkdir(parents=True, exist_ok=True)
-
-            sid = _logger.add(
-                str(run_dir / common_filename),
-                format=_FILE_FMT,
-                level=eff_level,
-                rotation=rotation_max_bytes,
-                retention=rotation_backup_count,
-                encoding="utf-8",
-            )
-            sink_ids.append(sid)
-
-        for spec in sublogs:
-            if spec.filename:
-                channel = spec.name
+        try:
+            if env_file:
+                # LOG_FILE: single named file, no run-subdirectory
+                log_path = Path(env_file)
+                log_path.parent.mkdir(parents=True, exist_ok=True)
                 sid = _logger.add(
-                    str(run_dir / spec.filename),
+                    str(log_path),
                     format=_FILE_FMT,
-                    level=_to_level(spec.level),
-                    filter=lambda r, ch=channel: r["extra"].get("channel") == ch,
+                    level=eff_level,
                     rotation=rotation_max_bytes,
                     retention=rotation_backup_count,
                     encoding="utf-8",
                 )
                 sink_ids.append(sid)
+            else:
+                run_dir = eff_base_dir / f"run-{_new_run_id()}"
+                run_dir.mkdir(parents=True, exist_ok=True)
+
+                sid = _logger.add(
+                    str(run_dir / common_filename),
+                    format=_FILE_FMT,
+                    level=eff_level,
+                    rotation=rotation_max_bytes,
+                    retention=rotation_backup_count,
+                    encoding="utf-8",
+                )
+                sink_ids.append(sid)
+
+            if run_dir is not None:
+                for spec in sublogs:
+                    if spec.filename:
+                        channel = spec.name
+                        sid = _logger.add(
+                            str(run_dir / spec.filename),
+                            format=_FILE_FMT,
+                            level=_to_level(spec.level),
+                            filter=lambda r, ch=channel: r["extra"].get("channel") == ch,
+                            rotation=rotation_max_bytes,
+                            retention=rotation_backup_count,
+                            encoding="utf-8",
+                        )
+                        sink_ids.append(sid)
+        except OSError as exc:
+            _logger.warning("File logging could not be configured: {}", exc)
 
     _manager = LoggingManager(
         config=LoggingConfig(

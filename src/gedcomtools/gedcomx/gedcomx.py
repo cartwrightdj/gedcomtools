@@ -20,6 +20,10 @@ import orjson
 #                       — TypeCollection.append(): no longer stamps type path onto
 #                         _uri; uses URI(fragment=id) only so resource refs serialize
 #                         as #id (same-document); explicit path URIs are preserved
+#           2026-04-03 — added conversion_warnings property exposing
+#                         _import_unhandled_tags for callers to detect data loss
+#                       — TypeCollection.append(): rollback guard wraps
+#                         _update_indexes so _items stays consistent on error
 # ======================================================================
 # GEDCOM Module Types
 from .agent import Agent
@@ -176,7 +180,11 @@ class TypeCollection(Generic[T]):
             setattr(item, "_uri", URI(fragment=getattr(item, "id", None)))
 
         self._items.append(item)
-        self._update_indexes(item)
+        try:
+            self._update_indexes(item)
+        except Exception:
+            self._items.pop()
+            raise
 
     def extend(self, items: Iterable[T]) -> None:
         """Append each item from an iterable to the collection."""
@@ -275,6 +283,17 @@ class GedcomX:
         self._import_unhandled_tags = {}
 
         #self.default_id_generator = make_uid
+
+    @property
+    def conversion_warnings(self) -> Dict[str, int]:
+        """GEDCOM tags skipped during import due to missing handlers (potential data loss).
+
+        Non-empty when a converter encountered tags it could not map to GedcomX
+        objects.  Keys are GEDCOM tag names; values are occurrence counts.
+        Returns an empty dict when conversion was clean or this object was not
+        produced by a converter.
+        """
+        return dict(self._import_unhandled_tags)
 
     @property
     def contents(self):

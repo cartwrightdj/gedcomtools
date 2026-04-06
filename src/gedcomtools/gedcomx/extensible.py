@@ -6,7 +6,7 @@
  Purpose: Plugin registry and trust-level security system for GedcomX extensions
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-03 — _is_url moved to utils.Utilities; import from there
 ======================================================================
 """
 from __future__ import annotations
@@ -73,6 +73,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 
+from ..utils.Utilities import _is_url
 from .gx_base import GedcomXModel
 
 
@@ -512,10 +513,6 @@ def import_plugins(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
-
-def _is_url(s: str) -> bool:
-    return s.startswith("http://") or s.startswith("https://")
-
 
 _DOWNLOAD_TIMEOUT = 30  # seconds
 

@@ -28,7 +28,6 @@ from gedcomtools.gedcomx import GedcomConverter, GedcomX
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.cli import objects_to_schema_table, write_jsonl
-from gedcomtools.gedcomx.arango import make_arango_graph_files
 
 
 SHELL_VERSION = '0.7.1'
@@ -342,7 +341,7 @@ def as_indexable_list(obj: Any) -> list[Any] | None:
             pass
     if hasattr(obj, "__iter__"):
         try:
-            return list(obj)
+            return list(obj)  # type: ignore[arg-type]
         except (TypeError, AttributeError):
             pass
     return None
@@ -481,7 +480,7 @@ def _schema_fields_for_object(obj: Any) -> dict[str, Any]:
         pass
     # Last resort: class-level __annotations__ merged up the MRO.
     merged: dict[str, Any] = {}
-    for base in reversed(cls.__mro__):
+    for base in reversed(list(cls.__mro__)):  # type: ignore[arg-type]
         merged.update(getattr(base, "__annotations__", {}))
     return {k: v for k, v in merged.items() if not k.startswith("_")}
 

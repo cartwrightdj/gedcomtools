@@ -7,6 +7,8 @@
           cmd_stats, cmd_convert, cmd_version, cmd_spec, _package_version,
           _LIST_TYPES
  Created: 2026-04-01 — split from gctool.py
+ Updated: 2026-04-03 — import PackageNotFoundError directly; fix NameError in _package_version
+ Updated: 2026-04-03 — import GedcomFile protocol
 ======================================================================
 """
 
@@ -18,6 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
@@ -562,9 +565,9 @@ def cmd_convert(args) -> int:
 
 def _package_version() -> str:
     try:
-        from importlib.metadata import version
+        from importlib.metadata import version, PackageNotFoundError
         return version("gedcomtools")
-    except importlib.metadata.PackageNotFoundError:
+    except PackageNotFoundError:
         pass
     # Fallback for editable installs where metadata may not be present
     try:

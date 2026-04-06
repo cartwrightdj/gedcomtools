@@ -274,7 +274,7 @@ class Gedcom5x():
             for record in self.records:
                 if record.tag == 'HEAD':
                     self.header = record
-                    self.version = record['GEDC']['VERS'].value
+                    self.version = record['GEDC']['VERS'].value  # type: ignore[index]
                 if record.tag == 'INDI':
                     self._individuals.append(record)
                 if record.tag == 'SOUR' and record.level == 0:
@@ -286,7 +286,7 @@ class Gedcom5x():
                 if record.tag == 'OBJE' and record.level == 0:
                     self._objects.append(record)
                 if record.tag == 'SNOTE' and record.level == 0:
-                    record.xref = record.value
+                    record.xref = record.value or ""
                     self._snotes.append(record)
 
     # ─────────────────────────────────────────────────────────────
@@ -622,7 +622,7 @@ class Gedcom5x():
                 if record.tag == 'OBJE' and record.level == 0:
                     self._objects.append(record)
                 if record.tag == 'SNOTE' and record.level == 0:
-                    record.xref = record.value
+                    record.xref = record.value or ""
                     self._snotes.append(record)
         else:
             raise ValueError("Input must be a non-empty list of Gedcom5xRecord objects")

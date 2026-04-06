@@ -72,7 +72,7 @@ class Resource(GedcomXModel):
         elif isinstance(target, dict):
             # Already-serialized resource reference: {"resource": "..."} or {"resourceId": "..."}
             raw = target.get("resource") or target.get("resourceId")
-            resource = URI(value=str(raw)) if raw else None
+            resource = URI(target=str(raw)) if raw else None  # type: ignore[call-arg]
         else:
             log.debug("Target of type: {}", type(target))
             if hasattr(target, "_uri"):

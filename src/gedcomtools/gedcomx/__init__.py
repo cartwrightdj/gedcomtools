@@ -8,6 +8,8 @@
  Created: 2025-08-25
  Updated: 2026-03-31 — added GxConverterBase, G5ToGxConverter alias; added
                         belt-and-suspenders model_rebuild() calls after all imports
+          2026-04-03 — removed redundant model_rebuild() calls; each module
+                        (event.py, relationship.py) self-rebuilds at load time
 
 ======================================================================
 """
@@ -75,9 +77,8 @@ from .validation import ValidationIssue, ValidationResult
 
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
 
-# Belt-and-suspenders: ensure forward references are resolved for any import
-# path (direct submodule imports bypass the bottom-of-file rebuilds in
-# event.py and relationship.py).  model_rebuild() is idempotent in pydantic v2.
-EventRole.model_rebuild(_types_namespace={"Person": Person})
-Relationship.model_rebuild(_types_namespace={"Person": Person})
-Person.model_rebuild()
+# Forward-reference resolution: EventRole.person and Relationship.person1/person2
+# are typed as Union[Person, Resource].  Because person.py does not import
+# event.py or relationship.py, pydantic model_rebuild() is called at the bottom
+# of each respective module (event.py, relationship.py) immediately after a safe
+# deferred import of Person.  No additional rebuild calls are needed here.

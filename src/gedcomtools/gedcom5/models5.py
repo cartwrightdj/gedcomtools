@@ -186,16 +186,19 @@ def individual_detail_from_g5(rec: IndividualRecord) -> IndividualDetail:
 
     # Repeated events
     detail.residences = [
-        _event_detail(c) for c in rec.get_child_elements()
-        if c.tag == "RESI" and _event_detail(c) is not None
+        e for c in rec.get_child_elements()
+        if c.tag == "RESI"
+        for e in (_event_detail(c),) if e is not None
     ]
     detail.events = [
-        _event_detail(c) for c in rec.get_child_elements()
-        if c.tag == "EVEN" and _event_detail(c) is not None
+        e for c in rec.get_child_elements()
+        if c.tag == "EVEN"
+        for e in (_event_detail(c),) if e is not None
     ]
 
     # Family links
-    detail.families_as_child = _pointer_values(rec, "FAMC")
+    from ..gedcom7.models import FamcLink
+    detail.families_as_child = [FamcLink(xref=x) for x in _pointer_values(rec, "FAMC")]
     detail.families_as_spouse = _pointer_values(rec, "FAMS")
 
     # Citations, notes, media
@@ -226,8 +229,9 @@ def family_detail_from_g5(rec: FamilyRecord) -> FamilyDetail:
     detail.divorce = _event_detail(rec.sub_record("DIV"))
 
     detail.events = [
-        _event_detail(c) for c in rec.get_child_elements()
-        if c.tag == "EVEN" and _event_detail(c) is not None
+        e for c in rec.get_child_elements()
+        if c.tag == "EVEN"
+        for e in (_event_detail(c),) if e is not None
     ]
 
     detail.source_citations = _source_citations(rec)

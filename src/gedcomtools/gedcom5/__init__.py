@@ -37,7 +37,7 @@
 
 __all__ = [
     "parser",
-    "tags",
+    "tags",  # type: ignore[reportUnsupportedDunderAll]
     "Gedcom5x",
     "Gedcom5",
 ]

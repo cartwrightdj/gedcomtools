@@ -21,6 +21,7 @@
                  now cache results and invalidate via parse_lines()
    - 2026-03-31: URL support in __init__ and load_url(); .ged extension check
    - 2026-04-01: use RelationshipCacheMixin; _rel_cache access via _cache_get/_cache_set/_cache_clear
+   - 2026-04-03: _is_url/_check_ged_url moved to utils.Utilities; import from there
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -49,22 +50,9 @@ from pathlib import Path
 from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
 from collections import defaultdict
 import urllib.error
-import urllib.parse
 import urllib.request
 
-
-def _is_url(s: str) -> bool:
-    """Return True if *s* looks like an HTTP/HTTPS URL."""
-    return s.startswith(("http://", "https://"))
-
-
-def _check_ged_url(url: str) -> None:
-    """Raise :class:`ValueError` if the URL path does not end in ``.ged``."""
-    path = urllib.parse.urlparse(url).path
-    if Path(path).suffix.lower() != ".ged":
-        raise ValueError(
-            f"URL does not point to a .ged file: {url!r}"
-        )
+from ..utils.Utilities import _is_url, _check_ged_url
 
 from .structure import GedcomStructure
 from . import specification as g7specs

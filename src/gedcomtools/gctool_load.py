@@ -5,21 +5,26 @@
  File:    gctool_load.py
  Purpose: Format detection, URL loading, file loading
  Created: 2026-04-01 — split from gctool.py
+ Updated: 2026-04-03 — import _is_url from utils; NamedTemporaryFile in _load_url
+ Updated: 2026-04-03 — return type Tuple[str, GedcomFile] replacing Tuple[str, Any]
+          2026-04-03 — added comment explaining errors="replace" is intentional
+                        in _sniff (ASCII-only VERS tag inspection)
 ======================================================================
 """
 
 from __future__ import annotations
 
-import os
 import sys
 import tempfile
 import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Tuple
 
+from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
+from gedcomtools.utils.Utilities import _is_url
 
 log = get_logger(__name__)
 
@@ -46,6 +51,8 @@ def _sniff(path: Path) -> str:
         if suffix == ".gdz":
             return "g7"  # .gdz is always a zipped GEDCOM 7 archive
         try:
+            # errors="replace" is intentional: we only inspect ASCII VERS/HEAD
+            # tags here, so replacement characters cannot affect the result.
             with open(path, "r", encoding="utf-8-sig", errors="replace") as fh:
                 for line in fh:
                     line = line.strip()
@@ -69,12 +76,7 @@ def _sniff(path: Path) -> str:
 # Unified loader
 # ---------------------------------------------------------------------------
 
-def _is_url(s: str) -> bool:
-    """Return True if *s* looks like an HTTP/HTTPS URL."""
-    return s.startswith("http://") or s.startswith("https://")
-
-
-def _load_url(url: str) -> Tuple[str, Any]:
+def _load_url(url: str) -> Tuple[str, GedcomFile]:
     """Download a GEDCOM file from *url* to a temp file and call :func:`_load`."""
     print(f"Fetching {url} …")
     try:
@@ -89,19 +91,16 @@ def _load_url(url: str) -> Tuple[str, Any]:
 
     # Preserve the filename/extension so _sniff() works correctly.
     suffix = Path(url.split("?")[0]).suffix or ".ged"
-    fd, tmp = tempfile.mkstemp(suffix=suffix)
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as fh:
+        tmp = Path(fh.name)
+        fh.write(data)
     try:
-        with os.fdopen(fd, "wb") as f:
-            f.write(data)
-        return _load(Path(tmp))
+        return _load(tmp)
     finally:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
+        tmp.unlink(missing_ok=True)
 
 
-def _load(path: Path) -> Tuple[str, Any]:
+def _load(path: Path) -> Tuple[str, GedcomFile]:
     """Return ``(fmt, obj)`` where *obj* is a ``Gedcom5`` or ``Gedcom7`` instance."""
     if not path.exists():
         print(f"error: file not found: {path}", file=sys.stderr)

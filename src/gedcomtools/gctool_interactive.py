@@ -139,8 +139,9 @@ def _print_status(path: Optional[Path], fmt: Optional[str], obj: Optional[Any]) 
     if path is None or obj is None:
         print(f"  {_yellow('No GEDCOM loaded.')}  Use: load <file>")
     else:
-        print(f"  {_bold('File')}  {_cyan(str(path))}  {_dim(f'[{fmt.upper()}]')}")
-        for line in _attribution(fmt, obj):
+        fmt_upper = (fmt or "").upper()
+        print(f"  {_bold('File')}  {_cyan(str(path))}  {_dim(f'[{fmt_upper}]')}")
+        for line in _attribution(fmt or "", obj):
             print(line)
     print()
 
@@ -259,6 +260,8 @@ def cmd_interactive(args) -> int:
         nonlocal edit_mode
         if _need_file():
             return False
+        assert obj is not None
+        assert fmt is not None
         allow_edit = (tokens[0].lower() == "edit")
         raw_roots = obj.records if fmt == "g7" else list(obj._parser.get_root_child_elements())
         xref_arg = tokens[1] if len(tokens) > 1 else None

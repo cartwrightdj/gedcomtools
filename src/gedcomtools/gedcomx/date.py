@@ -21,7 +21,7 @@ from pydantic import model_validator
 from .gx_base import GedcomXModel
 
 try:
-    import dateparser
+    import dateparser  # type: ignore[import-untyped]
 except ImportError:
     dateparser = None
 
@@ -75,7 +75,7 @@ class Date(GedcomXModel):
 # GedcomX Date Format parsing (unchanged from original)
 # ---------------------------------------------------------------------------
 
-def parse_to_gedcomx_date(s: str) -> str:
+def parse_to_gedcomx_date(s: str) -> str | None:
     """Parse a natural-language or standard date string into a GedcomX formal date string.
 
     Handles approximate prefixes (``abt``, ``circa``), range expressions

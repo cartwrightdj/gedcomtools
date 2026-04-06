@@ -7,6 +7,8 @@
 
  Created: 2026-03-16
  Updated: 2026-03-24 — added g5→g7 conversion; --on-unknown drop|convert flag
+          2026-04-03 — added comment explaining errors="replace" is intentional
+                        in _sniff_source_type (ASCII-only VERS tag inspection)
 ======================================================================
 """
 
@@ -59,6 +61,8 @@ def _sniff_source_type(path: Path) -> str:
     # GEDCOM line-based file — sniff VERS tag
     if suffix in (".ged", ".gedcom", ""):
         try:
+            # errors="replace" is intentional: we only inspect ASCII VERS/HEAD
+            # tags here, so replacement characters cannot affect the result.
             with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
                 for line in f:
                     line = line.strip()

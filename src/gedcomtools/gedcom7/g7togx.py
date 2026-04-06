@@ -145,15 +145,16 @@ class Gedcom7Converter(GxConverterBase):
     # Public entry point
     # ------------------------------------------------------------------
 
-    def convert(self, gedcom7: "Gedcom7") -> "GedcomX":
-        """Convert *gedcom7* and return a populated :class:`GedcomX`.
+    def convert(self, source: "Gedcom7") -> "GedcomX":  # type: ignore[override]
+        """Convert *source* and return a populated :class:`GedcomX`.
 
         Args:
-            gedcom7: A loaded :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance.
+            source: A loaded :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance.
 
         Returns:
             A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
         """
+        gedcom7 = source
         from ..gedcomx.gedcomx import GedcomX
         gx = GedcomX()
         self._gx = gx
@@ -357,7 +358,7 @@ class Gedcom7Converter(GxConverterBase):
             uid_val = d.uid if d.uid.startswith("urn:") else f"urn:uuid:{d.uid}"
             sd.add_identifier(Identifier(
                 type=IdentifierType.Persistent,  # type: ignore[attr-defined]
-                values=[URI(value=uid_val)],
+                values=[URI(target=uid_val)],  # type: ignore[call-arg]
             ))
 
     def _convert_snote(self, d) -> None:

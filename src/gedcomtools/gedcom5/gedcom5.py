@@ -28,6 +28,7 @@
  Updated: 2026-03-31 — URL support in __init__ and load_url(); .ged extension check
  Updated: 2026-04-01 — use RelationshipCacheMixin; replace _rel_cache
                         direct access with _cache_get/_cache_set/_cache_clear
+ Updated: 2026-04-03 — _is_url/_check_ged_url moved to utils.Utilities; import from there
 ======================================================================
 """
 
@@ -37,22 +38,9 @@ from pathlib import Path
 from typing import List, Optional, Union
 import io
 import urllib.error
-import urllib.parse
 import urllib.request
 
-
-def _is_url(s: str) -> bool:
-    """Return True if *s* looks like an HTTP/HTTPS URL."""
-    return s.startswith(("http://", "https://"))
-
-
-def _check_ged_url(url: str) -> None:
-    """Raise :class:`ValueError` if the URL path does not end in ``.ged``."""
-    path = urllib.parse.urlparse(url).path
-    if Path(path).suffix.lower() != ".ged":
-        raise ValueError(
-            f"URL does not point to a .ged file: {url!r}"
-        )
+from ..utils.Utilities import _is_url, _check_ged_url
 
 from .elements import (
     FamilyRecord,

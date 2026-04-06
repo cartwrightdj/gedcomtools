@@ -428,7 +428,6 @@ New test modules added this release:
 - ✅ Correct `Agent.__eq__` — person-reference priority with name-overlap fallback
 - ✅ ~1145 tests, 0 failures
 - 🔧 GEDCOM X → GEDCOM 7 converter — planned
-- 🔧 Graph database export (ArangoDB) — in progress
 
 ---
 
@@ -693,7 +692,6 @@ Set `GEDCOMTOOLS_DEBUG=1` in your environment to enable debug output.
 - [ ] GEDCOM X → GEDCOM 7 converter
 - [ ] JSON-LD export
 - [ ] RAG pipeline integration
-- [ ] Graph database export (ArangoDB)
 
 ---
 

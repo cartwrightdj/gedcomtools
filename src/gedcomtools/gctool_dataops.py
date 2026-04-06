@@ -5,6 +5,10 @@
  File:    gctool_dataops.py
  Purpose: merge/diff/repair/export helpers + commands
  Created: 2026-04-01 — split from gctool.py
+ Updated: 2026-04-03 — re.IGNORECASE on xref pattern; log warning on set_value failure
+ Updated: 2026-04-03 — import GedcomFile protocol; type _alloc_xref_remap parameters
+ Updated: 2026-04-03 — _parse_g5_blocks and G5 merge read: binary decode with
+                        log.warning on non-UTF-8 bytes instead of silent replace
 ======================================================================
 """
 
@@ -17,6 +21,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
@@ -53,7 +58,7 @@ def _norm_date_str(s: str) -> str:
     return " ".join(p.upper() if p.upper() in _MONTH_ABBREVS else p for p in parts)
 
 
-def _alloc_xref_remap(obj1: Any, obj2: Any, fmt1: str, fmt2: str) -> Dict[str, str]:
+def _alloc_xref_remap(obj1: GedcomFile, obj2: GedcomFile, fmt1: str, fmt2: str) -> Dict[str, str]:
     """Build old-xref → new-xref mapping for every record in obj2 safe for obj1."""
     xrefs1: set = set()
     if fmt1 == "g7":
@@ -66,7 +71,7 @@ def _alloc_xref_remap(obj1: Any, obj2: Any, fmt1: str, fmt2: str) -> Dict[str, s
             if xr:
                 xrefs1.add(xr.upper())
 
-    pat = re.compile(r"^@([A-Z_]+)(\d+)@$")
+    pat = re.compile(r"^@([A-Z_]+)(\d+)@$", re.IGNORECASE)
     max_idx: Dict[str, int] = {}
     for x in xrefs1:
         m = pat.match(x)
@@ -129,17 +134,23 @@ def _clone_g7_node(
 
 def _parse_g5_blocks(path: Path) -> List[Tuple[str, str, str]]:
     """Parse a G5 file into [(xref, tag, raw_text), …] for every level-0 record."""
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("utf-8-sig", errors="replace")
+        count = text.count("\ufffd")
+        log.warning("{}: {} byte(s) could not be decoded as UTF-8 and were replaced — merged data may be incomplete", path.name, count)
+
     blocks: List[List[str]] = []
     cur: List[str] = []
-    with open(path, encoding="utf-8", errors="replace") as f:
-        for line in f:
-            line = line.rstrip("\r\n")
-            if line.startswith("0 "):
-                if cur:
-                    blocks.append(cur)
-                cur = [line]
-            elif cur:
-                cur.append(line)
+    for line in text.splitlines():
+        if line.startswith("0 "):
+            if cur:
+                blocks.append(cur)
+            cur = [line]
+        elif cur:
+            cur.append(line)
     if cur:
         blocks.append(cur)
 
@@ -228,8 +239,8 @@ def _repair_walk_g5(el: Any, counts: Dict[str, int]) -> None:
     if new_val != val:
         try:
             el.set_value(new_val)
-        except (AttributeError, TypeError):
-            pass
+        except (AttributeError, TypeError) as exc:
+            log.warning("repair: set_value failed on {} element (fix not applied): {}", tag, exc)
 
     try:
         children = el.get_child_elements()
@@ -576,13 +587,19 @@ def cmd_merge(args) -> int:
 
     else:  # g5 text-based merge
         # read file1 text, strip TRLR
+        _f1_path = Path(args.file1)
+        _f1_raw = _f1_path.read_bytes()
+        try:
+            _f1_text = _f1_raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            _f1_text = _f1_raw.decode("utf-8-sig", errors="replace")
+            _count = _f1_text.count("\ufffd")
+            log.warning("{}: {} byte(s) could not be decoded as UTF-8 and were replaced — merged data may be incomplete", _f1_path.name, _count)
         f1_lines: List[str] = []
-        with open(Path(args.file1), encoding="utf-8", errors="replace") as f:
-            for line in f:
-                stripped = line.rstrip("\r\n")
-                if stripped.strip() == "0 TRLR":
-                    break
-                f1_lines.append(stripped)
+        for line in _f1_text.splitlines():
+            if line.strip() == "0 TRLR":
+                break
+            f1_lines.append(line)
 
         # collect new blocks from file2
         blocks2 = _parse_g5_blocks(Path(args.file2))

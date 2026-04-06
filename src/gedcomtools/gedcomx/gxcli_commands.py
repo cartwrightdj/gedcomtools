@@ -8,6 +8,7 @@ from __future__ import annotations
 #  Purpose: All _cmd_* Shell methods as mixin classes.
 #           Import order: gxcli_core assembles Shell from these mixins.
 #  Created: 2026-03-31 — split from gxcli.py
+#  Updated: 2026-04-03 — _is_url moved to utils.Utilities; removed _LoadMixin._is_url staticmethod
 # ======================================================================
 import inspect
 import json
@@ -29,8 +30,8 @@ from gedcomtools.gedcomx import GedcomConverter, GedcomX
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.cli import write_jsonl
-from gedcomtools.gedcomx.arango import make_arango_graph_files
 from gedcomtools.glog import get_logger, LoggerSpec
+from gedcomtools.utils.Utilities import _is_url
 
 from gedcomtools.gedcomx.gxcli_output import (
     ANSI,
@@ -209,7 +210,7 @@ class _InfoMixin:
         """
         history [N]   Show last N commands (default 20). Requires readline.
         """
-        if not _READLINE:
+        if _readline is None:
             print("Command history not available (readline not installed).")
             return
         try:
@@ -436,7 +437,7 @@ class _InfoMixin:
             if entry.status == PluginStatus.LOADED:
                 mod = sys.modules.get(entry.name) or sys.modules.get(src)
                 if mod and getattr(mod, "__file__", None):
-                    return mod.__file__
+                    return mod.__file__ or src
             if src and not src.startswith(("http://", "https://", "/", ".", os.sep)):
                 return _resolve_module_path(src)
             return src
@@ -1230,14 +1231,10 @@ class _NavMixin:
 class _LoadMixin:
     """Mixin for load/extend/url commands."""
 
-    @staticmethod
-    def _is_url(s: str) -> bool:
-        return s.startswith("http://") or s.startswith("https://")
-
     def _dispatch_load(self, src: str) -> Any:
         """Resolve *src* (path or URL) to a GedcomX object and return it."""
         low = src.lower().split("?")[0]
-        is_url = self._is_url(src)
+        is_url = _is_url(src)
 
         if low.endswith(".ged"):
             print("Loading GEDCOM (size may affect time)…")
@@ -1714,13 +1711,13 @@ class _DataMixin:
             print(f"\n  {cname}: {total_a} current / {total_b} other")
             if added:
                 print(f"    + {len(added)} added in other")
-                for oid in sorted(added)[:5]:
+                for oid in sorted(x for x in added if x is not None)[:5]:
                     print(f"        {oid}")
                 if len(added) > 5:
                     print(f"        … and {len(added) - 5} more")
             if removed:
                 print(f"    - {len(removed)} only in current")
-                for oid in sorted(removed)[:5]:
+                for oid in sorted(x for x in removed if x is not None)[:5]:
                     print(f"        {oid}")
                 if len(removed) > 5:
                     print(f"        … and {len(removed) - 5} more")
@@ -2419,10 +2416,9 @@ class _DataMixin:
         write gx PATH      Write current root as GEDCOM-X JSON.
         write zip PATH     Write current root as a GEDCOM-X ZIP archive.
         write jsonl PATH   Write current node as JSON-L.
-        write adbg DIR     Write ArangoDB graph files.
         """
-        if len(args) < 2 or args[0] not in ["gx", "zip", "adbg", "jsonl"]:
-            print("usage: write FORMAT[gx | zip | adbg | jsonl] PATH")
+        if len(args) < 2 or args[0] not in ["gx", "zip", "jsonl"]:
+            print("usage: write FORMAT[gx | zip | jsonl] PATH")
             return None
         if args[0] == "zip":
             from gedcomtools.gedcomx.zip import GedcomZip
@@ -2450,27 +2446,6 @@ class _DataMixin:
             if self.cur is not None:  # type: ignore[attr-defined]
                 path = Path(args[1].strip('"').strip("'"))
                 return write_jsonl(self.cur, Path(path))  # type: ignore[attr-defined]
-            print("usage: write FORMAT[gx | adbg | jsonl] PATH")
+            print("usage: write FORMAT[gx | jsonl] PATH")
             return None
-        elif args[0] == "adbg":
-            if args[1]:
-                argo_graph_files_folder = Path(args[1])
-                argo_graph_files_folder.mkdir(parents=True, exist_ok=True)
-                print('Writing Argo Graph Files')
-                if self.root is None:  # type: ignore[attr-defined]
-                    print("No data loaded.")
-                    return None
-                file_specs = make_arango_graph_files(self.root)  # type: ignore[attr-defined]
-                persons_file = argo_graph_files_folder / 'persons.jsonl'
-                with persons_file.open("w", encoding="utf-8") as f:
-                    for line in file_specs['persons']:
-                        print('Writing Person')
-                        f.write(json.dumps(line))
-                        f.write("\n")
-                persons_to_file = argo_graph_files_folder / 'person_to_person.jsonl'
-                with persons_to_file.open("w", encoding="utf-8") as f:
-                    for line in file_specs['relationships']:
-                        print('Writing Relationship')
-                        f.write(json.dumps(line))
-                        f.write("\n")
         return None

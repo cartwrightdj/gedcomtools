@@ -516,7 +516,7 @@ _RULES.update({
 # ---------------------------------------------------------------------------
 
 # Maps GEDCOM tag at level 0 → rule key in _RULES
-TOP_LEVEL_TAG_TO_RULE: Dict[str, str] = {
+TOP_LEVEL_TAG_TO_RULE: Dict[str, Optional[str]] = {
     "HEAD":  "HEAD",
     "INDI":  "INDI_RECORD",
     "FAM":   "FAM_RECORD",

@@ -119,6 +119,8 @@ class Shell(_NavMixin, _LoadMixin, _AhnenMixin, _DataMixin, _InfoMixin, _SchemaM
         """Return a readline-compatible completer function."""
         def completer(text: str, state: int):
             try:
+                if _readline is None:
+                    return None
                 line = _readline.get_line_buffer()
                 before = line[:_readline.get_begidx()]
                 try:
@@ -172,7 +174,7 @@ class Shell(_NavMixin, _LoadMixin, _AhnenMixin, _DataMixin, _InfoMixin, _SchemaM
             _gxcli_output_module._RESET = ""
 
         # Set up readline (tab completion + persistent history) for interactive sessions.
-        if self._interactive and _READLINE:
+        if self._interactive and _readline is not None:
             try:
                 _readline.set_history_length(self._settings.get("history_size", 200))
                 _HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -184,7 +186,7 @@ class Shell(_NavMixin, _LoadMixin, _AhnenMixin, _DataMixin, _InfoMixin, _SchemaM
                 _readline.set_completer_delims(" \t\n")
                 _readline.parse_and_bind("tab: complete")
                 import atexit as _atexit
-                _atexit.register(lambda: _readline.write_history_file(str(_HISTORY_PATH)))
+                _atexit.register(lambda rl=_readline: rl.write_history_file(str(_HISTORY_PATH)))
             except (ImportError, OSError, AttributeError):
                 pass
 

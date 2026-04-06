@@ -29,6 +29,7 @@ from .conclusion import Conclusion
 from .date import Date
 from .place_reference import PlaceReference
 from .resource import Resource
+from .uri import URI
 from .subject import Subject
 
 
@@ -68,7 +69,7 @@ class EventRole(Conclusion):
         if isinstance(v, dict):
             return Resource.model_validate(v)
         if isinstance(v, str):
-            return Resource(resource=v)
+            return Resource(resource=URI(target=v))  # type: ignore[call-arg]
         return v
 
     def _validate_self(self, result) -> None:

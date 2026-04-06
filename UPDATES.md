@@ -4,6 +4,176 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## Code quality fixes: circular imports, conversion warnings, encoding (2026-04-03d)
+
+### Fix 9 — Remove redundant `model_rebuild()` calls from `gedcomx/__init__.py`
+
+`__init__.py` called `EventRole.model_rebuild()`, `Relationship.model_rebuild()`, and
+`Person.model_rebuild()` at the end of its import block as "belt-and-suspenders".  These
+were redundant: `event.py` and `relationship.py` each perform their own rebuild (with the
+correct `_types_namespace`) at module load time via a deferred import of `person.py`.
+Since `person.py` does not import either module, the deferred imports are safe for any
+import path.  The three redundant calls are removed and replaced with a comment
+documenting where the rebuilds live and why.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/__init__.py` | Removed 3 redundant `model_rebuild()` calls; added explanatory comment |
+
+### Fix 10 — `GedcomX.conversion_warnings` property
+
+Both converters (`GedcomConverter` and `Gedcom7Converter`) already populate
+`gx._import_unhandled_tags` — a dict of GEDCOM tags that had no handler during conversion
+(i.e. potential data loss).  However, the attribute was private and undocumented, giving
+callers no supported way to check whether conversion was clean.
+
+Added a public `conversion_warnings` property to `GedcomX` that returns a copy of that
+dict with a docstring explaining the semantics.  Callers can now do:
+
+```python
+gx = converter.convert(source)
+if gx.conversion_warnings:
+    print("Skipped tags:", gx.conversion_warnings)
+```
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | Added `conversion_warnings` property |
+
+### Fix 12 — `TypeCollection.append()` rollback guard
+
+`_items.append(item)` ran before `_update_indexes(item)` with no cleanup on failure.
+If `_update_indexes` raised, the item would be present in `_items` with no index entry,
+leaving the collection in an inconsistent state.  A `try/except` now wraps the index
+update and pops the item from `_items` before re-raising if anything goes wrong.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | `TypeCollection.append()`: rollback guard on `_update_indexes` |
+
+### Fix 11 — Logged warnings on non-UTF-8 bytes in data reads
+
+`_parse_g5_blocks()` and the G5 merge file read in `gctool_dataops.py` used
+`open(..., errors="replace")`, silently substituting U+FFFD for any byte that was not
+valid UTF-8.  Users had no indication that their genealogy data was corrupted during a
+merge or diff operation.
+
+Both reads are replaced with a binary `read_bytes()` / `decode("utf-8-sig")` pattern.
+A `UnicodeDecodeError` falls back to `errors="replace"` **and** emits a `log.warning`
+with the file name and count of replaced bytes.
+
+The two sniff-only reads in `cli.py` and `gctool_load.py` retain `errors="replace"` (they
+inspect only ASCII VERS/HEAD tags; replacement characters cannot affect the result) but now
+carry an explanatory comment.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_dataops.py` | `_parse_g5_blocks`: binary read + `log.warning` on decode error; G5 merge read: same treatment |
+| `src/gedcomtools/cli.py` | Added comment explaining `errors="replace"` is intentional in `_sniff_source_type` |
+| `src/gedcomtools/gctool_load.py` | Added comment explaining `errors="replace"` is intentional in `_sniff` |
+
+---
+
+## GedcomFile / GedcomNode protocols (2026-04-03c)
+
+Added `gedcom_protocol.py` with two structural typing protocols.
+
+### `GedcomFile`
+Defines the full public API shared by `Gedcom5` and `Gedcom7` — version
+detection, validation, raw record accessors, detail model accessors, and
+relationship traversal.  Neither class needs to change; structural subtyping
+means they satisfy the protocol automatically.
+
+`_load()` and `_load_url()` in `gctool_load.py` now return
+`Tuple[str, GedcomFile]` instead of `Tuple[str, Any]`, so pyright/mypy can
+flag missing methods on any new format class at analysis time.
+
+### `GedcomNode`
+Minimal protocol covering only the `tag: str` attribute — the one field
+shared safely by `GedcomStructure` (G7) and `Element` (G5).  Accompanies
+a docstring explaining why the extended interfaces differ and how to handle
+format-specific behaviour.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom_protocol.py` | New — `GedcomFile` and `GedcomNode` protocols |
+| `src/gedcomtools/gctool_load.py` | Return type `Tuple[str, GedcomFile]` |
+| `src/gedcomtools/gctool_commands.py` | Import `GedcomFile` |
+| `src/gedcomtools/gctool_dataops.py` | Import `GedcomFile`; type `_alloc_xref_remap` params |
+
+---
+
+## Code quality fixes: xref regex, repair warning, version lookup (2026-04-03b)
+
+### Fix 6 — Xref regex: add `re.IGNORECASE`
+`_alloc_xref_remap` used `r"^@([A-Z_]+)(\d+)@$"` without `IGNORECASE`.  Xrefs
+are uppercased before matching, but adding the flag makes the intent explicit
+and guards against future callers that skip normalisation.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_dataops.py` | `re.compile(..., re.IGNORECASE)` |
+
+### Fix 7 — Silent data loss in `_repair_walk_g5`
+When `el.set_value(new_val)` raised `AttributeError` or `TypeError`, the fix
+was silently discarded while its counter had already been incremented — the
+repair reported success but made no change.  The bare `pass` is replaced with
+a `log.warning` so the user can see which elements could not be repaired.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_dataops.py` | `except ... pass` → `log.warning(...)` |
+
+### Fix 8 — `NameError` in `_package_version`
+`except importlib.metadata.PackageNotFoundError` referenced `importlib.metadata`
+which was not in scope after a `from importlib.metadata import version` import —
+raising a `NameError` instead of gracefully falling through to the TOML fallback.
+Fixed by importing `PackageNotFoundError` explicitly alongside `version`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_commands.py` | `from importlib.metadata import version, PackageNotFoundError` |
+
+---
+
+## Code quality fixes: shared URL utils, temp-file safety, narrow excepts (2026-04-03)
+
+### Fix 1 — Deduplicate `_is_url` / `_check_ged_url`
+Both helpers were copy-pasted across six files.  Moved to
+`utils/Utilities.py` as the single canonical source; all callers now import
+from there.  `utils/__init__.py` created to make the package importable.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/utils/Utilities.py` | Added `_is_url`, `_check_ged_url` |
+| `src/gedcomtools/utils/__init__.py` | New — package marker |
+| `src/gedcomtools/gctool_load.py` | Import from utils; removed local copy |
+| `src/gedcomtools/gedcom7/gedcom7.py` | Import from utils; removed local copies |
+| `src/gedcomtools/gedcom5/gedcom5.py` | Import from utils; removed local copies |
+| `src/gedcomtools/gedcom7/g7cli.py` | Import from utils; removed `Shell._is_url` staticmethod |
+| `src/gedcomtools/gedcomx/extensible.py` | Import from utils; removed local copy |
+| `src/gedcomtools/gedcomx/gxcli_commands.py` | Import from utils; removed `_LoadMixin._is_url` staticmethod |
+
+### Fix 3 — Temp-file safety in `gctool_load._load_url`
+Replaced `mkstemp` + `os.fdopen` with `NamedTemporaryFile(delete=False)`.
+The old code could leak the raw file descriptor if `os.fdopen` raised before
+taking ownership of `fd`.  The new form is atomic and obviously correct.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_load.py` | `_load_url`: `mkstemp` → `NamedTemporaryFile(delete=False)` |
+
+### Fix 4 — Narrow bare `except Exception` in `schemas.py`
+Three broad `except Exception` clauses replaced with specific types.
+
+| Location | Old | New |
+|----------|-----|-----|
+| `schemas.py:24` — `Annotated` import guard | `except Exception` | `except ImportError` |
+| `schemas.py:292` — `get_type_hints` class fallback | `except Exception` | `except (NameError, AttributeError, TypeError)` |
+| `schemas.py:311` — `get_type_hints` init fallback | `except Exception` | `except (NameError, AttributeError, TypeError)` |
+
+---
+
 ## RelationshipCacheMixin + gctool.py split (2026-04-01)
 
 ### Issue 1 — RelationshipCacheMixin

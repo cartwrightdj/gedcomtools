@@ -241,7 +241,7 @@ class GedcomConverter(GxConverterBase):
 
     # Maps GEDCOM5 OBJE TYPE values to GedcomX ResourceType.
     # Unrecognised values are stored as a description on the SourceDescription.
-    _obje_type_resource_map: dict[str, object] = {
+    _obje_type_resource_map: dict[str, ResourceType] = {
         "image":      ResourceType.DigitalArtifact,
         "photo":      ResourceType.DigitalArtifact,
         "video":      ResourceType.DigitalArtifact,
@@ -500,7 +500,7 @@ class GedcomConverter(GxConverterBase):
 
         # Accept either a Gedcom5 facade or a raw Gedcom5x parser.
         if hasattr(gedcom5x, "_parser"):
-            gedcom5x = gedcom5x._parser
+            gedcom5x = gedcom5x._parser  # type: ignore[attr-defined]
 
         log.debug("Priming top-level IDs")
         for obj in gedcom5x.objects:
@@ -1360,7 +1360,7 @@ class GedcomConverter(GxConverterBase):
             uris = re.findall(r'https?://\S+|ftp://\S+', text)
             for uri_str in uris:
                 agent.add_identifier(Identifier(
-                    type=IdentifierType.Other,
+                    type=IdentifierType.Other,  # type: ignore[attr-defined]
                     values=[URI.from_url(uri_str)],
                 ))
             remaining = re.sub(r'https?://\S+|ftp://\S+', '', text).strip()
@@ -1417,7 +1417,7 @@ class GedcomConverter(GxConverterBase):
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from Object {record.tag} {record.describe()}")
-                gxobject = SourceDescription(id=record.xref if record.xref else None)
+                gxobject = SourceDescription(id=record.xref if record.xref else None)  # type: ignore[arg-type]
                 self.object_map[record.level-1].add_source_description(gxobject)
                 gxobject = ObjectParsingContainer(source=gxobject)
             else:
@@ -1468,7 +1468,7 @@ class GedcomConverter(GxConverterBase):
 
             gx_object = PlaceReference(
                 original=record.value,
-                descriptionRef=gx_object,
+                description=gx_object,
             )
             self.object_map[record.level - 1].place = gx_object
             self.object_map[record.level] = gx_object
@@ -1478,11 +1478,11 @@ class GedcomConverter(GxConverterBase):
         elif isinstance(self.object_map[record.level-1], Fact):
             existing_place = self.gedcomx.places.by_name(record.value)
             if existing_place:
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, descriptionRef=existing_place[0])
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=existing_place[0])
             else:
                 place_des = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place_des)
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, descriptionRef=place_des)
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place_des)
             self.object_map[record.level] = self.object_map[record.level-1].place
         elif isinstance(self.object_map[record.level-1], SourceDescription):
             if (place := self.gedcomx.places.by_name(record.value)) is not None:
@@ -1490,7 +1490,7 @@ class GedcomConverter(GxConverterBase):
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place)
-                self.object_map[record.level-1].place = PlaceReference(original=record.value, descriptionRef=place)
+                self.object_map[record.level-1].place = PlaceReference(original=record.value, description=place)
             gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
             self.object_map[record.level-1].add_note(gxobject)
 
@@ -1499,11 +1499,11 @@ class GedcomConverter(GxConverterBase):
             existing = self.gedcomx.places.by_name(record.value)
             if existing:
                 place = existing[0] if isinstance(existing, list) else existing
-                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, descriptionRef=place)
+                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
             else:
                 place = PlaceDescription(names=[TextValue(value=record.value)])
                 self.gedcomx.add_place_description(place)
-                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, descriptionRef=place)
+                self.object_map[record.level-1].sourceDescription.place = PlaceReference(original=record.value, description=place)
             gxobject = Note(text='Place: ' + record.value if record.value else 'WARNING: NOTE had no value')
             self.object_map[record.level-1].sourceDescription.add_note(gxobject)
             self.object_map[record.level] = place
@@ -1636,7 +1636,7 @@ class GedcomConverter(GxConverterBase):
             if (gxobject := self.gedcomx.sourceDescriptions.by_id(record.xref)) is None:
                 log.debug(f"SourceDescription with id: {record.xref} was not found. Creating a new SourceDescription")
                 log.debug(f"Creating SourceDescription from {record.tag} {record.describe()}")
-                gxobject = SourceDescription(id=record.xref if record.xref else None)
+                gxobject = SourceDescription(id=record.xref if record.xref else None)  # type: ignore[arg-type]
                 self.object_map[record.level-1].add_source_description(gxobject)
 
             else:
@@ -1821,10 +1821,10 @@ class GedcomConverter(GxConverterBase):
             if not parent_obj.type:
                 parent_obj.type = FactType.guess(record.value)
         elif isinstance(parent_obj, Identifier):
-            parent_obj.values.append(self.clean_str(record.value))
+            parent_obj.values.append(self.clean_str(record.value))  # type: ignore[arg-type]
             parent_obj.type = IdentifierType.Other  # type: ignore
         elif isinstance(parent_obj, Document):
-            parent_obj.values.append(self.clean_str(record.value))
+            parent_obj.values.append(self.clean_str(record.value))  # type: ignore[attr-defined]
             parent_obj.type = IdentifierType.Other  # type: ignore
         elif isinstance(parent_obj, ObjectParsingContainer):
             container = parent_obj
