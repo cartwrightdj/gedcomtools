@@ -5,6 +5,9 @@
 #  Author:  David J. Cartwright
 #  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
 #  Created: 2026-01-01
+#  Updated: 2026-04-06 — detect UTF-8/UTF-16 BOMs and decode the full byte
+#                         stream before splitting lines so UTF-16 GEDCOM 5
+#                         files load through the normal facade and CLI paths
 # ======================================================================
 """Parse GEDCOM 5.x files into the project’s element tree representation."""
 
@@ -212,9 +215,12 @@ class Gedcom5x:
             0: None, 1: None, 2: None, 3: None, 4: None, 5: None,
         }
 
+        raw = gedcom_stream.read()
+        encoding = self.__detect_encoding(raw)
+        text = raw.decode(encoding)
         line_number = 1
-        for line in gedcom_stream:
-            element = self.__parse_line(line_number, line.decode('utf-8-sig'), strict, self.violations)
+        for line in text.splitlines(keepends=True):
+            element = self.__parse_line(line_number, line, strict, self.violations)
             element._line_num = line_number
 
             if isinstance(element, HeaderRecord):
@@ -239,6 +245,25 @@ class Gedcom5x:
             if parent is not None:
                 parent.add_child_element(element)
             line_number += 1
+
+    @staticmethod
+    def __detect_encoding(raw: bytes) -> str:
+        """Detect the text encoding for a GEDCOM 5.x byte stream.
+
+        GEDCOM 5 files are commonly UTF-8, but official sample data also
+        appears in UTF-16 with a BOM. Detect the BOM once up front so the
+        normal facade and CLI paths can parse those files without special
+        caller-side handling.
+        """
+        head = raw[:4]
+
+        if head.startswith(b"\xff\xfe"):
+            return "utf-16"
+        if head.startswith(b"\xfe\xff"):
+            return "utf-16"
+        if head.startswith(b"\xef\xbb\xbf"):
+            return "utf-8-sig"
+        return "utf-8-sig"
 
     @staticmethod
     def __parse_line(line_number: int, line: str, strict: bool = True, violations: list | None = None) -> Element:

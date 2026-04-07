@@ -25,6 +25,15 @@ from .resource import Resource
 from .subject import Subject
 from .textvalue import TextValue
 from .uri import URI
+from .extensible_enum import ExtensibleEnum
+
+
+
+class PlaceDescriptionType(ExtensibleEnum):
+    pass
+PlaceDescriptionType.register("Address", "http://gedcomtools.org/Primary")
+#TODO Develop & Correlate iwth GEDCOM5/7 Place Building
+
 
 
 class PlaceDescription(Subject):

@@ -4,6 +4,81 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## GEDCOM 5 UTF-16 facade/CLI support (2026-04-06)
+
+### Fix 13 — Parse UTF-16 GEDCOM 5 files through the normal loader path
+
+`Gedcom5x.parse()` decoded each binary line as UTF-8, which worked for UTF-8
+input but failed on the official UTF-16 GEDCOM 5 sample files.  The parser now
+detects a UTF-8/UTF-16 BOM from the raw bytes, decodes the full byte stream
+once, and then splits into text lines before feeding `__parse_line()`.  This
+fixes the normal `Gedcom5(...)`, `gctool`, and `gedcomtools convert` paths for
+UTF-16 GEDCOM 5 input.
+
+### Regression coverage
+
+The GEDCOM 5 official-sample tests now exercise the high-level `Gedcom5`
+facade against the UTF-16 LE and BE fixtures instead of skipping them, and the
+CLI suite now includes a `g5 -> gx` conversion test using the UTF-16 LE sample.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom5/parser.py` | BOM-based UTF-8/UTF-16 detection; decode full stream before line splitting |
+| `tests/gedcom5/test_gedcom5_official.py` | Expanded `Gedcom5` facade coverage to UTF-16 LE/BE samples |
+| `tests/test_cli.py` | Added UTF-16 GEDCOM 5 CLI conversion regression test |
+
+---
+
+## gctool interactive URL sessions use in-memory objects (2026-04-06)
+
+### Fix 14 — `load URL` no longer breaks `info`/`validate`/`list`/`show`/`find`/`tree`/`stats`
+
+`gctool interactive` stored a display-only basename after `load URL` and then
+reused the normal file-based command handlers.  Read-only REPL commands like
+`info` and `show` would therefore try to reopen a nonexistent local file such
+as `family.ged`, even though the remote GEDCOM had already been downloaded and
+parsed successfully.
+
+The REPL now renders those read-only commands directly from the in-memory
+`Gedcom5`/`Gedcom7` object.  File-based operations (`merge`, `diff`, `export`,
+`repair`) remain path-based and now print a clear message when invoked from a
+URL-backed session.
+
+### Regression coverage
+
+Added an interactive regression test that simulates `load https://.../family.ged`
+followed by `info` and fails if the REPL tries to call `_load()` again.
+
+Follow-up hardening: URL-backed sessions are now tracked explicitly instead of
+inferring from `path.exists()`. This prevents `merge`/`diff`/`export`/`repair`
+from silently operating on an unrelated same-named local file such as
+`family.ged` in the current working directory.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gctool_interactive.py` | In-memory REPL render helpers for read-only commands; explicit URL-session tracking for path-required operations |
+| `tests/test_gctool.py` | Added `load URL` interactive regression tests for `info` and blocked `diff` |
+
+---
+
+## GedcomX polymorphic Group add support (2026-04-06)
+
+### Fix 15 — `GedcomX.add()` now accepts `Group`
+
+`GedcomX` already treated `groups` as a top-level collection for merge,
+serialization, deserialization, validation, and ZIP round-trips, but the
+generic `GedcomX.add()` dispatcher rejected `Group` objects outright. Added a
+dedicated `add_group()` method and wired `Group` into the polymorphic
+dispatcher so callers can use the same `gx.add(...)` entry point for groups as
+for persons, relationships, agents, events, and other top-level records.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | Added `add_group()` and `Group` support in `GedcomX.add()` |
+| `tests/test_gedcomx.py` | Added regression test for `gx.add(Group(...))` |
+
+---
+
 ## Code quality fixes: circular imports, conversion warnings, encoding (2026-04-03d)
 
 ### Fix 9 — Remove redundant `model_rebuild()` calls from `gedcomx/__init__.py`

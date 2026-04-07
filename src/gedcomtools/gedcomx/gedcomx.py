@@ -24,6 +24,9 @@ import orjson
 #                         _import_unhandled_tags for callers to detect data loss
 #                       — TypeCollection.append(): rollback guard wraps
 #                         _update_indexes so _items stays consistent on error
+#           2026-04-06 — add_group() and GedcomX.add(Group(...)) support so
+#                         Group is handled consistently with other top-level
+#                         collections
 # ======================================================================
 # GEDCOM Module Types
 from .agent import Agent
@@ -314,7 +317,7 @@ class GedcomX:
 
         Args:
             gedcomx_type_object: A Document, Person, SourceDescription, Agent,
-                PlaceDescription, Event, or Relationship instance.
+                PlaceDescription, Event, Relationship, or Group instance.
 
         Raises:
             ValueError: If the object type is not a recognised top-level type.
@@ -334,6 +337,8 @@ class GedcomX:
                 self.add_event(gedcomx_type_object)
             elif isinstance(gedcomx_type_object,Relationship):
                 self.add_relationship(gedcomx_type_object)
+            elif isinstance(gedcomx_type_object,Group):
+                self.add_group(gedcomx_type_object)
             else:
                 raise ValueError(f"I do not know how to add an Object of type {type(gedcomx_type_object)}")
         else:
@@ -494,6 +499,28 @@ class GedcomX:
             self.events.append(event_to_add)
         else:
             raise ValueError(f"event_to_add must be an Event instance, got {type(event_to_add).__name__}")
+
+    def add_group(self, group: Group):
+        """Add a Group to the genealogy, skipping duplicates by id.
+
+        Args:
+            group: The Group to add.
+
+        Returns:
+            False if a group with this id already exists (duplicate skipped);
+            None (implicit return) if the group was successfully added.
+
+        Raises:
+            ValueError: If the argument is not a Group.
+        """
+        if isinstance(group, Group) and group is not None:
+            if group.id is not None and self.groups.by_id(group.id) is not None:
+                return False
+            self.groups.append(group)
+            return None
+        raise ValueError(
+            f"group must be a Group instance, got {type(group).__name__}"
+        )
 
     def extend(self, gedcomx: 'GedcomX'):
         """Merge all top-level objects from another GedcomX instance into this one."""

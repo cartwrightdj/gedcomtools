@@ -8,6 +8,7 @@
  Created: 2026-03-16
  Updated: 2026-03-24 — updated g5→g7 tests (now supported);
                         added --on-unknown smoke tests
+          2026-04-06 — added UTF-16 GEDCOM 5 CLI conversion regression test
 ======================================================================
 """
 import json
@@ -107,6 +108,15 @@ class TestExitCodes:
         out = tmp_path / "out.json"
         result = run_cli("convert", str(ged_tiny), str(out), "-gx")
         assert result.returncode == OK
+
+    def test_successful_utf16_g5_to_gx(self, tmp_path):
+        source = Path(__file__).parent.parent / ".sample_data" / "gedcom5" / "gedcom5_sample_utf16le.ged"
+        if not source.exists():
+            pytest.skip(f"Pre-downloaded file not found: {source}")
+        out = tmp_path / "out_utf16.json"
+        result = run_cli("convert", str(source), str(out), "-gx")
+        assert result.returncode == OK
+        assert out.exists()
 
     def test_output_file_created(self, ged_tiny, tmp_path):
         out = tmp_path / "out.json"

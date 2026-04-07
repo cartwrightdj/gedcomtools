@@ -9,6 +9,9 @@
  Created: 2026-03-22
  Updated: 2026-03-24 — dispatch table refactor tests; merge/diff/
                         export/repair subcommand tests; g5→g7 convert
+          2026-04-06 — added REPL regression test for `load URL` followed
+                        by in-memory `info`, plus URL-session blocking for
+                        path-based commands even when a same-named local file exists
 ======================================================================
 """
 
@@ -259,6 +262,66 @@ class TestInfo:
     def test_real_g7_minimal(self):
         rc, out = _capture(["info", str(GED7_MINIMAL)])
         assert rc == 0
+
+
+# ---------------------------------------------------------------------------
+# interactive command
+# ---------------------------------------------------------------------------
+
+class TestInteractive:
+    def test_url_load_info_uses_in_memory_object(self, tmp_path):
+        sample = _make_g5(tmp_path)
+
+        from gedcomtools.gedcom5.gedcom5 import Gedcom5
+        from gedcomtools import gctool_interactive as mod
+
+        commands = iter([
+            "load https://example.com/family.ged",
+            "info",
+            "exit",
+        ])
+
+        buf = StringIO()
+        with patch.object(mod, "_is_url", side_effect=lambda s: s.startswith("http")), \
+             patch.object(mod, "_load_url", return_value=("g5", Gedcom5(str(sample)))), \
+             patch.object(mod, "_load", side_effect=AssertionError("interactive info should not reload path")), \
+             patch("builtins.input", side_effect=lambda _prompt: next(commands)), \
+             patch("sys.stdout", buf):
+            rc = mod.cmd_interactive(type("Args", (), {"file": None})())
+
+        out = buf.getvalue()
+        assert rc == 0
+        assert "family.ged" in out
+        assert "GEDCOM 5" in out
+
+    def test_url_load_diff_ignores_same_named_local_file(self, tmp_path, monkeypatch):
+        sample = _make_g5(tmp_path)
+        local_family = tmp_path / "family.ged"
+        other = tmp_path / "other.ged"
+        local_family.write_text("0 HEAD\n0 TRLR\n", encoding="utf-8")
+        other.write_text("0 HEAD\n0 TRLR\n", encoding="utf-8")
+
+        from gedcomtools.gedcom5.gedcom5 import Gedcom5
+        from gedcomtools import gctool_interactive as mod
+
+        commands = iter([
+            "load https://example.com/family.ged",
+            f"diff {other}",
+            "exit",
+        ])
+
+        buf = StringIO()
+        monkeypatch.chdir(tmp_path)
+        with patch.object(mod, "_is_url", side_effect=lambda s: s.startswith("http")), \
+             patch.object(mod, "_load_url", return_value=("g5", Gedcom5(str(sample)))), \
+             patch.object(mod, "cmd_diff", side_effect=AssertionError("diff should be blocked for URL-backed sessions")), \
+             patch("builtins.input", side_effect=lambda _prompt: next(commands)), \
+             patch("sys.stdout", buf):
+            rc = mod.cmd_interactive(type("Args", (), {"file": None})())
+
+        out = buf.getvalue()
+        assert rc == 0
+        assert "reload from disk" in out
 
 
 # ---------------------------------------------------------------------------

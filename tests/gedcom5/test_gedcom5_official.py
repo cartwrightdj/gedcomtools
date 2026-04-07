@@ -11,6 +11,10 @@ Two test strategies:
    the host is unreachable.
 
 Source: https://www.gedcom.org/samples.html
+
+Updated: 2026-04-06 — extend the high-level Gedcom5 facade coverage to the
+UTF-16 sample files now that the normal parser path handles BOM-detected
+UTF-16 input directly.
 """
 from __future__ import annotations
 
@@ -143,11 +147,7 @@ def test_local_has_header(filename):
     assert len(p.header) >= 1, f"{filename}: no header record found"
 
 
-@pytest.mark.parametrize(
-    "filename",
-    [f for f in LOCAL_SAMPLES if f not in UTF16_FILES],
-    ids=[f for f in LOCAL_SAMPLES if f not in UTF16_FILES],
-)
+@pytest.mark.parametrize("filename", LOCAL_SAMPLES, ids=LOCAL_SAMPLES)
 def test_local_gedcom5_facade(filename):
     """Gedcom5 high-level facade loads each file and detects version 5.5.5."""
     path = SAMPLE_DIR / filename

@@ -5,11 +5,16 @@
  File:    gctool_interactive.py
  Purpose: _attribution, _print_status, cmd_interactive, _INTERACTIVE_HELP
  Created: 2026-04-01 — split from gctool.py
+ Updated: 2026-04-06 — REPL read-only commands now operate on the already
+                       loaded in-memory object so `load URL` sessions no
+                       longer fail by trying to reopen a fake local path
+                       — track URL-backed sessions explicitly so path-based
+                         commands cannot accidentally target same-named local
+                         files in the working directory
 ======================================================================
 """
 
 from __future__ import annotations
-
 import shlex
 import sys
 from pathlib import Path
@@ -19,13 +24,13 @@ from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
 
-from .gctool_output import _bold, _cyan, _dim, _norm_xref, _yellow
-from .gctool_load import _is_url, _load, _load_url
-from .gctool_commands import (
-    cmd_find, cmd_info, cmd_list, cmd_show, cmd_stats, cmd_tree, cmd_validate,
+from .gctool_output import (
+    _bold, _cyan, _dim, _green, _kv, _norm_xref, _red, _table, _yellow,
 )
+from .gctool_load import _is_url, _load, _load_url
 from .gctool_examine import _Node, _run_examine
 from .gctool_dataops import cmd_diff, cmd_export, cmd_merge, cmd_repair
+from .gctool_commands import _LIST_TYPES
 
 
 _INTERACTIVE_HELP = """\
@@ -146,6 +151,360 @@ def _print_status(path: Optional[Path], fmt: Optional[str], obj: Optional[Any]) 
     print()
 
 
+def _record_counts(obj: Any) -> Dict[str, int]:
+    """Return top-level record counts for a loaded Gedcom5/Gedcom7 object."""
+    tag_method = {
+        "INDI": "individuals", "FAM": "families", "SOUR": "sources",
+        "REPO": "repositories", "OBJE": "media_objects", "SUBM": "submitters",
+        "SNOTE": "shared_notes",
+    }
+    counts: Dict[str, int] = {}
+    for tag, method in tag_method.items():
+        try:
+            items = getattr(obj, method)()
+            if items:
+                counts[tag] = len(items)
+        except (AttributeError, NotImplementedError):
+            pass
+    return counts
+
+
+def _show_info(path: Optional[Path], fmt: str, obj: Any) -> int:
+    """Print an in-memory equivalent of ``gctool info``."""
+    version = obj.detect_gedcom_version() or "unknown"
+    counts = _record_counts(obj)
+    print(f"File    : {path if path is not None else '(in-memory)'}")
+    print(f"Format  : GEDCOM {fmt[-1]}  (version {_bold(version)})")
+    print("Records :")
+    for tag, n in counts.items():
+        print(f"  {tag:<8} {_green(str(n))}")
+    return 0
+
+
+def _show_validate(obj: Any) -> int:
+    """Print an in-memory equivalent of ``gctool validate``."""
+    issues = obj.validate()
+    errors = [i for i in issues if i.severity == "error"]
+    warnings = [i for i in issues if i.severity == "warning"]
+
+    for w in warnings:
+        loc = f"line {w.line_num}" if w.line_num else "—"
+        tag = f" [{w.tag}]" if w.tag else ""
+        print(f"  {_yellow('warning')}  {loc}{tag}  {w.code}: {w.message}")
+    for e in errors:
+        loc = f"line {e.line_num}" if e.line_num else "—"
+        tag = f" [{e.tag}]" if e.tag else ""
+        print(f"  {_red('error')}    {loc}{tag}  {e.code}: {e.message}")
+
+    status = _red(f"{len(errors)} error(s)") if errors else _green("0 error(s)")
+    print(f"\n{status}, {_yellow(str(len(warnings)))} warning(s)")
+    return 1 if errors else 0
+
+
+def _show_list(fmt: str, obj: Any, rtype: str) -> int:
+    """Print an in-memory equivalent of ``gctool list``."""
+    if rtype == "indi":
+        rows = [
+            [d.xref, d.full_name, d.sex or "—",
+             str(d.birth_year or "—"), str(d.death_year or "—")]
+            for d in obj.individual_details()
+        ]
+        _table(["xref", "name", "sex", "born", "died"], rows)
+    elif rtype == "fam":
+        rows = [
+            [d.xref, d.husband_xref or "—", d.wife_xref or "—",
+             str(d.marriage_year or "—"), str(d.num_children)]
+            for d in obj.family_details()
+        ]
+        _table(["xref", "husband", "wife", "married", "children"], rows)
+    elif rtype == "sour":
+        rows = [[d.xref, d.title or "—", d.author or "—"] for d in obj.source_details()]
+        _table(["xref", "title", "author"], rows)
+    elif rtype == "repo":
+        rows = [[d.xref, d.name or "—", d.address or "—"] for d in obj.repository_details()]
+        _table(["xref", "name", "address"], rows)
+    elif rtype == "obje":
+        rows = [[d.xref, d.title or "—", str(len(d.files))] for d in obj.media_details()]
+        _table(["xref", "title", "files"], rows)
+    elif rtype == "subm":
+        rows = [[d.xref, d.name or "—"] for d in obj.submitter_details()]
+        _table(["xref", "name"], rows)
+    elif rtype == "snote":
+        if fmt == "g5":
+            print("error: SNOTE is a GEDCOM 7 feature.", file=sys.stderr)
+            return 1
+        rows = [
+            [d.xref, (d.text[:60] + "…") if len(d.text) > 60 else d.text]
+            for d in obj.shared_note_details()
+        ]
+        _table(["xref", "text"], rows)
+    else:
+        print(f"error: unknown type {rtype!r}. Choose: {', '.join(_LIST_TYPES)}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _show_record(fmt: str, obj: Any, xref: str) -> int:
+    """Print an in-memory equivalent of ``gctool show``."""
+    lookup = [
+        ("INDI", obj.get_individual_detail),
+        ("FAM",  obj.get_family_detail),
+        ("SOUR", obj.get_source_detail),
+        ("REPO", obj.get_repository_detail),
+        ("OBJE", obj.get_media_detail),
+        ("SUBM", obj.get_submitter_detail),
+    ]
+    if fmt == "g7":
+        lookup.append(("SNOTE", obj.get_shared_note_detail))
+
+    for tag, getter in lookup:
+        try:
+            detail = getter(xref)
+        except (AttributeError, KeyError, ValueError):
+            continue
+        if detail is None:
+            continue
+
+        d = detail
+        print(f"\n{_bold(tag)}  {_yellow(xref)}\n")
+        if tag == "INDI":
+            born = (f"{d.birth.date or '?'}  {d.birth.place or ''}".strip() if d.birth else None)
+            died = (f"{d.death.date or '?'}  {d.death.place or ''}".strip() if d.death else None)
+            pairs = [
+                ("xref", d.xref), ("name", d.full_name), ("sex", d.sex),
+                ("born", born), ("died", died),
+                ("occupation", d.occupation), ("title", d.title),
+                ("religion", d.religion), ("nationality", d.nationality),
+                ("family (child)", ", ".join(lnk.xref for lnk in d.families_as_child) or None),
+                ("family (spouse)", ", ".join(d.families_as_spouse) or None),
+                ("sources", len(d.source_citations) or None),
+                ("notes", len(d.note_texts) or None),
+                ("uid", d.uid), ("restriction", d.restriction),
+                ("last changed", d.last_changed),
+            ]
+        elif tag == "FAM":
+            married = (f"{d.marriage.date or '?'}  {d.marriage.place or ''}".strip()
+                       if d.marriage else None)
+            divorced = (f"{d.divorce.date or '?'}  {d.divorce.place or ''}".strip()
+                        if d.divorce else None)
+            pairs = [
+                ("xref", d.xref), ("husband", d.husband_xref),
+                ("wife", d.wife_xref), ("married", married), ("divorced", divorced),
+                ("children", ", ".join(d.children_xrefs) or None),
+                ("# children", d.num_children or None),
+                ("uid", d.uid), ("restriction", d.restriction),
+            ]
+        elif tag == "SOUR":
+            pairs = [
+                ("xref", d.xref), ("title", d.title), ("author", d.author),
+                ("publication", d.publication), ("abbreviation", d.abbreviation),
+                ("repositories", ", ".join(d.repository_refs) or None),
+                ("uid", d.uid), ("last changed", d.last_changed),
+            ]
+        elif tag == "REPO":
+            pairs = [
+                ("xref", d.xref), ("name", d.name), ("address", d.address),
+                ("phone", d.phone), ("email", d.email), ("website", d.website),
+                ("uid", d.uid), ("last changed", d.last_changed),
+            ]
+        elif tag == "OBJE":
+            pairs = [("xref", d.xref), ("title", d.title)]
+            for fp, form in d.files:
+                pairs.append(("file", f"{fp}  [{form}]" if form else fp))
+            pairs += [("uid", d.uid), ("last changed", d.last_changed)]
+        elif tag == "SUBM":
+            pairs = [
+                ("xref", d.xref), ("name", d.name), ("address", d.address),
+                ("phone", d.phone), ("email", d.email), ("website", d.website),
+                ("language", d.language), ("uid", d.uid),
+            ]
+        else:
+            text = d.text
+            pairs = [
+                ("xref", d.xref), ("mime", d.mime), ("language", d.language),
+                ("text", (text[:200] + "…") if len(text) > 200 else text),
+                ("uid", d.uid), ("last changed", d.last_changed),
+            ]
+        _kv(pairs)
+        return 0
+
+    print(f"error: record {xref!r} not found", file=sys.stderr)
+    return 1
+
+
+def _show_find(fmt: str, obj: Any, tag: str, payload_filter: Optional[str]) -> int:
+    """Print an in-memory equivalent of ``gctool find``."""
+    target = tag.upper()
+    results: List[Dict[str, Any]] = []
+
+    if fmt == "g7":
+        def _walk_g7(node: Any, record_label: str) -> None:
+            if node.tag == target:
+                payload = node.payload.replace("\n", "↵") if node.payload else ""
+                if payload_filter is None or payload_filter.lower() in payload.lower():
+                    results.append({
+                        "record": record_label,
+                        "path": node.get_path(),
+                        "line": node.line_num,
+                        "payload": payload,
+                    })
+            for child in node.children:
+                _walk_g7(child, record_label)
+
+        for record in obj.records:
+            label = record.xref_id or record.tag
+            _walk_g7(record, label)
+    else:
+        def _walk_g5(elem: Any, record_label: str, path_parts: List[str]) -> None:
+            etag = (getattr(elem, "tag", None) or "").upper()
+            value = ""
+            try:
+                value = elem.get_value() or ""
+            except (AttributeError, TypeError):
+                pass
+            if etag == target:
+                payload = str(value).replace("\n", "↵")
+                if payload_filter is None or payload_filter.lower() in payload.lower():
+                    results.append({
+                        "record": record_label,
+                        "path": "/" + "/".join(path_parts + [etag]),
+                        "line": None,
+                        "payload": payload,
+                    })
+            try:
+                children = elem.get_child_elements()
+            except (AttributeError, TypeError):
+                children = []
+            for child in children:
+                _walk_g5(child, record_label, path_parts + [etag])
+
+        try:
+            roots = obj._parser.get_root_child_elements()
+        except (AttributeError, TypeError) as exc:
+            log.debug("get_root_child_elements failed in _show_find: {}", exc)
+            roots = []
+        for root in roots:
+            label = getattr(root, "xref_id", None) or getattr(root, "tag", "?")
+            _walk_g5(root, label, [])
+
+    filt_msg = f" containing {payload_filter!r}" if payload_filter else ""
+    print(f"{_bold(str(len(results)))} result(s) for {_green(target)}{filt_msg}")
+    for result in results[:100]:
+        loc = f"line {result['line']}" if result["line"] else "—"
+        print(f"  {_dim(loc.ljust(10))}{_yellow(result['path'])}  {result['payload'][:80]}")
+    if len(results) > 100:
+        print(f"  … {len(results) - 100} more")
+    return 0
+
+
+def _show_tree(obj: Any, xref: str, max_depth: int) -> int:
+    """Print an in-memory equivalent of ``gctool tree``."""
+    def _label(person_xref: str) -> str:
+        try:
+            detail = obj.get_individual_detail(person_xref)
+            if detail:
+                born = str(detail.birth_year or "?")
+                died = str(detail.death_year or "?") if not detail.is_living else "living"
+                return f"{detail.full_name}  {_dim(person_xref)}  {_dim(f'({born}–{died})')}"
+        except (AttributeError, KeyError, ValueError):
+            pass
+        return person_xref
+
+    def _draw_ancestors(person_xref: str, depth: int, prefix: str, is_last: bool) -> None:
+        if depth > max_depth:
+            return
+        conn = "└── " if is_last else "├── "
+        ext = "    " if is_last else "│   "
+        print(prefix + conn + _label(person_xref))
+        try:
+            parents = obj.get_parents(person_xref)
+        except (AttributeError, KeyError, ValueError):
+            parents = []
+        for i, parent in enumerate(parents):
+            _draw_ancestors(parent.xref_id or "", depth + 1, prefix + ext, i == len(parents) - 1)
+
+    def _draw_descendants(person_xref: str, depth: int, prefix: str, is_last: bool) -> None:
+        if depth > max_depth:
+            return
+        conn = "└── " if is_last else "├── "
+        ext = "    " if is_last else "│   "
+        print(prefix + conn + _label(person_xref))
+        try:
+            children = obj.get_children_of(person_xref)
+        except (AttributeError, KeyError, ValueError):
+            children = []
+        for i, child in enumerate(children):
+            _draw_descendants(child.xref_id or "", depth + 1, prefix + ext, i == len(children) - 1)
+
+    try:
+        detail = obj.get_individual_detail(xref)
+    except (AttributeError, KeyError, ValueError):
+        detail = None
+    if detail is None:
+        print(f"error: individual {xref!r} not found", file=sys.stderr)
+        return 1
+
+    print(f"\n{_bold(_label(xref))}\n")
+    print(_bold("Ancestors"))
+    try:
+        parents = obj.get_parents(xref)
+    except (AttributeError, KeyError, ValueError):
+        parents = []
+    if parents:
+        for i, parent in enumerate(parents):
+            _draw_ancestors(parent.xref_id or "", 1, "", i == len(parents) - 1)
+    else:
+        print("  (none recorded)")
+
+    print()
+    print(_bold("Descendants"))
+    try:
+        children = obj.get_children_of(xref)
+    except (AttributeError, KeyError, ValueError):
+        children = []
+    if children:
+        for i, child in enumerate(children):
+            _draw_descendants(child.xref_id or "", 1, "", i == len(children) - 1)
+    else:
+        print("  (none recorded)")
+    print()
+    return 0
+
+
+def _show_stats(obj: Any) -> int:
+    """Print an in-memory equivalent of ``gctool stats``."""
+    indis = obj.individual_details()
+    fams = obj.family_details()
+    n = len(indis)
+    nf = len(fams)
+
+    with_name = sum(1 for d in indis if d.full_name != "Unknown")
+    with_birth = sum(1 for d in indis if d.birth_year)
+    with_death = sum(1 for d in indis if d.death_year)
+    living = sum(1 for d in indis if d.is_living)
+    males = sum(1 for d in indis if d.sex == "M")
+    females = sum(1 for d in indis if d.sex == "F")
+    birth_years = [d.birth_year for d in indis if d.birth_year]
+    with_marr = sum(1 for d in fams if d.marriage_year)
+
+    def pct(num: int, den: int) -> str:
+        return f"{100 * num // den}%" if den else "—"
+
+    print(f"{_bold('Individuals')}  {_green(str(n))}")
+    print(f"  with name         {with_name:>6}  {pct(with_name, n)}")
+    print(f"  with birth year   {with_birth:>6}  {pct(with_birth, n)}")
+    print(f"  with death year   {with_death:>6}  {pct(with_death, n)}")
+    print(f"  living            {living:>6}  {pct(living, n)}")
+    print(f"  male              {males:>6}  {pct(males, n)}")
+    print(f"  female            {females:>6}  {pct(females, n)}")
+    if birth_years:
+        print(f"  birth range       {min(birth_years)} – {max(birth_years)}")
+    print()
+    print(f"{_bold('Families')}   {_green(str(nf))}")
+    print(f"  with marriage year {with_marr:>5}  {pct(with_marr, nf)}")
+    return 0
+
+
 def cmd_interactive(args) -> int:
     """Handle the interactive shell command."""
     try:
@@ -158,18 +517,15 @@ def cmd_interactive(args) -> int:
 
     # File is optional: may be None if invoked bare
     path: Optional[Path] = Path(args.file) if getattr(args, "file", None) else None
-    fmt:  Optional[str]  = None
-    obj:  Optional[Any]  = None
+    display_path: Optional[Path] = path
+    fmt: Optional[str] = None
+    obj: Optional[Any] = None
+    loaded_from_url = False
 
     if path is not None:
         fmt, obj = _load(path)
 
-    _print_status(path, fmt, obj)
-
-    # Minimal namespace: reuse existing cmd_* functions by faking an args object
-    class _NS:
-        def __init__(self, **kw):
-            self.__dict__.update(kw)
+    _print_status(display_path, fmt, obj)
 
     edit_mode = False
 
@@ -191,7 +547,7 @@ def cmd_interactive(args) -> int:
         return False
 
     def _icmd_load(tokens: List[str]) -> bool:
-        nonlocal path, fmt, obj
+        nonlocal path, display_path, fmt, obj, loaded_from_url
         if len(tokens) < 2:
             print("usage: load FILE|URL")
             return False
@@ -199,35 +555,44 @@ def cmd_interactive(args) -> int:
         try:
             if _is_url(src):
                 new_fmt, new_obj = _load_url(src)
-                new_path = Path(src.split("?")[0].split("/")[-1] or "remote.ged")
+                path = None
+                display_path = Path(src.split("?")[0].split("/")[-1] or "remote.ged")
+                loaded_from_url = True
             else:
                 new_path = Path(src)
                 new_fmt, new_obj = _load(new_path)
+                path = new_path
+                display_path = new_path
+                loaded_from_url = False
         except SystemExit:
             return False  # _load/_load_url already printed the error
-        path, fmt, obj = new_path, new_fmt, new_obj
-        _print_status(path, fmt, obj)
+        fmt, obj = new_fmt, new_obj
+        _print_status(display_path, fmt, obj)
         return False
 
     def _icmd_info(tokens: List[str]) -> bool:
         if not _need_file():
-            cmd_info(_NS(file=str(path), json=False))
+            assert fmt is not None and obj is not None
+            _show_info(display_path, fmt, obj)
         return False
 
     def _icmd_validate(tokens: List[str]) -> bool:
         if not _need_file():
-            cmd_validate(_NS(file=str(path), json=False))
+            assert obj is not None
+            _show_validate(obj)
         return False
 
     def _icmd_stats(tokens: List[str]) -> bool:
         if not _need_file():
-            cmd_stats(_NS(file=str(path), json=False))
+            assert obj is not None
+            _show_stats(obj)
         return False
 
     def _icmd_list(tokens: List[str]) -> bool:
         if not _need_file():
+            assert fmt is not None and obj is not None
             rtype = tokens[1].lower() if len(tokens) > 1 else "indi"
-            cmd_list(_NS(file=str(path), json=False, type=rtype))
+            _show_list(fmt, obj, rtype)
         return False
 
     def _icmd_show(tokens: List[str]) -> bool:
@@ -235,7 +600,8 @@ def cmd_interactive(args) -> int:
             if len(tokens) < 2:
                 print("usage: show XREF")
             else:
-                cmd_show(_NS(file=str(path), json=False, xref=tokens[1]))
+                assert fmt is not None and obj is not None
+                _show_record(fmt, obj, _norm_xref(tokens[1]))
         return False
 
     def _icmd_find(tokens: List[str]) -> bool:
@@ -243,8 +609,9 @@ def cmd_interactive(args) -> int:
             if len(tokens) < 2:
                 print("usage: find TAG [TEXT]")
             else:
+                assert fmt is not None and obj is not None
                 payload = tokens[2] if len(tokens) > 2 else None
-                cmd_find(_NS(file=str(path), json=False, tag=tokens[1], payload=payload))
+                _show_find(fmt, obj, tokens[1], payload)
         return False
 
     def _icmd_tree(tokens: List[str]) -> bool:
@@ -252,8 +619,9 @@ def cmd_interactive(args) -> int:
             if len(tokens) < 2:
                 print("usage: tree XREF [DEPTH]")
             else:
+                assert obj is not None
                 depth = int(tokens[2]) if len(tokens) > 2 else 3
-                cmd_tree(_NS(file=str(path), json=False, xref=tokens[1], depth=depth))
+                _show_tree(obj, _norm_xref(tokens[1]), depth)
         return False
 
     def _icmd_examine(tokens: List[str]) -> bool:
@@ -286,9 +654,14 @@ def cmd_interactive(args) -> int:
         if len(tokens) < 2:
             print("usage: merge FILE2 [OUT]")
             return False
+        if loaded_from_url or path is None:
+            print("merge requires a local file path; reload from disk to use it")
+            return False
         out = tokens[2] if len(tokens) > 2 else None
-        cmd_merge(_NS(file1=str(path), file2=tokens[1], out=out,
-                      no_interactive=False, json=False))
+        class _NS:
+            def __init__(self, **kw):
+                self.__dict__.update(kw)
+        cmd_merge(_NS(file1=str(path), file2=tokens[1], out=out, no_interactive=False, json=False))
         return False
 
     def _icmd_diff(tokens: List[str]) -> bool:
@@ -297,21 +670,39 @@ def cmd_interactive(args) -> int:
         if len(tokens) < 2:
             print("usage: diff FILE2")
             return False
+        if loaded_from_url or path is None:
+            print("diff requires a local file path; reload from disk to use it")
+            return False
+        class _NS:
+            def __init__(self, **kw):
+                self.__dict__.update(kw)
         cmd_diff(_NS(file1=str(path), file2=tokens[1], json=False))
         return False
 
     def _icmd_export(tokens: List[str]) -> bool:
         if _need_file():
             return False
+        if loaded_from_url or path is None:
+            print("export requires a local file path; reload from disk to use it")
+            return False
         fmt_arg = tokens[1].lower() if len(tokens) > 1 else "csv"
         out_arg = tokens[2] if len(tokens) > 2 else None
+        class _NS:
+            def __init__(self, **kw):
+                self.__dict__.update(kw)
         cmd_export(_NS(file=str(path), to=fmt_arg, out=out_arg, json=False))
         return False
 
     def _icmd_repair(tokens: List[str]) -> bool:
         if _need_file():
             return False
+        if loaded_from_url or path is None:
+            print("repair requires a local file path; reload from disk to use it")
+            return False
         out_arg = tokens[1] if len(tokens) > 1 else None
+        class _NS:
+            def __init__(self, **kw):
+                self.__dict__.update(kw)
         cmd_repair(_NS(file=str(path), out=out_arg,
                        dry_run=False, fix_links=False, json=False))
         return False
