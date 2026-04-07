@@ -5,9 +5,10 @@
  Purpose: GEDCOM 5.5.1 structural validator.
 
  Created: 2026-03-22
- Updated: 2026-04-07 — added phases 7-9; expanded payload checks for
-                        AGE format, LDS STAT enumerations, GEDC.VERS
-                        value, and HEAD.CHAR encoding.
+ Updated: 2026-04-07 — phases 7-9 (xref format, duplicate FAMC, self-
+                        referential ALIA); payload checks for AGE format,
+                        LDS STAT enumerations, GEDC.VERS value, and
+                        HEAD.CHAR encoding.
 ======================================================================
 
 Validates a parsed GEDCOM 5 element tree against the GEDCOM 5.5.1

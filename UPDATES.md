@@ -4,6 +4,100 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## GedcomX → GEDCOM 7 converter (2026-04-07)
+
+### Feature — `GedcomXConverter`: new reverse conversion path
+
+A new converter completes the format triangle by adding the previously
+missing GX → G7 direction.  All three conversion paths now exist:
+G5 → G7, G5 → GX, G7 → GX, and now **GX → G7**.
+
+**Converter (`gxtog7.py`) — three phases:**
+
+1. **Xref assignment** — persons → `@I1@`, sources → `@S1@`, repo
+   agents → `@R1@`, submitter agents → `@SUBM1@`.
+2. **Family reconstruction** — Couple relationships become FAM records;
+   ParentChild relationships are grouped by child and matched to an
+   existing Couple FAM (by parent-pair lookup), or an implicit FAM is
+   created.  Pedigree facts (Adoption, FosterParent, SealingChildToParents)
+   are converted back to `FAMC.PEDI` values.
+3. **Record building** — canonical G7 order: HEAD → REPO → SUBM →
+   SOUR → INDI → FAM → TRLR.
+
+**Coverage:**
+- INDI: SEX, NAME (slash notation, GIVN/SURN/NPFX/NSFX, TRAN), all 25
+  standard fact/event/attribute tags, FAMS/FAMC with PEDI, notes,
+  source citations with PAGE.
+- FAM: HUSB/WIFE (assigned by gender), CHIL, all 9 family-event tags,
+  notes, source citations.
+- SOUR: TITL, AUTH/PUBL/ABBR (recovered from notes encoded by g7togx),
+  REPO pointer.
+- REPO/SUBM: NAME, ADDR, PHON, EMAIL, WWW.
+- DATE: prefers `original` (raw GEDCOM string) over `formal`; converts
+  GX formal dates (approximate, before, after, range, ISO) to GEDCOM
+  date grammar as fallback.
+- Unknown GX fact/event types fall back to `EVEN` with `TYPE`.
+- Unconverted constructs are tracked in `conversion_warnings` (same
+  pattern as the forward converter).
+
+**Facade methods added:**
+- `Gedcom7.from_gedcomx(gx)` — classmethod returning a `Gedcom7` with
+  converted records.
+- `GedcomX.to_gedcom7()` — instance method mirroring `to_gedcomx()` on
+  `Gedcom7`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom7/gxtog7.py` | New — `GedcomXConverter` |
+| `src/gedcomtools/gedcom7/gedcom7.py` | Added `from_gedcomx()` classmethod |
+| `src/gedcomtools/gedcomx/gedcomx.py` | Added `to_gedcom7()` method |
+| `tests/test_gxtog7.py` | New — 46 tests covering converter, facade, round-trip |
+
+---
+
+## GEDCOM 5 validator — phases 7-9 and expanded payload checks (2026-04-07)
+
+### Enhancement — nine-phase structural validator for GEDCOM 5.5.1
+
+`Gedcom5Validator` previously had six validation phases.  Three new phases
+were added and the existing payload-check phase was extended.
+
+**New phases:**
+
+- **Phase 7 — Xref format**: warns if an xref inner identifier exceeds the
+  GEDCOM 5.5.1 maximum of 20 characters (`xref_too_long`); errors if the
+  xref contains embedded spaces or `@` characters (`invalid_xref_format`).
+- **Phase 8 — Duplicate FAMC links**: warns when the same family is cited
+  more than once via `FAMC` on a single individual (`duplicate_famc`).
+- **Phase 9 — Self-referential ALIA**: errors when an individual's `ALIA`
+  pointer references the individual itself (`self_referential_alia`).
+
+**Extended Phase 1 (file structure):**
+
+- `HEAD.GEDC.VERS` value is now checked; warns if it is not `"5.5"` or
+  `"5.5.1"` (`head_gedc_vers_value`).
+- `HEAD.CHAR` value is now checked; warns on unrecognised encodings such as
+  `LATIN1` (`head_char_unknown`).  Known values: `ANSEL`, `ASCII`, `UTF-8`,
+  `UNICODE`, `ANSI`, `IBMPC`, `MACINTOSH`.
+
+**Extended Phase 3 (payload validation):**
+
+- `AGE` values are now validated against the standard age grammar
+  (`Ny`, `Nm`, `Nd`, `Nw`, `< Ny Nm Nd`, etc.) — code `invalid_age_format`.
+- `STAT` under LDS ordinance parents (`BAPL`, `CONL`, `ENDL`, `SLGC`,
+  `SLGS`) is validated against the `LDS_STAT_ORD` enumeration —
+  code `invalid_lds_stat_ord`.
+- `STAT` under `FAMC` is validated against the `LDS_STAT_CHILD`
+  enumeration — code `invalid_lds_stat_child`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom5/validator5.py` | Phases 7-9; extended Phase 1 and Phase 3 payload checks |
+| `tests/gedcom5/test_gedcom5_validator.py` | New — 45 tests covering all 9 phases |
+| `.sample_data/gedcom5/gedcom5_junk.ged` | New — intentionally malformed file exercising every check |
+
+---
+
 ## GEDCOM 5 UTF-16 facade/CLI support (2026-04-06)
 
 ### Fix 13 — Parse UTF-16 GEDCOM 5 files through the normal loader path

@@ -27,6 +27,7 @@ import orjson
 #           2026-04-06 — add_group() and GedcomX.add(Group(...)) support so
 #                         Group is handled consistently with other top-level
 #                         collections
+#           2026-04-07 — added to_gedcom7() conversion helper (GedcomX → GEDCOM 7)
 # ======================================================================
 # GEDCOM Module Types
 from .agent import Agent
@@ -707,6 +708,23 @@ class GedcomX:
                 if items:
                     result[name] = items
         return result
+
+    def to_gedcom7(self):
+        """Convert this GedcomX document to a
+        :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.
+
+        Returns:
+            A :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance whose
+            :attr:`records` hold the converted GEDCOM 7 structure tree.
+
+        Example::
+
+            gx = GedcomX.from_dict(data)
+            g7 = gx.to_gedcom7()
+            g7.write("output.ged")
+        """
+        from ..gedcom7.gedcom7 import Gedcom7
+        return Gedcom7.from_gedcomx(self)
 
     def gml(self) -> str:
         """Return the GedcomX graph as a GML string.

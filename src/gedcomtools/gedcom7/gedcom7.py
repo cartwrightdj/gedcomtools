@@ -22,6 +22,7 @@
    - 2026-03-31: URL support in __init__ and load_url(); .ged extension check
    - 2026-04-01: use RelationshipCacheMixin; _rel_cache access via _cache_get/_cache_set/_cache_clear
    - 2026-04-03: _is_url/_check_ged_url moved to utils.Utilities; import from there
+   - 2026-04-07: added from_gedcomx() classmethod (GedcomX → GEDCOM 7 conversion)
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -847,6 +848,29 @@ class Gedcom7(RelationshipCacheMixin):
         """
         from .g7togx import Gedcom7Converter
         return Gedcom7Converter().convert(self)
+
+    @classmethod
+    def from_gedcomx(cls, gx) -> "Gedcom7":
+        """Create a :class:`Gedcom7` from a
+        :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Args:
+            gx: A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance.
+
+        Returns:
+            A new :class:`Gedcom7` instance whose :attr:`records` hold the
+            converted GEDCOM 7 structure tree.
+
+        Example::
+
+            gx = GedcomX.from_dict(data)
+            g7 = Gedcom7.from_gedcomx(gx)
+            g7.write("output.ged")
+        """
+        from .gxtog7 import GedcomXConverter
+        g7 = cls.__new__(cls)
+        g7.records = GedcomXConverter().convert(gx)
+        return g7
 
     def gml(self) -> str:
         """Return the family graph as a GML string.
