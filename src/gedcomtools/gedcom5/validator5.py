@@ -5,6 +5,9 @@
  Purpose: GEDCOM 5.5.1 structural validator.
 
  Created: 2026-03-22
+ Updated: 2026-04-07 — added phases 7-9; expanded payload checks for
+                        AGE format, LDS STAT enumerations, GEDC.VERS
+                        value, and HEAD.CHAR encoding.
 ======================================================================
 
 Validates a parsed GEDCOM 5 element tree against the GEDCOM 5.5.1
@@ -21,6 +24,21 @@ Usage::
 
 The :class:`ValidationIssue` dataclass is shared with the GEDCOM 7
 validator (imported from ``gedcom7.validator``).
+
+Validation phases
+-----------------
+1. File-level structure (HEAD/TRLR presence, HEAD required children,
+   GEDC.VERS value, HEAD.CHAR encoding).
+2. Xref index construction and duplicate-xref detection.
+3. Recursive structural validation (allowed children, cardinality,
+   payload types including SEX, date, PEDI, QUAY, MEDI, RESN, AGE,
+   and LDS ordinance STAT enumerations).
+4. Pointer resolution (unresolved pointers, wrong target record type).
+5. Bidirectional link consistency (FAMS/FAMC ↔ FAM.HUSB/WIFE/CHIL).
+6. Orphaned citeable records (SOUR, REPO, OBJE, NOTE, SUBM never cited).
+7. Xref format (max 20 inner characters, no embedded ``@`` or spaces).
+8. Duplicate FAMC links (same family cited more than once per individual).
+9. Self-referential ALIA (individual aliased to itself).
 """
 
 from __future__ import annotations
@@ -35,6 +53,31 @@ from gedcomtools.gedcom5 import specification5 as spec
 
 # Regex to recognise a pointer payload (@...@)
 _POINTER_RE = re.compile(r"^@[^@]+@$")
+
+# Xref format: @<no-space, no-embedded-@>@, inner part max 20 chars
+_XREF_ID_RE = re.compile(r"^@[^@ ]+@$")
+
+# AGE format: optional < or >, then Ny[Nm[Nd]] | Nm[Nd] | Nw | Nd
+_AGE_RE = re.compile(
+    r"^[<>]?\s*(?:"
+    r"\d+y(?:\s+\d+m(?:\s+\d+d)?)?"
+    r"|\d+m(?:\s+\d+d)?"
+    r"|\d+w"
+    r"|\d+d"
+    r")$",
+    re.IGNORECASE,
+)
+
+# Recognised HEAD.CHAR encodings (core spec + common vendor values)
+_KNOWN_CHAR_ENCODINGS: FrozenSet[str] = frozenset({
+    "ANSEL", "ASCII", "UTF-8", "UNICODE", "ANSI", "IBMPC", "MACINTOSH",
+})
+
+# Valid HEAD.GEDC.VERS values
+_KNOWN_GEDC_VERS: FrozenSet[str] = frozenset({"5.5", "5.5.1"})
+
+# LDS ordinance parents that use LDS_STAT_ORD values
+_LDS_ORD_PARENTS: FrozenSet[str] = frozenset({"BAPL", "CONL", "ENDL", "SLGC", "SLGS"})
 
 # Tags whose value is always a pointer (to specific record types)
 _ALWAYS_POINTER_TAGS: Dict[str, Set[str]] = {
@@ -78,12 +121,16 @@ class Gedcom5Validator:
         roots = self._parser.get_root_child_elements()
         xref_index = self._build_xref_index(roots)
 
-        self._check_file_structure(roots)
-        for el in roots:
+        self._check_file_structure(roots)             # Phase 1
+        # Phase 2 is _build_xref_index (called above)
+        for el in roots:                               # Phase 3
             self._check_node(el, parent_tag=None, parent_is_record=False)
-        self._check_pointers(roots, xref_index)
-        self._check_bidirectional(xref_index)
-        self._check_orphans(roots, xref_index)
+        self._check_pointers(roots, xref_index)       # Phase 4
+        self._check_bidirectional(xref_index)         # Phase 5
+        self._check_orphans(roots, xref_index)        # Phase 6
+        self._check_xref_format(roots)                # Phase 7
+        self._check_duplicate_famc(xref_index)        # Phase 8
+        self._check_self_referential_alia(xref_index) # Phase 9
         return list(self.issues)
 
     # ------------------------------------------------------------------
@@ -120,7 +167,7 @@ class Gedcom5Validator:
                     f"HEAD is missing required child {req}.",
                     tag=req, line=head._line_num,
                 )
-        # GEDC.VERS required
+        # GEDC.VERS required and must be a known version
         gedc_els = [c for c in head.get_child_elements() if c.tag.upper() == "GEDC"]
         if gedc_els:
             gedc = gedc_els[0]
@@ -130,6 +177,25 @@ class Gedcom5Validator:
                     "head_gedc_no_vers",
                     "HEAD.GEDC is missing required VERS child.",
                     tag="VERS", line=gedc._line_num,
+                )
+            else:
+                vers_val = (vers_children[0].get_value() or "").strip()
+                if vers_val not in _KNOWN_GEDC_VERS:
+                    self._warn(
+                        "head_gedc_vers_value",
+                        f"HEAD.GEDC.VERS value {vers_val!r} is not '5.5' or '5.5.1'.",
+                        tag="VERS", line=vers_children[0]._line_num,
+                    )
+
+        # HEAD.CHAR must be a recognised encoding
+        char_els = [c for c in head.get_child_elements() if c.tag.upper() == "CHAR"]
+        if char_els:
+            char_val = (char_els[0].get_value() or "").strip().upper()
+            if char_val and char_val not in _KNOWN_CHAR_ENCODINGS:
+                self._warn(
+                    "head_char_unknown",
+                    f"HEAD.CHAR value {char_val!r} is not a recognised GEDCOM 5 encoding.",
+                    tag="CHAR", line=char_els[0]._line_num,
                 )
 
     # ------------------------------------------------------------------
@@ -184,7 +250,7 @@ class Gedcom5Validator:
         # Cardinality — checked at parent level (see _check_cardinality)
 
         # Payload type check
-        self._check_payload(el, tag, is_record)
+        self._check_payload(el, tag, is_record, parent_tag=parent_tag)
 
         # Recurse: collect child tags, check cardinality for this node
         children = el.get_child_elements()
@@ -198,7 +264,14 @@ class Gedcom5Validator:
         for child in children:
             self._check_node(child, parent_tag=tag, parent_is_record=is_record)
 
-    def _check_payload(self, el: Any, tag: str, is_record: bool) -> None:
+    def _check_payload(
+        self,
+        el: Any,
+        tag: str,
+        is_record: bool,
+        *,
+        parent_tag: Optional[str] = None,
+    ) -> None:
         value = (el.get_value() or "").strip()
         line = el._line_num
 
@@ -260,6 +333,35 @@ class Gedcom5Validator:
                 f"RESN value {value!r} is not one of {sorted(spec.RESN_VALUES)}.",
                 tag=tag, line=line,
             )
+
+        # A4: AGE payload format
+        if tag == "AGE" and value and not _AGE_RE.match(value):
+            self._warn(
+                "invalid_age_format",
+                f"AGE value {value!r} does not match the GEDCOM age format "
+                "(e.g. '30y', '2m 10d', '< 1y 6m').",
+                tag=tag, line=line,
+            )
+
+        # A3: LDS ordinance STAT enumeration
+        if tag == "STAT" and value:
+            val_upper = value.upper()
+            if parent_tag in _LDS_ORD_PARENTS:
+                if val_upper not in spec.LDS_STAT_ORD:
+                    self._warn(
+                        "invalid_lds_stat_ord",
+                        f"LDS ordinance STAT value {value!r} is not a recognised "
+                        f"ordinance status (parent: {parent_tag}).",
+                        tag=tag, line=line,
+                    )
+            elif parent_tag == "FAMC":
+                if val_upper not in spec.LDS_STAT_CHILD:
+                    self._warn(
+                        "invalid_lds_stat_child",
+                        f"FAMC.STAT value {value!r} is not one of "
+                        f"{sorted(spec.LDS_STAT_CHILD)}.",
+                        tag=tag, line=line,
+                    )
 
     def _check_cardinality(
         self,
@@ -444,6 +546,77 @@ class Gedcom5Validator:
                         "orphaned_record",
                         f"{tag} record {el.xref!r} is never referenced.",
                         tag=tag, line=el._line_num,
+                    )
+
+    # ------------------------------------------------------------------
+    # Phase 7 — Xref format
+    # ------------------------------------------------------------------
+
+    def _check_xref_format(self, roots: List[Any]) -> None:
+        for el in roots:
+            if not el.xref:
+                continue
+            xref = el.xref
+            line = el._line_num
+            if not _XREF_ID_RE.match(xref):
+                self._err(
+                    "invalid_xref_format",
+                    f"Xref {xref!r} contains invalid characters (spaces or embedded '@').",
+                    tag=el.tag.upper(), line=line,
+                )
+                continue
+            # Inner part (strip leading/trailing @) must be 1-20 characters
+            inner = xref[1:-1]
+            if len(inner) > 20:
+                self._warn(
+                    "xref_too_long",
+                    f"Xref {xref!r} inner identifier is {len(inner)} characters; "
+                    "the GEDCOM 5.5.1 maximum is 20.",
+                    tag=el.tag.upper(), line=line,
+                )
+
+    # ------------------------------------------------------------------
+    # Phase 8 — Duplicate FAMC links
+    # ------------------------------------------------------------------
+
+    def _check_duplicate_famc(self, xref_index: Dict[str, Any]) -> None:
+        for el in xref_index.values():
+            if el.tag.upper() != "INDI":
+                continue
+            seen: Set[str] = set()
+            for child in el.get_child_elements():
+                if child.tag.upper() != "FAMC":
+                    continue
+                target = _norm(child.get_value() or "")
+                if not target:
+                    continue
+                if target in seen:
+                    self._warn(
+                        "duplicate_famc",
+                        f"INDI {el.xref} has more than one FAMC link to {child.get_value()!r}.",
+                        tag="FAMC", line=child._line_num,
+                    )
+                else:
+                    seen.add(target)
+
+    # ------------------------------------------------------------------
+    # Phase 9 — Self-referential ALIA
+    # ------------------------------------------------------------------
+
+    def _check_self_referential_alia(self, xref_index: Dict[str, Any]) -> None:
+        for el in xref_index.values():
+            if el.tag.upper() != "INDI":
+                continue
+            ik = _norm(el.xref)
+            for child in el.get_child_elements():
+                if child.tag.upper() != "ALIA":
+                    continue
+                target = _norm(child.get_value() or "")
+                if target and target == ik:
+                    self._err(
+                        "self_referential_alia",
+                        f"INDI {el.xref} has an ALIA pointer that references itself.",
+                        tag="ALIA", line=child._line_num,
                     )
 
     # ------------------------------------------------------------------
