@@ -11,15 +11,22 @@
    fs-gedcomx-extension-specification.md
 
  Created: 2026-03-21
+ Updated: 2026-04-08 — make ChildAndParentsRelationship a fully typed
+                       Pydantic model with ResourceReference fields and
+                       Fact-typed parent fact arrays
+ Updated: 2026-04-08 — promote the FamilySearch docs name
+                       `RelationshipType` to a first-class enum while
+                       preserving `FsRelationshipType` as an alias
 ======================================================================
 """
 from __future__ import annotations
 
 import enum
-from typing import Any, ClassVar, List, Optional
+from typing import ClassVar, List, Optional
 
 from pydantic import Field
 
+from gedcomtools.gedcomx.fact import Fact
 from gedcomtools.gedcomx.resource import Resource
 from gedcomtools.gedcomx.subject import Subject
 from gedcomtools.glog import get_logger
@@ -27,7 +34,7 @@ from gedcomtools.glog import get_logger
 log = get_logger(__name__)
 
 
-class FsRelationshipType(str, enum.Enum):
+class RelationshipType(str, enum.Enum):
     """URI constants for relationship types supported by FamilySearch.
 
     Includes the standard GedcomX types plus FS-extended types.
@@ -55,15 +62,32 @@ class ChildAndParentsRelationship(Subject):
     """
 
     identifier: ClassVar[str] = "http://familysearch.org/v1/ChildAndParentsRelationship"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     parent1: Optional[Resource] = None
     parent2: Optional[Resource] = None
     child: Optional[Resource] = None
-    parent1Facts: List[Any] = Field(default_factory=list)
-    parent2Facts: List[Any] = Field(default_factory=list)
+    parent1Facts: List[Fact] = Field(default_factory=list)
+    parent2Facts: List[Fact] = Field(default_factory=list)
+
+    def _validate_self(self, result) -> None:
+        """Validate FamilySearch child-and-parents relationship fields."""
+        super()._validate_self(result)
+        from gedcomtools.gedcomx.validation import check_instance
+
+        check_instance(result, "parent1", self.parent1, Resource)
+        check_instance(result, "parent2", self.parent2, Resource)
+        check_instance(result, "child", self.child, Resource)
+        for i, fact in enumerate(self.parent1Facts):
+            check_instance(result, f"parent1Facts[{i}]", fact, Fact)
+        for i, fact in enumerate(self.parent2Facts):
+            check_instance(result, f"parent2Facts[{i}]", fact, Fact)
+
+# Backward-compatible alias retained for older internal imports/tests.
+FsRelationshipType = RelationshipType
 
 
 log.debug(
     "fs_types_relationship extension loaded — "
-    "FsRelationshipType, ChildAndParentsRelationship defined"
+    "RelationshipType, ChildAndParentsRelationship defined"
 )

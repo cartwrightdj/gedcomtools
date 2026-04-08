@@ -222,7 +222,7 @@ def compare(
     Returns a list of human-readable report lines.
     """
     lines: List[str] = []
-    all_spec_uris = {s["uri"] for s in spec_structures.values()}
+    _all_spec_uris = {s["uri"] for s in spec_structures.values()}
 
     # ── 1. Missing / extra structure terms ──────────────────────────────
     spec_tags  = {s["standard_tag"].upper() for s in spec_structures.values() if s["standard_tag"]}

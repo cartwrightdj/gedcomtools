@@ -34,7 +34,7 @@ import sys
 # Re-export the public surface so that callers who do
 #   from gedcomtools.gedcomx.gxcli import Shell, main
 # continue to work identically.
-from gedcomtools.gedcomx.gxcli_output import (  # noqa: F401
+from gedcomtools.gedcomx.gxcli_output import (  # noqa: F401  # pylint: disable=unused-import
     ANSI,
     NO_DATA,
     JSON_LOAD,

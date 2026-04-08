@@ -11,6 +11,11 @@
    fs-gedcomx-extension-specification.md
 
  Created: 2026-03-21
+ Updated: 2026-04-08 — promote the FamilySearch docs name `FieldInfo`
+                       to a first-class model while preserving
+                       `FsFieldInfo` as a compatibility alias
+          2026-04-08 — register PersonInfo on Person for typed
+                        FamilySearch deserialization
 ======================================================================
 """
 from __future__ import annotations
@@ -20,6 +25,7 @@ from typing import ClassVar, List, Optional
 from pydantic import Field
 
 from gedcomtools.gedcomx.gx_base import GedcomXModel
+from gedcomtools.gedcomx.person import Person
 from gedcomtools.gedcomx.resource import Resource
 from gedcomtools.gedcomx.schemas import SCHEMA
 from gedcomtools.gedcomx.textvalue import TextValue
@@ -131,11 +137,8 @@ class FeedbackInfo(GedcomXModel):
     details: Optional[str] = None
 
 
-class FsFieldInfo(GedcomXModel):
+class FieldInfo(GedcomXModel):
     """Metadata about a field type in the FamilySearch API.
-
-    Note: Named ``FsFieldInfo`` to avoid collision with pydantic's ``FieldInfo``.
-    Its FamilySearch identifier URI is ``http://familysearch.org/v1/FieldInfo``.
 
     Fields:
         fieldType:     The field type URI.
@@ -168,10 +171,14 @@ class PltApiReadMessage(GedcomXModel):
 # Register Tag as an extra field on Conclusion.
 # ---------------------------------------------------------------------------
 SCHEMA.register_extra(Conclusion, "tags", List[Tag])
+SCHEMA.register_extra(Person, "personInfo", List[PersonInfo])
+
+# Backward-compatible alias retained for older internal imports/tests.
+FsFieldInfo = FieldInfo
 
 log.debug(
     "fs_types_core extension loaded — "
     "Tag, AgentName, Feature, Error, PersonInfo, "
-    "FeedbackInfo, FsFieldInfo, PltApiReadMessage defined; "
-    "tags registered on Conclusion"
+    "FeedbackInfo, FieldInfo, PltApiReadMessage defined; "
+    "tags registered on Conclusion; personInfo registered on Person"
 )

@@ -32,8 +32,9 @@ class EvidenceReference(GedcomXModel):
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
         from .validation import check_instance
+        from .subject import Subject as _Subject  # pylint: disable=import-outside-toplevel
         if self.resource is None:
             result.warn("resource", "EvidenceReference has no resource")
         else:
-            check_instance(result, "resource", self.resource, Resource, Subject)
+            check_instance(result, "resource", self.resource, Resource, _Subject)
         check_instance(result, "attribution", self.attribution, Attribution)

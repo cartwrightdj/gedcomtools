@@ -49,7 +49,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 from typing import List, Optional
 
 from .gctool_commands import (
@@ -92,18 +91,20 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # info
     p = sub.add_parser("info", help="File summary (format, version, record counts)")
-    _file(p); p.set_defaults(func=cmd_info)
+    _file(p)
+    p.set_defaults(func=cmd_info)
 
     # validate
     p = sub.add_parser("validate", help="Validate; exit 1 if errors found")
-    _file(p); p.set_defaults(func=cmd_validate)
+    _file(p)
+    p.set_defaults(func=cmd_validate)
 
     # list
     p = sub.add_parser("list", help=f"Tabular record listing [{_LIST_TYPES_STR}]")
     _file(p)
     p.add_argument("type", metavar="TYPE", nargs="?",
                    choices=_LIST_TYPES, default="indi",
-                   help=f"Record type (default: indi)")
+                   help="Record type (default: indi)")
     p.set_defaults(func=cmd_list)
 
     # show
@@ -130,7 +131,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # stats
     p = sub.add_parser("stats", help="Individual/family completeness summary")
-    _file(p); p.set_defaults(func=cmd_stats)
+    _file(p)
+    p.set_defaults(func=cmd_stats)
 
     # convert
     p = sub.add_parser("convert", help="Convert between formats (g5→g7, g5→gx)")

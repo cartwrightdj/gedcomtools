@@ -220,7 +220,7 @@ def cmd_update(args: List[str]) -> int:
     spec._CORE_RULES.update(scratch)
     spec.save_rules()
 
-    print(f"Updated spec_rules.json:")
+    print("Updated spec_rules.json:")
     print(f"  {added:>4} substructure(s) added")
     print(f"  {updated:>4} cardinality change(s) applied")
     print(f"Saved to {spec._RULES_FILE}")

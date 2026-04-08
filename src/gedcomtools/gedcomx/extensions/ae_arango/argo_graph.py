@@ -20,7 +20,6 @@ from ...schemas import SCHEMA, bind_schema_property
 
 def ext_description_set(self, _value) -> None:  # pylint: disable=unused-argument
     """Ignore assignments to the computed extension description."""
-    pass  # computed property; incoming values are ignored
 
 def ext_description_get(self) -> dict:
     """Return a computed summary dictionary for a person."""
@@ -180,7 +179,6 @@ bind_schema_property(
 
 def ext_emb_narrative_set(self, _value) -> None:  # pylint: disable=unused-argument
     """Ignore assignments to the computed embedding narrative."""
-    pass  # computed property; incoming values are ignored
 
 
 bind_schema_property(

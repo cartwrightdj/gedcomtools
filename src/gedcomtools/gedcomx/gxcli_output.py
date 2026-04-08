@@ -10,11 +10,9 @@ from __future__ import annotations
 #  Created: 2026-03-31 — split from gxcli.py
 # ======================================================================
 import ast
-import dataclasses
 import inspect
 import json
 import logging
-import os
 import re
 import sys
 from dataclasses import fields as dataclass_fields, is_dataclass
@@ -23,11 +21,9 @@ from typing import Any, Iterable, get_args, get_origin
 
 import orjson
 
-from gedcomtools.glog import setup_logging, get_logger, LoggerSpec
-from gedcomtools.gedcomx import GedcomConverter, GedcomX
+from gedcomtools.glog import setup_logging
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
-from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
-from gedcomtools.gedcomx.cli import objects_to_schema_table, write_jsonl
+from gedcomtools.gedcomx.serialization import Serialization
 
 
 SHELL_VERSION = '0.7.1'
@@ -599,7 +595,7 @@ def _load_settings() -> dict[str, Any]:
     cfg = dict(_DEFAULT_SETTINGS)
     if _SETTINGS_PATH.exists():
         try:
-            with open(_SETTINGS_PATH) as _f:
+            with open(_SETTINGS_PATH, encoding="utf-8") as _f:
                 _data = json.load(_f)
             cfg.update({k: v for k, v in _data.items() if k in _DEFAULT_SETTINGS})
         except (OSError, json.JSONDecodeError):
@@ -609,7 +605,7 @@ def _load_settings() -> dict[str, Any]:
 def _save_settings(cfg: dict[str, Any]) -> None:
     try:
         _SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_SETTINGS_PATH, "w") as _f:
+        with open(_SETTINGS_PATH, "w", encoding="utf-8") as _f:
             json.dump(cfg, _f, indent=2)
     except OSError as e:
         print(f"Warning: could not save settings: {e}")

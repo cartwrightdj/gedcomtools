@@ -8,17 +8,20 @@
  Updated:
    - 2025-11-13: added Gedcom-X Date Format API
    - 2026-03-19: migrated to pydantic GedcomXModel
+   - 2026-04-08: model normalized FamilySearch date renderings as
+                 typed DateNormalization entries
 ======================================================================
 """
 from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import ClassVar, Optional
+from typing import ClassVar, List, Optional
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from .gx_base import GedcomXModel
+from .textvalue import TextValue
 
 try:
     import dateparser  # type: ignore[import-untyped]
@@ -33,12 +36,13 @@ except ImportError:
 
 class DateFormat:
     """Placeholder for GedcomX date format constants."""
-    pass
 
 
-class DateNormalization:
-    """Placeholder for GedcomX date normalization data."""
-    pass
+class DateNormalization(TextValue):
+    """A normalized textual rendering of a date value."""
+
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/DateNormalization"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
 
 class Date(GedcomXModel):
@@ -49,16 +53,18 @@ class Date(GedcomXModel):
 
     original: Optional[str] = None
     formal: Optional[str] = None
-    normalized: Optional[DateNormalization] = None
+    normalized: List[DateNormalization] = Field(default_factory=list)
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
-        from .validation import check_gedcomx_date, check_nonempty
+        from .validation import check_gedcomx_date, check_instance, check_nonempty
         if not self.original and not self.formal:
             result.warn("", "Date has neither original nor formal value")
         if self.original is not None:
             check_nonempty(result, "original", self.original)
         check_gedcomx_date(result, "formal", self.formal)
+        for i, norm in enumerate(self.normalized):
+            check_instance(result, f"normalized[{i}]", norm, DateNormalization)
 
     @model_validator(mode="after")
     def _parse_formal(self) -> "Date":

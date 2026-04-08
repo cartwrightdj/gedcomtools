@@ -7,6 +7,8 @@
 
  Created: 2025-08-25
  Updated:
+   - 2026-04-08: accept the FamilySearch-specific `FamilyTree`
+                 resource type during source-description deserialization
 ======================================================================
 """
 from __future__ import annotations
@@ -41,6 +43,7 @@ class ResourceType(Enum):
     DigitalArtifact = "http://gedcomx.org/DigitalArtifact"
     Record = "http://gedcomx.org/Record"
     Person = "http://gedcomx.org/Person"
+    FamilyTree = "http://familysearch.org/FamilyTree"
 
     @property
     def description(self) -> str:
@@ -50,6 +53,7 @@ class ResourceType(Enum):
             ResourceType.PhysicalArtifact: "A physical artifact, such as a book.",
             ResourceType.DigitalArtifact: "A digital artifact, such as a digital image.",
             ResourceType.Record: "A historical record.",
+            ResourceType.FamilyTree: "A FamilySearch family tree resource.",
         }
         return descriptions.get(self, "No description available.")
 
@@ -107,7 +111,8 @@ class SourceDescription(GedcomXModel):
             check_instance(result, f"authors[{i}]", a, Resource)
         check_instance(result, "attribution", self.attribution, Attribution)
         if self.analysis is not None:
-            check_instance(result, "analysis", self.analysis, Resource, Document)
+            from .document import Document as _Document  # pylint: disable=import-outside-toplevel
+            check_instance(result, "analysis", self.analysis, Resource, _Document)
 
     def add_description(self, description_to_add: TextValue) -> None:
         """Add a TextValue description, skipping duplicates."""

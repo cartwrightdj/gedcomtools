@@ -611,7 +611,7 @@ class Gedcom5to7:
         level: int,
         parent: Optional[GedcomStructure],
         force_tag: Optional[str] = None,
-        parent_tag: str = "",
+        parent_tag: str = "",  # pylint: disable=unused-argument
     ) -> Optional[GedcomStructure]:
         """Recursively convert one G5 element and all its descendants."""
         tag = force_tag or (el.tag or "").upper()

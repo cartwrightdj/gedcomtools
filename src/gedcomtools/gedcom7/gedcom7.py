@@ -716,21 +716,21 @@ class Gedcom7(RelationshipCacheMixin):
     # Relationship traversal — raw records
     # ------------------------------------------------------------------
 
-    def get_parents(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_parents(self, xref: str) -> List[GedcomStructure]:
         """Return the parents of an individual as raw records.
 
         Walks FAMC → FAM → HUSB/WIFE.
 
         Args:
-            indi_xref: Xref id of the individual (e.g. ``"@I1@"``).
+            xref: Xref id of the individual (e.g. ``"@I1@"``).
 
         Returns:
             Raw :class:`GedcomStructure` for each parent found.
         """
-        cached = self._cache_get("p", indi_xref)
+        cached = self._cache_get("p", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
         result: List[GedcomStructure] = []
@@ -746,24 +746,24 @@ class Gedcom7(RelationshipCacheMixin):
                     parent = self._record_by_xref("INDI", ptr_node.payload)
                     if parent:
                         result.append(parent)
-        self._cache_set("p", indi_xref, result)
+        self._cache_set("p", xref, result)
         return result
 
-    def get_children_of(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_children_of(self, xref: str) -> List[GedcomStructure]:
         """Return the children of an individual as raw records.
 
         Walks FAMS → FAM → CHIL.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`GedcomStructure` for each child found.
         """
-        cached = self._cache_get("c", indi_xref)
+        cached = self._cache_get("c", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
         result: List[GedcomStructure] = []
@@ -778,25 +778,25 @@ class Gedcom7(RelationshipCacheMixin):
                     child_node = self._record_by_xref("INDI", chil.payload)
                     if child_node:
                         result.append(child_node)
-        self._cache_set("c", indi_xref, result)
+        self._cache_set("c", xref, result)
         return result
 
-    def get_spouses(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_spouses(self, xref: str) -> List[GedcomStructure]:
         """Return the spouses of an individual as raw records.
 
         For each FAMS family, returns the other HUSB or WIFE record.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`GedcomStructure` for each spouse found.
         """
-        norm_xref = indi_xref.upper()
-        cached = self._cache_get("s", indi_xref)
+        norm_xref = xref.upper()
+        cached = self._cache_get("s", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
         result: List[GedcomStructure] = []
@@ -813,24 +813,24 @@ class Gedcom7(RelationshipCacheMixin):
                     spouse_node = self._record_by_xref("INDI", ptr_node.payload)
                     if spouse_node:
                         result.append(spouse_node)
-        self._cache_set("s", indi_xref, result)
+        self._cache_set("s", xref, result)
         return result
 
     # ------------------------------------------------------------------
     # Relationship traversal — Detail models (explicit)
     # ------------------------------------------------------------------
 
-    def get_parents_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_parents_detail(self, xref: str) -> List[IndividualDetail]:
         """Return parents as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_parents(indi_xref)]
+        return [individual_detail(r) for r in self.get_parents(xref)]
 
-    def get_children_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_children_detail(self, xref: str) -> List[IndividualDetail]:
         """Return children as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_children_of(indi_xref)]
+        return [individual_detail(r) for r in self.get_children_of(xref)]
 
-    def get_spouses_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_spouses_detail(self, xref: str) -> List[IndividualDetail]:
         """Return spouses as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_spouses(indi_xref)]
+        return [individual_detail(r) for r in self.get_spouses(xref)]
 
     def to_gedcomx(self):
         """Convert this GEDCOM 7 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.

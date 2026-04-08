@@ -296,3 +296,108 @@ class TestSerialization:
         result = gx_maximal.json
         assert isinstance(result, bytes)
         assert len(result) > 0
+
+
+# ---------------------------------------------------------------------------
+# Shared notes (SNOTE)
+# maximal70.ged has: 0 @N1@ SNOTE Shared note 1
+#                    0 @N2@ SNOTE Shared note 2
+# ---------------------------------------------------------------------------
+
+class TestSNote:
+    def test_snote_records_converted(self, gx_maximal, g7_maximal):
+        """Each top-level SNOTE record must appear as a SourceDescription."""
+        snote_xrefs = {n.xref_id for n in g7_maximal.shared_notes() if n.xref_id}
+        for xref in snote_xrefs:
+            sd = gx_maximal.sourceDescriptions.by_id(xref)
+            assert sd is not None, (
+                f"SNOTE {xref!r} not found in GedcomX sourceDescriptions"
+            )
+
+    def test_snote_resource_type_is_record(self, gx_maximal, g7_maximal):
+        """SNOTE SourceDescriptions must have resourceType=Record."""
+        from gedcomtools.gedcomx.source_description import ResourceType
+        for node in g7_maximal.shared_notes():
+            xref = node.xref_id
+            if not xref:
+                continue
+            sd = gx_maximal.sourceDescriptions.by_id(xref)
+            assert sd is not None
+            assert sd.resourceType == ResourceType.Record, (
+                f"SNOTE {xref!r} has resourceType={sd.resourceType!r}, expected Record"
+            )
+
+    def test_snote_text_preserved(self, gx_maximal, g7_maximal):
+        """SNOTE text must be stored in the SourceDescription's notes."""
+        from gedcomtools.gedcom7.models import shared_note_detail
+        for node in g7_maximal.shared_notes():
+            xref = node.xref_id
+            if not xref:
+                continue
+            d = shared_note_detail(node)
+            if not d.text:
+                continue
+            sd = gx_maximal.sourceDescriptions.by_id(xref)
+            assert sd is not None
+            note_texts = [n.text for n in sd.notes if n.text]
+            assert any(d.text in t for t in note_texts), (
+                f"SNOTE {xref!r} text {d.text!r} not found in notes: {note_texts}"
+            )
+
+    def test_snote_count(self, gx_maximal, g7_maximal):
+        """Source description count includes all SNOTE records."""
+        n_snotes = len(g7_maximal.shared_notes())
+        n_sources = len(g7_maximal.sources())
+        n_obje = len(g7_maximal.media_objects())
+        assert len(gx_maximal.sourceDescriptions) >= n_sources + n_obje + n_snotes
+
+
+# ---------------------------------------------------------------------------
+# HEAD attribution
+# maximal70.ged has: 1 DATE 10 JUN 2022  and  1 SUBM @U1@  under HEAD
+# ---------------------------------------------------------------------------
+
+class TestHeadAttribution:
+    def test_attribution_created(self, gx_maximal):
+        """Conversion of maximal70 must produce a non-None attribution."""
+        assert gx_maximal.attribution is not None, (
+            "gx.attribution is None — HEAD DATE/SUBM not converted"
+        )
+
+    def test_attribution_date_matches_head(self, gx_maximal, g7_maximal):
+        """Attribution.created must match the HEAD DATE payload."""
+        head = g7_maximal["HEAD"][0]
+        date_node = head.first_child("DATE")
+        if date_node is None or not date_node.payload:
+            pytest.skip("maximal70.ged HEAD has no DATE — cannot verify attribution.created")
+        assert gx_maximal.attribution is not None
+        assert gx_maximal.attribution.created == date_node.payload, (
+            f"attribution.created={gx_maximal.attribution.created!r}, "
+            f"expected {date_node.payload!r}"
+        )
+
+    def test_attribution_contributor_set(self, gx_maximal, g7_maximal):
+        """When HEAD has a SUBM pointer, attribution.contributor must be set."""
+        head = g7_maximal["HEAD"][0]
+        subm_node = head.first_child("SUBM")
+        if subm_node is None or not subm_node.payload_is_pointer:
+            pytest.skip("maximal70.ged HEAD has no SUBM pointer")
+        assert gx_maximal.attribution is not None
+        assert gx_maximal.attribution.contributor is not None, (
+            "attribution.contributor is None despite HEAD.SUBM pointer being present"
+        )
+
+    def test_attribution_contributor_points_to_agent(self, gx_maximal, g7_maximal):
+        """attribution.contributor resource fragment must resolve to an agent in gx.agents."""
+        head = g7_maximal["HEAD"][0]
+        subm_node = head.first_child("SUBM")
+        if subm_node is None or not subm_node.payload_is_pointer:
+            pytest.skip("maximal70.ged HEAD has no SUBM pointer")
+        contrib = gx_maximal.attribution.contributor
+        assert contrib is not None
+        # The contributor resource URI has the agent xref as fragment
+        resource_str = str(contrib.resource) if contrib.resource else ""
+        subm_xref = subm_node.payload.strip()
+        assert subm_xref.strip("@") in resource_str or subm_xref in resource_str, (
+            f"contributor resource {resource_str!r} does not reference {subm_xref!r}"
+        )

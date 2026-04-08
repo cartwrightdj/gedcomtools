@@ -28,12 +28,28 @@ def _c(code: str, text: str) -> str:
     return f"\x1b[{code}m{text}\x1b[0m" if _colour_ok() else text
 
 
-def _green(t: str) -> str: return _c("32", t)
-def _yellow(t: str) -> str: return _c("33", t)
-def _red(t: str) -> str: return _c("31", t)
-def _cyan(t: str) -> str: return _c("36", t)
-def _bold(t: str) -> str: return _c("1", t)
-def _dim(t: str) -> str: return _c("2", t)
+def _green(t: str) -> str:
+    return _c("32", t)
+
+
+def _yellow(t: str) -> str:
+    return _c("33", t)
+
+
+def _red(t: str) -> str:
+    return _c("31", t)
+
+
+def _cyan(t: str) -> str:
+    return _c("36", t)
+
+
+def _bold(t: str) -> str:
+    return _c("1", t)
+
+
+def _dim(t: str) -> str:
+    return _c("2", t)
 
 
 # ---------------------------------------------------------------------------

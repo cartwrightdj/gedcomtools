@@ -55,9 +55,9 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from .structure import GedcomStructure
 from ..glog import get_logger
+from ..gedcomx.gedcomx import GedcomX
 
 if TYPE_CHECKING:
-    from ..gedcomx.gedcomx import GedcomX
     from ..gedcomx.fact import Fact
     from ..gedcomx.name import Name, NameForm
     from ..gedcomx.note import Note
@@ -164,7 +164,7 @@ class GedcomXConverter:
 
     def __init__(self) -> None:
         self._records: List[GedcomStructure] = []
-        self._gx: Optional[GedcomX] = None
+        self._gx: GedcomX = GedcomX()
 
         # GX object id → assigned GEDCOM xref string
         self._person_xref: Dict[str, str] = {}
@@ -315,9 +315,9 @@ class GedcomXConverter:
 
             # Try to find a FAM matching two parents
             if len(parent_ids) >= 2:
-                for i in range(len(parent_ids)):
+                for i, pid_i in enumerate(parent_ids):
                     for j in range(i + 1, len(parent_ids)):
-                        key = frozenset([parent_ids[i], parent_ids[j]])
+                        key = frozenset([pid_i, parent_ids[j]])
                         if key in couple_key_xref:
                             found_fam = couple_key_xref[key]
                             break

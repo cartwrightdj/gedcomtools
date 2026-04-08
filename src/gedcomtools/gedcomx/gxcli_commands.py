@@ -11,7 +11,6 @@ from __future__ import annotations
 #  Updated: 2026-04-03 — _is_url moved to utils.Utilities; removed _LoadMixin._is_url staticmethod
 # ======================================================================
 import inspect
-import json
 import logging
 import io
 import os
@@ -36,7 +35,6 @@ from gedcomtools.utils.Utilities import _is_url
 from gedcomtools.gedcomx.gxcli_output import (
     ANSI,
     _RED, _RESET,
-    NO_DATA,
     _level_from_str,
     _set_all_handler_levels,
     _is_private,
@@ -45,7 +43,6 @@ from gedcomtools.gedcomx.gxcli_output import (
     _declaring_class,
     _format_signature,
     is_primitive,
-    to_plain,
     short_preview,
     list_fields,
     as_indexable_list,
@@ -53,7 +50,6 @@ from gedcomtools.gedcomx.gxcli_output import (
     _seg_to_key,
     get_child,
     resolve_path,
-    _typename,
     _print_table,
     _schema_fields_for_object,
     _expected_element_type_from_parent,
@@ -792,7 +788,7 @@ class _AhnenMixin:
             try:
                 n = int(rest[0])
             except ValueError:
-                print(f"N must be an integer")
+                print("N must be an integer")
                 return
             if n not in self._ahnen:  # type: ignore[attr-defined]
                 print(f"No entry for #{n}.")
@@ -801,12 +797,18 @@ class _AhnenMixin:
             rel = self._ahnen_relation(n)
             print(f"#{n}  {rel}")
             print(f"  Name        : {e['name']}")
-            if e.get("birth_date"):  print(f"  Born        : {e['birth_date']}")
-            if e.get("birth_place"): print(f"  Birth place : {e['birth_place']}")
-            if e.get("death_date"):  print(f"  Died        : {e['death_date']}")
-            if e.get("death_place"): print(f"  Death place : {e['death_place']}")
-            if e.get("marr_date"):   print(f"  Married     : {e['marr_date']}")
-            if e.get("marr_place"):  print(f"  Marr. place : {e['marr_place']}")
+            if e.get("birth_date"):
+                print(f"  Born        : {e['birth_date']}")
+            if e.get("birth_place"):
+                print(f"  Birth place : {e['birth_place']}")
+            if e.get("death_date"):
+                print(f"  Died        : {e['death_date']}")
+            if e.get("death_place"):
+                print(f"  Death place : {e['death_place']}")
+            if e.get("marr_date"):
+                print(f"  Married     : {e['marr_date']}")
+            if e.get("marr_place"):
+                print(f"  Marr. place : {e['marr_place']}")
             if n > 1:
                 child_n = n >> 1
                 print(f"  Parent of   : #{child_n} ({self._ahnen.get(child_n, {}).get('name', '—')})")  # type: ignore[attr-defined]
@@ -874,8 +876,8 @@ class _AhnenMixin:
                 print("No Ahnentafel entries to build from.")
                 return
             from gedcomtools.gedcomx import (
-                GedcomX, Person, Relationship, RelationshipType,
-                Fact, FactType, Name, NameForm, Gender, GenderType,
+                Person, Relationship, RelationshipType,
+                Fact, FactType, Gender, GenderType,
                 Date, PlaceReference,
             )
             from gedcomtools.gedcomx.name import QuickName
@@ -2247,7 +2249,7 @@ class _DataMixin:
                 origin = get_origin(tp)
                 if origin is None:
                     return tp
-                args2 = [a for a in get_args(tp) if a is not type(None)]  # noqa: E721
+                args2 = [a for a in get_args(tp) if a is not type(None)]  # noqa: E721  # pylint: disable=unidiomatic-typecheck
                 return args2[0] if args2 else tp
 
             elem_type2 = _strip_optional(elem_type)

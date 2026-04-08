@@ -7,6 +7,8 @@
 
  Created: 2025-08-25
  Updated:
+   - 2026-04-08: coerce FamilySearch `nameFormInfo` extension entries
+                 into typed NameFormInfo models after deserialization
 ======================================================================
 """
 from __future__ import annotations
@@ -15,7 +17,7 @@ import re
 from enum import Enum
 from typing import Any, ClassVar, List, Optional
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .conclusion import Conclusion
 from .date import Date
@@ -113,6 +115,20 @@ class NameForm(GedcomXModel):
     lang: Optional[str] = None
     fullText: Optional[str] = None
     parts: List[NamePart] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _coerce_name_form_info(self) -> "NameForm":
+        """Coerce FamilySearch `nameFormInfo` entries into typed models when present."""
+        if isinstance(getattr(self, "nameFormInfo", None), list):
+            try:
+                from .extensions.fs.fs_types_node import NameFormInfo
+                self.nameFormInfo = [  # pylint: disable=attribute-defined-outside-init
+                    NameFormInfo.model_validate(item) if isinstance(item, dict) else item
+                    for item in self.nameFormInfo
+                ]
+            except Exception:
+                pass
+        return self
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

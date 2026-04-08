@@ -4,6 +4,83 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## RS 1.0 link-map deserialization for FamilySearch payloads (2026-04-08)
+
+### Fix 17 — make FamilySearch RS `links` accept JSON link maps in inherited GedcomX fields
+
+The FamilySearch RS link support had registered `Conclusion.links` as `_rsLinks`, but
+that helper was still a legacy non-pydantic object. As a result, payloads like
+FamilySearch `childAndParentsRelationships` could deserialize the typed
+`child`, `parent1`, `parent2`, and fact lists, but failed on the inherited
+`links` object with a validation error demanding an `_rsLinks` instance.
+
+`rsLink` and `_rsLinks` are now pydantic-compatible extension models. `_rsLinks`
+accepts plain JSON maps such as `{"child": {"href": ...}}`, converts each
+entry into an `rsLink`, and still exposes backward-compatible accessors like
+`.person`, `.portrait`, `.keys()`, and `.get()`.
+
+### Regression coverage
+
+The extension API suite now checks that `_rsLinks.model_validate(...)` accepts
+a plain JSON link map, and the FamilySearch relationship tests now verify that
+`ChildAndParentsRelationship.model_validate(...)` succeeds with inherited
+RS10-style `links` data.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/extensions/fs/fs_types_rs.py` | Convert `RsLink` / `RsLinks` to pydantic-compatible models; accept JSON link maps |
+| `tests/extensions/test_extension_api.py` | Added `_rsLinks` JSON-map validation coverage |
+| `tests/extensions/test_fs_types.py` | Added `ChildAndParentsRelationship` deserialization coverage with inherited `links` |
+
+---
+
+## FamilySearch RS models moved under `fs` extensions (2026-04-08)
+
+### Fix 18 — move legacy `rs10` FamilySearch models into the `fs` package
+
+The legacy `extensions.rs10` package was housing FamilySearch-specific RS
+support types (`rsLink`, `_rsLinks`, `FamilyView`, `DisplayProperties`, and
+`FamilyLinks`) even though they are consumed as part of the broader
+FamilySearch extension surface. Those models now live in
+`gedcomx.extensions.fs.fs_types_rs` with proper class names `RsLink` and
+`RsLinks`.
+
+The old `extensions.rs10` package has been removed so FamilySearch extension
+code lives in one place. All remaining imports and plugin loading now target
+the `fs` package directly.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/extensions/fs/fs_types_rs.py` | New — FamilySearch RS link and display models moved under `fs` |
+| `src/gedcomtools/gedcomx/extensions/fs/__init__.py` | Import the new RS support module as part of FS extensions |
+| `src/gedcomtools/gedcomx/extensions/__init__.py` | Expose moved FamilySearch RS link types from the new `fs` home |
+| `tests/extensions/test_extension_api.py` | Updated to use `fs.fs_types_rs` as the primary import path |
+| `tests/extensions/conftest.py` | Stop loading the removed `rs10` plugin package |
+
+---
+
+## FamilySearch docs-name parity for FS extension types (2026-04-08)
+
+### Fix 19 — add exact `FieldInfo` and `RelationshipType` names from the official FS JSON docs
+
+Comparing the current `gedcomx.extensions.fs` package against the official
+FamilySearch JSON type list showed that nearly every listed type was already
+implemented, but two were only available under internal compatibility names:
+`FsFieldInfo` and `FsRelationshipType`.
+
+The FamilySearch extension package now exposes the exact docs names
+`FieldInfo` and `RelationshipType` as first-class models/enums, while keeping
+the older `FsFieldInfo` and `FsRelationshipType` names as aliases so existing
+imports continue to work.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/extensions/fs/fs_types_core.py` | Promote `FieldInfo`; keep `FsFieldInfo` alias |
+| `src/gedcomtools/gedcomx/extensions/fs/fs_types_relationship.py` | Promote `RelationshipType`; keep `FsRelationshipType` alias |
+| `tests/extensions/test_fs_types.py` | Added coverage for the docs names and alias compatibility |
+
+---
+
 ## GedcomX → GEDCOM 7 converter (2026-04-07)
 
 ### Feature — `GedcomXConverter`: new reverse conversion path
@@ -170,6 +247,31 @@ for persons, relationships, agents, events, and other top-level records.
 |------|--------|
 | `src/gedcomtools/gedcomx/gedcomx.py` | Added `add_group()` and `Group` support in `GedcomX.add()` |
 | `tests/test_gedcomx.py` | Added regression test for `gx.add(Group(...))` |
+
+---
+
+## FamilySearch ChildAndParentsRelationship typing (2026-04-08)
+
+### Fix 16 — make `ChildAndParentsRelationship` a typed Pydantic extension model
+
+The FamilySearch extension model for `ChildAndParentsRelationship` already
+existed, but its `parent1Facts` and `parent2Facts` arrays were typed as
+`List[Any]`, which weakened validation and made the extension less useful as a
+schema-backed Pydantic model.
+
+The model now uses:
+
+- `Resource` for `parent1`, `parent2`, and `child`
+- `List[Fact]` for `parent1Facts` and `parent2Facts`
+- a small `_validate_self()` method to verify those fields explicitly
+
+This aligns the extension with the rest of the GedcomX model layer and makes
+construction, validation, and type-driven serialization more predictable.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/extensions/fs/fs_types_relationship.py` | Typed `ChildAndParentsRelationship` fields as `Resource` / `Fact`; added validation |
+| `tests/extensions/test_fs_types.py` | Expanded relationship extension tests for identifier, default fact lists, and typed facts |
 
 ---
 

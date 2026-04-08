@@ -1,6 +1,10 @@
 """
 Tests for the GedcomX extension API after the pydantic migration.
 
+Updated: 2026-04-08 — cover FamilySearch RS link-model deserialization in
+its new `fs` extension home, including inherited `Conclusion.links`
+payloads
+
 Covers:
 - define_ext() adds a proper pydantic model field
 - declared_extras() reflects dynamically added fields
@@ -9,7 +13,7 @@ Covers:
 - SCHEMA.register_extra() wires up define_ext() for pydantic models
 - Extension field serialization via model_dump()
 - FamilyLinks (Extensible subclass) instantiation
-- rs10 extension field access on pydantic models
+- FamilySearch RS extension field access on pydantic models
 """
 from __future__ import annotations
 
@@ -145,10 +149,10 @@ class TestImportPlugins:
         result = import_plugins("gedcomx", registry=self._make_registry())
         assert result["errors"] == {}, f"Plugin load errors: {result['errors']}"
 
-    def test_rs10_imported(self):
+    def test_fs_imported(self):
         from gedcomtools.gedcomx.extensible import import_plugins
         result = import_plugins("gedcomx", registry=self._make_registry())
-        assert any("rs10" in m for m in result["imported"])
+        assert any(".extensions.fs" in m for m in result["imported"])
 
     def test_test_extension_imported(self):
         from gedcomtools.gedcomx.extensible import import_plugins
@@ -368,30 +372,30 @@ class TestExtensionSerialization:
 # rs10 extension classes
 # ---------------------------------------------------------------------------
 
-class TestRs10Extension:
+class TestFsRsExtension:
     def setup_method(self):
         from gedcomtools.gedcomx.extensible import import_plugins
         import_plugins("gedcomx")
 
     def test_rslink_creation(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import rsLink
-        link = rsLink(href="http://example.com/person/1")
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import RsLink
+        link = RsLink(href="http://example.com/person/1")
         assert "example.com" in str(link)
 
     def test_rslink_requires_href_or_template(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import rsLink
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import RsLink
         from gedcomtools.gedcomx.exceptions import GedcomClassAttributeError
         with pytest.raises(GedcomClassAttributeError):
-            rsLink()
+            RsLink()
 
     def test_family_links_creation(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import FamilyLinks
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import FamilyLinks
         from gedcomtools.gedcomx.uri import URI
         fl = FamilyLinks(parent1=URI(path="/persons/P1"))
         assert str(fl.parent1) == "/persons/P1"
 
     def test_family_links_all_fields(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import FamilyLinks
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import FamilyLinks
         from gedcomtools.gedcomx.uri import URI
         fl = FamilyLinks(
             parent1=URI(path="/P1"),
@@ -403,17 +407,27 @@ class TestRs10Extension:
         assert len(fl.children) == 2
 
     def test_family_links_defaults_none(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import FamilyLinks
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import FamilyLinks
         fl = FamilyLinks()
         assert fl.parent1 is None
         assert fl.parent2 is None
         assert fl.children is None
 
     def test_display_properties_creation(self):
-        from gedcomtools.gedcomx.extensions.rs10.rs10 import DisplayProperties
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import DisplayProperties
         dp = DisplayProperties(name="Alice", gender="F", lifespan="1900-1975")
         assert dp.name == "Alice"
         assert dp.gender == "F"
+
+    def test_rslinks_accepts_json_map(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import RsLinks
+        links = RsLinks.model_validate({
+            "person": {"href": "http://example.com/person/1"},
+            "portrait": {"href": "http://example.com/person/1/portrait"},
+        })
+        assert links.person is not None
+        assert links.portrait is not None
+        assert "person" in list(links.keys())
 
 
 # ---------------------------------------------------------------------------

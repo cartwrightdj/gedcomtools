@@ -37,7 +37,6 @@ from __future__ import annotations
 import re as regex
 # Base GEDCOM element
 
-from sys import version_info
 from gedcomtools.gedcom5.helpers import deprecated
 
 from .tags import (
@@ -377,11 +376,10 @@ class RootElement(Element):
 
 class HeaderRecord(Element):
     """Represent the GEDCOM 5.x HEAD record."""
-    pass
+
 
 class SubmitterRecord(Element):
     """Represent a GEDCOM 5.x SUBM record."""
-    pass
 
 class FamilyRecord(Element):
 
@@ -851,8 +849,7 @@ class ObjectRecord(Element):
 
 class RepositoryRecord(Element):
     """Represent a GEDCOM 5.x repository record."""
-    pass
+
 
 class SourceRecord(Element):
     """Represent a GEDCOM 5.x source record."""
-    pass

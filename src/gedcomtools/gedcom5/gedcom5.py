@@ -317,7 +317,15 @@ class Gedcom5(RelationshipCacheMixin):
         """Always returns ``[]`` — GEDCOM 5.x has no SNOTE records."""
         return []
 
+    def shared_note_details(self) -> List[SharedNoteDetail]:
+        """Always returns ``[]`` — GEDCOM 5.x has no SNOTE records."""
+        return []
+
     def get_shared_note(self, _xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
+        """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
+        return None
+
+    def get_shared_note_detail(self, xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002  # pylint: disable=unused-argument
         """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
         return None
 
@@ -351,21 +359,21 @@ class Gedcom5(RelationshipCacheMixin):
     # Relationship traversal — raw records
     # ------------------------------------------------------------------
 
-    def get_parents(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_parents(self, xref: str) -> List[IndividualRecord]:
         """Return the parents of an individual as raw records.
 
         Walks FAMC → FAM → HUSB/WIFE.
 
         Args:
-            indi_xref: Xref id of the individual (e.g. ``"@I1@"``).
+            xref: Xref id of the individual (e.g. ``"@I1@"``).
 
         Returns:
             Raw :class:`IndividualRecord` for each parent found.
         """
-        cached = self._cache_get("p", indi_xref)
+        cached = self._cache_get("p", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        el = self._lookup(indi_xref)
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
         result: List[IndividualRecord] = []
@@ -381,24 +389,24 @@ class Gedcom5(RelationshipCacheMixin):
                     parent_el = self._lookup(ptr.value)
                     if parent_el and parent_el.tag == "INDI":
                         result.append(parent_el)
-        self._cache_set("p", indi_xref, result)
+        self._cache_set("p", xref, result)
         return result
 
-    def get_children_of(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_children_of(self, xref: str) -> List[IndividualRecord]:
         """Return the children of an individual as raw records.
 
         Walks FAMS → FAM → CHIL.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`IndividualRecord` for each child found.
         """
-        cached = self._cache_get("c", indi_xref)
+        cached = self._cache_get("c", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        el = self._lookup(indi_xref)
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
         result: List[IndividualRecord] = []
@@ -413,25 +421,25 @@ class Gedcom5(RelationshipCacheMixin):
                     child_el = self._lookup(chil.value)
                     if child_el and child_el.tag == "INDI":
                         result.append(child_el)
-        self._cache_set("c", indi_xref, result)
+        self._cache_set("c", xref, result)
         return result
 
-    def get_spouses(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_spouses(self, xref: str) -> List[IndividualRecord]:
         """Return the spouses of an individual as raw records.
 
         For each FAMS family, returns the other HUSB or WIFE record.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`IndividualRecord` for each spouse found.
         """
-        norm = _normalize_xref(indi_xref)
-        cached = self._cache_get("s", indi_xref)
+        norm = _normalize_xref(xref)
+        cached = self._cache_get("s", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
-        el = self._lookup(indi_xref)
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
         result: List[IndividualRecord] = []
@@ -447,7 +455,7 @@ class Gedcom5(RelationshipCacheMixin):
                     spouse_el = self._lookup(ptr.value)
                     if spouse_el and spouse_el.tag == "INDI":
                         result.append(spouse_el)
-        self._cache_set("s", indi_xref, result)
+        self._cache_set("s", xref, result)
         return result
 
     # ------------------------------------------------------------------

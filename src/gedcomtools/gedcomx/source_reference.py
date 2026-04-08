@@ -11,7 +11,7 @@
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field, field_validator
 

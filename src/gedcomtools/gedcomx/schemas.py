@@ -10,6 +10,9 @@ from __future__ import annotations
 #  Updated: 2026-03-31 — fact_from_even_tag/event_from_even_tag moved to
 #                         conversion.py; stubs retained for backward compat
 #  Updated: 2026-04-03 — narrow bare except Exception to ImportError / (NameError, AttributeError, TypeError)
+#  Updated: 2026-04-08 — pass full extension field types through to
+#                         GedcomXModel.define_ext so generic model lists
+#                         stay typed during deserialization
 # ======================================================================
 import functools
 import inspect
@@ -200,7 +203,7 @@ class Schema:
 
         # For pydantic models, also wire up as a proper model field.
         if isinstance(cls, type) and hasattr(cls, "define_ext"):
-            cls.define_ext(name, typ=typ if isinstance(typ, type) else None, overwrite=overwrite)
+            cls.define_ext(name, typ=typ, overwrite=overwrite)
 
     def normalize_all(self) -> None:
         """Re-run normalization across all registered fields."""

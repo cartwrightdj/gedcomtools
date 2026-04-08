@@ -16,7 +16,6 @@ import traceback
 from typing import Any
 
 from gedcomtools.gedcomx.gxcli_output import (
-    ANSI,
     NO_DATA,
     SHELL_VERSION,
     _DEFAULT_SETTINGS,

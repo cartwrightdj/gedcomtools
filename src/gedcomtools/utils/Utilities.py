@@ -51,4 +51,3 @@ def combine_enums(name: str, *enums, allow_aliases=False, prefix_on_conflict=Fal
             seen_values.add(val)
 
     return Enum(name, items)
-

@@ -102,12 +102,11 @@ class _Node:
             child = GedcomStructure(level=child_level, tag=tag, payload=value)
             self._raw.add_child(child)
             return _Node(child, self._fmt)
-        else:
-            from gedcomtools.gedcom5.elements import Element
-            child_level = (self._raw.level or 0) + 1
-            child = Element(child_level, "", tag, value)
-            self._raw.add_child_element(child)
-            return _Node(child, self._fmt)
+        from gedcomtools.gedcom5.elements import Element
+        child_level = (self._raw.level or 0) + 1
+        child = Element(child_level, "", tag, value)
+        self._raw.add_child_element(child)
+        return _Node(child, self._fmt)
 
     def remove_child(self, child: "_Node") -> None:
         """Remove a child node."""
@@ -143,7 +142,6 @@ def _ls(node: _Node) -> None:
         print("  (no children)")
         return
     # Count occurrences of each tag to decide when to show [n] suffix
-    from collections import Counter
     tag_counts = Counter(k.tag for k in kids)
     tag_seen: Dict[str, int] = {}
     for i, child in enumerate(kids):
@@ -201,8 +199,6 @@ def _run_examine(
     allow_edit: bool,
 ) -> None:
     """Inner REPL for examine / edit mode."""
-    import shlex
-
     if not roots:
         print("No records to examine.")
         return
@@ -265,7 +261,6 @@ def _run_examine(
         # ambiguous — show options
         print(f"  {len(matches)} children with tag {wanted_tag!r}, specify index:")
         kids_all = cursor.children()
-        from collections import Counter
         tag_counts = Counter(k.tag for k in kids_all)
         tag_seen: Dict[str, int] = {}
         for i, child in enumerate(kids_all):
@@ -333,7 +328,8 @@ def _run_examine(
                 cursor = file_root
                 breadcrumbs = ["/"]
             else:
-                breadcrumbs.pop() if len(breadcrumbs) > 1 else None
+                if len(breadcrumbs) > 1:
+                    breadcrumbs.pop()
                 cursor = p
         return False
 
@@ -389,7 +385,8 @@ def _run_examine(
                 confirm = input(f"  delete {cursor.tag!r}? [y/N] ").strip().lower()
                 if confirm == "y":
                     parent.remove_child(cursor)
-                    breadcrumbs.pop() if len(breadcrumbs) > 1 else None
+                    if len(breadcrumbs) > 1:
+                    breadcrumbs.pop()
                     cursor = parent
                     print(f"  deleted — now at {_path_str(breadcrumbs)}")
                     _ls(cursor)

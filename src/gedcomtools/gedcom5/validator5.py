@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter, defaultdict
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set
 
 from gedcomtools.gedcom7.validator import ValidationIssue
 from gedcomtools.gedcom5 import specification5 as spec
@@ -521,7 +521,7 @@ class Gedcom5Validator:
     # Phase 6 — Orphaned records
     # ------------------------------------------------------------------
 
-    def _check_orphans(self, roots: List[Any], xref_index: Dict[str, Any]) -> None:
+    def _check_orphans(self, roots: List[Any], _xref_index: Dict[str, Any]) -> None:
         # Collect all pointer values mentioned anywhere in the file
         cited: Set[str] = set()
 

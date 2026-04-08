@@ -24,11 +24,8 @@ from typing import Tuple
 
 from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
-from gedcomtools.utils.Utilities import _is_url
 
 log = get_logger(__name__)
-
-from .gctool_output import _bold
 
 
 # ---------------------------------------------------------------------------

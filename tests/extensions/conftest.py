@@ -11,7 +11,6 @@ def load_all_plugins():
 
     plugin_registry.set_trust_level(TrustLevel.BUILTIN)
     plugin_registry.allow("gedcomtools.gedcomx.extensions.fs")
-    plugin_registry.allow("gedcomtools.gedcomx.extensions.rs10")
     plugin_registry.allow("gedcomtools.gedcomx.extensions.test")
     result = plugin_registry.load()
     assert result["errors"] == {}, f"Plugin load errors: {result['errors']}"

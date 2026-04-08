@@ -18,15 +18,18 @@ import importlib.metadata
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
-from gedcomtools.gedcom_protocol import GedcomFile
+if TYPE_CHECKING:
+    from gedcomtools.gedcom7.gedcom7 import Gedcom7
+    from gedcomtools.gedcom5.gedcom5 import Gedcom5
+
 from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
 
 from .gctool_output import (
-    _bold, _cyan, _dim, _green, _kv, _norm_xref, _red, _table, _yellow,
+    _bold, _dim, _green, _kv, _norm_xref, _red, _table, _yellow,
 )
 from .gctool_load import _load
 
@@ -67,7 +70,7 @@ def cmd_info(args) -> int:
 
     print(f"File    : {path}")
     print(f"Format  : GEDCOM {fmt[-1]}  (version {_bold(version)})")
-    print(f"Records :")
+    print("Records :")
     for tag, n in counts.items():
         print(f"  {tag:<8} {_green(str(n))}")
     return 0
@@ -321,7 +324,7 @@ def cmd_find(args) -> int:
             for child in node.children:
                 _walk_g7(child, record_label)
 
-        for record in obj.records:
+        for record in cast("Gedcom7", obj).records:
             label = record.xref_id or record.tag
             _walk_g7(record, label)
 
@@ -350,7 +353,7 @@ def cmd_find(args) -> int:
                 _walk_g5(child, record_label, path_parts + [tag])
 
         try:
-            roots = obj._parser.get_root_child_elements()
+            roots = cast("Gedcom5", obj)._parser.get_root_child_elements()
         except (AttributeError, TypeError) as exc:
             log.debug("get_root_child_elements failed in cmd_find: {}", exc)
             roots = []
@@ -384,7 +387,7 @@ def cmd_tree(args) -> int:
     path = Path(args.file)
     xref = _norm_xref(args.xref)
     max_depth: int = args.depth
-    fmt, obj = _load(path)
+    _fmt, obj = _load(path)
 
     def _label(x: str) -> str:
         try:
@@ -470,7 +473,7 @@ def cmd_tree(args) -> int:
 def cmd_stats(args) -> int:
     """Handle the `stats` command."""
     path = Path(args.file)
-    fmt, obj = _load(path)
+    _fmt, obj = _load(path)
 
     indis = obj.individual_details()
     fams  = obj.family_details()
@@ -565,9 +568,8 @@ def cmd_convert(args) -> int:
 
 def _package_version() -> str:
     try:
-        from importlib.metadata import version, PackageNotFoundError
-        return version("gedcomtools")
-    except PackageNotFoundError:
+        return importlib.metadata.version("gedcomtools")
+    except importlib.metadata.PackageNotFoundError:
         pass
     # Fallback for editable installs where metadata may not be present
     try:
@@ -585,7 +587,7 @@ def _package_version() -> str:
     return "unknown"
 
 
-def cmd_version(args) -> int:
+def cmd_version(_args) -> int:
     """Handle the `version` command."""
     print(_package_version())
     return 0

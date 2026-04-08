@@ -32,7 +32,6 @@ class TagConversionError(GedcomXError):
 
 class ConversionErrorDump(GedcomXError):
     """Document the ConversionErrorDump type."""
-    pass
 
 class GedcomXDateParseError(ValueError):
     """Raised when we cannot parse a date string into GEDCOM X Date format."""

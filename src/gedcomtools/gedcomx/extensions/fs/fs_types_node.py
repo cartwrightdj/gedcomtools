@@ -12,6 +12,8 @@
    fs-gedcomx-extension-specification.md
 
  Created: 2026-03-21
+ Updated: 2026-04-08 — register NameFormInfo on NameForm for typed
+                       FamilySearch deserialization
 ======================================================================
 """
 from __future__ import annotations
@@ -22,6 +24,8 @@ from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import Field
 
 from gedcomtools.gedcomx.gx_base import GedcomXModel
+from gedcomtools.gedcomx.name import NameForm
+from gedcomtools.gedcomx.schemas import SCHEMA
 from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
@@ -195,3 +199,6 @@ log.debug(
     "Template, Templates, NameFormInfo, NameFormOrder, NameSearchInfo, "
     "Child, ChildrenData, NodeData, Facet, SearchInfo defined"
 )
+
+
+SCHEMA.register_extra(NameForm, "nameFormInfo", List[NameFormInfo])

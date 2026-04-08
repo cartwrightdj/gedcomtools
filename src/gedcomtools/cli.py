@@ -121,7 +121,6 @@ def _load_gx(path: Path):
 
 def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     from gedcomtools.gedcomx.conversion import GedcomConverter
-    from gedcomtools.gedcomx.serialization import Serialization
     print(f"Loading GEDCOM 5 from {source_path} ...")
     try:
         g5 = _load_g5(source_path)

@@ -508,10 +508,9 @@ def _show_stats(obj: Any) -> int:
 def cmd_interactive(args) -> int:
     """Handle the interactive shell command."""
     try:
-        import readline  # noqa: F401 — enables arrow-key history on most platforms
+        import readline  # noqa: F401  # pylint: disable=unused-import
     except ImportError:
         pass
-    import shlex
 
     print(_bold("gctool interactive") + "  —  type 'help' for commands, 'exit' to quit")
 
@@ -542,7 +541,7 @@ def cmd_interactive(args) -> int:
 
     # ---- dispatch table for interactive REPL ---------------------------------
 
-    def _icmd_help(tokens: List[str]) -> bool:
+    def _icmd_help(_tokens: List[str]) -> bool:
         print(_INTERACTIVE_HELP)
         return False
 
@@ -570,19 +569,19 @@ def cmd_interactive(args) -> int:
         _print_status(display_path, fmt, obj)
         return False
 
-    def _icmd_info(tokens: List[str]) -> bool:
+    def _icmd_info(_tokens: List[str]) -> bool:
         if not _need_file():
             assert fmt is not None and obj is not None
             _show_info(display_path, fmt, obj)
         return False
 
-    def _icmd_validate(tokens: List[str]) -> bool:
+    def _icmd_validate(_tokens: List[str]) -> bool:
         if not _need_file():
             assert obj is not None
             _show_validate(obj)
         return False
 
-    def _icmd_stats(tokens: List[str]) -> bool:
+    def _icmd_stats(_tokens: List[str]) -> bool:
         if not _need_file():
             assert obj is not None
             _show_stats(obj)
@@ -630,7 +629,7 @@ def cmd_interactive(args) -> int:
             return False
         assert obj is not None
         assert fmt is not None
-        allow_edit = (tokens[0].lower() == "edit")
+        allow_edit = tokens[0].lower() == "edit"
         raw_roots = obj.records if fmt == "g7" else list(obj._parser.get_root_child_elements())
         xref_arg = tokens[1] if len(tokens) > 1 else None
         if xref_arg:

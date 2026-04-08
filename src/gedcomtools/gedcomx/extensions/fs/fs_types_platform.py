@@ -12,6 +12,9 @@
    fs-gedcomx-extension-specification.md
 
  Created: 2026-03-21
+ Updated: 2026-04-08 — type FamilySearchPlatform persons, relationships,
+                       places, links, and sourceDescriptions; add the
+                       observed FamilySearchPersonEnvelope wrapper
 ======================================================================
 """
 from __future__ import annotations
@@ -23,7 +26,12 @@ from pydantic import Field
 
 from gedcomtools.gedcomx.attribution import Attribution
 from gedcomtools.gedcomx.gx_base import GedcomXModel
+from gedcomtools.gedcomx.person import Person
+from gedcomtools.gedcomx.place_description import PlaceDescription
+from gedcomtools.gedcomx.relationship import Relationship
 from gedcomtools.gedcomx.resource import Resource
+from gedcomtools.gedcomx.source_description import SourceDescription
+from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import ChildAndParentsRelationship
 from gedcomtools.glog import get_logger
 
 if TYPE_CHECKING:
@@ -214,6 +222,11 @@ class FamilySearchPlatform(GedcomXModel):
 
     Fields:
         childAndParentsRelationships: ChildAndParentsRelationship list.
+        persons:                       Persons in this data set.
+        relationships:                Relationships in this data set.
+        places:                       Place descriptions in this data set.
+        sourceDescriptions:           Source descriptions in this data set.
+        links:                        Top-level FamilySearch link rel names.
         discussions:                  Discussions in this data set.
         trees:                        Trees in this data set.
         users:                        Users in this data set.
@@ -224,7 +237,12 @@ class FamilySearchPlatform(GedcomXModel):
 
     identifier: ClassVar[str] = "http://familysearch.org/v1/FamilySearchPlatform"
 
-    childAndParentsRelationships: List[Any] = Field(default_factory=list)
+    childAndParentsRelationships: List[ChildAndParentsRelationship] = Field(default_factory=list)
+    persons: List[Person] = Field(default_factory=list)
+    relationships: List[Relationship] = Field(default_factory=list)
+    places: List[PlaceDescription] = Field(default_factory=list)
+    sourceDescriptions: List[SourceDescription] = Field(default_factory=list)
+    links: List[str] = Field(default_factory=list)
     discussions: List[Any] = Field(default_factory=list)
     trees: List[Tree] = Field(default_factory=list)
     users: List[User] = Field(default_factory=list)
@@ -233,8 +251,36 @@ class FamilySearchPlatform(GedcomXModel):
     features: List[Any] = Field(default_factory=list)
 
 
+class FamilySearchPersonEnvelope(GedcomXModel):
+    """Observed FamilySearch web payload wrapper around a platform response.
+
+    This wrapper is inferred from FamilySearch web JSON payloads seen in the
+    browser and is not part of the public `FamilySearchPlatform` schema
+    documented in the FamilySearch developer docs.
+
+    Fields:
+        data:      Nested `FamilySearchPlatform` payload.
+        display:   Short display label for the person.
+        id:        Top-level person identifier.
+        lifespan:  Short display lifespan string.
+        person:    Expanded primary person object.
+        personId:  Repeated person identifier.
+        summary:   Short summary string.
+        title:     Title string for the page/card.
+    """
+
+    data: Optional[FamilySearchPlatform] = None
+    display: Optional[str] = None
+    id: Optional[str] = None
+    lifespan: Optional[str] = None
+    person: Optional[Person] = None
+    personId: Optional[str] = None
+    summary: Optional[str] = None
+    title: Optional[str] = None
+
+
 log.debug(
     "fs_types_platform extension loaded — "
     "ThirdPartyAccess, MatchStatus, MatchInfo, Tree, TreePersonReference, User, "
-    "FamilySearchPlatform defined"
+    "FamilySearchPlatform, FamilySearchPersonEnvelope defined"
 )

@@ -628,7 +628,6 @@ def log_failure(
 # — set LOG_LEVEL=WARNING to silence routine conversion chatter.
 
 def _auto_configure() -> None:
-    global _manager  # pylint: disable=global-statement
     if _manager is not None:
         return  # already configured by an explicit setup_logging() call
 

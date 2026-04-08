@@ -7,15 +7,18 @@
 
  Created: 2025-08-25
  Updated:
+   - 2026-04-08: add typed normalized text values for FamilySearch
+                 place references
 ======================================================================
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field, field_validator
 
 from .gx_base import GedcomXModel
 from .resource import Resource
+from .textvalue import TextValue
 from .uri import URI
 
 if TYPE_CHECKING:
@@ -30,6 +33,7 @@ class PlaceReference(GedcomXModel):
 
     original: Optional[str] = None
     descriptionRef: Optional[Any] = Field(default=None, alias="description")  # Resource | URI | PlaceDescription
+    normalized: List[TextValue] = Field(default_factory=list)
 
     @field_validator("descriptionRef", mode="before")
     @classmethod
@@ -49,3 +53,5 @@ class PlaceReference(GedcomXModel):
             from .place_description import PlaceDescription
             check_instance(result, "description", self.descriptionRef,
                            Resource, URI, PlaceDescription)
+        for i, norm in enumerate(self.normalized):
+            check_instance(result, f"normalized[{i}]", norm, TextValue)

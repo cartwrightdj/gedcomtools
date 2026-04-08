@@ -9,9 +9,9 @@ from __future__ import annotations
 #  Created: 2026-03-31 — split from gxcli.py
 # ======================================================================
 import json
-from typing import Any, get_args, get_origin
+from typing import Any
 
-from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
+from gedcomtools.gedcomx.schemas import SCHEMA
 
 from gedcomtools.gedcomx.gxcli_output import (
     ANSI,
@@ -103,7 +103,10 @@ class _SchemaMixin:
                 for clsname, fields in sorted(SCHEMA.field_type_table.items())
                 if target_field in fields
             ]
-            print("(no matches)") if not rows else _print_table(rows, ["class", "field", "type"])
+            if not rows:
+                print("(no matches)")
+            else:
+                _print_table(rows, ["class", "field", "type"])
 
         def _do_where(_rest: list[str]) -> None:
             if not _rest:
@@ -116,7 +119,10 @@ class _SchemaMixin:
                 for fname, ftype in fields.items()
                 if needle in _typename(ftype)
             ]
-            print("(no matches)") if not rows else _print_table(rows, ["class", "field", "type"])
+            if not rows:
+                print("(no matches)")
+            else:
+                _print_table(rows, ["class", "field", "type"])
 
         def _do_bases(_rest: list[str]) -> None:
             if not _rest:

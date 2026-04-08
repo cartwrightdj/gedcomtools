@@ -19,14 +19,18 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
+
+if TYPE_CHECKING:
+    from gedcomtools.gedcom7.gedcom7 import Gedcom7
+    from gedcomtools.gedcom5.gedcom5 import Gedcom5
 
 from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
 
-from .gctool_output import _bold, _dim, _green, _kv, _red, _table, _yellow
+from .gctool_output import _green, _kv, _red, _yellow
 from .gctool_load import _load
 
 
@@ -62,11 +66,11 @@ def _alloc_xref_remap(obj1: GedcomFile, obj2: GedcomFile, fmt1: str, fmt2: str) 
     """Build old-xref → new-xref mapping for every record in obj2 safe for obj1."""
     xrefs1: set = set()
     if fmt1 == "g7":
-        for r in obj1.records:
+        for r in cast("Gedcom7", obj1).records:
             if r.xref_id:
                 xrefs1.add(r.xref_id.upper())
     else:
-        for el in obj1._parser.get_root_child_elements():
+        for el in cast("Gedcom5", obj1)._parser.get_root_child_elements():
             xr = (getattr(el, "xref_id", None) or getattr(el, "xref", None) or "").strip()
             if xr:
                 xrefs1.add(xr.upper())
@@ -91,13 +95,13 @@ def _alloc_xref_remap(obj1: GedcomFile, obj2: GedcomFile, fmt1: str, fmt2: str) 
 
     remap: Dict[str, str] = {}
     if fmt2 == "g7":
-        for r in obj2.records:
+        for r in cast("Gedcom7", obj2).records:
             if r.xref_id:
                 old = r.xref_id.upper()
                 m = pat.match(old)
                 remap[old] = _next(m.group(1) if m else r.tag[:4].upper())
     else:
-        for el in obj2._parser.get_root_child_elements():
+        for el in cast("Gedcom5", obj2)._parser.get_root_child_elements():
             xr = (getattr(el, "xref_id", None) or getattr(el, "xref", None) or "").strip()
             tag = (getattr(el, "tag", None) or "UNKN").upper()
             if xr:
@@ -265,11 +269,11 @@ def cmd_repair(args) -> int:
 
     counts: Dict[str, int] = {}
     if fmt == "g7":
-        for record in obj.records:
+        for record in cast("Gedcom7", obj).records:
             _repair_walk_g7(record, counts)
     else:
         try:
-            roots = obj._parser.get_root_child_elements()
+            roots = cast("Gedcom5", obj)._parser.get_root_child_elements()
         except (AttributeError, TypeError) as exc:
             log.debug("get_root_child_elements failed in cmd_repair: {}", exc)
             roots = []
@@ -285,10 +289,10 @@ def cmd_repair(args) -> int:
 
     if not dry_run:
         if fmt == "g7":
-            obj.write(out_path)
+            cast("Gedcom7", obj).write(out_path)
         else:
             with open(out_path, "w", encoding="utf-8") as fh:
-                obj._parser.save_gedcom(fh)
+                cast("Gedcom5", obj)._parser.save_gedcom(fh)
 
     if args.json:
         print(json.dumps({
@@ -322,9 +326,8 @@ def cmd_repair(args) -> int:
 
 def cmd_export(args) -> int:
     """Dump individuals and families to CSV files."""
-    import csv as _csv
     path = Path(args.file)
-    fmt, obj = _load(path)  # noqa: F841
+    _fmt, obj = _load(path)
 
     if args.to.lower() != "csv":
         print(f"error: unsupported export format {args.to!r}", file=sys.stderr)
@@ -390,8 +393,8 @@ def cmd_export(args) -> int:
 
 def cmd_diff(args) -> int:
     """Show structural differences between two GEDCOM files."""
-    fmt1, obj1 = _load(Path(args.file1))
-    fmt2, obj2 = _load(Path(args.file2))
+    _fmt1, obj1 = _load(Path(args.file1))
+    _fmt2, obj2 = _load(Path(args.file2))
 
     indis1 = {d.xref: d for d in obj1.individual_details()}
     indis2 = {d.xref: d for d in obj2.individual_details()}
@@ -432,7 +435,7 @@ def cmd_diff(args) -> int:
             result["indi"]["removed"].append({"xref": xref, **_indi_fields(indis1[xref])})
         else:
             f1, f2 = _indi_fields(indis1[xref]), _indi_fields(indis2[xref])
-            diffs = {k: (f1[k], f2[k]) for k in f1 if f1[k] != f2[k]}
+            diffs = {k: (v, f2[k]) for k, v in f1.items() if v != f2[k]}
             if diffs:
                 result["indi"]["changed"].append({"xref": xref, "changes": diffs})
 
@@ -443,7 +446,7 @@ def cmd_diff(args) -> int:
             result["fam"]["removed"].append({"xref": xref, **_fam_fields(fams1[xref])})
         else:
             f1, f2 = _fam_fields(fams1[xref]), _fam_fields(fams2[xref])
-            diffs = {k: (f1[k], f2[k]) for k in f1 if f1[k] != f2[k]}
+            diffs = {k: (v, f2[k]) for k, v in f1.items() if v != f2[k]}
             if diffs:
                 result["fam"]["changed"].append({"xref": xref, "changes": diffs})
 
@@ -457,8 +460,8 @@ def cmd_diff(args) -> int:
 
     def _section(label: str, sec: Dict[str, Any]) -> None:
         total = sum(len(v) for v in sec.values())
-        bar = "─" * max(0, 50 - len(label))
-        print(f"\n── {label} {bar}")
+        rule = "─" * max(0, 50 - len(label))
+        print(f"\n── {label} {rule}")
         if total == 0:
             print("  (no changes)")
             return
@@ -532,7 +535,6 @@ def cmd_merge(args) -> int:
     no_interactive = getattr(args, "no_interactive", False) or not sys.stdin.isatty()
 
     for xref1, d2 in conflicts:
-        d1_info = f"FILE1  {xref1:<10} {indis1[0].full_name if indis1 else '?'}"
         # find d1 by xref
         d1 = next((d for d in indis1 if d.xref == xref1), None)
         name1 = f"{d1.full_name}  b.{d1.birth_year}" if d1 else xref1
@@ -540,7 +542,7 @@ def cmd_merge(args) -> int:
         if no_interactive:
             # default: keep both
             continue
-        print(f"\n  Possible duplicate:")
+        print("\n  Possible duplicate:")
         print(f"    FILE1  {xref1:<10} {name1}")
         print(f"    FILE2  {d2.xref:<10} {name2}")
         while True:
@@ -550,14 +552,13 @@ def cmd_merge(args) -> int:
             if choice == "1":
                 skip_xrefs2.add(d2.xref.upper())
                 break
-            elif choice == "2":
+            if choice == "2":
                 # remove from file1 — not supported in this implementation
                 print("    (keeping file2 version is not yet supported; keeping both)")
                 break
-            elif choice in ("3", ""):
+            if choice in ("3", ""):
                 break
-            else:
-                print("    Please enter 1, 2, 3 or press Enter.")
+            print("    Please enter 1, 2, 3 or press Enter.")
 
     # Build xref remap for file2
     remap = _alloc_xref_remap(obj1, obj2, fmt1, fmt2)
@@ -572,7 +573,9 @@ def cmd_merge(args) -> int:
     added = 0
 
     if fmt1 == "g7":
-        for record in obj2.records:
+        g7obj1 = cast("Gedcom7", obj1)
+        g7obj2 = cast("Gedcom7", obj2)
+        for record in g7obj2.records:
             # skip HEAD and TRLR from file2
             if record.tag in ("HEAD", "TRLR"):
                 continue
@@ -580,10 +583,10 @@ def cmd_merge(args) -> int:
             if xref_key in skip_xrefs2:
                 continue
             clone = _clone_g7_node(record, remap, parent=None, level=0)
-            obj1.records.append(clone)
+            g7obj1.records.append(clone)
             added += 1
-        obj1._rebuild_tag_index()
-        obj1.write(out_path)
+        g7obj1._rebuild_tag_index()
+        g7obj1.write(out_path)
 
     else:  # g5 text-based merge
         # read file1 text, strip TRLR
