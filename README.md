@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.4-dev2**
+> **ALPHA SOFTWARE — v0.7.5b1**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
@@ -13,7 +13,38 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-## What's New (development)
+## What's New in v0.7.5b1
+
+### FamilySearch deserialization
+
+- Added typed FamilySearch deserialization for `PersonInfo`, `NameFormInfo`,
+  normalized dates, normalized place text, and FamilySearch `display`
+  payloads.
+- Expanded `FamilySearchPlatform` deserialization so `persons`,
+  `relationships`, `places`, `links`, and `sourceDescriptions` build typed
+  model objects instead of being left as loose extra data.
+- Added `FamilySearchPersonEnvelope` for the observed outer FamilySearch web
+  payload wrapper containing `data`, `person`, `personId`, `summary`,
+  `title`, and related display fields.
+- `Person.display()` now prefers deserialized FamilySearch display data and
+  computes only the fields that are missing from the payload.
+
+### Samples and examples
+
+- Added FamilySearch sample JSON fixtures under
+  `.sample_data/familysearch/`.
+- Added disk-based tests covering both the platform payload and the outer
+  FamilySearch person envelope.
+- Added `examples/familysearch_deserialize.py` showing how to load the
+  FamilySearch extension plugin and deserialize the sample payloads.
+
+### Release packaging
+
+- Bumped the package and docs version to `0.7.5b1`.
+- Rebuilt the Sphinx HTML documentation and the release artifacts for this
+  beta cut.
+
+## Previous Development Updates
 
 ### Updates from 2026-03-31
 
