@@ -260,7 +260,7 @@
 <li><p>Verify field types and data integrity.</p></li>
 <li><p>Resolve cross-references.</p></li>
 <li><p>Build a quick ancestor list without an external file.</p></li>
-<li><p>Export to GEDCOM-X JSON, ZIP, JSONL, or ArangoDB graph files.</p></li>
+<li><p>Export to GEDCOM-X JSON, ZIP, or JSONL.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -398,9 +398,6 @@ python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> <
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jsonl</span></code></p></td>
 <td><p>JSON Lines. Serialises the <strong>current node</strong> (not necessarily root), one record per line.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">adbg</span></code></p></td>
-<td><p>ArangoDB graph files. <code class="docutils literal notranslate"><span class="pre">PATH</span></code> is a <strong>directory</strong>; writes <code class="docutils literal notranslate"><span class="pre">persons.jsonl</span></code> and <code class="docutils literal notranslate"><span class="pre">person_to_person.jsonl</span></code> into it.</p></td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -408,7 +405,6 @@ python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> <
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>write gx output/tree.json
 write zip output/tree
 write jsonl output/persons.jsonl
-write adbg output/arango/
 </pre></div>
 </div>
 </section>
@@ -1544,9 +1540,6 @@ log files on /var/log/gedcomtools
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">jsonl</span> <span class="pre">PATH</span></code></p></td>
 <td><p>Save current node as JSON Lines</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">adbg</span> <span class="pre">DIR</span></code></p></td>
-<td><p>Write ArangoDB graph files to a directory</p></td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -1945,7 +1938,7 @@ log files on /var/log/gedcomtools
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="_static/documentation_options.js?v=eba77b5f"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

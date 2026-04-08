@@ -299,13 +299,8 @@ severity: <code class="docutils literal notranslate"><span class="pre">&quot;err
 <dl class="py class">
 <dt class="sig sig-object py">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcom7.gedcom7.</span></span><span class="sig-name descname"><span class="pre">Gedcom7</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RelationshipCacheMixin</span></code></p>
 <p>Parse and validate GEDCOM 7 files.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">filepath</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></dt>
-<dd></dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">records</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcom7.structure.GedcomStructure" title="gedcomtools.gedcom7.structure.GedcomStructure"><span class="pre">GedcomStructure</span></a><span class="p"><span class="pre">]</span></span></span></dt>
@@ -314,6 +309,11 @@ severity: <code class="docutils literal notranslate"><span class="pre">&quot;err
 <dl class="py attribute">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">errors</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><span class="pre">GedcomValidationError</span><span class="p"><span class="pre">]</span></span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">filepath</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -331,6 +331,28 @@ severity: <code class="docutils literal notranslate"><span class="pre">&quot;err
 <dt>Returns:</dt><dd><p>Parsed line dictionary or <code class="docutils literal notranslate"><span class="pre">None</span></code> for blank lines.</p>
 </dd>
 <dt>Raises:</dt><dd><p>ValueError: If the line is malformed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">load_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.load_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.</p>
+<p>The response body is decoded as UTF-8 (required by the GEDCOM 7
+specification) and passed to <code class="xref py py-meth docutils literal notranslate"><span class="pre">parse_string()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>url: HTTP or HTTPS URL pointing to a <code class="docutils literal notranslate"><span class="pre">.ged</span></code> file.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError:             If the URL does not end in <code class="docutils literal notranslate"><span class="pre">.ged</span></code>.
+urllib.error.URLError:  If the URL cannot be reached.
+urllib.error.HTTPError: If the server returns an error status.
+GedcomParseError:       If the response body is not valid UTF-8.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -764,7 +786,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_parents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_parents"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_parents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_parents"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return the parents of an individual as raw records.</p>
 <p>Walks FAMC → FAM → HUSB/WIFE.</p>
 <dl class="field-list simple">
@@ -773,7 +795,7 @@ record cannot be found or has no name.</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>Args:</dt><dd><p>indi_xref: Xref id of the individual (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;&#64;I1&#64;&quot;</span></code>).</p>
+<dt>Args:</dt><dd><p>xref: Xref id of the individual (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;&#64;I1&#64;&quot;</span></code>).</p>
 </dd>
 <dt>Returns:</dt><dd><p>Raw <code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomStructure</span></code> for each parent found.</p>
 </dd>
@@ -782,7 +804,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_children_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_children_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_children_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_children_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return the children of an individual as raw records.</p>
 <p>Walks FAMS → FAM → CHIL.</p>
 <dl class="field-list simple">
@@ -791,7 +813,7 @@ record cannot be found or has no name.</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>Args:</dt><dd><p>indi_xref: Xref id of the individual.</p>
+<dt>Args:</dt><dd><p>xref: Xref id of the individual.</p>
 </dd>
 <dt>Returns:</dt><dd><p>Raw <code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomStructure</span></code> for each child found.</p>
 </dd>
@@ -800,7 +822,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_spouses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_spouses"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_spouses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_spouses"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return the spouses of an individual as raw records.</p>
 <p>For each FAMS family, returns the other HUSB or WIFE record.</p>
 <dl class="field-list simple">
@@ -809,7 +831,7 @@ record cannot be found or has no name.</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>Args:</dt><dd><p>indi_xref: Xref id of the individual.</p>
+<dt>Args:</dt><dd><p>xref: Xref id of the individual.</p>
 </dd>
 <dt>Returns:</dt><dd><p>Raw <code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomStructure</span></code> for each spouse found.</p>
 </dd>
@@ -818,7 +840,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_parents_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_parents_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_parents_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_parents_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return parents as <code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code> snapshots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -829,7 +851,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_children_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_children_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_children_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_children_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return children as <code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code> snapshots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -840,7 +862,7 @@ record cannot be found or has no name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">get_spouses_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indi_xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_spouses_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-name descname"><span class="pre">get_spouses_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_spouses_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return spouses as <code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code> snapshots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -863,6 +885,31 @@ from this file’s records.</p>
 <span class="n">gx</span> <span class="o">=</span> <span class="n">g7</span><span class="o">.</span><span class="n">to_gedcomx</span><span class="p">()</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;family.json&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">gx</span><span class="o">.</span><span class="n">json</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_gedcomx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.from_gedcomx"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Create a <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom7</span></code> from a
+<a class="reference internal" href="gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX" title="gedcomtools.gedcomx.gedcomx.GedcomX"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomX</span></code></a> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom7</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gx: A <a class="reference internal" href="gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX" title="gedcomtools.gedcomx.gedcomx.GedcomX"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomX</span></code></a> instance.</p>
+</dd>
+<dt>Returns:</dt><dd><p>A new <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom7</span></code> instance whose <code class="xref py py-attr docutils literal notranslate"><span class="pre">records</span></code> hold the
+converted GEDCOM 7 structure tree.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gx</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">g7</span> <span class="o">=</span> <span class="n">Gedcom7</span><span class="o">.</span><span class="n">from_gedcomx</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
+<span class="n">g7</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;output.ged&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -3155,7 +3202,7 @@ the final line terminator on the TRLR line.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

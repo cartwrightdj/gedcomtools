@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -238,6 +241,12 @@
 <span class="c1">#  Author:  David J. Cartwright</span>
 <span class="c1">#  Purpose: Central schema registry for field type metadata</span>
 <span class="c1">#  Created: 2025-08-25</span>
+<span class="c1">#  Updated: 2026-03-31 — fact_from_even_tag/event_from_even_tag moved to</span>
+<span class="c1">#                         conversion.py; stubs retained for backward compat</span>
+<span class="c1">#  Updated: 2026-04-03 — narrow bare except Exception to ImportError / (NameError, AttributeError, TypeError)</span>
+<span class="c1">#  Updated: 2026-04-08 — pass full extension field types through to</span>
+<span class="c1">#                         GedcomXModel.define_ext so generic model lists</span>
+<span class="c1">#                         stay typed during deserialization</span>
 <span class="c1"># ======================================================================</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
@@ -250,7 +259,7 @@
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># typing.Annotated may not exist in older 3.9 without typing_extensions</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>  <span class="c1"># type: ignore</span>
-<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">Annotated</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
 <span class="n">_UNION_ORIGINS</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
@@ -441,7 +450,7 @@
 
         <span class="c1"># For pydantic models, also wire up as a proper model field.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;define_ext&quot;</span><span class="p">):</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">define_ext</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">typ</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">define_ext</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">typ</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Schema.normalize_all">
@@ -556,7 +565,7 @@
         <span class="n">lns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">globalns</span><span class="o">=</span><span class="n">gns</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">lns</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
             <span class="c1"># fallback keeps strings — but we’ll fix those below</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
 
@@ -575,7 +584,7 @@
         <span class="n">lns</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">globalns</span><span class="o">=</span><span class="n">gns</span><span class="p">,</span> <span class="n">localns</span><span class="o">=</span><span class="n">lns</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
             <span class="n">hints</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="n">hints</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">hints</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1201,7 +1210,11 @@
 <span class="c1"># Singleton instance</span>
 <span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="p">()</span>
 
-<span class="c1"># -------------</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># NOTE: fact_from_even_tag and event_from_even_tag have been moved to</span>
+<span class="c1"># conversion.py where they are used.  The stubs below are kept for any</span>
+<span class="c1"># external callers that imported them from here.</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="fact_from_even_tag">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.schemas.fact_from_even_tag">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fact_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">):</span>
@@ -1334,7 +1347,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

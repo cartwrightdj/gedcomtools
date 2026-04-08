@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -251,6 +254,14 @@
 <span class="c1">#                       — TypeCollection.append(): no longer stamps type path onto</span>
 <span class="c1">#                         _uri; uses URI(fragment=id) only so resource refs serialize</span>
 <span class="c1">#                         as #id (same-document); explicit path URIs are preserved</span>
+<span class="c1">#           2026-04-03 — added conversion_warnings property exposing</span>
+<span class="c1">#                         _import_unhandled_tags for callers to detect data loss</span>
+<span class="c1">#                       — TypeCollection.append(): rollback guard wraps</span>
+<span class="c1">#                         _update_indexes so _items stays consistent on error</span>
+<span class="c1">#           2026-04-06 — add_group() and GedcomX.add(Group(...)) support so</span>
+<span class="c1">#                         Group is handled consistently with other top-level</span>
+<span class="c1">#                         collections</span>
+<span class="c1">#           2026-04-07 — added to_gedcom7() conversion helper (GedcomX → GEDCOM 7)</span>
 <span class="c1"># ======================================================================</span>
 <span class="c1"># GEDCOM Module Types</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
@@ -423,7 +434,11 @@
             <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">raise</span></div>
 
 
 <div class="viewcode-block" id="TypeCollection.extend">
@@ -534,6 +549,17 @@
         <span class="c1">#self.default_id_generator = make_uid</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conversion_warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;GEDCOM tags skipped during import due to missing handlers (potential data loss).</span>
+
+<span class="sd">        Non-empty when a converter encountered tags it could not map to GedcomX</span>
+<span class="sd">        objects.  Keys are GEDCOM tag names; values are occurrence counts.</span>
+<span class="sd">        Returns an empty dict when conversion was clean or this object was not</span>
+<span class="sd">        produced by a converter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_import_unhandled_tags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a dict with item counts for each top-level collection.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -554,7 +580,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            gedcomx_type_object: A Document, Person, SourceDescription, Agent,</span>
-<span class="sd">                PlaceDescription, Event, or Relationship instance.</span>
+<span class="sd">                PlaceDescription, Event, Relationship, or Group instance.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the object type is not a recognised top-level type.</span>
@@ -574,6 +600,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">,</span><span class="n">Relationship</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">,</span><span class="n">Group</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_group</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;I do not know how to add an Object of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gedcomx_type_object</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -755,6 +783,31 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event_to_add</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;event_to_add must be an Event instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">event_to_add</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomX.add_group">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.add_group">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">Group</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Group to the genealogy, skipping duplicates by id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            group: The Group to add.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            False if a group with this id already exists (duplicate skipped);</span>
+<span class="sd">            None (implicit return) if the group was successfully added.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the argument is not a Group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">Group</span><span class="p">)</span> <span class="ow">and</span> <span class="n">group</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;group must be a Group instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomX.extend">
@@ -958,6 +1011,26 @@
                     <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">items</span>
         <span class="k">return</span> <span class="n">result</span>
 
+<div class="viewcode-block" id="GedcomX.to_gedcom7">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.to_gedcom7">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gedcom7</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert this GedcomX document to a</span>
+<span class="sd">        :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance whose</span>
+<span class="sd">            :attr:`records` hold the converted GEDCOM 7 structure tree.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            gx = GedcomX.from_dict(data)</span>
+<span class="sd">            g7 = gx.to_gedcom7()</span>
+<span class="sd">            g7.write(&quot;output.ged&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..gedcom7.gedcom7</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom7</span>
+        <span class="k">return</span> <span class="n">Gedcom7</span><span class="o">.</span><span class="n">from_gedcomx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="GedcomX.gml">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.gml">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">gml</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1037,7 +1110,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

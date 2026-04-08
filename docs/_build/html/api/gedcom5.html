@@ -322,6 +322,25 @@ outputs consumed by <code class="xref py py-class docutils literal notranslate">
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.load_url">
+<span class="sig-name descname"><span class="pre">load_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/parser.html#Gedcom5x.load_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.load_url" title="Link to this definition">¶</a></dt>
+<dd><p>Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>url:    HTTP or HTTPS URL pointing to a GEDCOM file.
+strict: Passed through to <a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.parse" title="gedcomtools.gedcom5.parser.Gedcom5x.parse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">parse()</span></code></a>.</p>
+</dd>
+<dt>Raises:</dt><dd><p>urllib.error.URLError:  If the URL cannot be reached.
+urllib.error.HTTPError: If the server returns an error status.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcom5.parser.Gedcom5x.parse_file">
 <span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom5/parser.html#Gedcom5x.parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcom5.parser.Gedcom5x.parse_file" title="Link to this definition">¶</a></dt>
 <dd><p>Open and parse a GEDCOM 5.x file.</p>
@@ -1162,6 +1181,7 @@ the genealogical data.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.submitters"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.submitters</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.get_element_dictionary"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.get_element_dictionary()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.get_root_child_elements"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.get_root_child_elements()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.load_url"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.load_url()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.parse_file"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.parse_file()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.parse"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.parse()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcom5.parser.Gedcom5x.save_gedcom"><code class="docutils literal notranslate"><span class="pre">Gedcom5x.save_gedcom()</span></code></a></li>
@@ -1281,7 +1301,7 @@ the genealogical data.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

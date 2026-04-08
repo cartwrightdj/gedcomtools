@@ -48,7 +48,7 @@ def setup(app):
 project   = "gedcomtools"
 copyright = "2025, David J. Cartwright"
 author    = "David J. Cartwright"
-release   = "0.6.0"
+release   = "0.7.5b1"
 
 extensions = [
     "sphinx.ext.autodoc",

@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -236,6 +239,9 @@
 <span class="c1">#  Author:  David J. Cartwright</span>
 <span class="c1">#  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects</span>
 <span class="c1">#  Created: 2026-01-01</span>
+<span class="c1">#  Updated: 2026-04-06 — detect UTF-8/UTF-16 BOMs and decode the full byte</span>
+<span class="c1">#                         stream before splitting lines so UTF-16 GEDCOM 5</span>
+<span class="c1">#                         files load through the normal facade and CLI paths</span>
 <span class="c1"># ======================================================================</span>
 <span class="sd">&quot;&quot;&quot;Parse GEDCOM 5.x files into the project’s element tree representation.&quot;&quot;&quot;</span>
 
@@ -267,7 +273,10 @@
 <span class="c1"># All high-level analysis lives in Gedcom5.</span>
 <span class="c1"># This module is the raw parsing engine only.</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">regex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.error</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.elements</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -324,6 +333,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__repositories</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RepositoryRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__objects</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ObjectRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__root_element</span><span class="p">:</span> <span class="n">RootElement</span> <span class="o">=</span> <span class="n">RootElement</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">violations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Typed record collections</span>
@@ -393,6 +403,34 @@
     <span class="c1"># Parsing</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
+<div class="viewcode-block" id="Gedcom5x.load_url">
+<a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.load_url">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            url:    HTTP or HTTPS URL pointing to a GEDCOM file.</span>
+<span class="sd">            strict: Passed through to :meth:`parse`.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            urllib.error.URLError:  If the URL cannot be reached.</span>
+<span class="sd">            urllib.error.HTTPError: If the server returns an error status.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()),</span> <span class="n">strict</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">(</span>
+                <span class="n">exc</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;HTTP </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2"> fetching GEDCOM from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">exc</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">fp</span><span class="p">,</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cannot fetch GEDCOM from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
 <div class="viewcode-block" id="Gedcom5x.parse_file">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.parser.Gedcom5x.parse_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -423,15 +461,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__repositories</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__objects</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__root_element</span> <span class="o">=</span> <span class="n">RootElement</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">record_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Element</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__root_element</span><span class="p">,</span>
             <span class="mi">0</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">}</span>
 
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">gedcom_stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__detect_encoding</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
         <span class="n">line_number</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gedcom_stream</span><span class="p">:</span>
-            <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8-sig&#39;</span><span class="p">),</span> <span class="n">strict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(</span><span class="n">keepends</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">strict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">violations</span><span class="p">)</span>
             <span class="n">element</span><span class="o">.</span><span class="n">_line_num</span> <span class="o">=</span> <span class="n">line_number</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">HeaderRecord</span><span class="p">):</span>
@@ -449,14 +491,36 @@
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SubmitterRecord</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__submitters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
 
-            <span class="n">element</span><span class="o">.</span><span class="n">_set_parent</span><span class="p">(</span><span class="n">record_map</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">record_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">element</span><span class="o">.</span><span class="n">_set_parent</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
             <span class="n">record_map</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">element</span>
-            <span class="n">record_map</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_child_element</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">add_child_element</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
             <span class="n">line_number</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Element</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__detect_encoding</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect the text encoding for a GEDCOM 5.x byte stream.</span>
+
+<span class="sd">        GEDCOM 5 files are commonly UTF-8, but official sample data also</span>
+<span class="sd">        appears in UTF-16 with a BOM. Detect the BOM once up front so the</span>
+<span class="sd">        normal facade and CLI paths can parse those files without special</span>
+<span class="sd">        caller-side handling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xff\xfe</span><span class="s2">&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;utf-16&quot;</span>
+        <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xfe\xff</span><span class="s2">&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;utf-16&quot;</span>
+        <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xef\xbb\xbf</span><span class="s2">&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;utf-8-sig&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;utf-8-sig&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">violations</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Element</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one GEDCOM line and return the appropriate Element subclass.&quot;&quot;&quot;</span>
 
         <span class="n">level_regex</span> <span class="o">=</span> <span class="s1">&#39;^(0|[1-9]+[0-9]*) &#39;</span>
@@ -474,6 +538,8 @@
                     <span class="sa">f</span><span class="s2">&quot;Line &lt;</span><span class="si">{</span><span class="n">line_number</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&gt; violates GEDCOM format 5.5</span><span class="se">\n</span><span class="s2">&quot;</span>
                     <span class="s2">&quot;See: https://chronoplexsoftware.com/gedcomvalidator/gedcom/gedcom-5.5.pdf&quot;</span>
                 <span class="p">)</span>
+            <span class="k">if</span> <span class="n">violations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;line </span><span class="si">{</span><span class="n">line_number</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="c1"># Quirk: last line may be missing CRLF</span>
             <span class="n">last_line_regex</span> <span class="o">=</span> <span class="n">level_regex</span> <span class="o">+</span> <span class="n">pointer_regex</span> <span class="o">+</span> <span class="n">tag_regex</span> <span class="o">+</span> <span class="n">value_regex</span>
             <span class="n">regex_match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">last_line_regex</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
@@ -489,6 +555,10 @@
                 <span class="c1"># treat as CONC so text is not silently dropped.</span>
                 <span class="n">cont_line_regex</span> <span class="o">=</span> <span class="s1">&#39;([^</span><span class="se">\n\r</span><span class="s1">]*|)&#39;</span> <span class="o">+</span> <span class="n">end_of_line_regex</span>
                 <span class="n">regex_match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">cont_line_regex</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">regex_match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">GedcomFormatViolationError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Line &lt;</span><span class="si">{</span><span class="n">line_number</span><span class="si">}</span><span class="s2">&gt; could not be parsed even in recovery mode&quot;</span>
+                    <span class="p">)</span>
                 <span class="n">line_parts</span> <span class="o">=</span> <span class="n">regex_match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
                 <span class="n">level</span> <span class="o">=</span> <span class="mi">1</span>
                 <span class="n">pointer</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -572,7 +642,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

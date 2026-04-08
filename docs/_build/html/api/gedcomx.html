@@ -368,6 +368,16 @@ complies with GEDCOM X Conceptual Model V1 (<a class="reference external" href="
 <dd></dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.conversion_warnings">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">conversion_warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.conversion_warnings" title="Link to this definition">¶</a></dt>
+<dd><p>GEDCOM tags skipped during import due to missing handlers (potential data loss).</p>
+<p>Non-empty when a converter encountered tags it could not map to GedcomX
+objects.  Keys are GEDCOM tag names; values are occurrence counts.
+Returns an empty dict when conversion was clean or this object was not
+produced by a converter.</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.contents">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">contents</span></span><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.contents" title="Link to this definition">¶</a></dt>
 <dd><p>Return a dict with item counts for each top-level collection.</p>
@@ -379,7 +389,7 @@ complies with GEDCOM X Conceptual Model V1 (<a class="reference external" href="
 <dd><p>Dispatch a GedcomX top-level object to its appropriate <code class="docutils literal notranslate"><span class="pre">add_*</span></code> method.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
-<dt>gedcomx_type_object: A Document, Person, SourceDescription, Agent,</dt><dd><p>PlaceDescription, Event, or Relationship instance.</p>
+<dt>gedcomx_type_object: A Document, Person, SourceDescription, Agent,</dt><dd><p>PlaceDescription, Event, Relationship, or Group instance.</p>
 </dd>
 </dl>
 </dd>
@@ -478,6 +488,21 @@ Duplicate events (by equality) are silently ignored.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.add_group">
+<span class="sig-name descname"><span class="pre">add_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.add_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_group" title="Link to this definition">¶</a></dt>
+<dd><p>Add a Group to the genealogy, skipping duplicates by id.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>group: The Group to add.</p>
+</dd>
+<dt>Returns:</dt><dd><p>False if a group with this id already exists (duplicate skipped);
+None (implicit return) if the group was successfully added.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If the argument is not a Group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.extend">
 <span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gedcomx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.extend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.extend" title="Link to this definition">¶</a></dt>
 <dd><p>Merge all top-level objects from another GedcomX instance into this one.</p>
@@ -527,6 +552,24 @@ cross-collection checks (e.g. relationship person references resolve).</p>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX" title="gedcomtools.gedcomx.gedcomx.GedcomX"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomX</span></code></a></span></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.to_gedcom7">
+<span class="sig-name descname"><span class="pre">to_gedcom7</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.to_gedcom7"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.to_gedcom7" title="Link to this definition">¶</a></dt>
+<dd><p>Convert this GedcomX document to a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom7</span></code> object.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Gedcom7</span></code> instance whose
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">records</span></code> hold the converted GEDCOM 7 structure tree.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gx</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">g7</span> <span class="o">=</span> <span class="n">gx</span><span class="o">.</span><span class="n">to_gedcom7</span><span class="p">()</span>
+<span class="n">g7</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;output.ged&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -598,6 +641,11 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 <span class="sig-name descname"><span class="pre">living</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.person.Person.living" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.person.Person.displayProperties">
+<span class="sig-name descname"><span class="pre">displayProperties</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.person.Person.displayProperties" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.person.Person.add_fact">
 <span class="sig-name descname"><span class="pre">add_fact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fact_to_add</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/person.html#Person.add_fact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.person.Person.add_fact" title="Link to this definition">¶</a></dt>
@@ -621,9 +669,15 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.person.Person.display_object">
+<span class="sig-name descname"><span class="pre">display_object</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/person.html#Person.display_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.person.Person.display_object" title="Link to this definition">¶</a></dt>
+<dd><p>Return typed display data, preferring deserialized values and filling gaps from the person.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.person.Person.display">
 <span class="sig-name descname"><span class="pre">display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/person.html#Person.display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.person.Person.display" title="Link to this definition">¶</a></dt>
-<dd><p>Return a display-summary dict with name, gender, lifespan, birth date, and death date.</p>
+<dd><p>Return display data, preferring FamilySearch JSON values and falling back to computed ones.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
@@ -1954,6 +2008,11 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 <span class="sig-name descname"><span class="pre">MarriageSettlment</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://gedcom.io/terms/v7/MARS'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.event.EventType.MarriageSettlment" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.event.EventType.UnknowUserCreated">
+<span class="sig-name descname"><span class="pre">UnknowUserCreated</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://gedcom.io/terms/v1/UUCE'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.event.EventType.UnknowUserCreated" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.event.EventType.description">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#gedcomtools.gedcomx.event.EventType.description" title="Link to this definition">¶</a></dt>
@@ -2181,6 +2240,11 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 <span class="sig-name descname"><span class="pre">Person</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'http://gedcomx.org/Person'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.source_description.ResourceType.Person" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.source_description.ResourceType.FamilyTree">
+<span class="sig-name descname"><span class="pre">FamilyTree</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'http://familysearch.org/FamilyTree'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.source_description.ResourceType.FamilyTree" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.source_description.ResourceType.description">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">description</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.source_description.ResourceType.description" title="Link to this definition">¶</a></dt>
@@ -2388,6 +2452,24 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.source_description.ObjectParsingContainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.source_description.</span></span><span class="sig-name descname"><span class="pre">ObjectParsingContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/source_description.html#ObjectParsingContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.source_description.ObjectParsingContainer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Thin wrapper used during GEDCOM parsing to associate OBJE sub-records.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.source_description.ObjectParsingContainer.add_title">
+<span class="sig-name descname"><span class="pre">add_title</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title_to_add</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/source_description.html#ObjectParsingContainer.add_title"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.source_description.ObjectParsingContainer.add_title" title="Link to this definition">¶</a></dt>
+<dd><p>Forward title additions to the wrapped source description.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class" id="module-gedcomtools.gedcomx.source_reference">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.source_reference.KnownSourceReference">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.source_reference.</span></span><span class="sig-name descname"><span class="pre">KnownSourceReference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/source_reference.html#KnownSourceReference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.source_reference.KnownSourceReference" title="Link to this definition">¶</a></dt>
@@ -2589,9 +2671,25 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.date.DateNormalization">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.date.</span></span><span class="sig-name descname"><span class="pre">DateNormalization</span></span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/date.html#DateNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.date.DateNormalization" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Placeholder for GedcomX date normalization data.</p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.date.</span></span><span class="sig-name descname"><span class="pre">DateNormalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/date.html#DateNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.date.DateNormalization" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcomx.textvalue.TextValue" title="gedcomtools.gedcomx.textvalue.TextValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">TextValue</span></code></a></p>
+<p>A normalized textual rendering of a date value.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.date.DateNormalization.identifier">
+<span class="sig-name descname"><span class="pre">identifier</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'http://gedcomx.org/v1/DateNormalization'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.date.DateNormalization.identifier" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.date.DateNormalization.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'http://gedcomx.org/conceptual-model/v1'</span></span><a class="headerlink" href="#gedcomtools.gedcomx.date.DateNormalization.version" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.date.DateNormalization.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'extra':</span> <span class="pre">'allow',</span> <span class="pre">'populate_by_name':</span> <span class="pre">True,</span> <span class="pre">'validate_by_alias':</span> <span class="pre">True,</span> <span class="pre">'validate_by_name':</span> <span class="pre">True}</span></span><a class="headerlink" href="#gedcomtools.gedcomx.date.DateNormalization.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -2621,7 +2719,7 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.date.Date.normalized">
-<span class="sig-name descname"><span class="pre">normalized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization" title="gedcomtools.gedcomx.date.DateNormalization"><span class="pre">DateNormalization</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.date.Date.normalized" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">normalized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization" title="gedcomtools.gedcomx.date.DateNormalization"><span class="pre">DateNormalization</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcomx.date.Date.normalized" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2641,7 +2739,7 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 the input cannot be parsed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2658,6 +2756,17 @@ the input cannot be parsed.</p>
 </dd></dl>
 
 <dl class="py class" id="module-gedcomtools.gedcomx.place_description">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.place_description.PlaceDescriptionType">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.place_description.</span></span><span class="sig-name descname"><span class="pre">PlaceDescriptionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'name'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'value'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/place_description.html#PlaceDescriptionType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.place_description.PlaceDescriptionType" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExtensibleEnum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.place_description.PlaceDescriptionType.Address">
+<span class="sig-name descname"><span class="pre">Address</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PlaceDescriptionType.Address</span></span><a class="headerlink" href="#gedcomtools.gedcomx.place_description.PlaceDescriptionType.Address" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.place_description.PlaceDescription">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.place_description.</span></span><span class="sig-name descname"><span class="pre">PlaceDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/place_description.html#PlaceDescription"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.place_description.PlaceDescription" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcomx.subject.Subject" title="gedcomtools.gedcomx.subject.Subject"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subject</span></code></a></p>
@@ -2755,6 +2864,11 @@ and possibly its type, time period, and/or a geospatial description.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.place_reference.PlaceReference.descriptionRef">
 <span class="sig-name descname"><span class="pre">descriptionRef</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.place_reference.PlaceReference.descriptionRef" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.place_reference.PlaceReference.normalized">
+<span class="sig-name descname"><span class="pre">normalized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#gedcomtools.gedcomx.textvalue.TextValue" title="gedcomtools.gedcomx.textvalue.TextValue"><span class="pre">TextValue</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcomx.place_reference.PlaceReference.normalized" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -3349,13 +3463,6 @@ and possibly its type, time period, and/or a geospatial description.</p>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="gedcomtools.gedcomx.document.DocumentParsingContainer">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.document.</span></span><span class="sig-name descname"><span class="pre">DocumentParsingContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/document.html#DocumentParsingContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.document.DocumentParsingContainer" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Thin wrapper used during GEDCOM parsing to associate OBJE sub-records.</p>
 </dd></dl>
 
 <dl class="py class" id="module-gedcomtools.gedcomx.group">
@@ -4072,7 +4179,28 @@ Returns the (possibly same) root.</p>
 
 </dd></dl>
 
-<p id="module-gedcomtools.gedcomx.conversion">Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models.</p>
+<dl class="py function" id="module-gedcomtools.gedcomx.conversion">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.fact_from_even_tag">
+<span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.conversion.</span></span><span class="sig-name descname"><span class="pre">fact_from_even_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">even_value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#fact_from_even_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.fact_from_even_tag" title="Link to this definition">¶</a></dt>
+<dd><p>Return the GedcomX FactType mapped from a GEDCOM EVEN tag, or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#gedcomtools.gedcomx.fact.FactType" title="gedcomtools.gedcomx.fact.FactType"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactType</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.event_from_even_tag">
+<span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.conversion.</span></span><span class="sig-name descname"><span class="pre">event_from_even_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">even_value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#event_from_even_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.event_from_even_tag" title="Link to this definition">¶</a></dt>
+<dd><p>Return the GedcomX EventType mapped from a GEDCOM EVEN tag, or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#gedcomtools.gedcomx.event.EventType" title="gedcomtools.gedcomx.event.EventType"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventType</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GxoObjectStack">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.conversion.</span></span><span class="sig-name descname"><span class="pre">GxoObjectStack</span></span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#GxoObjectStack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GxoObjectStack" title="Link to this definition">¶</a></dt>
@@ -4157,11 +4285,12 @@ uses everywhere: <cite>self.object_map[level] = obj</cite> and <cite>self.object
 <dl class="py class">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GedcomConverter">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.conversion.</span></span><span class="sig-name descname"><span class="pre">GedcomConverter</span></span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#GedcomConverter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GedcomConverter" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GxConverterBase</span></code></p>
 <p>Converts a parsed Gedcom5x object graph into a GedcomX genealogy.</p>
 <p>Uses a tag-dispatch table (<code class="docutils literal notranslate"><span class="pre">handle_&lt;TAG&gt;</span></code> methods) to walk every GEDCOM
 element and produce the equivalent GedcomX objects.  Call
-<a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX" title="gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gedcom5x_GedcomX()</span></code></a> to run the full conversion.</p>
+<a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX" title="gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gedcom5x_GedcomX()</span></code></a> (or the <a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.convert" title="gedcomtools.gedcomx.conversion.GedcomConverter.convert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">convert()</span></code></a> alias) to run the full
+conversion.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GedcomConverter.type_name_type">
 <span class="sig-name descname"><span class="pre">type_name_type</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'aka':</span> <span class="pre">NameType.AlsoKnownAs}</span></span><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GedcomConverter.type_name_type" title="Link to this definition">¶</a></dt>
@@ -4280,6 +4409,17 @@ record through the tag dispatch table to populate the GedcomX object.</p>
 <dt>Returns:</dt><dd><p>The populated GedcomX genealogy.</p>
 </dd>
 <dt>Raises:</dt><dd><p>ValueError: If gedcom5x is falsy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GedcomConverter.convert">
+<span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#GedcomConverter.convert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GedcomConverter.convert" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for <a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX" title="gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gedcom5x_GedcomX()</span></code></a> satisfying <code class="xref py py-class docutils literal notranslate"><span class="pre">GxConverterBase</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX" title="gedcomtools.gedcomx.gedcomx.GedcomX"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomX</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -4678,6 +4818,12 @@ called directly on the parent object.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GedcomConverter.handle_page">
 <span class="sig-name descname"><span class="pre">handle_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#GedcomConverter.handle_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_page" title="Link to this definition">¶</a></dt>
 <dd><p>Handle PAGE tag: add a Page qualifier to the parent SourceReference.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conversion.GedcomConverter.jls_extract_def">
+<span class="sig-name descname"><span class="pre">jls_extract_def</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/conversion.html#GedcomConverter.jls_extract_def"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.conversion.GedcomConverter.jls_extract_def" title="Link to this definition">¶</a></dt>
+<dd><p>Placeholder for future JLS-specific extraction support.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -5438,6 +5584,12 @@ only when the couple is complete.</p>
 <dd><p>Create ParentChild relationships between the child and each known parent.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.family.FamilyParser.add_event">
+<span class="sig-name descname"><span class="pre">add_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/family.html#FamilyParser.add_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.family.FamilyParser.add_event" title="Link to this definition">¶</a></dt>
+<dd><p>Return the family event placeholder until full event wiring is implemented.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class" id="module-gedcomtools.gedcomx.zip">
@@ -5549,6 +5701,27 @@ ValueError:        If no GedcomX JSON entries are found in the archive.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.zip.GedcomZip.load_url">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/zip.html#GedcomZip.load_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.zip.GedcomZip.load_url" title="Link to this definition">¶</a></dt>
+<dd><p>Download a GedcomX ZIP archive from an HTTP/HTTPS URL and return a merged <code class="docutils literal notranslate"><span class="pre">GedcomX</span></code> instance.</p>
+<p>The archive is written to a temporary file, then passed to <a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.read" title="gedcomtools.gedcomx.zip.GedcomZip.read"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read()</span></code></a>.
+The temporary file is deleted after parsing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX" title="gedcomtools.gedcomx.gedcomx.GedcomX"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomX</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>url: HTTP or HTTPS URL pointing to a GedcomX ZIP file.</p>
+</dd>
+<dt>Raises:</dt><dd><p>urllib.error.URLError:  If the URL cannot be reached.
+urllib.error.HTTPError: If the server returns an error status.
+ValueError:             If the archive contains no GedcomX JSON entries.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.zip.GedcomZip.list_entries">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">list_entries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/zip.html#GedcomZip.list_entries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.zip.GedcomZip.list_entries" title="Link to this definition">¶</a></dt>
 <dd><p>Return a list of entry info dicts from a GedcomX ZIP archive.</p>
@@ -5579,7 +5752,7 @@ Manifest entries are included.</p>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.exceptions.TagConversionError">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.exceptions.</span></span><span class="sig-name descname"><span class="pre">TagConversionError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levelstack</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/exceptions.html#TagConversionError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.exceptions.TagConversionError" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.exceptions.</span></span><span class="sig-name descname"><span class="pre">TagConversionError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levelstack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/exceptions.html#TagConversionError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.exceptions.TagConversionError" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gedcomtools.gedcomx.exceptions.GedcomXError" title="gedcomtools.gedcomx.exceptions.GedcomXError"><code class="xref py py-class docutils literal notranslate"><span class="pre">GedcomXError</span></code></a></p>
 <p>Document the TagConversionError type.</p>
 </dd></dl>
@@ -5668,6 +5841,7 @@ Manifest entries are included.</p>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX"><code class="docutils literal notranslate"><span class="pre">GedcomX</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.version"><code class="docutils literal notranslate"><span class="pre">GedcomX.version</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.conversion_warnings"><code class="docutils literal notranslate"><span class="pre">GedcomX.conversion_warnings</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.contents"><code class="docutils literal notranslate"><span class="pre">GedcomX.contents</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add"><code class="docutils literal notranslate"><span class="pre">GedcomX.add()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_source_description"><code class="docutils literal notranslate"><span class="pre">GedcomX.add_source_description()</span></code></a></li>
@@ -5677,12 +5851,14 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_place_description"><code class="docutils literal notranslate"><span class="pre">GedcomX.add_place_description()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_agent"><code class="docutils literal notranslate"><span class="pre">GedcomX.add_agent()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_event"><code class="docutils literal notranslate"><span class="pre">GedcomX.add_event()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.add_group"><code class="docutils literal notranslate"><span class="pre">GedcomX.add_group()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.extend"><code class="docutils literal notranslate"><span class="pre">GedcomX.extend()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.get_person_by_id"><code class="docutils literal notranslate"><span class="pre">GedcomX.get_person_by_id()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id"><code class="docutils literal notranslate"><span class="pre">GedcomX.source_by_id()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.validate"><code class="docutils literal notranslate"><span class="pre">GedcomX.validate()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.id_index"><code class="docutils literal notranslate"><span class="pre">GedcomX.id_index</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.from_dict"><code class="docutils literal notranslate"><span class="pre">GedcomX.from_dict()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.to_gedcom7"><code class="docutils literal notranslate"><span class="pre">GedcomX.to_gedcom7()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.gml"><code class="docutils literal notranslate"><span class="pre">GedcomX.gml()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.json"><code class="docutils literal notranslate"><span class="pre">GedcomX.json</span></code></a></li>
 </ul>
@@ -5695,8 +5871,10 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.names"><code class="docutils literal notranslate"><span class="pre">Person.names</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.facts"><code class="docutils literal notranslate"><span class="pre">Person.facts</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.living"><code class="docutils literal notranslate"><span class="pre">Person.living</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.displayProperties"><code class="docutils literal notranslate"><span class="pre">Person.displayProperties</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.add_fact"><code class="docutils literal notranslate"><span class="pre">Person.add_fact()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.add_name"><code class="docutils literal notranslate"><span class="pre">Person.add_name()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.display_object"><code class="docutils literal notranslate"><span class="pre">Person.display_object()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.display"><code class="docutils literal notranslate"><span class="pre">Person.display()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.name"><code class="docutils literal notranslate"><span class="pre">Person.name</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.person.Person.model_config"><code class="docutils literal notranslate"><span class="pre">Person.model_config</span></code></a></li>
@@ -5970,6 +6148,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.Ordination"><code class="docutils literal notranslate"><span class="pre">EventType.Ordination</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.Retirement"><code class="docutils literal notranslate"><span class="pre">EventType.Retirement</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.MarriageSettlment"><code class="docutils literal notranslate"><span class="pre">EventType.MarriageSettlment</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.UnknowUserCreated"><code class="docutils literal notranslate"><span class="pre">EventType.UnknowUserCreated</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.description"><code class="docutils literal notranslate"><span class="pre">EventType.description</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.event.EventType.guess"><code class="docutils literal notranslate"><span class="pre">EventType.guess()</span></code></a></li>
 </ul>
@@ -6012,6 +6191,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ResourceType.DigitalArtifact"><code class="docutils literal notranslate"><span class="pre">ResourceType.DigitalArtifact</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ResourceType.Record"><code class="docutils literal notranslate"><span class="pre">ResourceType.Record</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ResourceType.Person"><code class="docutils literal notranslate"><span class="pre">ResourceType.Person</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ResourceType.FamilyTree"><code class="docutils literal notranslate"><span class="pre">ResourceType.FamilyTree</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ResourceType.description"><code class="docutils literal notranslate"><span class="pre">ResourceType.description</span></code></a></li>
 </ul>
 </li>
@@ -6047,6 +6227,10 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.SourceDescription.add_source_reference"><code class="docutils literal notranslate"><span class="pre">SourceDescription.add_source_reference()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.SourceDescription.add_title"><code class="docutils literal notranslate"><span class="pre">SourceDescription.add_title()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.SourceDescription.model_config"><code class="docutils literal notranslate"><span class="pre">SourceDescription.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ObjectParsingContainer"><code class="docutils literal notranslate"><span class="pre">ObjectParsingContainer</span></code></a><ul>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.source_description.ObjectParsingContainer.add_title"><code class="docutils literal notranslate"><span class="pre">ObjectParsingContainer.add_title()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.source_reference.KnownSourceReference"><code class="docutils literal notranslate"><span class="pre">KnownSourceReference</span></code></a><ul>
@@ -6090,7 +6274,12 @@ Manifest entries are included.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateFormat"><code class="docutils literal notranslate"><span class="pre">DateFormat</span></code></a></li>
-<li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization"><code class="docutils literal notranslate"><span class="pre">DateNormalization</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization"><code class="docutils literal notranslate"><span class="pre">DateNormalization</span></code></a><ul>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization.identifier"><code class="docutils literal notranslate"><span class="pre">DateNormalization.identifier</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization.version"><code class="docutils literal notranslate"><span class="pre">DateNormalization.version</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.date.DateNormalization.model_config"><code class="docutils literal notranslate"><span class="pre">DateNormalization.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.Date"><code class="docutils literal notranslate"><span class="pre">Date</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.Date.identifier"><code class="docutils literal notranslate"><span class="pre">Date.identifier</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.Date.version"><code class="docutils literal notranslate"><span class="pre">Date.version</span></code></a></li>
@@ -6102,6 +6291,10 @@ Manifest entries are included.</p>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.parse_to_gedcomx_date"><code class="docutils literal notranslate"><span class="pre">parse_to_gedcomx_date()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.date.date_to_timestamp"><code class="docutils literal notranslate"><span class="pre">date_to_timestamp()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.place_description.PlaceDescriptionType"><code class="docutils literal notranslate"><span class="pre">PlaceDescriptionType</span></code></a><ul>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.place_description.PlaceDescriptionType.Address"><code class="docutils literal notranslate"><span class="pre">PlaceDescriptionType.Address</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_description.PlaceDescription"><code class="docutils literal notranslate"><span class="pre">PlaceDescription</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_description.PlaceDescription.identifier"><code class="docutils literal notranslate"><span class="pre">PlaceDescription.identifier</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_description.PlaceDescription.version"><code class="docutils literal notranslate"><span class="pre">PlaceDescription.version</span></code></a></li>
@@ -6122,6 +6315,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_reference.PlaceReference.version"><code class="docutils literal notranslate"><span class="pre">PlaceReference.version</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_reference.PlaceReference.original"><code class="docutils literal notranslate"><span class="pre">PlaceReference.original</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_reference.PlaceReference.descriptionRef"><code class="docutils literal notranslate"><span class="pre">PlaceReference.descriptionRef</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.place_reference.PlaceReference.normalized"><code class="docutils literal notranslate"><span class="pre">PlaceReference.normalized</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.place_reference.PlaceReference.model_config"><code class="docutils literal notranslate"><span class="pre">PlaceReference.model_config</span></code></a></li>
 </ul>
 </li>
@@ -6237,7 +6431,6 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.document.Document.model_post_init"><code class="docutils literal notranslate"><span class="pre">Document.model_post_init()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#gedcomtools.gedcomx.document.DocumentParsingContainer"><code class="docutils literal notranslate"><span class="pre">DocumentParsingContainer</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.group.GroupRoleType"><code class="docutils literal notranslate"><span class="pre">GroupRoleType</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.group.GroupRole"><code class="docutils literal notranslate"><span class="pre">GroupRole</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.group.GroupRole.identifier"><code class="docutils literal notranslate"><span class="pre">GroupRole.identifier</span></code></a></li>
@@ -6369,6 +6562,8 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.serialization.Serialization.resolve_references_recursive"><code class="docutils literal notranslate"><span class="pre">Serialization.resolve_references_recursive()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.fact_from_even_tag"><code class="docutils literal notranslate"><span class="pre">fact_from_even_tag()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.event_from_even_tag"><code class="docutils literal notranslate"><span class="pre">event_from_even_tag()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GxoObjectStack"><code class="docutils literal notranslate"><span class="pre">GxoObjectStack</span></code></a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GxoObjectStack.get"><code class="docutils literal notranslate"><span class="pre">GxoObjectStack.get()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GxoObjectStack.items"><code class="docutils literal notranslate"><span class="pre">GxoObjectStack.items()</span></code></a></li>
@@ -6391,6 +6586,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.find_duplicates"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.find_duplicates()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.unique"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.unique()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.Gedcom5x_GedcomX"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.Gedcom5x_GedcomX()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.convert"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.convert()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle__apid"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle__apid()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle__meta"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle__meta()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle__wlnk"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle__wlnk()</span></code></a></li>
@@ -6452,6 +6648,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_occu"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_occu()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_obje"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_obje()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_page"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_page()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.jls_extract_def"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.jls_extract_def()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_plac"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_plac()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_post"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_post()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conversion.GedcomConverter.handle_publ"><code class="docutils literal notranslate"><span class="pre">GedcomConverter.handle_publ()</span></code></a></li>
@@ -6560,6 +6757,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.family.FamilyParser.set_wife"><code class="docutils literal notranslate"><span class="pre">FamilyParser.set_wife()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.family.FamilyParser.finalize"><code class="docutils literal notranslate"><span class="pre">FamilyParser.finalize()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.family.FamilyParser.add_child"><code class="docutils literal notranslate"><span class="pre">FamilyParser.add_child()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.family.FamilyParser.add_event"><code class="docutils literal notranslate"><span class="pre">FamilyParser.add_event()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomHeaderField"><code class="docutils literal notranslate"><span class="pre">GedcomHeaderField</span></code></a></li>
@@ -6574,6 +6772,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.write_manifest"><code class="docutils literal notranslate"><span class="pre">GedcomZip.write_manifest()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.close"><code class="docutils literal notranslate"><span class="pre">GedcomZip.close()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.read"><code class="docutils literal notranslate"><span class="pre">GedcomZip.read()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.load_url"><code class="docutils literal notranslate"><span class="pre">GedcomZip.load_url()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.zip.GedcomZip.list_entries"><code class="docutils literal notranslate"><span class="pre">GedcomZip.list_entries()</span></code></a></li>
 </ul>
 </li>
@@ -6593,7 +6792,7 @@ Manifest entries are included.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

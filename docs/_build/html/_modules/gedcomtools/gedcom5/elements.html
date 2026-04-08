@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -268,7 +271,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">regex</span>
 <span class="c1"># Base GEDCOM element</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">version_info</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcom5.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.tags</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -641,12 +643,8 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;:rtype: str&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8-sig&#39;</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gedcom_string</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="RootElement">
@@ -661,15 +659,14 @@
 <div class="viewcode-block" id="HeaderRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.HeaderRecord">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HeaderRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent the GEDCOM 5.x HEAD record.&quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent the GEDCOM 5.x HEAD record.&quot;&quot;&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="SubmitterRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.SubmitterRecord">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmitterRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x SUBM record.&quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x SUBM record.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="FamilyRecord">
@@ -1240,15 +1237,14 @@
 <div class="viewcode-block" id="RepositoryRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.RepositoryRecord">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RepositoryRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x repository record.&quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x repository record.&quot;&quot;&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="SourceRecord">
 <a class="viewcode-back" href="../../../api/gedcom5.html#gedcomtools.gedcom5.elements.SourceRecord">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceRecord</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x source record.&quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represent a GEDCOM 5.x source record.&quot;&quot;&quot;</span></div>
 
 </pre></div>
         </article>
@@ -1282,7 +1278,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
