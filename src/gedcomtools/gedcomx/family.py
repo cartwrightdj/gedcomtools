@@ -112,7 +112,7 @@ class FamilyParser:
             if self.parent2 is not None:
                 p2child = Relationship(person1=self.parent2,person2=child,type=RelationshipType.ParentChild)
                 self.gedcomx.add_relationship(p2child)
-    
+
     def add_event(self, event: Event):
         """Return the family event placeholder until full event wiring is implemented."""
         return event

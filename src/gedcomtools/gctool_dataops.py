@@ -30,7 +30,7 @@ from gedcomtools.glog import get_logger
 
 log = get_logger(__name__)
 
-from .gctool_output import _green, _kv, _red, _yellow
+from .gctool_output import _green, _red, _yellow
 from .gctool_load import _load
 
 

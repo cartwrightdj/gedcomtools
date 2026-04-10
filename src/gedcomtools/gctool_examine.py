@@ -386,7 +386,7 @@ def _run_examine(
                 if confirm == "y":
                     parent.remove_child(cursor)
                     if len(breadcrumbs) > 1:
-                    breadcrumbs.pop()
+                        breadcrumbs.pop()
                     cursor = parent
                     print(f"  deleted — now at {_path_str(breadcrumbs)}")
                     _ls(cursor)

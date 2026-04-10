@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import ClassVar, Optional, Union
+from typing import ClassVar, Optional
 
 
 from .conclusion import Conclusion
@@ -73,6 +73,6 @@ class Document(Conclusion):
 
 
 # Resolve forward references that point back to Document or SourceDescription.
-from .source_reference import SourceReference  # noqa: E402
+from .source_reference import SourceReference  # noqa: E402  # pylint: disable=unused-import
 # Include SourceDescription so the cascade rebuild of SourceReference also resolves.
 SourceDescription.model_rebuild(_types_namespace={"Document": Document, "SourceDescription": SourceDescription})

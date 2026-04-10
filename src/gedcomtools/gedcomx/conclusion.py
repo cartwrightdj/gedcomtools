@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, List, Optional, Union
+from typing import Any, ClassVar, List, Optional
 
 from pydantic import Field, PrivateAttr
 
@@ -170,5 +170,3 @@ class Conclusion(GedcomXModel):
             and self.confidence == other.confidence
             and self.attribution == other.attribution
         )
-
-

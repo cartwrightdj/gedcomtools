@@ -246,4 +246,3 @@ class GedcomXEventOrFact(GedcomXObject):
 
 class GedcomXRelationshipBuilder(GedcomXObject):
     """Placeholder builder for constructing complex GEDCOM relationship structures."""
-    pass

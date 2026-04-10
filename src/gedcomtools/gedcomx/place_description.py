@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Union
 
 if TYPE_CHECKING:
     from .place_reference import PlaceReference

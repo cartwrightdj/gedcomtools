@@ -179,10 +179,67 @@ def _convert_g5_to_g7(source_path: Path, dest_path: Path, *, unknown_tags: str =
     return OK
 
 
+def _convert_g7_to_gx(source_path: Path, dest_path: Path) -> int:
+    from gedcomtools.gedcom7.g7togx import Gedcom7Converter
+    print(f"Loading GEDCOM 7 from {source_path} ...")
+    try:
+        g7 = _load_g7(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GedcomX ...")
+    try:
+        gx = Gedcom7Converter().convert(g7)
+        data = gx._to_dict()
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest_path, "wb") as f:
+            f.write(_json_dumps(data))
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    print(f"Written to {dest_path}")
+    if gx._import_unhandled_tags:
+        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}")
+    return OK
+
+
+def _convert_gx_to_g7(source_path: Path, dest_path: Path) -> int:
+    from gedcomtools.gedcom7.gxtog7 import GedcomXConverter
+    from gedcomtools.gedcom7.writer import Gedcom7Writer
+    print(f"Loading GedcomX from {source_path} ...")
+    try:
+        gx = _load_gx(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GEDCOM 7 ...")
+    try:
+        records = GedcomXConverter().convert(gx)
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        Gedcom7Writer().write(records, dest_path)
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    n_indi = sum(1 for r in records if r.tag == "INDI")
+    n_fam  = sum(1 for r in records if r.tag == "FAM")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    return OK
+
+
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
 _CONVERSIONS = {
     ("g5", "gx"): _convert_g5_to_gx,
     ("g5", "g7"): _convert_g5_to_g7,
+    ("g7", "gx"): _convert_g7_to_gx,
+    ("gx", "g7"): _convert_gx_to_g7,
 }
 
 

@@ -44,7 +44,7 @@ def make_uid(length: int = 10, alphabet: str = string.ascii_letters + string.dig
 
 class IdentifierType(ExtensibleEnum):
     """Runtime-extensible enum of identifier type URIs (Primary, Authority, Deprecated, etc.)."""
-    pass
+
 
 
 IdentifierType.register("Primary", "http://gedcomx.org/Primary")

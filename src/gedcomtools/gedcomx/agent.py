@@ -162,5 +162,3 @@ class Agent(GedcomXModel):
         self_names = {n.value for n in self.names if hasattr(n, "value") and n.value}
         other_names = {n.value for n in other.names if hasattr(n, "value") and n.value}
         return bool(self_names & other_names)
-
-

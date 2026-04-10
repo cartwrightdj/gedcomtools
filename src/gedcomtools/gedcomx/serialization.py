@@ -60,7 +60,7 @@ def _normalize_field_type(tp: Any) -> Any:
     origin = get_origin(tp)
     args = get_args(tp)
     if origin is Union and len(args) == 2 and type(None) in args:  # pylint: disable=unidiomatic-typecheck
-        tp = next(a for a in args if a is not type(None))
+        tp = next(a for a in args if a is not type(None))  # pylint: disable=unidiomatic-typecheck
         origin = get_origin(tp)
         args = get_args(tp)
 

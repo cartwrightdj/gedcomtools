@@ -13,7 +13,7 @@
 #                         uncommented ConversionErrorDump re-raise; narrowed bare excepts
 ======================================================================
 """
-"""Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models."""
+# Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models.
 
 # GEDCOM Module Types
 
@@ -378,7 +378,7 @@ class GedcomConverter(GxConverterBase):
 
         except ConversionErrorDump:
             raise
-        except Exception as exc:
+        except Exception:  # pylint: disable=broad-except
             import traceback
             tb = traceback.format_exc()
 
@@ -621,7 +621,7 @@ class GedcomConverter(GxConverterBase):
             self.object_map[record.level] = gxobject
         elif isinstance(self.object_map[record.level-1], Fact):
             gxobject = TextValue(value = record.value)
-            self.object_map[record.level] = gxobject     
+            self.object_map[record.level] = gxobject
 
         else:
             raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
@@ -683,7 +683,6 @@ class GedcomConverter(GxConverterBase):
     def handle_abbr(self, record: Element):
         """Handle ABBR tag: add an abbreviation note to the parent SourceDescription."""
         if isinstance(self.object_map[record.level-1], SourceDescription) and record.value:
-            from ..gedcomx.note import Note
             self.object_map[record.level-1].add_note(Note(text=f"Abbreviation: {self.clean_str(record.value)}"))
         else:
             self.convert_exception_dump(record=record)
@@ -692,7 +691,6 @@ class GedcomConverter(GxConverterBase):
         """Handle AGNC tag: add an agency note to the parent Fact or SourceDescription."""
         parent = self.object_map[record.level-1]
         if record.value and isinstance(parent, (Fact, SourceDescription)):
-            from ..gedcomx.note import Note
             parent.add_note(Note(text=f"Agency: {self.clean_str(record.value)}"))
         else:
             self.convert_exception_dump(record=record)
@@ -1054,11 +1052,10 @@ class GedcomConverter(GxConverterBase):
                 if isinstance(self.object_map[record.level-1], FamilyParser):
                     self.object_map[record.level] = self.object_map[record.level-1].add_event(gxobject)
                     return
-                
+
                 self.gedcomx.add_event(gxobject)
                 self.object_map[record.level] = gxobject
                 return
-                self.convert_exception_dump(record=record)
 
     def handle_exid(self,record: Element):
         """Handle EXID tag: add an External identifier to the parent subject."""
@@ -1264,14 +1261,6 @@ class GedcomConverter(GxConverterBase):
         When the parent tag is FAM the family parser is reused; otherwise add_fact is
         called directly on the parent object.
         """
-        """
-        if isinstance(self.object_map[record.level-1], Person):
-            gxobject = Fact(type=FactType.Marriage)
-            self.object_map[record.level-1].add_fact(gxobject)
-
-
-            self.object_map[record.level] = gxobject
-        """
         if record.parent is not None and record.parent.tag == 'FAM':
             self._family_parser.reset()
             self.object_map[record.level] = self._family_parser
@@ -1442,7 +1431,7 @@ class GedcomConverter(GxConverterBase):
 
     def jls_extract_def(self):
         """Placeholder for future JLS-specific extraction support."""
-        return 
+        return
 
     def handle_plac(self, record: Element):
         """Handle PLAC tag: create or look up a PlaceDescription and attach it to the parent Fact, Event, or SourceDescription."""
@@ -1730,7 +1719,7 @@ class GedcomConverter(GxConverterBase):
 
     def handle_titl(self, record: Element):
         """Handle TITL tag: add a title TextValue to the parent SourceDescription, or a Title name part to a Name."""
-        if isinstance(self.object_map[record.level-1], SourceDescription) or isinstance(self.object_map[record.level-1], ObjectParsingContainer):
+        if isinstance(self.object_map[record.level-1], (SourceDescription, ObjectParsingContainer)):
 
             gxobject = TextValue(value=self.clean_str(record.value))
             self.object_map[record.level-1].add_title(gxobject)

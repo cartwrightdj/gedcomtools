@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 # extensible.py
-"""  # pylint: disable=pointless-string-statement
+# pylint: disable=pointless-string-statement
+"""
 Extensibility framework for GedcomX models.
 
 Security model

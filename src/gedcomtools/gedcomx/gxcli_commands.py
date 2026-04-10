@@ -28,7 +28,7 @@ import orjson
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
-from gedcomtools.gedcomx.cli import write_jsonl
+from gedcomtools.gedcomx.cli import write_jsonl, objects_to_schema_table
 from gedcomtools.glog import get_logger, LoggerSpec
 from gedcomtools.utils.Utilities import _is_url
 
@@ -63,7 +63,6 @@ from gedcomtools.gedcomx.gxcli_output import (
     _sans_ansi,
     _clip,
     _red,
-    objects_to_schema_table,
 )
 
 # readline is optional
@@ -1337,13 +1336,16 @@ class _LoadMixin:
 
         if src_type == "g7":
             from gedcomtools.gedcom7.validator import GedcomValidator
+            from gedcomtools.gedcom7.g7togx import Gedcom7Converter
             print("  Parsing GEDCOM 7…")
             g7 = _load_g7(Path(path))
             print("  Validating GEDCOM 7…")
             issues = GedcomValidator(g7.records).validate()
             self._print_validation_results(issues)
-            print("  Note: GEDCOM 7 → GedcomX conversion is not yet implemented.")
-            return None
+            print("  Converting to GedcomX…")
+            gx = Gedcom7Converter().convert(g7)
+            self.gedcomx = gx  # type: ignore[attr-defined]
+            return gx
 
         raise ValueError(f"Cannot determine GEDCOM version for: {path}")
 
