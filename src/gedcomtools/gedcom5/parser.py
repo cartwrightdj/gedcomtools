@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/parser.py
- Author:  David J. Cartwright
- Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/parser.py
+#  Author:  David J. Cartwright
+#  Purpose: GEDCOM 5.x file parser producing a tree of GedcomElement objects
+#  Created: 2026-01-01
+#  Updated: 2026-04-06 — detect UTF-8/UTF-16 BOMs and decode the full byte
+#                         stream before splitting lines so UTF-16 GEDCOM 5
+#                         files load through the normal facade and CLI paths
+# ======================================================================
+"""Parse GEDCOM 5.x files into the project’s element tree representation."""
 
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -34,85 +34,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-GEDCOM 5.x file parser — builds a typed element tree from a .ged file.
+# GEDCOM 5.x file parser — builds a typed element tree from a .ged file.
+#
+# All high-level analysis lives in Gedcom5.
+# This module is the raw parsing engine only.
 
-All high-level analysis lives in :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5`.
-This module is the raw parsing engine only.
-
-Changes from the original python-gedcom source
------------------------------------------------
-
-**Module / file**
-
-* Renamed from ``gedcom5x.py`` (which was itself a rename of the original
-  ``parser.py`` from python-gedcom) to ``parser.py`` inside the ``gedcom5``
-  sub-package.  The class retains the name ``Gedcom5x`` to distinguish it from
-  the high-level :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade.
-
-**Dead code removed**
-
-The following methods were present in the original but are entirely superseded
-by the :class:`~gedcomtools.gedcom5.gedcom5.Gedcom5` facade and were never
-called from outside it.  All have been deleted:
-
-* ``get_marriages()``
-* ``get_marriage_years()``
-* ``marriage_year_match()``
-* ``marriage_range_match()``
-* ``get_families()``
-* ``get_ancestors()``
-* ``get_parents()``
-* ``find_path_to_ancestor()``
-* ``get_family_members()``
-* ``describe_individual()``
-* ``zero_records`` (property)
-* ``records`` (property)
-* ``__build_list()`` (private helper for the above)
-* Module-level ``FAMILY_MEMBERS_TYPE_*`` constants (only used by the removed
-  methods)
-
-**Dead ``__init__`` state removed**
-
-* ``self.__notes`` — GEDCOM 5 has no top-level NOTE records; the list was
-  allocated and never populated.
-* ``self.__element_dictionary`` — caching dict replaced by the on-demand
-  ``get_element_dictionary()`` method.
-
-**Dead ``parse()`` variable removed**
-
-* ``last_element`` — assigned on every iteration but never read.
-
-**Unused imports removed**
-
-* ``Iterator``, ``Iterable``, ``Tuple``, ``Any`` from ``typing``
-* ``version_info`` from ``sys``
-
-**Python 2 compatibility shim removed from ``save_gedcom()``**
-
-The original used ``isinstance(open_file, io.IOBase)`` to decide whether to
-call ``.write()`` or ``sys.stdout.write()``.  The project requires Python ≥
-3.10; the shim was removed and ``save_gedcom()`` now always calls
-``open_file.write()``.
-
-**Bug fixes**
-
-* ``__parse_line()`` — CONC fallback path set ``pointer = None``; storing
-  ``None`` as an element xref later caused a ``TypeError`` in
-  ``to_gedcom_string()``.  Fixed: ``pointer = ""``.
-
-* ``get_element_dictionary()`` — xref keys are now normalised via
-  ``_normalize_xref()`` so that lookups are case-insensitive (e.g. ``@I1@``
-  and ``@i1@`` resolve to the same record).
-
-* Pedigree comparison in the removed ``get_family_members()`` — right-hand
-  side of ``_normalize_xref(fm.value) == individual.xref`` was not normalised,
-  meaning a case mismatch silently skipped the pedigree check.  Fixed in the
-  facade; the raw method was deleted.
-"""
-
+import io
 import re as regex
-from typing import List, Optional, Union
+import urllib.error
+import urllib.request
+from typing import List, Union
 
 from .elements import (
     Element, FamilyRecord, FileElement, HeaderRecord,
@@ -163,6 +94,7 @@ class Gedcom5x:
         self.__repositories: List[RepositoryRecord] = []
         self.__objects: List[ObjectRecord] = []
         self.__root_element: RootElement = RootElement()
+        self.violations: List[str] = []
 
     # ------------------------------------------------------------------
     # Typed record collections
@@ -170,30 +102,37 @@ class Gedcom5x:
 
     @property
     def individuals(self) -> List[IndividualRecord]:
+        """Return the individual records."""
         return self.__individuals
 
     @property
     def families(self) -> List[FamilyRecord]:
+        """Return the family records."""
         return self.__families
 
     @property
     def sources(self) -> List[SourceRecord]:
+        """Return the source records."""
         return self.__sources
 
     @property
     def repositories(self) -> List[RepositoryRecord]:
+        """Return the repository records."""
         return self.__repositories
 
     @property
     def objects(self) -> List[ObjectRecord]:
+        """Return the multimedia object records."""
         return self.__objects
 
     @property
     def header(self) -> List[HeaderRecord]:
+        """Return the header record."""
         return self.__header
 
     @property
     def submitters(self) -> List[SubmitterRecord]:
+        """Return the submitter records."""
         return self.__submitters
 
     # ------------------------------------------------------------------
@@ -218,6 +157,31 @@ class Gedcom5x:
     # ------------------------------------------------------------------
     # Parsing
     # ------------------------------------------------------------------
+
+    def load_url(self, url: str, strict: bool = True) -> None:
+        """Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.
+
+        Args:
+            url:    HTTP or HTTPS URL pointing to a GEDCOM file.
+            strict: Passed through to :meth:`parse`.
+
+        Raises:
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+        """
+        try:
+            with urllib.request.urlopen(url) as resp:
+                self.parse(io.BytesIO(resp.read()), strict)
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
 
     def parse_file(self, file_path: str, strict: bool = True) -> None:
         """Open and parse a GEDCOM 5.x file.
@@ -244,15 +208,19 @@ class Gedcom5x:
         self.__repositories = []
         self.__objects = []
         self.__root_element = RootElement()
+        self.violations = []
 
         record_map: dict[int, Union[Element, None]] = {
             -1: self.__root_element,
             0: None, 1: None, 2: None, 3: None, 4: None, 5: None,
         }
 
+        raw = gedcom_stream.read()
+        encoding = self.__detect_encoding(raw)
+        text = raw.decode(encoding)
         line_number = 1
-        for line in gedcom_stream:
-            element = self.__parse_line(line_number, line.decode('utf-8-sig'), strict)
+        for line in text.splitlines(keepends=True):
+            element = self.__parse_line(line_number, line, strict, self.violations)
             element._line_num = line_number
 
             if isinstance(element, HeaderRecord):
@@ -270,13 +238,35 @@ class Gedcom5x:
             elif isinstance(element, SubmitterRecord):
                 self.__submitters.append(element)
 
-            element._set_parent(record_map[element.level - 1])
+            parent = record_map.get(element.level - 1)
+            if parent is not None:
+                element._set_parent(parent)
             record_map[element.level] = element
-            record_map[element.level - 1].add_child_element(element)
+            if parent is not None:
+                parent.add_child_element(element)
             line_number += 1
 
     @staticmethod
-    def __parse_line(line_number: int, line: str, strict: bool = True) -> Element:
+    def __detect_encoding(raw: bytes) -> str:
+        """Detect the text encoding for a GEDCOM 5.x byte stream.
+
+        GEDCOM 5 files are commonly UTF-8, but official sample data also
+        appears in UTF-16 with a BOM. Detect the BOM once up front so the
+        normal facade and CLI paths can parse those files without special
+        caller-side handling.
+        """
+        head = raw[:4]
+
+        if head.startswith(b"\xff\xfe"):
+            return "utf-16"
+        if head.startswith(b"\xfe\xff"):
+            return "utf-16"
+        if head.startswith(b"\xef\xbb\xbf"):
+            return "utf-8-sig"
+        return "utf-8-sig"
+
+    @staticmethod
+    def __parse_line(line_number: int, line: str, strict: bool = True, violations: list | None = None) -> Element:
         """Parse one GEDCOM line and return the appropriate Element subclass."""
 
         level_regex = '^(0|[1-9]+[0-9]*) '
@@ -294,6 +284,8 @@ class Gedcom5x:
                     f"Line <{line_number}:{line}> violates GEDCOM format 5.5\n"
                     "See: https://chronoplexsoftware.com/gedcomvalidator/gedcom/gedcom-5.5.pdf"
                 )
+            if violations is not None:
+                violations.append(f"line {line_number}: {line.rstrip()}")
             # Quirk: last line may be missing CRLF
             last_line_regex = level_regex + pointer_regex + tag_regex + value_regex
             regex_match = regex.match(last_line_regex, line)
@@ -309,6 +301,10 @@ class Gedcom5x:
                 # treat as CONC so text is not silently dropped.
                 cont_line_regex = '([^\n\r]*|)' + end_of_line_regex
                 regex_match = regex.match(cont_line_regex, line)
+                if regex_match is None:
+                    raise GedcomFormatViolationError(
+                        f"Line <{line_number}> could not be parsed even in recovery mode"
+                    )
                 line_parts = regex_match.groups()
                 level = 1
                 pointer = ""

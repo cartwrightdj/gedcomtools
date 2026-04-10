@@ -364,7 +364,7 @@ class TestIndividualDetailFamilyLinks:
 
     def test_families_as_child(self):
         detail = _indi(self._TEXT)
-        assert "@F2@" in detail.families_as_child
+        assert "@F2@" in [lnk.xref for lnk in detail.families_as_child]
 
 
 # ---------------------------------------------------------------------------

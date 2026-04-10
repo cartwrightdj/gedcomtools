@@ -1,5 +1,16 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/resource.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Resource reference type used for serialization of top-level objects
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, Optional
 
 from pydantic import PrivateAttr, model_serializer
 
@@ -41,27 +52,39 @@ class Resource(GedcomXModel):
 
     @property
     def uri(self) -> Optional[URI]:
+        """Return the URI held by this resource reference."""
         return self.resource
 
     @property
     def value(self) -> Optional[dict]:
+        """Return ``{"resource": uri}`` if a URI is set, or None."""
         res: dict = {}
         if self.resource:
             res["resource"] = self.resource
         return res if res else None
 
     @classmethod
-    def _of_object(cls, target: Any) -> "Resource":
+    def _of_object(cls, target: Any) -> Optional["Resource"]:
         if isinstance(target, Resource):
             resource = target.resource
         elif isinstance(target, URI):
             resource = target
+        elif isinstance(target, dict):
+            # Already-serialized resource reference: {"resource": "..."} or {"resourceId": "..."}
+            raw = target.get("resource") or target.get("resourceId")
+            resource = URI(target=str(raw)) if raw else None  # type: ignore[call-arg]
         else:
             log.debug("Target of type: {}", type(target))
             if hasattr(target, "_uri"):
                 resource = target._uri
-            else:
+            elif hasattr(target, "id") and target.id:
                 resource = URI(fragment=target.id)
+            else:
+                log.warning(
+                    "Resource._of_object: target {} has no id/uri — skipping field",
+                    type(target).__name__,
+                )
+                return None
         log.debug("Resource '{}'", resource)
         return Resource(resource=resource)
 

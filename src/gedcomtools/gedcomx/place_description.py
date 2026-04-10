@@ -1,16 +1,39 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/place_description.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX PlaceDescription model
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
+# GedcomX PlaceDescription model.
+# jurisdiction typed as Union[Resource, PlaceDescription] (self-reference).
+# spatialDescription typed as PlaceReference; both resolved via bottom-of-file model_rebuild().
+
 from __future__ import annotations
 
-from typing import Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+
+if TYPE_CHECKING:
+    from .place_reference import PlaceReference
 
 from .date import Date
-from .evidence_reference import EvidenceReference
-from .identifier import IdentifierList
-from .note import Note
 from .resource import Resource
-from .source_reference import SourceReference
 from .subject import Subject
 from .textvalue import TextValue
 from .uri import URI
+from .extensible_enum import ExtensibleEnum
+
+
+
+class PlaceDescriptionType(ExtensibleEnum):
+    pass
+PlaceDescriptionType.register("Address", "http://gedcomtools.org/Primary")
+#TODO Develop & Correlate iwth GEDCOM5/7 Place Building
+
 
 
 class PlaceDescription(Subject):
@@ -24,33 +47,37 @@ class PlaceDescription(Subject):
     names: Optional[List[TextValue]] = None
     type: Optional[str] = None  # TODO: replace with enumeration
     place: Optional[URI] = None
-    jurisdiction: Optional[Any] = None  # Resource | PlaceDescription
+    jurisdiction: Optional[Union[Resource, PlaceDescription]] = None
     latitude: Optional[Union[float, str]] = None
     longitude: Optional[Union[float, str]] = None
     temporalDescription: Optional[Date] = None
-    spatialDescription: Optional[Any] = None  # PlaceReference
+    spatialDescription: Optional[PlaceReference] = None
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
         from .validation import check_instance
-        if self.names is not None and len(self.names) == 0:
-            result.warn("names", "PlaceDescription.names list is empty")
+        if self.names is None or len(self.names) == 0:
+            result.warn("names", "PlaceDescription has no names")
         if self.latitude is not None:
             if isinstance(self.latitude, (int, float)):
-                if not (-90.0 <= self.latitude <= 90.0):
+                if not -90.0 <= self.latitude <= 90.0:
                     result.error("latitude", f"Latitude {self.latitude} out of range [-90, 90]")
             else:
                 result.warn("latitude", f"Expected float, got {type(self.latitude).__name__}: {self.latitude!r}")
         if self.longitude is not None:
             if isinstance(self.longitude, (int, float)):
-                if not (-180.0 <= self.longitude <= 180.0):
+                if not -180.0 <= self.longitude <= 180.0:
                     result.error("longitude", f"Longitude {self.longitude} out of range [-180, 180]")
             else:
                 result.warn("longitude", f"Expected float, got {type(self.longitude).__name__}: {self.longitude!r}")
         if self.jurisdiction is not None:
             check_instance(result, "jurisdiction", self.jurisdiction, Resource, PlaceDescription)
         if self.spatialDescription is not None:
-            from .place_reference import PlaceReference
             check_instance(result, "spatialDescription", self.spatialDescription, PlaceReference)
         check_instance(result, "temporalDescription", self.temporalDescription, Date)
         check_instance(result, "place", self.place, URI)
+
+
+# Resolve forward references (self-reference + PlaceReference).
+from .place_reference import PlaceReference  # noqa: E402
+PlaceDescription.model_rebuild()

@@ -47,7 +47,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .structure import GedcomStructure
 
@@ -58,17 +58,10 @@ from .structure import GedcomStructure
 
 @dataclass
 class EventDetail:
-    """A genealogical event (birth, death, marriage, etc.).
+    """A genealogical event such as birth, death, or marriage.
 
-    Attributes:
-        date:        Raw GEDCOM date string, e.g. ``"1 JAN 2000"`` or
-                     ``"ABT 1850"``.
-        place:       Place name from the PLAC substructure.
-        age:         Age of the individual at the event (AGE substructure).
-        cause:       Cause of the event (CAUS — typically used for death).
-        event_type:  Free-text TYPE qualifier attached to the event node.
-        agency:      AGNC substructure value.
-        note:        First inline NOTE payload, if any.
+    The fields store the raw GEDCOM-derived values for date, place, age,
+    cause, type qualifier, agency, note text, and related citations.
     """
 
     date: Optional[str] = None
@@ -134,6 +127,8 @@ class NameDetail:
         nickname:   NICK substructure value.
         surname_prefix: SPFX surname prefix (de, van, von, etc.).
         name_type:  TYPE substructure value (BIRTH, AKA, IMMIGRANT, etc.).
+        lang:       Language tag for this name (populated on TRAN entries).
+        translations: NAME.TRAN translations of this name in other languages.
     """
 
     full: str = ""
@@ -168,6 +163,14 @@ class SourceCitation:
     quality: Optional[str] = None
 
 
+@dataclass
+class FamcLink:
+    """A FAMC family-as-child pointer with an optional pedigree qualifier."""
+
+    xref: str
+    pedigree: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Top-level record detail types
 # ---------------------------------------------------------------------------
@@ -195,7 +198,7 @@ class IndividualDetail:
         nationality:       First NATI payload.
         residences:        All RESI events.
         events:            All generic EVEN structures.
-        families_as_child: FAMC pointer values.
+        families_as_child: FAMC links with optional PEDI pedigree qualifier.
         families_as_spouse: FAMS pointer values.
         source_citations:  All SOUR citations on the INDI record itself.
         note_texts:        Inline NOTE payloads (not shared-note pointers).
@@ -220,7 +223,7 @@ class IndividualDetail:
     nationality: Optional[str] = None
     residences: List[EventDetail] = field(default_factory=list)
     events: List[EventDetail] = field(default_factory=list)
-    families_as_child: List[str] = field(default_factory=list)
+    families_as_child: List[FamcLink] = field(default_factory=list)
     families_as_spouse: List[str] = field(default_factory=list)
     source_citations: List[SourceCitation] = field(default_factory=list)
     note_texts: List[str] = field(default_factory=list)
@@ -258,7 +261,10 @@ class IndividualDetail:
     @property
     def full_name(self) -> str:
         """Clean display name of the primary name entry."""
-        return self.name.display if self.name else "Unknown"
+        name = self.name
+        if name is None:
+            return "Unknown"
+        return name.display or "Unknown"
 
     @property
     def birth_year(self) -> Optional[int]:
@@ -703,7 +709,18 @@ def individual_detail(node: GedcomStructure) -> IndividualDetail:
         if e is not None
     ]
 
-    detail.families_as_child = _pointers(node, "FAMC")
+    detail.families_as_child = [
+        FamcLink(
+            xref=c.payload,
+            pedigree=(
+                pedi.payload.strip().upper()
+                if (pedi := c.first_child("PEDI")) and pedi.payload
+                else None
+            ),
+        )
+        for c in node.get_children("FAMC")
+        if c.payload_is_pointer and c.payload.upper() != "@VOID@"
+    ]
     detail.families_as_spouse = _pointers(node, "FAMS")
 
     detail.source_citations = _source_citations(node)

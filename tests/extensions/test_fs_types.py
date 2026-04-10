@@ -1,6 +1,12 @@
 """
 Tests for all FamilySearch GedcomX extension data types.
 
+Updated: 2026-04-08 — verify `ChildAndParentsRelationship` deserializes
+typed parent/child/fact fields and accepts inherited RS10-style `links`
+maps from FamilySearch JSON payloads
+Updated: 2026-04-08 — cover FamilySearch docs names `FieldInfo` and
+`RelationshipType`, while preserving older compatibility aliases
+
 Covers all 65 types listed in the FS JSON specification:
   https://www.familysearch.org/en/developers/docs/api/fs_json
 
@@ -149,16 +155,20 @@ class TestCoreTypes:
         f = FeedbackInfo(resolution="resolved", status="closed", details="Duplicate record merged")
         assert f.resolution == "resolved"
 
-    def test_fs_field_info_fields(self):
-        from gedcomtools.gedcomx.extensions.fs.fs_types_core import FsFieldInfo
-        fi = FsFieldInfo(fieldType="http://familysearch.org/v1/BirthDate", displayLabel="Birth Date",
-                         editable=True, displayable=True, elementTypes=["date"])
+    def test_field_info_fields(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_core import FieldInfo
+        fi = FieldInfo(fieldType="http://familysearch.org/v1/BirthDate", displayLabel="Birth Date",
+                       editable=True, displayable=True, elementTypes=["date"])
         assert fi.fieldType == "http://familysearch.org/v1/BirthDate"
         assert fi.elementTypes == ["date"]
 
-    def test_fs_field_info_identifier(self):
-        from gedcomtools.gedcomx.extensions.fs.fs_types_core import FsFieldInfo
-        assert FsFieldInfo.identifier == "http://familysearch.org/v1/FieldInfo"
+    def test_field_info_identifier(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_core import FieldInfo
+        assert FieldInfo.identifier == "http://familysearch.org/v1/FieldInfo"
+
+    def test_fs_field_info_alias_preserved(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_core import FieldInfo, FsFieldInfo
+        assert FsFieldInfo is FieldInfo
 
     def test_plt_api_read_message_empty(self):
         from gedcomtools.gedcomx.extensions.fs.fs_types_core import PltApiReadMessage
@@ -167,8 +177,11 @@ class TestCoreTypes:
 
     def test_tags_registered_on_conclusion(self):
         from gedcomtools.gedcomx.conclusion import Conclusion
-        from gedcomtools.gedcomx.extensions.fs.fs_types_core import Tag
         assert "tags" in Conclusion.model_fields
+
+    def test_person_info_registered_on_person(self):
+        from gedcomtools.gedcomx.person import Person
+        assert "personInfo" in Person.model_fields
 
 
 # ---------------------------------------------------------------------------
@@ -182,6 +195,7 @@ class TestDiscussionTypes:
         c = Comment(id="C1", text="Great find!", created=1700000000000,
                     contributor=Resource(resourceId="U1"))
         assert c.text == "Great find!"
+        assert c.contributor is not None
         assert c.contributor.resourceId == "U1"
 
     def test_discussion_with_comments(self):
@@ -271,6 +285,7 @@ class TestMergeTypes:
         from gedcomtools.gedcomx.resource import Resource
         mc = MergeConflict(survivorResource=Resource(resourceId="P1"),
                            duplicateResource=Resource(resourceId="P2"))
+        assert mc.survivorResource is not None
         assert mc.survivorResource.resourceId == "P1"
 
     def test_merge_analysis_fields(self):
@@ -281,6 +296,7 @@ class TestMergeTypes:
             duplicate=Resource(resourceId="P2"),
             conflictingResources=[MergeConflict(survivorResource=Resource(resourceId="P1"))],
         )
+        assert ma.survivor is not None
         assert ma.survivor.resourceId == "P1"
         assert len(ma.conflictingResources) == 1
 
@@ -314,6 +330,10 @@ class TestNodeTypes:
         from gedcomtools.gedcomx.extensions.fs.fs_types_node import NameFormInfo, NameFormOrder
         nfi = NameFormInfo(order=NameFormOrder.Eurotypic)
         assert nfi.order == NameFormOrder.Eurotypic
+
+    def test_name_form_info_registered_on_name_form(self):
+        from gedcomtools.gedcomx.name import NameForm
+        assert "nameFormInfo" in NameForm.model_fields
 
     def test_name_form_order_enum(self):
         from gedcomtools.gedcomx.extensions.fs.fs_types_node import NameFormOrder
@@ -364,6 +384,137 @@ class TestNodeTypes:
         from gedcomtools.gedcomx.extensions.fs.fs_types_node import SearchInfo
         s = SearchInfo(totalHits=500, closeHits=12)
         assert s.totalHits == 500
+
+    def test_person_deserializes_person_info_and_name_form_info(self):
+        from gedcomtools.gedcomx.person import Person
+
+        person = Person.model_validate(
+            {
+                "id": "P-1",
+                "living": False,
+                "personInfo": [
+                    {
+                        "canUserEdit": True,
+                        "visibleToAll": True,
+                        "visibleToAllWhenUsingFamilySearchApps": True,
+                    }
+                ],
+                "names": [
+                    {
+                        "type": "http://gedcomx.org/BirthName",
+                        "nameForms": [
+                            {
+                                "fullText": "Gerald F. Cartwright",
+                                "nameFormInfo": [
+                                    {"order": "http://familysearch.org/v1/Eurotypic"}
+                                ],
+                                "parts": [
+                                    {
+                                        "type": "http://gedcomx.org/Given",
+                                        "value": "Gerald F.",
+                                    },
+                                    {
+                                        "type": "http://gedcomx.org/Surname",
+                                        "value": "Cartwright",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+
+        assert len(person.personInfo) == 1
+        assert person.personInfo[0].canUserEdit is True
+        assert len(person.names[0].nameForms[0].nameFormInfo) == 1
+        assert (
+            person.names[0].nameForms[0].nameFormInfo[0].order
+            == "http://familysearch.org/v1/Eurotypic"
+        )
+
+    def test_person_deserializes_display_to_typed_display_properties(self):
+        from gedcomtools.gedcomx.person import Person
+        from gedcomtools.gedcomx.extensions.fs.fs_types_rs import DisplayProperties
+
+        person = Person.model_validate(
+            {
+                "id": "P-1",
+                "display": {
+                    "name": "Gerald F. Cartwright",
+                    "gender": "Male",
+                    "birthDate": "12 August 1917",
+                    "deathDate": "19 July 1996",
+                    "lifespan": "1917-1996",
+                },
+            }
+        )
+
+        assert isinstance(person.displayProperties, DisplayProperties)
+        assert person.displayProperties.birthDate == "12 August 1917"
+        assert person.display()["deathDate"] == "19 July 1996"
+
+    def test_person_display_falls_back_to_computed_values(self):
+        from gedcomtools.gedcomx.person import Person
+
+        person = Person.model_validate(
+            {
+                "id": "P-1",
+                "names": [
+                    {
+                        "type": "http://gedcomx.org/BirthName",
+                        "nameForms": [{"fullText": "Gerald F. Cartwright"}],
+                    }
+                ],
+                "gender": {"type": "http://gedcomx.org/Male"},
+                "facts": [
+                    {
+                        "type": "http://gedcomx.org/Birth",
+                        "date": {"original": "12 August 1917"},
+                        "place": {"original": "New York, United States"},
+                    },
+                    {
+                        "type": "http://gedcomx.org/Death",
+                        "date": {"original": "19 July 1996"},
+                        "place": {"original": "Hunt, Livingston, New York, United States"},
+                    },
+                ],
+            }
+        )
+
+        display = person.display()
+        assert display["name"] == "Gerald F. Cartwright"
+        assert display["gender"] == "Male"
+        assert display["birthDate"] == "12 August 1917"
+        assert display["deathDate"] == "19 July 1996"
+        assert display["birthPlace"] == "New York, United States"
+        assert display["deathPlace"] == "Hunt, Livingston, New York, United States"
+
+    def test_person_display_prefers_deserialized_values_and_fills_missing_fields(self):
+        from gedcomtools.gedcomx.person import Person
+
+        person = Person.model_validate(
+            {
+                "id": "P-1",
+                "display": {
+                    "name": "Gerald F. Cartwright",
+                    "lifespan": "1917-1996",
+                },
+                "gender": {"type": "http://gedcomx.org/Male"},
+                "facts": [
+                    {
+                        "type": "http://gedcomx.org/Birth",
+                        "date": {"original": "12 August 1917"},
+                    }
+                ],
+            }
+        )
+
+        display = person.display()
+        assert display["name"] == "Gerald F. Cartwright"
+        assert display["lifespan"] == "1917-1996"
+        assert display["gender"] == "Male"
+        assert display["birthDate"] == "12 August 1917"
 
 
 # ---------------------------------------------------------------------------
@@ -445,6 +596,7 @@ class TestOrdinanceModels:
             reserveDate=1700000000000,
             assigneeType=OrdinanceReservationAssigneeType.Personal,
         )
+        assert r.owner is not None
         assert r.owner.resourceId == "U1"
 
     def test_ordinance_summary_counts(self):
@@ -568,17 +720,159 @@ class TestPlatformTypes:
         assert len(fsp.trees) == 1
         assert fsp.trees[0].name == "Tree 1"
 
+    def test_family_search_platform_deserializes_persons_places_relationships_and_sources(self):
+        from gedcomtools.gedcomx.date import DateNormalization
+        from gedcomtools.gedcomx.extensions.fs.fs_types_platform import FamilySearchPlatform
+
+        platform = FamilySearchPlatform.model_validate(
+            {
+                "links": ["person", "collection", "portrait"],
+                "childAndParentsRelationships": [
+                    {
+                        "id": "CAPR-1",
+                        "child": {"resource": "#CHILD", "resourceId": "CHILD"},
+                        "parent1": {"resource": "#P1", "resourceId": "P1"},
+                        "parent2": {"resource": "#P2", "resourceId": "P2"},
+                    }
+                ],
+                "persons": [
+                    {
+                        "id": "P1",
+                        "living": False,
+                        "personInfo": [{"canUserEdit": True}],
+                        "names": [
+                            {
+                                "type": "http://gedcomx.org/BirthName",
+                                "nameForms": [
+                                    {
+                                        "fullText": "Gerald F. Cartwright",
+                                        "nameFormInfo": [
+                                            {
+                                                "order": "http://familysearch.org/v1/Eurotypic"
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                        "facts": [
+                            {
+                                "type": "http://gedcomx.org/Birth",
+                                "date": {
+                                    "formal": "+1917-08-12",
+                                    "normalized": [
+                                        {
+                                            "lang": "en-US",
+                                            "value": "12 August 1917",
+                                        }
+                                    ],
+                                },
+                            }
+                        ],
+                    }
+                ],
+                "places": [
+                    {
+                        "id": "339",
+                        "names": [{"lang": "en-US", "value": "New York, United States"}],
+                    }
+                ],
+                "relationships": [
+                    {
+                        "id": "R-1",
+                        "type": "http://gedcomx.org/Couple",
+                        "person1": {"resource": "#P1", "resourceId": "P1"},
+                        "person2": {"resource": "#P2", "resourceId": "P2"},
+                    }
+                ],
+                "sourceDescriptions": [
+                    {
+                        "id": "SD-1",
+                        "resourceType": "http://familysearch.org/FamilyTree",
+                    }
+                ],
+            }
+        )
+
+        assert platform.links == ["person", "collection", "portrait"]
+        assert len(platform.childAndParentsRelationships) == 1
+        assert len(platform.persons) == 1
+        assert platform.persons[0].facts[0].date is not None
+        assert isinstance(platform.persons[0].facts[0].date.normalized[0], DateNormalization)
+        assert len(platform.places) == 1
+        assert len(platform.relationships) == 1
+        assert platform.sourceDescriptions[0].resourceType is not None
+        assert platform.sourceDescriptions[0].resourceType.value == "http://familysearch.org/FamilyTree"
+
+    def test_family_search_person_envelope_deserializes_observed_wrapper(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_platform import (
+            FamilySearchPersonEnvelope,
+            FamilySearchPlatform,
+        )
+
+        envelope = FamilySearchPersonEnvelope.model_validate(
+            {
+                "data": {
+                    "persons": [
+                        {
+                            "id": "LRX2-TYY",
+                            "display": {
+                                "name": "Gerald F. Cartwright",
+                                "lifespan": "1917-1996",
+                            },
+                        }
+                    ]
+                },
+                "display": "Gerald F. Cartwright",
+                "id": "LRX2-TYY",
+                "lifespan": "1917-1996",
+                "person": {
+                    "id": "LRX2-TYY",
+                    "display": {
+                        "name": "Gerald F. Cartwright",
+                        "lifespan": "1917-1996",
+                    },
+                },
+                "personId": "LRX2-TYY",
+                "summary": "Male · 1917-1996",
+                "title": "Gerald F. Cartwright",
+            }
+        )
+
+        assert isinstance(envelope.data, FamilySearchPlatform)
+        assert envelope.data.persons[0].displayProperties is not None
+        assert envelope.data.persons[0].displayProperties.name == "Gerald F. Cartwright"
+        assert envelope.person is not None
+        assert envelope.person.displayProperties is not None
+        assert envelope.person.displayProperties.lifespan == "1917-1996"
+        assert envelope.personId == "LRX2-TYY"
+
+    def test_fs_package_reexports_envelope_and_display_types(self):
+        from gedcomtools.gedcomx.extensions.fs import (
+            DisplayProperties,
+            FamilySearchPersonEnvelope,
+            FamilySearchPlatform,
+        )
+
+        assert FamilySearchPersonEnvelope is not None
+        assert FamilySearchPlatform is not None
+        assert DisplayProperties is not None
+
 
 # ---------------------------------------------------------------------------
 # Relationship types  (fs_types_relationship)
 # ---------------------------------------------------------------------------
 
 class TestRelationshipTypes:
-    def test_fs_relationship_type_enum(self):
-        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import FsRelationshipType
-        assert FsRelationshipType.Couple.value == "http://gedcomx.org/Couple"
-        assert FsRelationshipType.AncestorDescendant.value == "http://gedcomx.org/AncestorDescendant"
-        assert FsRelationshipType.EnslavedBy.value == "http://gedcomx.org/EnslavedBy"
+    def test_relationship_type_enum(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import RelationshipType
+        assert RelationshipType.Couple.value == "http://gedcomx.org/Couple"
+        assert RelationshipType.AncestorDescendant.value == "http://gedcomx.org/AncestorDescendant"
+        assert RelationshipType.EnslavedBy.value == "http://gedcomx.org/EnslavedBy"
+
+    def test_fs_relationship_type_alias_preserved(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import RelationshipType, FsRelationshipType
+        assert FsRelationshipType is RelationshipType
 
     def test_child_and_parents_extends_subject(self):
         from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import ChildAndParentsRelationship
@@ -593,6 +887,8 @@ class TestRelationshipTypes:
             parent2=Resource(resourceId="P2"),
             child=Resource(resourceId="P3"),
         )
+        assert r.parent1 is not None
+        assert r.child is not None
         assert r.parent1.resourceId == "P1"
         assert r.child.resourceId == "P3"
 
@@ -606,6 +902,36 @@ class TestRelationshipTypes:
             parent1Facts=[Fact(type=FactType.Birth)],
         )
         assert len(r.parent1Facts) == 1
+        assert r.parent1Facts[0].type == FactType.Birth
+
+    def test_child_and_parents_identifier(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import ChildAndParentsRelationship
+        assert ChildAndParentsRelationship.identifier == "http://familysearch.org/v1/ChildAndParentsRelationship"
+
+    def test_child_and_parents_fact_lists_default_empty(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import ChildAndParentsRelationship
+        r = ChildAndParentsRelationship()
+        assert r.parent1Facts == []
+        assert r.parent2Facts == []
+
+    def test_child_and_parents_deserializes_with_links_map(self):
+        from gedcomtools.gedcomx.extensions.fs.fs_types_relationship import ChildAndParentsRelationship
+        payload = {
+            "id": "9T52-9XM",
+            "child": {"resource": "https://beta.familysearch.org/platform/tree/persons/GKTD-24B", "resourceId": "GKTD-24B"},
+            "parent1": {"resource": "#9NBF-M6D", "resourceId": "9NBF-M6D"},
+            "parent2": {"resource": "https://beta.familysearch.org/platform/tree/persons/GKT6-MPZ", "resourceId": "GKT6-MPZ"},
+            "links": {
+                "child": {"href": "https://beta.familysearch.org/platform/tree/persons/GKTD-24B?flag=fsh"},
+                "relationship": {"href": "https://beta.familysearch.org/platform/tree/child-and-parents-relationships/9T52-9XM?flag=fsh"},
+            },
+        }
+        r = ChildAndParentsRelationship.model_validate(payload)
+        assert r.child is not None
+        assert r.child.resourceId == "GKTD-24B"
+        links = getattr(r, "links", None)
+        assert links is not None
+        assert links.get("child") is not None
 
 
 # ---------------------------------------------------------------------------

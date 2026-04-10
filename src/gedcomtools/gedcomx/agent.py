@@ -1,8 +1,28 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/agent.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Agent model: person, organisation, or software that created or modified data
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
+# GedcomX Agent model.
+# Represents a person, organisation, or software that created or modified data.
+# Equality is semantic: person reference takes priority; falls back to name overlap.
+# __hash__ = None — mutable object, not safely hashable.
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
-from pydantic import Field, PrivateAttr
+if TYPE_CHECKING:
+    from .attribution import Attribution
+    from .person import Person
+
+from pydantic import Field, PrivateAttr, field_validator
 
 from .address import Address
 from .gx_base import GedcomXModel
@@ -11,11 +31,6 @@ from .online_account import OnlineAccount
 from .resource import Resource
 from .textvalue import TextValue
 from .uri import URI
-
-if TYPE_CHECKING:
-    from .attribution import Attribution
-    from .note import Note
-    from .person import Person
 
 
 class Agent(GedcomXModel):
@@ -33,11 +48,25 @@ class Agent(GedcomXModel):
     emails: List[URI] = Field(default_factory=list)
     phones: List[URI] = Field(default_factory=list)
     addresses: List[Address] = Field(default_factory=list)
-    person: Optional[Any] = None        # Person | Resource (avoids circular import)
-    attribution: Optional[Any] = None   # Attribution
-    xnotes: List[Any] = Field(default_factory=list)
+    # TYPE_CHECKING branch: gives type checkers Union[Person, Resource] / Attribution.
+    # Runtime branch: keeps Any so Pydantic never tries to resolve Person/Attribution
+    # before they exist (circular build chain:
+    # attribution.py → agent.py ← person.py ← fact.py ← conclusion.py → attribution.py).
+    if TYPE_CHECKING:
+        person: Optional[Union[Person, Resource]] = None
+        attribution: Optional[Attribution] = None
+    else:
+        person: Optional[Any] = None
+        attribution: Optional[Any] = None
+    @field_validator("addresses", mode="before")
+    @classmethod
+    def _drop_none_addresses(cls, v: Any) -> Any:
+        if isinstance(v, list):
+            return [a for a in v if a is not None]
+        return v
 
     def model_post_init(self, __context: object) -> None:
+        """Populate derived state after model initialization."""
         self._uri = URI(fragment=self.id)
 
     # ------------------------------------------------------------------
@@ -53,6 +82,7 @@ class Agent(GedcomXModel):
             raise ValueError("Agent has no names to append to")
 
     def add_address(self, address_to_add: Address) -> None:
+        """Add an Address to this agent, skipping duplicates."""
         if not isinstance(address_to_add, Address):
             raise ValueError(f"address must be of type Address, not {type(address_to_add)}")
         for current in self.addresses:
@@ -61,6 +91,7 @@ class Agent(GedcomXModel):
         self.addresses.append(address_to_add)
 
     def add_name(self, name_to_add: Union[TextValue, str]) -> None:
+        """Add a name to this agent, skipping duplicates.  Accepts a string or TextValue."""
         if isinstance(name_to_add, str):
             name_to_add = TextValue(value=name_to_add)
         if not isinstance(name_to_add, TextValue):
@@ -72,13 +103,8 @@ class Agent(GedcomXModel):
                 return
         self.names.append(name_to_add)
 
-    def add_note(self, note_to_add: Any) -> None:
-        from .note import Note
-        if not isinstance(note_to_add, Note):
-            raise ValueError(f"note must be of type Note, got {type(note_to_add)}")
-        self.xnotes.append(note_to_add)
-
     def add_identifier(self, identifier_to_add: Identifier) -> None:
+        """Append an Identifier to this agent's identifier list."""
         self.identifiers.append(identifier_to_add)
 
     # ------------------------------------------------------------------
@@ -105,10 +131,6 @@ class Agent(GedcomXModel):
         if self.attribution is not None:
             from .attribution import Attribution
             check_instance(result, "attribution", self.attribution, Attribution)
-        for i, n in enumerate(self.xnotes):
-            from .note import Note
-            check_instance(result, f"xnotes[{i}]", n, Note)
-
     # Dunder methods
     # ------------------------------------------------------------------
 
@@ -117,28 +139,28 @@ class Agent(GedcomXModel):
         homepage_str = f", homepage={self.homepage}" if self.homepage else ""
         return f"Agent(id={self.id}, name='{primary_name}'{homepage_str})"
 
+    __hash__ = None  # mutable object with semantic equality — not safely hashable
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Agent):
             return NotImplemented
-        return (
-            self.id == other.id
-            and self.identifiers == other.identifiers
-            and self.names == other.names
-            and self.homepage == other.homepage
-            and self.openid == other.openid
-            and self.accounts == other.accounts
-            and self.emails == other.emails
-            and self.phones == other.phones
-            and self.addresses == other.addresses
-            and self.person == other.person
-            and self.attribution == other.attribution
-            and self.xnotes == other.xnotes
-            and self._uri == other._uri
-        )
+        if self.person is not None:
+            return self.person == other.person
+        self_values = {(tv.value or "").casefold() for tv in self.names if tv.value}
+        other_values = {(tv.value or "").casefold() for tv in other.names if tv.value}
+        return bool(self_values & other_values)
+
+    @property
+    def sorted_names(self) -> List[TextValue]:
+        """Return names sorted alphabetically by value (primary name order preserved in self.names)."""
+        return sorted(self.names, key=lambda tv: (tv.value or "").casefold())
 
     def shares_name(self, other: "Agent") -> bool:
+        """Return True if this agent and *other* share at least one name value."""
         if not isinstance(other, Agent):
             return False
         self_names = {n.value for n in self.names if hasattr(n, "value") and n.value}
         other_names = {n.value for n in other.names if hasattr(n, "value") and n.value}
         return bool(self_names & other_names)
+
+

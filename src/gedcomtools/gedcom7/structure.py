@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .g7interop import get_uri_for_tag
+from .tag_registry import get_uri_for_tag
 
 
 class GedcomStructure:
@@ -111,7 +111,17 @@ class GedcomStructure:
 
         Args:
             child: Child structure to attach.
+
+        Raises:
+            ValueError: If ``child.level`` is not exactly ``self.level + 1``,
+                which would produce an internally inconsistent tree.
         """
+        if child.level != self.level + 1:
+            raise ValueError(
+                f"Cannot attach level-{child.level} node {child.tag!r} "
+                f"to level-{self.level} parent {self.tag!r}: "
+                f"expected child level {self.level + 1}."
+            )
         child.parent = self
         self.children.append(child)
 

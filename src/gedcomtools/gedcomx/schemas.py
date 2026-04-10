@@ -1,22 +1,19 @@
+"""Schema registry and type-introspection helpers for GedcomX models."""
+
 from __future__ import annotations
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/schemas.py
- Author:  David J. Cartwright
- Purpose: Central schema registry providing field type metadata for serialization and extensibility
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: _from_json_ refactor
-   - 2025-09-09: added schema_class
-   - 2025-09-12: extras inheritance; robust union rebuild; URI/Resource binding
-   - 2025-09-12: make sure extra fields get inherited, and handles by __init__, jsonify returns alphabetized dict
-   - 2026-02-01: add ability to register @property or functions as properties in SCHEMA
-
-======================================================================
-"""
-
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcomx/schemas.py
+#  Author:  David J. Cartwright
+#  Purpose: Central schema registry for field type metadata
+#  Created: 2025-08-25
+#  Updated: 2026-03-31 — fact_from_even_tag/event_from_even_tag moved to
+#                         conversion.py; stubs retained for backward compat
+#  Updated: 2026-04-03 — narrow bare except Exception to ImportError / (NameError, AttributeError, TypeError)
+#  Updated: 2026-04-08 — pass full extension field types through to
+#                         GedcomXModel.define_ext so generic model lists
+#                         stay typed during deserialization
+# ======================================================================
 import functools
 import inspect
 import operator
@@ -28,7 +25,7 @@ from typing import Any, Callable, Dict, Union, get_args, get_origin, get_type_hi
 try:
     # typing.Annotated may not exist in older 3.9 without typing_extensions
     from typing import Annotated  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     Annotated = None  # type: ignore
 
 _UNION_ORIGINS = tuple(
@@ -70,9 +67,11 @@ class Schema:
     # Bind concrete classes (optional)
     # ──────────────────────────────
     def set_uri_class(self, cls: type | None) -> None:
+        """Register the URI class used by schema helpers."""
         self._uri_cls = cls
 
     def set_resource_class(self, cls: type | None) -> None:
+        """Register the Resource class used by schema helpers."""
         self._resource_cls = cls
 
     # ──────────────────────────────
@@ -204,7 +203,7 @@ class Schema:
 
         # For pydantic models, also wire up as a proper model field.
         if isinstance(cls, type) and hasattr(cls, "define_ext"):
-            cls.define_ext(name, typ=typ if isinstance(typ, type) else None, overwrite=overwrite)
+            cls.define_ext(name, typ=typ, overwrite=overwrite)
 
     def normalize_all(self) -> None:
         """Re-run normalization across all registered fields."""
@@ -213,16 +212,42 @@ class Schema:
                 fields[k] = self._normalize_field_type(v)
 
     # lookups
-    def get_class_fields(self, type_name: str) -> Dict[str, Any] | None:
-        return self.field_type_table.get(type_name)
+    def get_class_fields(self, type_name: str | type) -> Dict[str, Any] | None:
+        """Return normalised field map for *type_name*.
+
+        Explicit registrations (via ``register_class``) take priority.  For
+        any ``GedcomXModel`` subclass that hasn't been explicitly registered,
+        the fields are auto-derived from Pydantic ``model_fields`` and cached
+        so that the resolver and gxcli type-inference work without needing
+        manual decoration on every model class.
+        """
+        name: str = type_name if isinstance(type_name, str) else type_name.__name__
+        if name in self.field_type_table:
+            return self.field_type_table[name]
+
+        # Fallback: auto-register from Pydantic model_fields for GedcomXModel subclasses
+        cls: type | None = type_name if isinstance(type_name, type) else None
+        if cls is None:
+            return None
+        try:
+            from .gx_base import GedcomXModel as _GXBase
+        except ImportError:
+            return None
+        if not (isinstance(cls, type) and issubclass(cls, _GXBase)):
+            return None
+
+        self.register_class(cls)
+        return self.field_type_table.get(name)
 
     def set_toplevel(self, cls: type, *, meta: Dict[str, Any] | None = None) -> None:
+        """Register a class as a top-level GedcomX type."""
         self._toplevel[cls.__name__] = dict(meta or {})
 
     def is_toplevel(self, cls_or_name: type | str) -> bool:
+        """Return whether the class is registered as top-level."""
         name = cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
         return name in self._toplevel
-    
+
     def is_toplevel_obj(self, obj: Any) -> bool:
         """
         Like is_toplevel, but takes an arbitrary object and checks its class.
@@ -232,6 +257,7 @@ class Schema:
         return self.is_toplevel(obj.__class__)
 
     def get_toplevel(self) -> Dict[str, Dict[str, Any]]:
+        """Return the registered top-level classes."""
         return dict(self._toplevel)
 
     def get_extras(self, cls_or_name: type | str) -> Dict[str, Any]:
@@ -249,6 +275,7 @@ class Schema:
 
     @property
     def json(self) -> dict[str, dict[str, str]]:
+        """Return a JSON-compatible representation of the current data."""
         return schema_to_jsonable(self)
 
     # ──────────────────────────────
@@ -266,7 +293,7 @@ class Schema:
         lns = dict(vars(cls))
         try:
             return get_type_hints(cls, include_extras=True, globalns=gns, localns=lns)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             # fallback keeps strings — but we’ll fix those below
             return dict(getattr(cls, "__annotations__", {}) or {})
 
@@ -285,7 +312,7 @@ class Schema:
         lns = dict(vars(cls))
         try:
             hints = get_type_hints(fn, include_extras=True, globalns=gns, localns=lns)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             hints = dict(getattr(fn, "__annotations__", {}) or {})
         hints.pop("return", None)
         hints.pop("self", None)
@@ -319,7 +346,7 @@ class Schema:
             return self._strip_optional(args[0])
 
         if origin in _UNION_ORIGINS:
-            kept = tuple(a for a in args if a is not type(None))  # noqa: E721
+            kept = tuple(a for a in args if a is not type(None))  # noqa: E721  # pylint: disable=unidiomatic-typecheck
             if not kept:
                 return Any
             if len(kept) == 1:
@@ -410,8 +437,7 @@ class Schema:
         try:
             return reduce(operator.or_, args)  # e.g., A | B | C
         except TypeError:
-            from typing import Union as _TypingUnion
-            return _TypingUnion.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
+            return Union.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
 
     def _rebuild_param(self, origin: Any, sub: tuple[Any, ...], *, fallback: Any) -> Any:
         try:
@@ -559,6 +585,7 @@ class Schema:
 # Stringification helpers (JSON dump)
 # ──────────────────────────────
 def type_repr(tp: Any) -> str:
+    """Return a readable string representation of a type annotation."""
     if isinstance(tp, str):
         return tp
 
@@ -587,6 +614,7 @@ def type_repr(tp: Any) -> str:
 
 
 def schema_to_jsonable(schema: Schema) -> dict[str, dict[str, str]]:
+    """Convert schema metadata into JSON-serializable structures."""
     out: dict[str, dict[str, str]] = {}
     for cls_name in sorted(schema.field_type_table):
         fields = schema.field_type_table[cls_name]
@@ -690,6 +718,7 @@ def schema_property(
     return deco
 
 def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
+    """Create a plugin that binds a computed schema property."""
     def deco(fget):
         meta = {"name": name or fget.__name__, "typ": typ, "fset": None, "fdel": None}
         setattr(fget, "__schema_prop__", meta)
@@ -708,6 +737,7 @@ def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
     return deco
 
 def apply_schema_property(cls: type, fget, *, schema: Schema, overwrite: bool = False):
+    """Apply a schema-bound computed property to a class."""
     meta = getattr(fget, "__schema_prop__", None)
     if meta is None:
         raise TypeError(
@@ -750,7 +780,7 @@ def accept_extras(*, stash_attr: str = "_extras",
             def __init__(self, *args, **kwargs):
                 # Split known from extras using THIS class's signature
                 known = {}
-                for name, p in sig.parameters.items():
+                for name, _p in sig.parameters.items():
                     if name == "self":
                         continue
                     if name in kwargs:
@@ -813,6 +843,7 @@ def extensible(*, allow_only=None, **schema_kwargs):
     return deco
 
 def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
+    """Decorate a dataclass so it participates in the extension system."""
     from dataclasses import dataclass as _dc
     def deco(cls):
         cls = _dc(*d_args)(cls)                          # generate __init__
@@ -822,8 +853,6 @@ def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
         return cls
     return deco
 
-# put this in your schemas.py (or a shared helpers module)
-import inspect
 
 class ExtrasAwareMeta(type):
     """Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.
@@ -875,12 +904,16 @@ class ExtrasAwareMeta(type):
 # Singleton instance
 SCHEMA = Schema()
 
-# -------------
+# ---------------------------------------------------------------------------
+# NOTE: fact_from_even_tag and event_from_even_tag have been moved to
+# conversion.py where they are used.  The stubs below are kept for any
+# external callers that imported them from here.
+# ---------------------------------------------------------------------------
 def fact_from_even_tag(even_value):
+    """Return the GedcomX fact type mapped from a GEDCOM EVEN tag."""
     from .fact import FactType
     gedcom_even_to_fact = {
         # Person Fact Types
-        "ADOP": FactType.Adoption,
         "CHR": FactType.AdultChristening,
         "EVEN": FactType.Amnesty,  # and other FactTypes with no direct GEDCOM tag
         "BAPM": FactType.Baptism,
@@ -930,7 +963,8 @@ def fact_from_even_tag(even_value):
         }
     return gedcom_even_to_fact.get(even_value,None)
 
-def event_from_even_tag(even_value): 
+def event_from_even_tag(even_value):
+    """Return the GedcomX event type mapped from a GEDCOM EVEN tag."""
     from .event import EventType
     gedcom_even_to_evnt = {
         # Person Fact Types
@@ -943,7 +977,7 @@ def event_from_even_tag(even_value):
         "BIRT, CHR": EventType.Birth,
         "BLES": EventType.Blessing,
         "BURI": EventType.Burial,
-        
+
         "CENS": EventType.Census,
         "CIRC": EventType.Circumcision,
         "CONF": EventType.Confirmation,
@@ -952,13 +986,13 @@ def event_from_even_tag(even_value):
         "EDUC": EventType.Education,
         "EMIG": EventType.Emigration,
         "FCOM": EventType.FirstCommunion,
-        
+
         "IMMI": EventType.Immigration,
-        
+
         "NATU": EventType.Naturalization,
-        
+
         "ORDN": EventType.Ordination,
-        
+
 
         # Couple Relationship Fact Types
         "ANUL": EventType.Annulment,
@@ -966,6 +1000,6 @@ def event_from_even_tag(even_value):
         "DIVF": EventType.DivorceFiling,
         "ENGA": EventType.Engagement,
         "MARR": EventType.Marriage
-        
+
     }
     return gedcom_even_to_evnt.get(even_value,None)

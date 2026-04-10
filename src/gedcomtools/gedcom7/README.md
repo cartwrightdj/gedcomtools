@@ -15,7 +15,7 @@ GEDCOM 7 parser, validator, serializer, and interactive CLI for the
 | `writer.py` | Serializer — `GedcomStructure` trees → GEDCOM 7 text |
 | `models.py` | High-level dataclasses (`IndividualDetail`, `FamilyDetail`, …) |
 | `specification.py` | Tag rules, payload types, cardinality, and enumerations |
-| `g7interop.py` | Tag ↔ URI mapping and extension tag registration |
+| `tag_registry.py` | Tag ↔ URI mapping and extension tag registration |
 | `exceptions.py` | Exception hierarchy (`GedcomError`, `GedcomParseError`, …) |
 | `g7cli.py` | Interactive browser/editor shell (`g7cli`) |
 | `validate7.py` | CLI validator entry point (`validate7`) |
@@ -183,7 +183,7 @@ files.
 
 ---
 
-## g7interop — tag/URI helpers
+## tag_registry — tag/URI helpers
 
 ```python
 from gedcomtools.gedcom7 import (
@@ -407,7 +407,7 @@ gedcom7/
 ├── validator.py         18-phase validator
 ├── writer.py            GEDCOM 7 serializer
 ├── models.py            High-level detail dataclasses + factory functions
-├── g7interop.py         Tag/URI mapping
+├── tag_registry.py      Tag/URI mapping
 ├── exceptions.py        Exception hierarchy
 ├── g7cli.py             Interactive shell
 └── validate7.py         validate7 CLI entry point

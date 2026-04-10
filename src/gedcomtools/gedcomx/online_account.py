@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/online_account.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX OnlineAccount model
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import ClassVar
 
@@ -6,6 +17,8 @@ from .resource import Resource
 
 
 class OnlineAccount(GedcomXModel):
+    """An online account held by an agent, identified by service homepage and account name."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/OnlineAccount"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 

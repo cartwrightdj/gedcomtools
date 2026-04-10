@@ -1,11 +1,15 @@
 """
 Tests for gedcomtools.gedcomx.gedcomx.GedcomX — collections, lookups, merge
+
+Updated: 2026-04-06 — add regression coverage for polymorphic
+``GedcomX.add(Group(...))`` support.
 """
 import pytest
 from gedcomtools.gedcomx.gedcomx import GedcomX
 from gedcomtools.gedcomx.person import Person, QuickPerson
 from gedcomtools.gedcomx.relationship import Relationship, RelationshipType
 from gedcomtools.gedcomx.agent import Agent
+from gedcomtools.gedcomx.group import Group
 from gedcomtools.gedcomx.textvalue import TextValue
 from gedcomtools.gedcomx.source_description import SourceDescription
 from gedcomtools.gedcomx.place_description import PlaceDescription
@@ -220,3 +224,9 @@ class TestGedcomXPolymorphicAdd:
         gx = GedcomX()
         gx.add(SourceDescription(id="S1"))
         assert len(gx.sourceDescriptions) == 1
+
+    def test_add_group(self):
+        gx = GedcomX()
+        gx.add(Group(id="G1", names=[TextValue(value="Research Group")]))
+        assert len(gx.groups) == 1
+        assert gx.groups.by_id("G1") is not None

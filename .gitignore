@@ -11,11 +11,15 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+test/
+test (2)/
 .claude/
 .venv/
 Makefile
 make.bat
 STATUS.md
+.spec_cache
+.djc.ged
 
 # Private/sensitive genealogy files
 .sample_data/current_family_tree.ged

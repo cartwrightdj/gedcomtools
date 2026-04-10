@@ -1,43 +1,47 @@
-import random
-import string
-import orjson
+"""Core GedcomX container types, collections, validation, and serialization entry points."""
 
 from typing import Any, Dict, List, Optional, Union, Generic, TypeVar, Iterable
 
-"""
-======================================================================
- Project: Gedcom-X
- File:    GedcomX.py
- Author:  David J. Cartwright
- Purpose: Object for working with Gedcom-X Data
+import orjson
 
- Created: 2025-07-25
- Updated:
-    - 2025-08-31: _as_dict_ to only create entries in dict for fields that hold data,
-    id_index functionality, will be used for resolution of Resources
-    - 2025-09-03: _from_json_ refactor
-    - 2025-09-09: added schema_class
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    GedcomX.py
+#  Author:  David J. Cartwright
+#  Purpose: Object for working with Gedcom-X Data
+#  Created: 2025-07-25
+#  Updated: 2026-03-24 — removed _serializer/_as_dict; json property now
+#                         delegates to _to_dict() via Serialization.serialize
+#           2026-03-29 — validate(): fixed cross-ref check to extract person id
+#                         from Resource.resource.fragment (URI form), not only
+#                         resourceId; fixes silent pass for dangling refs
+#                       — from_dict(): now restores attribution and groups;
+#                         previously both were silently dropped on deserialization
+#                       — TypeCollection.append(): no longer stamps type path onto
+#                         _uri; uses URI(fragment=id) only so resource refs serialize
+#                         as #id (same-document); explicit path URIs are preserved
+#           2026-04-03 — added conversion_warnings property exposing
+#                         _import_unhandled_tags for callers to detect data loss
+#                       — TypeCollection.append(): rollback guard wraps
+#                         _update_indexes so _items stays consistent on error
+#           2026-04-06 — add_group() and GedcomX.add(Group(...)) support so
+#                         Group is handled consistently with other top-level
+#                         collections
+#           2026-04-07 — added to_gedcom7() conversion helper (GedcomX → GEDCOM 7)
+# ======================================================================
+# GEDCOM Module Types
 from .agent import Agent
 from .attribution import Attribution
 from .document import Document
 from .event import Event
 from .group import Group
 from .identifier import make_uid
-from ..glog import get_logger, hub
+from ..glog import get_logger
 from .person import Person
 from .place_description import PlaceDescription
-from .relationship import Relationship, RelationshipType
+from .relationship import Relationship, RelationshipType  # re-exported: family.py imports from here  # pylint: disable=unused-import
 from .resource import Resource
-from .source_description import ResourceType, SourceDescription
+from .source_description import SourceDescription
 from .textvalue import TextValue
 from .uri import URI
 from .validation import ValidationResult
@@ -66,31 +70,38 @@ class TypeCollection(Generic[T]):
 
     # --- core container protocol ---
     def __iter__(self):
+        """Iterate over items in insertion order."""
         return iter(self._items)
 
     def __len__(self) -> int:
+        """Return the number of items in the collection."""
         return len(self._items)
 
-    def __getitem__(self, index: int) -> T:
+    def __getitem__(self, index: Union[int, slice]) -> Union[T, List[T]]:
+        """Return the item or slice of items at the given index."""
         return self._items[index]
 
     def __contains__(self, item: object) -> bool:
+        """Return True if the item is present in the collection."""
         return item in self._items
 
     def __repr__(self) -> str:
         return f"Collection<{self.item_type.__name__}>({len(self)} items)"
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index: Union[int, slice]) -> None:
         """
-        Delete an item at the given index, updating all secondary indexes.
-        Supports negative indices like a normal list.
+        Delete item(s) at the given index or slice, updating all secondary indexes.
+        Supports negative indices and slices like a normal list.
         """
-        # Let list semantics raise IndexError if out of range
-        item = self._items[index]
-        # Remove from primary storage first
-        del self._items[index]
-        # Then clean up indexes
-        self._remove_from_indexes(item)
+        if isinstance(index, slice):
+            items_to_remove = self._items[index]
+            del self._items[index]
+            for item in items_to_remove:
+                self._remove_from_indexes(item)
+        else:
+            item = self._items[index]
+            del self._items[index]
+            self._remove_from_indexes(item)
 
     def pop(self, index: int = -1) -> T:
         """
@@ -167,16 +178,17 @@ class TypeCollection(Generic[T]):
         if not isinstance(item, self.item_type):
             raise TypeError(f"Expected {self.item_type.__name__}, got {type(item).__name__} {item}")
 
-        # ensure/normalize item.uri
-        u = getattr(item, "_uri", None)
-        if u is None:
-            setattr(item, "_uri", URI(path=f"/{self.item_type.__name__.lower()}s/", fragment=getattr(item, "id", None)))
-        else:
-            if not getattr(u, "path", None):
-                u.path = f"/{self.item_type.__name__.lower()}s/"
+        # ensure item has a _uri; only set it if absent — never overwrite an
+        # explicitly assigned path-based URI (e.g. /persons/#P1 for zip layout)
+        if getattr(item, "_uri", None) is None:
+            setattr(item, "_uri", URI(fragment=getattr(item, "id", None)))
 
         self._items.append(item)
-        self._update_indexes(item)
+        try:
+            self._update_indexes(item)
+        except Exception:
+            self._items.pop()
+            raise
 
     def extend(self, items: Iterable[T]) -> None:
         """Append each item from an iterable to the collection."""
@@ -220,7 +232,7 @@ class GedcomX:
     attribution : Attribution Object
         Attribution information for the Genealogy
     filepath : str
-        Not Implimented.
+        Not Implemented.
     description : str
         Description of the Genealogy: ex. 'My Family Tree'
 
@@ -231,9 +243,9 @@ class GedcomX:
     """
     version = 'http://gedcomx.org/conceptual-model/v1'
 
-    def __init__(self, id: Optional[str] = None,
+    def __init__(self, id: Optional[str] = None,  # pylint: disable=redefined-builtin
                  attribution: Optional[Attribution] = None,
-                 filepath: Optional[str] = None,
+                 _filepath: Optional[str] = None,
                  description: Optional[str] = None,
                  persons: Optional[TypeCollection[Person]] = None,
                  relationships: Optional[TypeCollection[Relationship]] = None,
@@ -242,32 +254,50 @@ class GedcomX:
                  places: Optional[TypeCollection[PlaceDescription]] = None,
                  events: Optional[TypeCollection[Event]] = None,
                  documents: Optional[TypeCollection[Document]] = None) -> None:
-        
+
         self.id = id
         self.attribution = attribution if attribution else None
         self._filepath = None
-        
+
         self.description = description
         self.sourceDescriptions = TypeCollection(SourceDescription)
-        if sourceDescriptions: self.sourceDescriptions.extend(sourceDescriptions)
+        if sourceDescriptions:
+            self.sourceDescriptions.extend(sourceDescriptions)
         self.persons = TypeCollection(Person)
-        if persons: self.persons.extend(persons)
+        if persons:
+            self.persons.extend(persons)
         self.relationships = TypeCollection(Relationship)
-        if relationships: self.relationships.extend(relationships)      
+        if relationships:
+            self.relationships.extend(relationships)
         self.agents = TypeCollection(Agent)
-        if agents: self.agents.extend(agents) 
+        if agents:
+            self.agents.extend(agents)
         self.events = TypeCollection(Event)
-        if events: self.events.extend(events) 
+        if events:
+            self.events.extend(events)
         self.documents = TypeCollection(Document)
-        if documents: self.documents.extend(documents)
+        if documents:
+            self.documents.extend(documents)
         self.places = TypeCollection(PlaceDescription)
-        if places: self.places.extend(places)
+        if places:
+            self.places.extend(places)
         self.groups = TypeCollection(Group)
 
         self.__relationship_table = {}
         self._import_unhandled_tags = {}
 
         #self.default_id_generator = make_uid
+
+    @property
+    def conversion_warnings(self) -> Dict[str, int]:
+        """GEDCOM tags skipped during import due to missing handlers (potential data loss).
+
+        Non-empty when a converter encountered tags it could not map to GedcomX
+        objects.  Keys are GEDCOM tag names; values are occurrence counts.
+        Returns an empty dict when conversion was clean or this object was not
+        produced by a converter.
+        """
+        return dict(self._import_unhandled_tags)
 
     @property
     def contents(self):
@@ -282,13 +312,13 @@ class GedcomX:
             "places": len(self.places),
             "groups": len(self.groups),
         }
-            
+
     def add(self, gedcomx_type_object):
         """Dispatch a GedcomX top-level object to its appropriate ``add_*`` method.
 
         Args:
             gedcomx_type_object: A Document, Person, SourceDescription, Agent,
-                PlaceDescription, Event, or Relationship instance.
+                PlaceDescription, Event, Relationship, or Group instance.
 
         Raises:
             ValueError: If the object type is not a recognised top-level type.
@@ -308,6 +338,8 @@ class GedcomX:
                 self.add_event(gedcomx_type_object)
             elif isinstance(gedcomx_type_object,Relationship):
                 self.add_relationship(gedcomx_type_object)
+            elif isinstance(gedcomx_type_object,Group):
+                self.add_group(gedcomx_type_object)
             else:
                 raise ValueError(f"I do not know how to add an Object of type {type(gedcomx_type_object)}")
         else:
@@ -326,7 +358,6 @@ class GedcomX:
             if sourceDescription.id is None:
                 raise ValueError("SourceDescription must have an id before being added")
             self.sourceDescriptions.append(item=sourceDescription)
-            self.__lastSourceDescriptionAdded = sourceDescription
         else:
             raise ValueError(f"When adding a SourceDescription, value must be of type SourceDescription, type {type(sourceDescription)} was provided")
 
@@ -340,13 +371,13 @@ class GedcomX:
             None
 
         Raises:
-            ValueError: If `person` is not of type Person.
+            ValueError: If ``document`` is not of type Document.
         """
         if document and isinstance(document,Document):
             self.documents.append(item=document)
         else:
             raise ValueError(f"document must be a 'Document'' Object not type: {type(document)}")
-      
+
     def add_person(self,person: Person):
         """Add a Person object to the Genealogy
 
@@ -363,7 +394,7 @@ class GedcomX:
             self.persons.append(item=person)
         else:
             raise ValueError(f'person must be a Person Object not type: {type(person)}')
-        
+
     def add_relationship(self, relationship: Relationship):
         """Add a Relationship to the genealogy.
 
@@ -380,7 +411,7 @@ class GedcomX:
             if isinstance(relationship.person1,Resource) and isinstance(relationship.person2,Resource):
                 self.relationships.append(relationship)
                 return
-            elif isinstance(relationship.person1,Person) and isinstance(relationship.person2,Person):
+            if isinstance(relationship.person1,Person) and isinstance(relationship.person2,Person):
 
                 if relationship.person1:
                     if relationship.person1.id is None:
@@ -393,7 +424,7 @@ class GedcomX:
                     relationship.person1._add_relationship(relationship)
                 else:
                     pass
-                
+
                 if relationship.person2:
                     if relationship.person2.id is None:
                         relationship.person2.id = make_uid()
@@ -430,22 +461,22 @@ class GedcomX:
             agent: The Agent to add.
 
         Returns:
-            False if the agent's id already exists; None otherwise.
+            False if an agent with this id already exists (duplicate skipped);
+            None (implicit return) if the agent was successfully added.
 
         Raises:
             ValueError: If the argument is not an Agent.
         """
         if isinstance(agent,Agent) and agent is not None:
             if self.agents.by_id(agent.id) is not None:
-                log.debug("Skipped duplicate agent id={}", agent.id)
+                #log.debug("Skipped duplicate agent id={}", agent.id)
                 return False
-            else:
-                self.agents.append(agent)
-                log.debug("Added agent id={}", agent.id)
-        else:
-            raise ValueError(
-                f"agent must be an Agent instance, got {type(agent).__name__}"
-            )
+            self.agents.append(agent)
+            #log.debug("Added agent id={}", agent.id)
+            return None
+        raise ValueError(
+            f"agent must be an Agent instance, got {type(agent).__name__}"
+        )
 
     def add_event(self, event_to_add: Event):
         """Add an Event to this GedcomX genealogy.
@@ -470,9 +501,40 @@ class GedcomX:
         else:
             raise ValueError(f"event_to_add must be an Event instance, got {type(event_to_add).__name__}")
 
+    def add_group(self, group: Group):
+        """Add a Group to the genealogy, skipping duplicates by id.
+
+        Args:
+            group: The Group to add.
+
+        Returns:
+            False if a group with this id already exists (duplicate skipped);
+            None (implicit return) if the group was successfully added.
+
+        Raises:
+            ValueError: If the argument is not a Group.
+        """
+        if isinstance(group, Group) and group is not None:
+            if group.id is not None and self.groups.by_id(group.id) is not None:
+                return False
+            self.groups.append(group)
+            return None
+        raise ValueError(
+            f"group must be a Group instance, got {type(group).__name__}"
+        )
+
     def extend(self, gedcomx: 'GedcomX'):
         """Merge all top-level objects from another GedcomX instance into this one."""
         if gedcomx is not None:
+            if self.id is None and gedcomx.id is not None:
+                self.id = gedcomx.id
+            if self.description is None and gedcomx.description is not None:
+                self.description = gedcomx.description
+            if self.attribution is None and gedcomx.attribution is not None:
+                self.attribution = gedcomx.attribution
+            for group in gedcomx.groups:
+                if group.id is None or self.groups.by_id(group.id) is None:
+                    self.groups.append(group)
             for person in gedcomx.persons:
                 self.add_person(person)
             for agent in gedcomx.agents:
@@ -488,13 +550,13 @@ class GedcomX:
             for place in gedcomx.places:
                 self.add_place_description(place)
 
-    def get_person_by_id(self, id: str):
+    def get_person_by_id(self, obj_id: str):
         """Return the Person with the given id, or None if not found."""
-        return self.persons.by_id(id)
+        return self.persons.by_id(obj_id)
 
-    def source_by_id(self, id: str):
+    def source_by_id(self, obj_id: str):
         """Return the SourceDescription with the given id, or None if not found."""
-        return self.sourceDescriptions.by_id(id)
+        return self.sourceDescriptions.by_id(obj_id)
 
     def validate(self) -> ValidationResult:
         """Validate this GedcomX document.
@@ -527,7 +589,12 @@ class GedcomX:
             for pnum, pfield in (("person1", rel.person1), ("person2", rel.person2)):
                 if pfield is None:
                     continue
-                ref_id = getattr(pfield, "id", None) or getattr(pfield, "resourceId", None)
+                if isinstance(pfield, Person):
+                    ref_id = pfield.id
+                elif isinstance(pfield, Resource):
+                    ref_id = pfield.resourceId or (pfield.resource.fragment if pfield.resource else None)
+                else:
+                    ref_id = getattr(pfield, "id", None)
                 if ref_id and ref_id not in person_ids:
                     result.error(
                         f"relationships[{i}].{pnum}",
@@ -552,40 +619,6 @@ class GedcomX:
         #    combined[i] = str(type(combined[i]).__name__)
         return combined
 
-    @property
-    def _serializer(self) -> Optional[dict]:
-        """Return a JSON-compatible dict for this GedcomX instance."""
-        from .serialization import Serialization
-        result: dict[str, Any] = {}
-        if self.id:
-            result["id"] = self.id
-        if self.description:
-            result["description"] = self.description
-        if self.attribution:
-            attr = Serialization.serialize(self.attribution)
-            if attr:
-                result["attribution"] = attr
-        _collections = (
-            ("persons", self.persons),
-            ("relationships", self.relationships),
-            ("sourceDescriptions", self.sourceDescriptions),
-            ("agents", self.agents),
-            ("events", self.events),
-            ("documents", self.documents),
-            ("places", self.places),
-            ("groups", self.groups),
-        )
-        for name, col in _collections:
-            if len(col) > 0:
-                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
-                if items:
-                    result[name] = items
-        return result if result else None
-
-    @property
-    def _as_dict(self) -> dict[str, Any]:
-        return self._serializer or {}
-
     @classmethod
     def from_dict(cls, data: dict) -> "GedcomX":
         """Deserialize a GedcomX instance from a JSON-compatible dict."""
@@ -593,6 +626,16 @@ class GedcomX:
             id=data.get("id"),
             description=data.get("description"),
         )
+        if ad := data.get("attribution"):
+            try:
+                gx.attribution = Attribution.model_validate(ad)
+            except Exception as e:
+                log.warning("Skipping invalid attribution: {}", e)
+        for gd in data.get("groups", []):
+            try:
+                gx.groups.append(item=Group.model_validate(gd))
+            except Exception as e:
+                log.warning("Skipping invalid group record: {}", e)
         for pd in data.get("persons", []):
             try:
                 gx.add_person(Person.model_validate(pd))
@@ -603,7 +646,7 @@ class GedcomX:
                 gx.add_agent(Agent.model_validate(ad))
             except Exception as e:
                 log.warning("Skipping invalid agent record: {}", e)
-        from .relationship import Relationship
+        from .relationship import Relationship  # pylint: disable=redefined-outer-name
         for rd in data.get("relationships", []):
             try:
                 gx.add_relationship(Relationship.model_validate(rd))
@@ -614,37 +657,99 @@ class GedcomX:
                 gx.add_source_description(SourceDescription.model_validate(sd))
             except Exception as e:
                 log.warning("Skipping invalid sourceDescription record: {}", e)
-        from .event import Event
+        from .event import Event  # pylint: disable=redefined-outer-name
         for ed in data.get("events", []):
             try:
                 gx.add_event(Event.model_validate(ed))
             except Exception as e:
                 log.warning("Skipping invalid event record: {}", e)
-        from .document import Document
+        from .document import Document  # pylint: disable=redefined-outer-name
         for dd in data.get("documents", []):
             try:
                 gx.add_document(Document.model_validate(dd))
             except Exception as e:
                 log.warning("Skipping invalid document record: {}", e)
-        from .place_description import PlaceDescription
+        from .place_description import PlaceDescription  # pylint: disable=redefined-outer-name
         for pld in data.get("places", []):
             try:
                 gx.add_place_description(PlaceDescription.model_validate(pld))
             except Exception as e:
                 log.warning("Skipping invalid place record: {}", e)
         return gx
-        
-    @property
-    def json(self) -> bytes:
+
+    def _to_dict(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dict via ``Serialization.serialize``.
+
+        Resource references are emitted as ``{"resource": "#id"}`` pointers
+        rather than inlined objects.
         """
-        JSON Representation of the GedcomX Genealogy.
+        from .serialization import Serialization
+        result: dict[str, Any] = {}
+        if self.id:
+            result["id"] = self.id
+        if self.description:
+            result["description"] = self.description
+        if self.attribution:
+            attr = Serialization.serialize(self.attribution)
+            if attr:
+                result["attribution"] = attr
+        for name, col in (
+            ("persons",            self.persons),
+            ("relationships",      self.relationships),
+            ("sourceDescriptions", self.sourceDescriptions),
+            ("agents",             self.agents),
+            ("events",             self.events),
+            ("documents",          self.documents),
+            ("places",             self.places),
+            ("groups",             self.groups),
+        ):
+            if col:
+                items = [s for item in col if (s := Serialization.serialize(item)) is not None]
+                if items:
+                    result[name] = items
+        return result
+
+    def to_gedcom7(self):
+        """Convert this GedcomX document to a
+        :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.
 
         Returns:
-            str: JSON Representation of the GedcomX Genealogy in the GEDCOM X JSON Serialization Format
+            A :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance whose
+            :attr:`records` hold the converted GEDCOM 7 structure tree.
+
+        Example::
+
+            gx = GedcomX.from_dict(data)
+            g7 = gx.to_gedcom7()
+            g7.write("output.ged")
         """
-        return orjson.dumps(self._as_dict,option= orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
+        from ..gedcom7.gedcom7 import Gedcom7
+        return Gedcom7.from_gedcomx(self)
+
+    def gml(self) -> str:
+        """Return the GedcomX graph as a GML string.
+
+        Persons become nodes; Couple and ParentChild relationships become
+        directed edges.  See :class:`~gedcomtools.gedcomx.gml.GedcomXGmlExporter`
+        for the full attribute list.
+
+        Returns:
+            GML content as a :class:`str`.
+        """
+        from .gml import GedcomXGmlExporter
+        return GedcomXGmlExporter().export(self)
+
+    @property
+    def json(self) -> bytes:
+        """Return the GedcomX document as indented UTF-8 JSON bytes.
+
+        Uses ``Serialization.serialize`` so resource references are emitted
+        as ``{"resource": "#id"}`` pointers rather than inlined objects.
+        """
+        return orjson.dumps(self._to_dict(), option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
 
     def _resolve(self, resource_reference: Union[URI, Resource]):
+        """Resolve a Resource or URI reference to the matching top-level object, or None."""
         #TODO indept URI search, URI index in collections
         if resource_reference:
             if isinstance(resource_reference, Resource):
@@ -662,7 +767,5 @@ class GedcomX:
             else:
                 log.debug("Resolved id='{}' to {}", ref_id, type(ref).__name__)
             return ref
-        else:
-            log.debug("_resolve: reference was None")
-
-    
+        log.debug("_resolve: reference was None")
+        return None

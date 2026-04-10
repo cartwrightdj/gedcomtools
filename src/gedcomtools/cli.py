@@ -6,6 +6,9 @@
  Purpose: Main gedcomtools CLI entry point
 
  Created: 2026-03-16
+ Updated: 2026-03-24 — added g5→g7 conversion; --on-unknown drop|convert flag
+          2026-04-03 — added comment explaining errors="replace" is intentional
+                        in _sniff_source_type (ASCII-only VERS tag inspection)
 ======================================================================
 """
 
@@ -58,6 +61,8 @@ def _sniff_source_type(path: Path) -> str:
     # GEDCOM line-based file — sniff VERS tag
     if suffix in (".ged", ".gedcom", ""):
         try:
+            # errors="replace" is intentional: we only inspect ASCII VERS/HEAD
+            # tags here, so replacement characters cannot affect the result.
             with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
                 for line in f:
                     line = line.strip()
@@ -66,13 +71,12 @@ def _sniff_source_type(path: Path) -> str:
                         vers = line.split(None, 2)[2] if len(line.split(None, 2)) > 2 else ""
                         if vers.startswith("7"):
                             return "g7"
-                        else:
-                            return "g5"
+                        return "g5"
                     # Stop after HEAD block (level 0 record other than HEAD means no VERS found)
                     if line.startswith("0 ") and "HEAD" not in line:
                         break
         except OSError as e:
-            raise ValueError(f"Cannot read file: {e}")
+            raise ValueError(f"Cannot read file: {e}") from e
         # No VERS found — fall back on extension, assume G5
         if suffix in (".ged", ".gedcom"):
             return "g5"
@@ -103,30 +107,31 @@ def _load_gx(path: Path):
     from gedcomtools.gedcomx.gedcomx import GedcomX
     from gedcomtools.gedcomx.serialization import Serialization
     try:
-        import orjson
+        import orjson  # pylint: disable=redefined-outer-name
         with open(path, "rb") as f:
             data = orjson.loads(f.read())
     except ImportError:
-        import json
+        import json  # pylint: disable=redefined-outer-name
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected a JSON object at root of {path}, got {type(data).__name__}")
     return Serialization.deserialize(data=data, class_type=GedcomX)
 
 
 def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     from gedcomtools.gedcomx.conversion import GedcomConverter
-    from gedcomtools.gedcomx.serialization import Serialization
     print(f"Loading GEDCOM 5 from {source_path} ...")
     try:
         g5 = _load_g5(source_path)
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print(f"Converting to GedcomX ...")
+    print("Converting to GedcomX ...")
     try:
         conv = GedcomConverter()
         gx = conv.Gedcom5x_GedcomX(g5)
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
@@ -143,9 +148,41 @@ def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
     return OK
 
 
+def _convert_g5_to_g7(source_path: Path, dest_path: Path, *, unknown_tags: str = "drop") -> int:
+    from gedcomtools.gedcom5.gedcom5 import Gedcom5
+    from gedcomtools.gedcom5.g5tog7 import Gedcom5to7
+    from gedcomtools.gedcom7.writer import Gedcom7Writer
+    print(f"Loading GEDCOM 5 from {source_path} ...")
+    try:
+        g5 = Gedcom5(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GEDCOM 7 ...")
+    try:
+        conv = Gedcom5to7(unknown_tags=unknown_tags)
+        records = conv.convert(g5)
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    for w in conv.warnings:
+        print(f"  warning: {w}")
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        Gedcom7Writer().write(records, dest_path)
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    n_indi = sum(1 for r in records if r.tag == "INDI")
+    n_fam  = sum(1 for r in records if r.tag == "FAM")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    return OK
+
+
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
 _CONVERSIONS = {
     ("g5", "gx"): _convert_g5_to_gx,
+    ("g5", "g7"): _convert_g5_to_g7,
 }
 
 
@@ -190,7 +227,10 @@ def cmd_convert(args) -> int:
         )
         return ERR_UNSUPPORTED_CONV
 
-    return converter(source_path, dest_path)
+    kwargs = {}
+    if (source_type, dest_type) == ("g5", "g7"):
+        kwargs["unknown_tags"] = getattr(args, "on_unknown", "drop") or "drop"
+    return converter(source_path, dest_path, **kwargs)
 
 
 # -----------------------------------------------------------------------
@@ -227,6 +267,18 @@ def main() -> None:
     fmt_group.add_argument("-g5", dest="dest_type", action="store_const", const="g5", help="Convert to GEDCOM 5.x")
     fmt_group.add_argument("-g7", dest="dest_type", action="store_const", const="g7", help="Convert to GEDCOM 7.x")
     fmt_group.add_argument("-gx", dest="dest_type", action="store_const", const="gx", help="Convert to GedcomX JSON")
+    p_convert.add_argument(
+        "--on-unknown",
+        dest="on_unknown",
+        choices=["drop", "convert"],
+        default="drop",
+        help=(
+            "How to handle vendor/non-standard G5 tags (RIN, FSID, AFN, WWW, ADR4-6) "
+            "during G5→G7 conversion. "
+            "'drop' (default) discards them; "
+            "'convert' renames them to _TAG extension tags declared in HEAD.SCHMA."
+        ),
+    )
     p_convert.set_defaults(func=cmd_convert)
 
     args = parser.parse_args()

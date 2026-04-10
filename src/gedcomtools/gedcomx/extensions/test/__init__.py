@@ -1,14 +1,10 @@
 """
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/extensions/test/__init__.py
- Author:  David J. Cartwright
- Purpose: Package initializer for the Gedcom-X test extension module
+Compatibility package for the legacy ``gedcomtools.gedcomx.extensions.test`` path.
 
- Created: 2025-08-25
- Updated:
-
-======================================================================
+The implementation now lives under ``ae_arango``; this module re-exports the
+same symbols so existing plugin configuration and tests continue to work.
 """
-from .test import TestClass
-from .argo_graph import ext_description_get
+
+from ..ae_arango import TestClass, ext_description_get
+
+__all__ = ["TestClass", "ext_description_get"]

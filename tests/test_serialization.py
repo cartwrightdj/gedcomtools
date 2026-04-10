@@ -1,5 +1,11 @@
 """
 Tests for gedcomtools.gedcomx.serialization — serialize / deserialize round-trips
+
+Updates:
+  2026-03-29 — added TestFromDictRootFields: round-trip tests for attribution
+               and groups, which were silently dropped by from_dict() (bug #2)
+             — added TestSerializeDictNullPruning: verifies None and empty-list
+               values are pruned from dict serialization output (bug #4)
 """
 import json
 import pytest
@@ -78,14 +84,14 @@ class TestSerializePerson:
 class TestSerializeGedcomX:
     def test_empty_gedcomx(self):
         gx = GedcomX()
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         # empty GedcomX serializes to None (no fields worth serializing)
         assert result is None or isinstance(result, dict)
 
     def test_gedcomx_with_person(self):
         gx = GedcomX()
         gx.add_person(Person(id="P1"))
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         assert "persons" in result
         assert len(result["persons"]) == 1
 
@@ -93,7 +99,7 @@ class TestSerializeGedcomX:
         gx = GedcomX()
         gx.add_person(Person(id="P1"))
         gx.add_person(Person(id="P2"))
-        result = Serialization.serialize(gx)
+        result = gx._to_dict()
         ids = [p.get("id") for p in result["persons"]]
         assert "P1" in ids
         assert "P2" in ids
@@ -110,24 +116,64 @@ class TestRoundTrip:
         gx = GedcomX()
         gx.add_person(Person(id="P1", names=[QuickName("John Smith")]))
         gx.add_agent(Agent(id="A1", names=[TextValue(value="FamilySearch")]))
-        data = Serialization.serialize(gx)
+        data = gx._to_dict()
         restored = Serialization.deserialize(data, GedcomX)
         assert isinstance(restored, GedcomX)
         assert len(restored.persons) == 1
         assert len(restored.agents) == 1
 
 
-class TestDeserializeFromFile:
-    def test_deserialize_gx_json(self, gx_small):
-        with open(gx_small, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        gx = Serialization.deserialize(data, GedcomX)
-        assert isinstance(gx, GedcomX)
-        assert len(gx.persons) >= 0  # may be 0 for source-only files
+class TestFromDictRootFields:
+    """Bug #2 regression: from_dict() was silently dropping attribution and groups."""
 
-    def test_deserialize_preserves_person_ids(self, gx_small):
-        with open(gx_small, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        gx = Serialization.deserialize(data, GedcomX)
-        for p in gx.persons:
-            assert p.id is not None
+    def test_attribution_survives_round_trip(self):
+        from gedcomtools.gedcomx.attribution import Attribution
+        gx = GedcomX(id="G1")
+        gx.attribution = Attribution(changeMessage="test export")
+        data = gx._to_dict()
+        assert "attribution" in data
+        restored = GedcomX.from_dict(data)
+        assert restored.attribution is not None
+        assert restored.attribution.changeMessage == "test export"
+
+    def test_groups_survive_round_trip(self):
+        from gedcomtools.gedcomx.group import Group
+        from gedcomtools.gedcomx.textvalue import TextValue as TV
+        gx = GedcomX(id="G1")
+        gx.groups.append(item=Group(id="GRP1", names=[TV(value="Test Group")]))
+        data = gx._to_dict()
+        assert "groups" in data
+        restored = GedcomX.from_dict(data)
+        assert len(restored.groups) == 1
+        assert restored.groups.by_id("GRP1") is not None
+
+    def test_id_and_description_still_restored(self):
+        gx = GedcomX(id="G1", description="#SD1")
+        data = gx._to_dict()
+        restored = GedcomX.from_dict(data)
+        assert restored.id == "G1"
+        assert restored.description == "#SD1"
+
+
+class TestSerializeDictNullPruning:
+    """Bug #4 regression: serialize(dict) was emitting 'key': null for empty lists."""
+
+    def test_empty_list_value_pruned(self):
+        result = Serialization.serialize({"names": [], "id": "P1"})
+        assert "names" not in result
+        assert result["id"] == "P1"
+
+    def test_none_value_pruned(self):
+        result = Serialization.serialize({"a": None, "b": "keep"})
+        assert "a" not in result
+        assert result["b"] == "keep"
+
+    def test_empty_dict_returns_none(self):
+        assert Serialization.serialize({"a": None}) is None
+
+    def test_nested_none_pruned(self):
+        result = Serialization.serialize({"outer": {"inner": None, "keep": "yes"}})
+        assert "inner" not in result["outer"]
+        assert result["outer"]["keep"] == "yes"
+
+

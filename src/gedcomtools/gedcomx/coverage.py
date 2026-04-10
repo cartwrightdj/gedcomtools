@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/coverage.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Coverage model: temporal and spatial scope of a source description
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 from typing import ClassVar, Optional
 
@@ -7,6 +18,8 @@ from .place_reference import PlaceReference
 
 
 class Coverage(GedcomXModel):
+    """Describes the temporal and spatial scope of a source description."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Coverage"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 

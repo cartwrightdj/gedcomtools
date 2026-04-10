@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.address - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -230,181 +230,112 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.address</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Address data types for the GedcomX conceptual model.</span>
-
-<span class="sd">This module contains classes used to represent postal addresses and related</span>
-<span class="sd">components in GEDCOMX documents. These classes follow the GedcomX v1</span>
-<span class="sd">conceptual model specification.</span>
-
-<span class="sd">Classes:</span>
-<span class="sd">    Address: Represents a structured postal address.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    address.py</span>
+<span class="sd"> File:    gedcomx/address.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose: GedcomX Address model</span>
 
-<span class="sd"> Created: 2026-02-01</span>
+<span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactoring</span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   - 2026-02-01: docstrings, and removed logging (to be fixed in the future)</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#TODO Logging for serialization/deserilzation</span>
-<span class="c1">#=====================================================================</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateAttr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+
 
 <div class="viewcode-block" id="Address">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.address.Address">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">Address</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    GedcomX address data type.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Address</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GedcomX address data type.&quot;&quot;&quot;</span>
 
-<span class="sd">    Represents a postal address according to the GedcomX conceptual model.</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Address&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        value (str, optional): A complete address as a single string.</span>
-<span class="sd">        city (str, optional): Name of the city or town.</span>
-<span class="sd">        country (str, optional): Name of the country.</span>
-<span class="sd">        postalCode (str, optional): Postal or ZIP code.</span>
-<span class="sd">        stateOrProvince (str, optional): Name of the state, province, or region.</span>
-<span class="sd">        street (str, optional): First street address line.</span>
-<span class="sd">        street2 (str, optional): Second street address line.</span>
-<span class="sd">        street3 (str, optional): Third street address line.</span>
-<span class="sd">        street4 (str, optional): Fourth street address line.</span>
-<span class="sd">        street5 (str, optional): Fifth street address line.</span>
-<span class="sd">        street6 (str, optional): Sixth street address line.</span>
+    <span class="n">city</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">postalCode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">stateOrProvince</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street3</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street4</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street5</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">street6</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        identifier (str): GedcomX identifier URI.</span>
-<span class="sd">        version (str): GedcomX conceptual model version URI.</span>
+    <span class="c1"># Raw free-form address string (used by _append; not serialized directly)</span>
+    <span class="n">_raw_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; addr = Address(</span>
-<span class="sd">        ...     street=&quot;123 Main St&quot;,</span>
-<span class="sd">        ...     city=&quot;Springfield&quot;,</span>
-<span class="sd">        ...     stateOrProvince=&quot;IL&quot;,</span>
-<span class="sd">        ...     postalCode=&quot;62704&quot;,</span>
-<span class="sd">        ...     country=&quot;USA&quot;</span>
-<span class="sd">        ... )</span>
-<span class="sd">        &gt;&gt;&gt; addr.city</span>
-<span class="sd">        &#39;Springfield&#39;</span>
-<span class="sd">        &gt;&gt;&gt; addr.postalCode</span>
-<span class="sd">        &#39;62704&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_self</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;Address has no data (all fields are None or empty)&quot;</span><span class="p">)</span>
 
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Address&quot;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
+<div class="viewcode-block" id="Address.model_post_init">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.address.Address.model_post_init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Preserve raw_value passed as &#39;value&#39; kwarg (handled by accept_extras)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate derived state after model initialization.&quot;&quot;&quot;</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span> <span class="o">=</span> <span class="n">raw</span></div>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">city</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">postalCode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">stateOrProvince</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street3</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street4</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street5</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">street6</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># TODO: implement structured address parsing</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">city</span> <span class="o">=</span> <span class="n">city</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">country</span> <span class="o">=</span> <span class="n">country</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span> <span class="o">=</span> <span class="n">postalCode</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span> <span class="o">=</span> <span class="n">stateOrProvince</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">=</span> <span class="n">street</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street2</span> <span class="o">=</span> <span class="n">street2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street3</span> <span class="o">=</span> <span class="n">street3</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street4</span> <span class="o">=</span> <span class="n">street4</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street5</span> <span class="o">=</span> <span class="n">street5</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">street6</span> <span class="o">=</span> <span class="n">street6</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> 
-        <span class="k">return</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street3</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street4</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street5</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street6</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">city</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">country</span>
-        <span class="p">]))</span>
-    
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a comma-separated string of all non-empty address components.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="p">(</span>
+                <span class="kc">None</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street3</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">street4</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street5</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street6</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">city</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">country</span><span class="p">,</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
     <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
-    
-    <span class="k">def</span> <span class="nf">_append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">value</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the raw free-form address string.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">value</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
-             
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        
         <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">city</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">city</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">country</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">country</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">postalCode</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">stateOrProvince</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street2</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street2</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street3</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street3</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street4</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street4</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street5</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street5</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street6</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street6</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">city</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">city</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">country</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">country</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">postalCode</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">stateOrProvince</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street2</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street2</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street3</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street3</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street4</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street4</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street5</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street5</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">street6</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">street6</span>
         <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># Combine non-empty address components into a formatted string</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street2</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street3</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street4</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street5</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">street6</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">city</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">country</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street3</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">street4</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street5</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">street6</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">city</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stateOrProvince</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">postalCode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">country</span><span class="p">,</span>
         <span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">p</span><span class="p">)</span></div>
 
-        <span class="c1"># Filter out any parts that are None or empty strings</span>
-        <span class="n">filtered_parts</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">part</span><span class="p">]</span>
-
-        <span class="c1"># Join the remaining parts with a comma and space</span>
-        <span class="k">return</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filtered_parts</span><span class="p">)</span></div>
-
-    
-    
-        
-    
-    
 </pre></div>
         </article>
       </div>

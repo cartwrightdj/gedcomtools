@@ -22,7 +22,13 @@
               print(d.full_name, d.birth_year)
 
  Created: 2026-03-16
- Updated: 2026-03-16 — raw-first API; Detail only on explicit request
+ Updated: 2026-03-24 — added to_gedcom7() and to_gedcomx() conversion helpers
+ Updated: 2026-03-31 — added _rel_cache; get_parents/get_children_of/get_spouses
+                        now cache results and invalidate on loadfile()
+ Updated: 2026-03-31 — URL support in __init__ and load_url(); .ged extension check
+ Updated: 2026-04-01 — use RelationshipCacheMixin; replace _rel_cache
+                        direct access with _cache_get/_cache_set/_cache_clear
+ Updated: 2026-04-03 — _is_url/_check_ged_url moved to utils.Utilities; import from there
 ======================================================================
 """
 
@@ -30,6 +36,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional, Union
+import io
+import urllib.error
+import urllib.request
+
+from ..utils.Utilities import _is_url, _check_ged_url
 
 from .elements import (
     FamilyRecord,
@@ -57,9 +68,10 @@ from ..gedcom7.models import (
     SourceDetail,
     SubmitterDetail,
 )
+from ..rel_cache import RelationshipCacheMixin
 
 
-class Gedcom5:
+class Gedcom5(RelationshipCacheMixin):
     """Parse GEDCOM 5.x files and expose a :class:`Gedcom7`-compatible API.
 
     **Two access tiers:**
@@ -81,13 +93,22 @@ class Gedcom5:
         """Initialise the parser.
 
         Args:
-            filepath: Optional path to a GEDCOM 5.x file to load immediately.
+            filepath: Optional path to a GEDCOM 5.x file **or** HTTP/HTTPS
+                URL to load immediately.  URLs must end in ``.ged``.
         """
-        self.filepath: Optional[Path] = Path(filepath) if filepath else None
         self._parser = Gedcom5x()
+        self._rel_cache: dict[str, list] = {}
 
-        if self.filepath:
-            self.loadfile(self.filepath)
+        if filepath is not None:
+            s = str(filepath)
+            if _is_url(s):
+                self.filepath: Optional[Path] = None
+                self.load_url(s)
+            else:
+                self.filepath = Path(s)
+                self.loadfile(self.filepath)
+        else:
+            self.filepath = None
 
     # ------------------------------------------------------------------
     # Loading
@@ -102,7 +123,39 @@ class Gedcom5:
                 than tolerating minor deviations.
         """
         self.filepath = Path(path)
+        self._cache_clear()
         self._parser.parse_file(str(self.filepath), strict=strict)
+
+    def load_url(self, url: str) -> None:
+        """Download and parse a GEDCOM 5.x file from an HTTP/HTTPS URL.
+
+        The response body is decoded as UTF-8.  Use :meth:`loadfile` for
+        local files.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a ``.ged`` file.
+
+        Raises:
+            ValueError:             If the URL does not end in ``.ged``.
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+        """
+        _check_ged_url(url)
+        try:
+            with urllib.request.urlopen(url) as resp:
+                raw = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
+        self._cache_clear()
+        self._parser.parse(io.BytesIO(raw))
 
     # ------------------------------------------------------------------
     # Version detection
@@ -129,6 +182,21 @@ class Gedcom5:
             if vers and vers.value:
                 return vers.value.strip() or None
         return "5.5"
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    def validate(self):
+        """Validate the loaded file against the GEDCOM 5.5.1 specification.
+
+        Returns:
+            A list of :class:`~gedcomtools.gedcom7.validator.ValidationIssue`
+            instances, each with ``severity`` (``"error"`` or ``"warning"``),
+            ``code``, ``message``, ``tag``, and ``line_num`` fields.
+        """
+        from .validator5 import Gedcom5Validator
+        return Gedcom5Validator(self._parser).validate()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -249,7 +317,15 @@ class Gedcom5:
         """Always returns ``[]`` — GEDCOM 5.x has no SNOTE records."""
         return []
 
-    def get_shared_note(self, xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
+    def shared_note_details(self) -> List[SharedNoteDetail]:
+        """Always returns ``[]`` — GEDCOM 5.x has no SNOTE records."""
+        return []
+
+    def get_shared_note(self, _xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
+        """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
+        return None
+
+    def get_shared_note_detail(self, xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002  # pylint: disable=unused-argument
         """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
         return None
 
@@ -262,22 +338,42 @@ class Gedcom5:
         el = self._lookup(xref)
         return submitter_detail_from_g5(el) if el is not None and el.tag == "SUBM" else None
 
+    def resolve_subm(self, xref: str) -> str:
+        """Resolve a SUBM xref pointer to a human-readable name.
+
+        Returns the submitter's NAME value, or the raw *xref* string if the
+        record cannot be found or has no name.
+
+        Args:
+            xref: Xref id, e.g. ``"@S1@"`` or ``"S1"``.
+        """
+        xref = xref.strip()
+        if not xref.startswith("@"):
+            xref = f"@{xref}@"
+        detail = self.get_submitter_detail(xref)
+        if detail and detail.name:
+            return detail.name
+        return xref
+
     # ------------------------------------------------------------------
     # Relationship traversal — raw records
     # ------------------------------------------------------------------
 
-    def get_parents(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_parents(self, xref: str) -> List[IndividualRecord]:
         """Return the parents of an individual as raw records.
 
         Walks FAMC → FAM → HUSB/WIFE.
 
         Args:
-            indi_xref: Xref id of the individual (e.g. ``"@I1@"``).
+            xref: Xref id of the individual (e.g. ``"@I1@"``).
 
         Returns:
             Raw :class:`IndividualRecord` for each parent found.
         """
-        el = self._lookup(indi_xref)
+        cached = self._cache_get("p", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
         result: List[IndividualRecord] = []
@@ -293,20 +389,24 @@ class Gedcom5:
                     parent_el = self._lookup(ptr.value)
                     if parent_el and parent_el.tag == "INDI":
                         result.append(parent_el)
+        self._cache_set("p", xref, result)
         return result
 
-    def get_children_of(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_children_of(self, xref: str) -> List[IndividualRecord]:
         """Return the children of an individual as raw records.
 
         Walks FAMS → FAM → CHIL.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`IndividualRecord` for each child found.
         """
-        el = self._lookup(indi_xref)
+        cached = self._cache_get("c", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
         result: List[IndividualRecord] = []
@@ -321,23 +421,27 @@ class Gedcom5:
                     child_el = self._lookup(chil.value)
                     if child_el and child_el.tag == "INDI":
                         result.append(child_el)
+        self._cache_set("c", xref, result)
         return result
 
-    def get_spouses(self, indi_xref: str) -> List[IndividualRecord]:
+    def get_spouses(self, xref: str) -> List[IndividualRecord]:
         """Return the spouses of an individual as raw records.
 
         For each FAMS family, returns the other HUSB or WIFE record.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`IndividualRecord` for each spouse found.
         """
-        el = self._lookup(indi_xref)
+        norm = _normalize_xref(xref)
+        cached = self._cache_get("s", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        el = self._lookup(xref)
         if el is None or el.tag != "INDI":
             return []
-        norm = _normalize_xref(indi_xref)
         result: List[IndividualRecord] = []
         for fams in el.get_child_elements():
             if fams.tag != "FAMS" or not fams.value:
@@ -351,6 +455,7 @@ class Gedcom5:
                     spouse_el = self._lookup(ptr.value)
                     if spouse_el and spouse_el.tag == "INDI":
                         result.append(spouse_el)
+        self._cache_set("s", xref, result)
         return result
 
     # ------------------------------------------------------------------
@@ -368,3 +473,99 @@ class Gedcom5:
     def get_spouses_detail(self, indi_xref: str) -> List[IndividualDetail]:
         """Return spouses as :class:`IndividualDetail` snapshots."""
         return [individual_detail_from_g5(r) for r in self.get_spouses(indi_xref)]
+
+    # ------------------------------------------------------------------
+    # Format conversion
+    # ------------------------------------------------------------------
+
+    def to_gedcomx(self):
+        """Convert this GEDCOM 5 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Returns:
+            A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance populated
+            from this file's records.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            gx = g5.to_gedcomx()
+            with open("family.json", "wb") as f:
+                f.write(gx.json)
+        """
+        from ..gedcomx.conversion import GedcomConverter
+        return GedcomConverter().Gedcom5x_GedcomX(self)  # type: ignore[arg-type]  # unwrapped inside
+
+    def to_gedcom7(self, *, unknown_tags: str = "drop"):
+        """Convert this GEDCOM 5 file to a :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` object.
+
+        Args:
+            unknown_tags: How to handle vendor/non-standard tags.
+                ``"drop"`` (default) discards them; ``"convert"`` renames
+                them to ``_TAG`` extension tags declared in ``HEAD.SCHMA``.
+
+        Returns:
+            A :class:`~gedcomtools.gedcom7.gedcom7.Gedcom7` instance populated
+            from the converted records.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            g7 = g5.to_gedcom7(unknown_tags="convert")
+            g7.write("family7.ged")
+        """
+        from .g5tog7 import Gedcom5to7
+        from ..gedcom7.gedcom7 import Gedcom7
+        conv = Gedcom5to7(unknown_tags=unknown_tags)
+        records = conv.convert(self)
+        g7 = Gedcom7()
+        for record in records:
+            g7._append_record(record)
+        return g7
+
+    def gml(self) -> str:
+        """Return the family graph as a GML string.
+
+        Converts this GEDCOM 5 file to GedcomX and serializes it to GML
+        (Graph Modelling Language) suitable for Gephi, yEd, and NetworkX.
+
+        Strings are encoded per the Himsolt 1997 GML spec: ``&quot;`` for
+        embedded double-quotes, ``&amp;`` for ampersands, ``&#NNN;`` for
+        non-ASCII and control characters.  Backslash has no special meaning
+        in GML and is passed through unchanged.
+
+        Returns:
+            GML content as a :class:`str`.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            print(g5.gml())
+        """
+        return self.to_gedcomx().gml()
+
+    def write_gml(
+        self,
+        path: Union[str, Path],
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        """Write the family graph to a GML file.
+
+        Converts this GEDCOM 5 file to GedcomX and writes it as GML
+        (Graph Modelling Language) using an atomic write via a temporary
+        file so a failed write never corrupts the destination.
+
+        Args:
+            path: Destination path.  Parent directory must exist.
+            encoding: File encoding (default UTF-8).
+
+        Raises:
+            FileNotFoundError: If the parent directory does not exist.
+
+        Example::
+
+            g5 = Gedcom5("family.ged")
+            g5.write_gml("family.gml")
+        """
+        from ..gedcomx.gml import GedcomXGmlExporter
+        GedcomXGmlExporter().write(self.to_gedcomx(), path, encoding=encoding)

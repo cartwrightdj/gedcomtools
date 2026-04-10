@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcom7.validator - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -250,6 +250,10 @@
 <span class="sd">                 orphaned check uses broader pointer detection to catch HEAD.SOUR refs;</span>
 <span class="sd">                 SDATE added to _TRAN_LEGAL_PARENTS</span>
 <span class="sd">   - 2026-03-16: import updated GedcomStructure.py → structure.py</span>
+<span class="sd">   - 2026-03-22: AGE regex adds week (Nw) support; SNOTE.LANG cardinality fix;</span>
+<span class="sd">                 self-referential ALIA/SOUR-OBJE cycle detection; NO-context</span>
+<span class="sd">                 validation; duplicate FAMC/CHIL detection; EXID-without-TYPE</span>
+<span class="sd">                 and ADR1/ADR2/ADR3 deprecation warnings (changelog 7.0.6–7.0.17)</span>
 <span class="sd">======================================================================</span>
 
 <span class="sd">This module performs structural and semantic validation of parsed GEDCOM 7</span>
@@ -267,21 +271,26 @@
 <span class="sd">8. orphaned record detection</span>
 <span class="sd">9. bidirectional pointer consistency</span>
 <span class="sd">10. TRAN context validation</span>
+<span class="sd">11. deprecated tag warnings (ADR1/ADR2/ADR3, EXID without TYPE)</span>
+<span class="sd">12. NO-tag context validation</span>
+<span class="sd">13. self-referential ALIA detection</span>
+<span class="sd">14. SOUR-OBJE cycle detection</span>
+<span class="sd">15. duplicate FAMC/CHIL link detection</span>
 
 <span class="sd">The docstrings are written in Google style so they render well with</span>
 <span class="sd">Sphinx Napoleon.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
 
-<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="n">GedcomStructure</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">specification</span> <span class="k">as</span> <span class="n">g7specs</span>
-<span class="kn">from</span> <span class="nn">.g7interop</span> <span class="kn">import</span> <span class="n">is_known_tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomStructure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">specification</span> <span class="k">as</span> <span class="n">g7specs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tag_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_known_tag</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Pre-compiled payload format patterns</span>
@@ -311,9 +320,15 @@
     <span class="sa">r</span><span class="s2">&quot;^\d{1,2}:\d</span><span class="si">{2}</span><span class="s2">(?::\d</span><span class="si">{2}</span><span class="s2">(?:\.\d+)?)?(?:Z|[+-]\d</span><span class="si">{4}</span><span class="s2">)?$&quot;</span>
 <span class="p">)</span>
 
-<span class="c1"># [&lt; | &gt;] any combo of Ny Nm Nd  (at least one component required)</span>
+<span class="c1"># [&lt; | &gt;] then exactly one of: Ny[Nm[Nd]] | Nm[Nd] | Nw | Nd</span>
+<span class="c1"># Weeks (Nw) are standalone per the GEDCOM 7 ABNF (7.0.0+).</span>
 <span class="n">_AGE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;^[&lt;&gt;]?\s*(?:(?:\d+y\s*)?(?:\d+m\s*)?(?:\d+d\s*)?)$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;^[&lt;&gt;]?\s*(?:&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;\d+y(?:\s+\d+m(?:\s+\d+d)?)?&quot;</span>   <span class="c1"># years [months [days]]</span>
+    <span class="sa">r</span><span class="s2">&quot;|\d+m(?:\s+\d+d)?&quot;</span>               <span class="c1"># months [days]</span>
+    <span class="sa">r</span><span class="s2">&quot;|\d+w&quot;</span>                            <span class="c1"># weeks (standalone)</span>
+    <span class="sa">r</span><span class="s2">&quot;|\d+d&quot;</span>                            <span class="c1"># days</span>
+    <span class="sa">r</span><span class="s2">&quot;)$&quot;</span><span class="p">,</span>
     <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -332,7 +347,7 @@
 <span class="n">_FORMAT_CHECKS</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;DATE&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">_DATE_RE</span><span class="p">,</span> <span class="s2">&quot;invalid_date_format&quot;</span><span class="p">,</span>  <span class="s2">&quot;DATE payload does not match GEDCOM date grammar&quot;</span><span class="p">),</span>
     <span class="s2">&quot;TIME&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">_TIME_RE</span><span class="p">,</span> <span class="s2">&quot;invalid_time_format&quot;</span><span class="p">,</span>  <span class="s2">&quot;TIME payload does not match hh:mm[:ss[.frac]][Z|±hhmm]&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;AGE&quot;</span><span class="p">:</span>  <span class="p">(</span><span class="n">_AGE_RE</span><span class="p">,</span>  <span class="s2">&quot;invalid_age_format&quot;</span><span class="p">,</span>   <span class="s2">&quot;AGE payload does not match [&lt;&gt;] Ny Nm Nd&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;AGE&quot;</span><span class="p">:</span>  <span class="p">(</span><span class="n">_AGE_RE</span><span class="p">,</span>  <span class="s2">&quot;invalid_age_format&quot;</span><span class="p">,</span>   <span class="s2">&quot;AGE payload does not match [&lt;&gt;] Ny[Nm[Nd]] | Nm[Nd] | Nw | Nd&quot;</span><span class="p">),</span>
     <span class="s2">&quot;LATI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">_LATI_RE</span><span class="p">,</span> <span class="s2">&quot;invalid_lati_format&quot;</span><span class="p">,</span>  <span class="s2">&quot;LATI must be N or S followed by decimal degrees&quot;</span><span class="p">),</span>
     <span class="s2">&quot;LONG&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">_LONG_RE</span><span class="p">,</span> <span class="s2">&quot;invalid_long_format&quot;</span><span class="p">,</span>  <span class="s2">&quot;LONG must be E or W followed by decimal degrees&quot;</span><span class="p">),</span>
     <span class="s2">&quot;LANG&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">_LANG_RE</span><span class="p">,</span> <span class="s2">&quot;invalid_lang_format&quot;</span><span class="p">,</span>  <span class="s2">&quot;LANG must be a valid BCP 47 language tag&quot;</span><span class="p">),</span>
@@ -342,7 +357,7 @@
 <div class="viewcode-block" id="ValidationIssue">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.ValidationIssue">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ValidationIssue</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationIssue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a GEDCOM validation issue.</span>
 
 <span class="sd">    Attributes:</span>
@@ -363,7 +378,7 @@
 
 <div class="viewcode-block" id="GedcomValidator">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomValidator</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomValidator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a parsed GEDCOM 7 dataset.</span>
 
 <span class="sd">    Args:</span>
@@ -373,7 +388,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.__init__">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
@@ -394,7 +409,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.add_issue">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.add_issue">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_issue</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_issue</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -425,7 +440,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ValidationIssue</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ValidationIssue</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run all validation phases.</span>
 
 <span class="sd">        Returns:</span>
@@ -441,12 +456,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_pointers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_bidirectional_links</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_orphaned_records</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_self_referential_links</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_pointer_cycles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_duplicate_family_links</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span></div>
 
 
 <div class="viewcode-block" id="GedcomValidator.walk">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.walk">[docs]</a>
-    <span class="k">def</span> <span class="nf">walk</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield all nodes in the dataset depth-first.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_node</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
@@ -454,7 +472,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.walk_node">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.walk_node">[docs]</a>
-    <span class="k">def</span> <span class="nf">walk_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">GedcomStructure</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield a node and all descendants.</span>
 
 <span class="sd">        Args:</span>
@@ -467,7 +485,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_file_structure">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_file_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_file_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_file_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate required GEDCOM file-level rules.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
@@ -563,7 +581,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.index_xrefs">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.index_xrefs">[docs]</a>
-    <span class="k">def</span> <span class="nf">index_xrefs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">index_xrefs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Build an index of all defined xref ids.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_xref_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
@@ -587,7 +605,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.collect_declared_extension_tags">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.collect_declared_extension_tags">[docs]</a>
-    <span class="k">def</span> <span class="nf">collect_declared_extension_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collect_declared_extension_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect extension tags declared in ``HEAD.SCHMA.TAG``.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_declared_extension_tags</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
@@ -606,7 +624,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_node">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_node">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate a node and its descendants.</span>
 
 <span class="sd">        Args:</span>
@@ -622,6 +640,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_enumeration</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_tran_context</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_void_pointer</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_deprecated_tag</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_exid_type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_no_context</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">validate_node</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
@@ -629,7 +650,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_known_tag">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_known_tag">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_known_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_known_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that a tag is known or an extension.</span>
 
 <span class="sd">        Args:</span>
@@ -649,7 +670,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_extension_usage">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_extension_usage">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_extension_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_extension_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate extension tag declaration.</span>
 
 <span class="sd">        Args:</span>
@@ -672,7 +693,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_level">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_level">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate level stepping.</span>
 
 <span class="sd">        Args:</span>
@@ -699,7 +720,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_child_legality">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_child_legality">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_child_legality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_child_legality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate parent/child legality.</span>
 
 <span class="sd">        Args:</span>
@@ -726,7 +747,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_cardinality">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_cardinality">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_cardinality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_cardinality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate child cardinality for a parent node.</span>
 
 <span class="sd">        Args:</span>
@@ -767,7 +788,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_payload">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_payload">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate basic payload typing.</span>
 
 <span class="sd">        Args:</span>
@@ -820,7 +841,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_enumeration">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_enumeration">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_enumeration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_enumeration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate selected enumeration payloads.</span>
 
 <span class="sd">        Checks the general enum for the tag first; if none is registered,</span>
@@ -860,7 +881,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_pointers">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_pointers">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_pointers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_pointers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate pointer targets.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
@@ -892,7 +913,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_bidirectional_links">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_bidirectional_links">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_bidirectional_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_bidirectional_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate bidirectional pointer consistency between INDI and FAM records.</span>
 
 <span class="sd">        Checks:</span>
@@ -901,7 +922,7 @@
 <span class="sd">        - FAM.CHIL @INDI@ → that INDI must have FAMC @FAM@ pointing back</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Build maps from xref (uppercased) → set of pointer values (uppercased)</span>
-        <span class="k">def</span> <span class="nf">_pointer_set</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_pointer_set</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span>
                 <span class="n">child</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
@@ -980,7 +1001,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_tran_context">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_tran_context">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_tran_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_tran_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate TRAN substructures match their parent context.</span>
 
 <span class="sd">        TRAN under NOTE/SNOTE must have LANG, may have MIME.</span>
@@ -1068,7 +1089,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_orphaned_records">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_orphaned_records">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_orphaned_records</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_orphaned_records</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn about top-level records that are defined but never cited.</span>
 
 <span class="sd">        Checks SOUR, REPO, OBJE, SNOTE records to see whether any</span>
@@ -1077,20 +1098,29 @@
 <span class="sd">        Note: SUBM records referenced by HEAD.SUBM are treated as cited.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Collect all pointer values used anywhere in the tree (uppercased).</span>
-        <span class="c1"># Use both the payload_is_pointer flag and a regex fallback so that</span>
-        <span class="c1"># nodes like HEAD.SOUR whose payload looks like a pointer but was not</span>
-        <span class="c1"># flagged as one (e.g. because the spec marks it as text) are still</span>
-        <span class="c1"># treated as citations.</span>
+        <span class="c1"># The primary source is payload_is_pointer (set by the parser).</span>
+        <span class="c1"># A regex fallback is applied only to known citation tags so that</span>
+        <span class="c1"># nodes like HEAD.SOUR (whose payload looks like a pointer but is</span>
+        <span class="c1"># marked as text) are treated as citations without risking false</span>
+        <span class="c1"># positives from free-text payloads that happen to match @…@.</span>
+        <span class="n">_CITATION_TAGS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span>
+            <span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="s2">&quot;ASSO&quot;</span><span class="p">,</span> <span class="s2">&quot;ALIA&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ANCI&quot;</span><span class="p">,</span> <span class="s2">&quot;DESI&quot;</span><span class="p">,</span> <span class="s2">&quot;SUBM&quot;</span><span class="p">,</span> <span class="s2">&quot;HUSB&quot;</span><span class="p">,</span> <span class="s2">&quot;WIFE&quot;</span><span class="p">,</span> <span class="s2">&quot;FAMC&quot;</span><span class="p">,</span> <span class="s2">&quot;FAMS&quot;</span><span class="p">,</span> <span class="s2">&quot;CHIL&quot;</span><span class="p">,</span>
+        <span class="p">})</span>
         <span class="n">all_pointers</span><span class="p">:</span> <span class="nb">set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk</span><span class="p">():</span>
             <span class="n">p</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;@VOID@&quot;</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">or</span> <span class="n">_XREF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">payload_is_pointer</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">_CITATION_TAGS</span> <span class="ow">and</span> <span class="n">_XREF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="p">):</span>
                 <span class="n">all_pointers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
 
         <span class="c1"># Check records of types that should be cited</span>
-        <span class="n">CITABLE</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="s2">&quot;SNOTE&quot;</span><span class="p">}</span>
+        <span class="c1"># SUBM is included: HEAD.SUBM will be in all_pointers if present,</span>
+        <span class="c1"># so truly orphaned SUBM records (no HEAD.SUBM reference) will warn.</span>
+        <span class="n">CITABLE</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SOUR&quot;</span><span class="p">,</span> <span class="s2">&quot;REPO&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJE&quot;</span><span class="p">,</span> <span class="s2">&quot;SNOTE&quot;</span><span class="p">,</span> <span class="s2">&quot;SUBM&quot;</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CITABLE</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -1108,7 +1138,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_void_pointer">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_void_pointer">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_void_pointer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_void_pointer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn if @VOID@ is used in a context where it is not meaningful.</span>
 
 <span class="sd">        @VOID@ is only appropriate for pointer-type payloads on tags that</span>
@@ -1143,7 +1173,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_xref_format">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_xref_format">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_xref_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_xref_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that a node&#39;s xref id matches the required format.</span>
 
 <span class="sd">        Args:</span>
@@ -1163,7 +1193,7 @@
 
 <div class="viewcode-block" id="GedcomValidator.validate_payload_format">
 <a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_payload_format">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_payload_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_payload_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate format-specific payload constraints for a node.</span>
 
 <span class="sd">        Checks DATE, TIME, AGE, LATI, LONG, LANG, and RESN payloads.</span>
@@ -1204,6 +1234,216 @@
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
                 <span class="p">)</span></div>
+
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Deprecation warnings (changelog 7.0.6, 7.0.13)</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+
+    <span class="n">_DEPRECATED_TAGS</span><span class="p">:</span> <span class="nb">frozenset</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;ADR1&quot;</span><span class="p">,</span> <span class="s2">&quot;ADR2&quot;</span><span class="p">,</span> <span class="s2">&quot;ADR3&quot;</span><span class="p">})</span>
+
+<div class="viewcode-block" id="GedcomValidator.validate_deprecated_tag">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_deprecated_tag">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_deprecated_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn on deprecated GEDCOM 7 tags.</span>
+
+<span class="sd">        ADR1, ADR2, and ADR3 were deprecated in 7.0.13 because they convey</span>
+<span class="sd">        no information not already present in ADDR.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node: Node to validate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEPRECATED_TAGS</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                <span class="s2">&quot;deprecated_tag&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> is deprecated since GEDCOM 7.0.13; use ADDR instead.&quot;</span><span class="p">,</span>
+                <span class="n">line_num</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomValidator.validate_exid_type">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_exid_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_exid_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn when EXID has no TYPE substructure.</span>
+
+<span class="sd">        EXID without TYPE was deprecated in 7.0.6; TYPE will become {1:1}</span>
+<span class="sd">        in the next major release.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node: Node to validate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;EXID&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">has_type</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;TYPE&quot;</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_type</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                <span class="s2">&quot;exid_missing_type&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;EXID without a TYPE substructure is deprecated since GEDCOM 7.0.6.&quot;</span><span class="p">,</span>
+                <span class="n">line_num</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;EXID&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># NO-tag context validation (changelog 7.0.14)</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GedcomValidator.validate_no_context">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_no_context">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_no_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GedcomStructure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn when NO XYZ is used where XYZ is not permitted.</span>
+
+<span class="sd">        Per 7.0.14, NO XYZ should only appear where XYZ itself is a legal</span>
+<span class="sd">        sibling structure.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node: Node to validate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;NO&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">payload</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">g7specs</span><span class="o">.</span><span class="n">allowed_child_tags</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">}:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                <span class="s2">&quot;no_tag_invalid_context&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;NO </span><span class="si">{</span><span class="n">payload</span><span class="si">!r}</span><span class="s2"> is not meaningful here; </span><span class="si">{</span><span class="n">payload</span><span class="si">!r}</span><span class="s2"> is not &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;a permitted substructure of </span><span class="si">{</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">line_num</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;NO&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Self-referential pointer checks (changelog 7.0.17)</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GedcomValidator.validate_self_referential_links">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_self_referential_links">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_self_referential_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Error on self-referential ALIA pointers.</span>
+
+<span class="sd">        Per 7.0.17, an INDI.ALIA pointing to the same INDI is meaningless</span>
+<span class="sd">        and prohibited.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;INDI&quot;</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">record</span><span class="o">.</span><span class="n">xref_id</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">own_xref</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">xref_id</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">alia</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;ALIA&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">alia</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">alia</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="n">own_xref</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                        <span class="s2">&quot;self_referential_alia&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;INDI </span><span class="si">{</span><span class="n">own_xref</span><span class="si">!r}</span><span class="s2"> has ALIA pointing to itself, which is prohibited.&quot;</span><span class="p">,</span>
+                        <span class="n">line_num</span><span class="o">=</span><span class="n">alia</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                        <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;ALIA&quot;</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomValidator.validate_pointer_cycles">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_pointer_cycles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_pointer_cycles</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Error on SOUR-OBJE pointer cycles.</span>
+
+<span class="sd">        Per 7.0.17, a SOUR-OBJE cycle (a source whose multimedia object</span>
+<span class="sd">        lists that source as its own source) is meaningless and prohibited.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sour_records</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span> <span class="n">node</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;SOUR&quot;</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span>
+        <span class="p">}</span>
+        <span class="n">obje_records</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span> <span class="n">node</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;OBJE&quot;</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">xref_id</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">sour_xref</span><span class="p">,</span> <span class="n">sour</span> <span class="ow">in</span> <span class="n">sour_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">obje_child</span> <span class="ow">in</span> <span class="n">sour</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;OBJE&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">obje_child</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">obje_xref</span> <span class="o">=</span> <span class="n">obje_child</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">obje_xref</span> <span class="o">==</span> <span class="s2">&quot;@VOID@&quot;</span> <span class="ow">or</span> <span class="n">obje_xref</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obje_records</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">obje</span> <span class="o">=</span> <span class="n">obje_records</span><span class="p">[</span><span class="n">obje_xref</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">sour_child</span> <span class="ow">in</span> <span class="n">obje</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;SOUR&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">sour_child</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">sour_child</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">sour_xref</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                            <span class="s2">&quot;sour_obje_cycle&quot;</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;SOUR </span><span class="si">{</span><span class="n">sour_xref</span><span class="si">!r}</span><span class="s2"> cites OBJE </span><span class="si">{</span><span class="n">obje_xref</span><span class="si">!r}</span><span class="s2">, which &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;lists </span><span class="si">{</span><span class="n">sour_xref</span><span class="si">!r}</span><span class="s2"> as its source — meaningless cycle &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;prohibited by GEDCOM 7.0.17.&quot;</span><span class="p">,</span>
+                            <span class="n">line_num</span><span class="o">=</span><span class="n">obje_child</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;OBJE&quot;</span><span class="p">,</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+                        <span class="p">)</span></div>
+
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Duplicate FAMC / CHIL detection (changelog 7.0.14)</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GedcomValidator.validate_duplicate_family_links">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.validator.GedcomValidator.validate_duplicate_family_links">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_duplicate_family_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warn when an INDI has duplicate FAMC pointers or a FAM has duplicate CHIL pointers.</span>
+
+<span class="sd">        Per 7.0.14:</span>
+<span class="sd">        - A given INDI should have at most one FAMC pointing to a given FAM.</span>
+<span class="sd">        - A given FAM should have at most one CHIL pointing to a given INDI.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;INDI&quot;</span><span class="p">:</span>
+                <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">famc</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;FAMC&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">famc</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">famc</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s2">&quot;@VOID@&quot;</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                            <span class="s2">&quot;duplicate_famc&quot;</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;INDI </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">xref_id</span><span class="si">!r}</span><span class="s2"> has more than one FAMC pointing &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;to </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s2">; this has unclear meaning per GEDCOM 7.0.14.&quot;</span><span class="p">,</span>
+                            <span class="n">line_num</span><span class="o">=</span><span class="n">famc</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;FAMC&quot;</span><span class="p">,</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;FAM&quot;</span><span class="p">:</span>
+                <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">chil</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;CHIL&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">chil</span><span class="o">.</span><span class="n">payload_is_pointer</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">chil</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s2">&quot;@VOID@&quot;</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_issue</span><span class="p">(</span>
+                            <span class="s2">&quot;duplicate_chil&quot;</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;FAM </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">xref_id</span><span class="si">!r}</span><span class="s2"> has more than one CHIL pointing &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;to </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s2">; this indicates nonsensical birth order per GEDCOM 7.0.14.&quot;</span><span class="p">,</span>
+                            <span class="n">line_num</span><span class="o">=</span><span class="n">chil</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span>
+                            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;CHIL&quot;</span><span class="p">,</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">target</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/note.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Note model
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from typing import ClassVar, Optional
@@ -7,6 +18,8 @@ from .gx_base import GedcomXModel
 
 
 class Note(GedcomXModel):
+    """A free-text note attached to a conclusion or source, with optional language and attribution."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Note"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -26,6 +39,7 @@ class Note(GedcomXModel):
         check_instance(result, "attribution", self.attribution, Attribution)
 
     def append(self, text_to_add: str) -> None:
+        """Append *text_to_add* to the existing note text."""
         if text_to_add and isinstance(text_to_add, str):
             self.text = (self.text + text_to_add) if self.text else text_to_add
         else:

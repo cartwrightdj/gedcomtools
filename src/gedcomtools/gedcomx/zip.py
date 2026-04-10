@@ -6,13 +6,23 @@
  Purpose: Read and write Gedcom-X ZIP file packages with manifest and resource entries
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-27 — manifest writing, read() classmethod
+          2026-03-29 — GedcomX objects now written as genealogy.json (not
+                        tree.json); collisions produce genealogy2.json, etc.;
+                        _arcnames set tracks all written entries to prevent
+                        duplicate zip entries across all object types
+                      — non-GedcomX objects with a path-based _uri are written
+                        under the corresponding directory (e.g. persons/P1.json);
+                        _unique_arcname handles collision suffix for both flat
+                        and path-based names
 
 ======================================================================
 """
 import json
 import os
 import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -21,9 +31,13 @@ from .schemas import SCHEMA
 from .serialization import Serialization
 
 GX_MANIFEST_FILE_NAME = "META-INF/MANIFEST.MF"
+GX_CONFORMSTO = "http://gedcomx.org/file/v1"
+GX_CONTENT_TYPE = "application/x-gedcomx-v1+json"
 
 
 class GedcomHeaderField:
+    """A key/value pair used in MANIFEST.MF entries."""
+
     def __init__(self, key: str, value: str) -> None:
         self.key = key
         self.value = value
@@ -31,68 +45,150 @@ class GedcomHeaderField:
 
 X_DC_CONFORMSTO_FIELD = GedcomHeaderField(
     key="X-DC-conformsTo",
-    value="http://gedcomx.org/file/v1",
+    value=GX_CONFORMSTO,
 )
 
 
 class GedcomResource:
+    """Represents a single resource entry in a GedcomX ZIP manifest."""
+
     def __init__(
         self,
         path: str,
         headers: list[GedcomHeaderField] | None = None,
     ) -> None:
-        # placeholder for future use
         self.path = path
         self.headers = headers or []
 
 
 class GedcomManifest:
+    """Builds and renders the ``META-INF/MANIFEST.MF`` content for a GedcomX ZIP package."""
+
     def __init__(self) -> None:
-        # placeholder for future use
         self.resources: list[GedcomResource] = []
+
+    def add(self, path: str, content_type: str = GX_CONTENT_TYPE) -> None:
+        """Register a resource entry at *path* with the given content-type header."""
+        self.resources.append(GedcomResource(path, [
+            GedcomHeaderField("Content-Type", content_type),
+            GedcomHeaderField("X-DC-conformsTo", GX_CONFORMSTO),
+        ]))
+
+    def render(self) -> str:
+        """Render as a MANIFEST.MF-style text block."""
+        lines = [
+            "Manifest-Version: 1.0",
+            f"X-DC-conformsTo: {GX_CONFORMSTO}",
+            "",
+        ]
+        for res in self.resources:
+            lines.append(f"Name: {res.path}")
+            for h in res.headers:
+                lines.append(f"{h.key}: {h.value}")
+            lines.append("")
+        return "\n".join(lines)
 
 
 class GedcomZip:
+    """Read and write GedcomX ZIP file packages with a MANIFEST.MF and JSON resource entries."""
+
     def __init__(self, path: str | None = None) -> None:
         """
-        Initialize a zipfile.
+        Open a new GedcomX ZIP archive for writing.
 
         If `path` is provided:
-            - Ensure directory exists or can be created
-            - Use that path as the zip location
-            - If any error occurs, fall back to a safe temp file
+            - The path is resolved to an absolute path to prevent traversal attacks.
+            - The parent directory is created only if it is a direct child of an
+              existing directory (no recursive ``parents=True`` on untrusted input).
+            - Raises ``ValueError`` for paths that contain ``..`` components.
+            - Raises ``OSError`` if the directory cannot be created.
         If `path` is None:
-            - Always create a zip in the system temp directory
+            - Creates a zip in the system temp directory.
 
         Result:
             self.path  -> Path to the zip file
             self.zip   -> zipfile.ZipFile instance (write mode)
         """
         self.path: Path = self._resolve_zip_path(path)
-        self.zip: zipfile.ZipFile = zipfile.ZipFile(
+        self.zip: zipfile.ZipFile = zipfile.ZipFile(  # pylint: disable=consider-using-with
             self.path,
             mode="w",
             compression=zipfile.ZIP_DEFLATED,
         )
+        self._manifest = GedcomManifest()
+        self._arcnames: set[str] = set()
 
     # ────────────────────────────────────────────────
     # Internal helpers
     # ────────────────────────────────────────────────
+    @staticmethod
+    def _normalize_entry_data(data: dict) -> dict:
+        """Normalize a ZIP JSON entry to the collection-shaped form expected by GedcomX.from_dict()."""
+        top_level_keys = (
+            "persons",
+            "relationships",
+            "sourceDescriptions",
+            "agents",
+            "events",
+            "documents",
+            "places",
+            "groups",
+        )
+        normalized = dict(data)
+        for key in top_level_keys:
+            value = normalized.get(key)
+            if value is not None and not isinstance(value, list):
+                normalized[key] = [value]
+        return normalized
+
+    def _unique_arcname(self, base: str) -> str:
+        """Return ``base.json``, deduplicating on collision.
+
+        For flat names (``genealogy``)  → ``genealogy.json``, ``genealogy2.json``, …
+        For path names (``persons/P1``) → ``persons/P1.json``, ``persons/P1_2.json``, …
+        """
+        candidate = f"{base}.json"
+        if candidate not in self._arcnames:
+            return candidate
+        n = 2
+        if "/" in base:
+            dir_part, name_part = base.rsplit("/", 1)
+            while True:
+                candidate = f"{dir_part}/{name_part}_{n}.json"
+                if candidate not in self._arcnames:
+                    return candidate
+                n += 1
+        else:
+            while True:
+                candidate = f"{base}{n}.json"
+                if candidate not in self._arcnames:
+                    return candidate
+                n += 1
+
     def _resolve_zip_path(self, path: str | None) -> Path:
         if path is None:
             return self._create_temp_zip_path()
 
         p = Path(path)
 
-        try:
-            # Ensure directory exists
-            if not p.parent.exists():
-                p.parent.mkdir(parents=True, exist_ok=True)
-            # ZipFile(..., "w") will create/truncate this path
-            return p
-        except Exception:
-            # Fall back safely to temp
-            return self._create_temp_zip_path()
+        # Reject any path containing ".." components before resolving
+        if ".." in p.parts:
+            raise ValueError(
+                f"Path traversal detected in zip path: {path!r}. "
+                "Use an absolute path or a path without '..' components."
+            )
+
+        # Resolve to absolute to catch symlink-based traversal
+        p = p.resolve()
+
+        # Create the immediate parent directory if it doesn't exist.
+        # We intentionally do NOT use parents=True to avoid creating an
+        # arbitrary directory tree from untrusted input.
+        parent = p.parent
+        if not parent.exists():
+            parent.mkdir(exist_ok=True)
+
+        return p
 
     def _create_temp_zip_path(self) -> Path:
         fd, temp_path = tempfile.mkstemp(suffix=".zip", prefix="gedcomx_")
@@ -100,56 +196,158 @@ class GedcomZip:
         return Path(temp_path)
 
     # ────────────────────────────────────────────────
-    # Public API
+    # Public API — write
     # ────────────────────────────────────────────────
     def add_object_as_resource(self, obj: object) -> str | None:
         """
-        If `obj` is a top-level schema object, serialize it and
-        store it as JSON inside the zip.
+        Serialize *obj* and store it as a JSON entry inside the zip.
 
-        Returns the internal archive name (arcname) on success,
-        or None if the object is not a top-level type.
+        - If *obj* is a ``GedcomX`` instance it is written as ``genealogy.json``
+          and the method returns immediately — no second serialization pass.
+        - For any other registered top-level type, the entry is named after
+          the object's ``id`` or class name.
+        - Returns the internal archive name on success, or ``None`` if *obj*
+          is not a recognised top-level type.
         """
-        if isinstance(obj,GedcomX):
-            arcname = f"tree.json"
-            
+        if isinstance(obj, GedcomX):
+            arcname = self._unique_arcname("genealogy")
             self.zip.writestr(arcname, obj.json)
+            self._manifest.add(arcname)
+            self._arcnames.add(arcname)
+            return arcname
 
-        if not hasattr(SCHEMA, "is_toplevel_obj"):
-            # fallback: treat as top-level if its class name is registered as toplevel
-            if not SCHEMA.is_toplevel(obj.__class__):
-                return None
-        else:
-            if not SCHEMA.is_toplevel_obj(obj):
-                return None
+        if not SCHEMA.is_toplevel(obj.__class__):
+            return None
 
         class_name = obj.__class__.__name__.lower() + "s"
         data = {class_name: Serialization.serialize(obj)}
 
-        # Prefer a URI-based filename, but sanitize it
-        uri = getattr(obj, "_uri", None) or getattr(obj, "id", None) or class_name
-        safe_uri = str(uri).replace("/", "_").replace("\\", "_")
-        arcname = f"{safe_uri}.json"
+        uri_obj = getattr(obj, "_uri", None)
+        if uri_obj and getattr(uri_obj, "path", None):
+            dir_part = uri_obj.path.strip("/")
+            name_part = str(uri_obj.fragment or getattr(obj, "id", None) or class_name)
+            safe_name = name_part.replace("\\", "_")
+            arcname = self._unique_arcname(f"{dir_part}/{safe_name}")
+        else:
+            base = str((getattr(uri_obj, "fragment", None) if uri_obj else None)
+                       or getattr(obj, "id", None) or class_name)
+            safe_base = base.replace("/", "_").replace("\\", "_")
+            arcname = self._unique_arcname(safe_base)
 
-        # Add resource to zip as JSON
         self.zip.writestr(arcname, json.dumps(data, ensure_ascii=False, indent=2))
-
-        # Optional debug:
-        print("ZIP path:", self.path)
-        print("Wrote entry:", arcname)
-        #print("Data:", data)
-
+        self._manifest.add(arcname)
+        self._arcnames.add(arcname)
         return arcname
 
+    def write_manifest(self) -> None:
+        """Write ``META-INF/MANIFEST.MF`` based on all added resources."""
+        self.zip.writestr(GX_MANIFEST_FILE_NAME, self._manifest.render())
+
     def close(self) -> None:
-        """
-        Close the underlying zip file if it's still open.
-        Safe to call multiple times.
-        """
+        """Write the manifest and close the zip.  Safe to call multiple times."""
         if getattr(self, "zip", None) is not None:
-            # zipfile.ZipFile uses .fp to track open/closed
             if self.zip.fp is not None:
+                self.write_manifest()
                 self.zip.close()
+
+    # ────────────────────────────────────────────────
+    # Public API — read
+    # ────────────────────────────────────────────────
+    @classmethod
+    def read(cls, path: str | Path) -> GedcomX:
+        """
+        Read a GedcomX ZIP archive and return a merged ``GedcomX`` instance.
+
+        Looks for all ``.json`` entries (excluding the manifest), deserializes
+        each one, and merges them into a single ``GedcomX`` object.  The primary
+        entry ``genealogy.json`` is processed first.
+
+        Raises:
+            FileNotFoundError: If *path* does not exist.
+            ValueError:        If no GedcomX JSON entries are found in the archive.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(p)
+
+        merged = GedcomX()
+
+        with zipfile.ZipFile(p, "r") as zf:
+            names = zf.namelist()
+
+            # Process genealogy.json first, then all other .json entries
+            ordered = (
+                [n for n in names if n == "genealogy.json"]
+                + sorted(n for n in names if n.endswith(".json") and n != "genealogy.json"
+                         and not n.startswith("META-INF/"))
+            )
+
+            if not ordered:
+                raise ValueError(f"No GedcomX JSON entries found in {p}")
+
+            for entry_name in ordered:
+                data = cls._normalize_entry_data(json.loads(zf.read(entry_name)))
+                gx = GedcomX.from_dict(data)
+                merged.extend(gx)
+
+        return merged
+
+    @classmethod
+    def load_url(cls, url: str) -> GedcomX:
+        """Download a GedcomX ZIP archive from an HTTP/HTTPS URL and return a merged ``GedcomX`` instance.
+
+        The archive is written to a temporary file, then passed to :meth:`read`.
+        The temporary file is deleted after parsing.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a GedcomX ZIP file.
+
+        Raises:
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+            ValueError:             If the archive contains no GedcomX JSON entries.
+        """
+        try:
+            with urllib.request.urlopen(url) as resp:
+                data = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GedcomX ZIP from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GedcomX ZIP from {url}: {exc.reason}"
+            ) from exc
+
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".gdxz")
+        try:
+            with os.fdopen(tmp_fd, "wb") as f:
+                f.write(data)
+            return cls.read(tmp_path)
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
+    @classmethod
+    def list_entries(cls, path: str | Path) -> list[dict]:
+        """
+        Return a list of entry info dicts from a GedcomX ZIP archive.
+
+        Each dict has ``name``, ``size``, ``compress_size``.
+        Manifest entries are included.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(p)
+        with zipfile.ZipFile(p, "r") as zf:
+            return [
+                {"name": i.filename, "size": i.file_size, "compress_size": i.compress_size}
+                for i in zf.infolist()
+            ]
 
     # ────────────────────────────────────────────────
     # Context manager support

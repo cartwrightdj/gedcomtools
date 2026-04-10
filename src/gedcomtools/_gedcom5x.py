@@ -1,33 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""Low-level GEDCOM 5.x parsing helpers and parser-facing data structures."""
+
 import html
+import logging as _logging
 import os
-from typing import List, Optional, Tuple, Any
 import re
 from collections import defaultdict
-from typing import Iterable, Iterator, List, Optional, Tuple, Union
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcom5x.py
- Author:  David J. Cartwright
- Purpose: 
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-03: 
-   
-======================================================================
-"""
-
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5x.py
+#  Author:  David J. Cartwright
+#  Purpose:
+#  Created: 2025-08-25
+# ======================================================================
+# GEDCOM Module Types
 from .glog import get_logger, hub, ChannelConfig
-import logging as _logging
 
 log = get_logger(__name__)
 serial_log = "gedcomx.serialization"
@@ -79,23 +69,22 @@ lineval = f'({pointer}|{linestr})'
 eol = '(\\\r(\\\n)?|\\\n)'
 line = f'{level}{d}((?P<xref>{xref}){d})?(?P<tag>{tag})({d}{lineval})?{eol}'
 
-from typing import List, Optional, Iterator, Union
-
 
 class Gedcom5xRecord():
+    """Represent a parsed GEDCOM 5.x record with nested sub-records."""
     def __init__(self,
                     line_num: Optional[int] = None,
-                    level: int = -1,
-                    tag: str | None = "NONR",
-                    xref: Optional[str] = None,
+                    lvl: int = -1,
+                    tag_str: str | None = "NONR",
+                    xref_str: Optional[str] = None,
                     value: Optional[str] = None,
                 ) -> None:
         self.line = line_num
         self._subRecords: List[Gedcom5xRecord] = []
-        self.level = int(level)
-        self.xref = xref.replace('@','') if xref else ''
+        self.level = int(lvl)
+        self.xref = xref_str.replace('@','') if xref_str else ''
         self.pointer: bool = False
-        self.tag = str(tag).strip()
+        self.tag = str(tag_str).strip()
         self.value = value
 
         self.parent: Optional[Gedcom5xRecord] = None
@@ -106,6 +95,7 @@ class Gedcom5xRecord():
     # ───────────────────────────────
     @property
     def to_dict(self):
+        """Return this object as a dictionary."""
         return {
             "level": self.level,
             "xref": self.xref,
@@ -119,7 +109,8 @@ class Gedcom5xRecord():
     # Subrecord management
     # ───────────────────────────────
     def add_sub_record(self, record: "Gedcom5xRecord"):
-       
+
+        """Add a child record to this record."""
         if record is not None and (record.level == (self.level + 1)):
             record.parent = self
             self._subRecords.append(record)
@@ -129,14 +120,16 @@ class Gedcom5xRecord():
             )
 
     def record_only(self):
+        """Return this record without its nested sub-records."""
         return Gedcom5xRecord(
-            line_num=self.line, level=self.level, tag=self.tag, value=self.value
+            line_num=self.line, lvl=self.level, tag_str=self.tag, value=self.value
         )
 
     # ───────────────────────────────
     # Pretty printers
     # ───────────────────────────────
     def dump(self) -> str:
+        """Return a formatted dump of this record tree."""
         record_dump = (
             f"Level: {self.level}, tag: {self.tag}, value: {self.value}, "
             f"subRecords: {len(self._subRecords)}\n"
@@ -146,6 +139,7 @@ class Gedcom5xRecord():
         return record_dump
 
     def describe(self, sub_records: bool = False) -> str:
+        """Return a human-readable summary of this object."""
         level_str = "\t" * self.level
         description = (
             f"Line {self.line}: {level_str} Level: {self.level}, "
@@ -160,14 +154,16 @@ class Gedcom5xRecord():
     # ───────────────────────────────
     # Subrecord access
     # ───────────────────────────────
-    def sub_record(self, tag: str):
-        result = [r for r in self._subRecords if r.tag == tag]
+    def sub_record(self, tag_str: str):
+        """Return the first matching child record."""
+        result = [r for r in self._subRecords if r.tag == tag_str]
         return None if not result else result
 
-    def sub_records(self, tag: str | None = None) -> List['Gedcom5xRecord']:
-        if not tag:
+    def sub_records(self, tag_str: str | None = None) -> List['Gedcom5xRecord']:
+        """Return all matching child records."""
+        if not tag_str:
             return self._subRecords
-        tags = tag.split("/", 1)
+        tags = tag_str.split("/", 1)
 
         # Collect matching first-level subrecords
         matches = [r for r in self._subRecords if r.tag == tags[0]]
@@ -212,7 +208,7 @@ class Gedcom5xRecord():
         - rec[1:3] -> slice of subrecords
         - rec['NAME'] -> list of subrecords with tag 'NAME'
         """
-        if isinstance(key, int) or isinstance(key, slice):
+        if isinstance(key, (int, slice)):
             return self._subRecords[key]
         if isinstance(key, str):
             matches = [r for r in self._subRecords if r.tag == key]
@@ -235,7 +231,7 @@ Key = Union[IndexKey, slice, TagKey]
 
 class Gedcom5x():
     """
-    Object representing a Genealogy in legacy GEDCOM 5.x / 7 format. 
+    Object representing a Genealogy in legacy GEDCOM 5.x / 7 format.
 
     Parameters
     ----------
@@ -243,15 +239,15 @@ class Gedcom5x():
         List of GedcomRecords to initialize the genealogy with
     filepath : str
         path to a GEDCOM (``*``.ged), if provided object will read, parse and initialize with records in the file.
-    
+
     Note
     ----
     **file_path** takes precidence over **records**.
     If no arguments are provided, Gedcom Object will initialize with no records.
-    
+
     """
     _top_level_tags = ['INDI', 'FAM', 'OBJE', 'SOUR', 'REPO', 'NOTE', 'HEAD','SNOTE']
-  
+
     def __init__(self, records: Optional[List[Gedcom5xRecord]] = None,filepath: str | None = None) -> None:
 
         self.records: List[Gedcom5xRecord] = records or []
@@ -259,12 +255,12 @@ class Gedcom5x():
             self.records = self._records_from_file(filepath)
         elif records:
             self.records: List[Gedcom5xRecord] = records if records else []
-        
-        
+
+
         # Fast tag index: {'HEAD': [rec], 'INDI': [rec1, rec2, ...], ...}
         self._tag_index: dict[str, List[Gedcom5xRecord]] = defaultdict(list)
         self._reindex()
-        
+
         self.header: Gedcom5xRecord | None = None
         self._sources: List[Gedcom5xRecord] = []
         self._repositories: List[Gedcom5xRecord] = []
@@ -278,7 +274,7 @@ class Gedcom5x():
             for record in self.records:
                 if record.tag == 'HEAD':
                     self.header = record
-                    self.version = record['GEDC']['VERS'].value
+                    self.version = record['GEDC']['VERS'].value  # type: ignore[index]
                 if record.tag == 'INDI':
                     self._individuals.append(record)
                 if record.tag == 'SOUR' and record.level == 0:
@@ -290,7 +286,7 @@ class Gedcom5x():
                 if record.tag == 'OBJE' and record.level == 0:
                     self._objects.append(record)
                 if record.tag == 'SNOTE' and record.level == 0:
-                    record.xref = record.value
+                    record.xref = record.value or ""
                     self._snotes.append(record)
 
     # ─────────────────────────────────────────────────────────────
@@ -301,8 +297,8 @@ class Gedcom5x():
         self._tag_index.clear()
         for rec in self.records:
             # Normalize tag just in case
-            tag = rec.tag if isinstance(rec.tag, str) else str(rec.tag)
-            self._tag_index[tag].append(rec)
+            tag_str = rec.tag if isinstance(rec.tag, str) else str(rec.tag)
+            self._tag_index[tag_str].append(rec)
 
     def __len__(self) -> int:
         return len(self.records)
@@ -339,30 +335,34 @@ class Gedcom5x():
         raise TypeError(f"Unsupported key type: {type(key).__name__}")
 
     # Optional: convenience helpers
-    def by_tag(self, tag: str) -> List['Gedcom5xRecord']:
+    def by_tag(self, tag_str: str) -> List['Gedcom5xRecord']:
         """Always return a list of records for a tag (empty list if none)."""
-        return list(self._tag_index.get(tag, []))
+        return list(self._tag_index.get(tag_str, []))
 
-    def first(self, tag: str) -> Optional['Gedcom5xRecord']:
+    def first(self, tag_str: str) -> Optional['Gedcom5xRecord']:
         """Return the first record with a given tag, or None."""
-        lst = self._tag_index.get(tag, [])
+        lst = self._tag_index.get(tag_str, [])
         return lst[0] if lst else None
 
     # If you add/replace records after init, keep the index fresh:
     def append(self, rec: 'Gedcom5xRecord') -> None:
+        """Append an item to the collection."""
         self.records.append(rec)
         self._tag_index.setdefault(rec.tag, []).append(rec)
 
     def extend(self, recs: Iterable['Gedcom5xRecord']) -> None:
+        """Extend the collection with items from an iterable or peer object."""
         self.records.extend(recs)
         for r in recs:
             self._tag_index.setdefault(r.tag, []).append(r)
 
     def insert(self, idx: int, rec: 'Gedcom5xRecord') -> None:
+        """Insert an item at the given position."""
         self.records.insert(idx, rec)
         self._tag_index.setdefault(rec.tag, []).append(rec)
 
     def remove(self, rec: 'Gedcom5xRecord') -> None:
+        """Remove the given item from the collection."""
         self.records.remove(rec)
         try:
             bucket = self._tag_index.get(rec.tag)
@@ -374,20 +374,23 @@ class Gedcom5x():
             pass  # already out of index
 
     def clear(self) -> None:
+        """Remove all items from the collection."""
         self.records.clear()
-        self._tag_index.clear()      
+        self._tag_index.clear()
     # =========================================================
     # 2. PROPERTY ACCESSORS (GETTERS & SETTERS)
     # =========================================================
-    
+
     @property
     def json(self):
+        """Return a JSON-compatible representation of the current data."""
         import json
         return json.dumps({'Individuals': [indi.to_dict for indi in self._individuals]},indent=4)
 
     @property
     def contents(self):
-        def print_table(pairs):
+        """Return a summary of the contained records."""
+        def _print_table(pairs):
 
             # Calculate the width of the columns
             name_width = max(len(name) for name, _ in pairs)
@@ -404,7 +407,7 @@ class Gedcom5x():
             for name, value in pairs:
                 lines.append(f"{name.ljust(name_width)} | {str(value).ljust(value_width)}")
             log.info("\n".join(lines))
-                
+
         imports_stats = {
             'Top Level Records': len(self.records),
             'Individuals': len(self.individuals),
@@ -418,10 +421,12 @@ class Gedcom5x():
 
     @property
     def sources(self) -> List[Gedcom5xRecord]:
+        """Return the source records."""
         return self._sources
 
     @sources.setter
     def sources(self, value: List[Gedcom5xRecord]):
+        """Return the source records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("sources must be a list of GedcomRecord objects.")
         self._sources = value
@@ -435,36 +440,43 @@ class Gedcom5x():
 
     @repositories.setter
     def repositories(self, value: List[Gedcom5xRecord]):
+        """Return the repository records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("repositories must be a list of GedcomRecord objects.")
         self._repositories = value
 
     @property
     def individuals(self) -> List[Gedcom5xRecord]:
+        """Return the individual records."""
         return self._individuals
 
     @individuals.setter
     def individuals(self, value: List[Gedcom5xRecord]):
+        """Return the individual records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("individuals must be a list of GedcomRecord objects.")
         self._individuals = value
 
     @property
     def families(self) -> List[Gedcom5xRecord]:
+        """Return the family records."""
         return self._families
 
     @families.setter
     def families(self, value: List[Gedcom5xRecord]):
+        """Return the family records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("families must be a list of GedcomRecord objects.")
         self._families = value
 
     @property
     def objects(self) -> List[Gedcom5xRecord]:
+        """Return the multimedia object records."""
         return self._objects
 
     @objects.setter
     def objects(self, value: List[Gedcom5xRecord]):
+        """Return the multimedia object records."""
         if not isinstance(value, list) or not all(isinstance(item, Gedcom5xRecord) for item in value):
             raise ValueError("objects must be a list of GedcomRecord objects.")
         self._objects = value
@@ -472,100 +484,102 @@ class Gedcom5x():
     def write(self) -> bool:
         """
         Method placeholder for writing GEDCOM files.
-        
+
         Raises
         ------
         NotImplementedError
          writing to legacy GEDCOM file is not currently implemented.
         """
-        raise NotImplementedError("Writing of GEDCOM files is not implemented.")  
+        raise NotImplementedError("Writing of GEDCOM files is not implemented.")
 
     @staticmethod
     def _records_from_file(file_path: str) -> List[Gedcom5xRecord]:
-        def parse_gedcom7_line(line: str) -> Optional[Tuple[int, Optional[str], str, Optional[str], Optional[str]]]:
+        def parse_gedcom7_line(raw_line: str) -> Optional[Tuple[int, Optional[str], str, Optional[str], Optional[str]]]:
             """
             Parse a GEDCOM 7 line into: level, xref_id (record), tag, value, xref_value (if value is an @X@)
-            
+
             Returns:
                 (level, xref_id, tag, value, xref_value)
             """
-            match = GEDCOM7_LINE_RE.match(line.strip())
+            match = GEDCOM7_LINE_RE.match(raw_line.strip())
             if not match:
                 return None
 
-            level = int(match.group("level"))
+            lvl = int(match.group("level"))
             xref_id = match.group("xref")
             xref_id = xref_id.strip('@') if xref_id else None
-            tag = match.group("tag")
+            tag_str = match.group("tag")
             value = match.group("value")
-            if value == 'None': value = None
+            if value == 'None':
+                value = None
             xref_value = value.strip("@") if value and XREF_RE.match(value.strip()) else None
 
-            return level, xref_id, tag, value, xref_value
+            return lvl, xref_id, tag_str, value, xref_value
         extension = '.ged'
 
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File does not exist: {file_path}")
-        elif not file_path.lower().endswith(extension.lower()):
+        if not file_path.lower().endswith(extension.lower()):
             raise ValueError(f"File does not have a .ged extension: {file_path}")
 
         log.debug("Reading from GEDCOM file: {}", file_path)
         with open(file_path, 'r', encoding='utf-8') as file:
-            lines = [line.strip() for line in file]
+            lines = [raw_line.strip() for raw_line in file]
 
             records = []
             record_map: dict[int,Any] = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
-            
-            for l, line in enumerate(lines):
-                if line.startswith(BOM):
-                    line = line.lstrip(BOM)
-                line = html.unescape(line).replace('&quot;', '')
 
-                if line.strip() == '':
+            for l, raw_line in enumerate(lines):
+                if raw_line.startswith(BOM):
+                    raw_line = raw_line.lstrip(BOM)
+                raw_line = html.unescape(raw_line).replace('&quot;', '')
+
+                if raw_line.strip() == '':
                     continue
 
-                level, tag, value = '', '', ''
+                lvl, tag_str, value = '', '', ''
 
                 # Split the line into the first two columns and the rest
-                parts = line.split(maxsplit=2)
+                parts = raw_line.split(maxsplit=2)
                 if len(parts) == 3:
-                    level, col2, col3 = parts
+                    lvl, col2, col3 = parts
 
                     if col3 in Gedcom5x._top_level_tags:
-                        tag = col3
+                        tag_str = col3
                         value = col2
                     else:
-                        tag = col2
+                        tag_str = col2
                         value = col3
-                
+
                 else:
-                    level, tag = parts
+                    lvl, tag_str = parts
 
-                level, xref, tag, value, xref_value = parse_gedcom7_line(line) or tuple([None, None, None, None])
-                
-                
-                if xref is None and xref_value is not None:
-                    xref = xref_value
-               # print(l, level, xref, tag, value, xref_value)
+                lvl, xref_str, tag_str, value, xref_value = parse_gedcom7_line(raw_line) or tuple([None, None, None, None])
 
-                if isinstance(level,int):    
-                    level = int(level)
-                else: raise ValueError(f"Record had a level of {level}") 
 
-                new_record = Gedcom5xRecord(line_num=l + 1, level=level, tag=tag if tag else None, xref=xref,value=value)
-                
-                
-                if level == 0:
+                if xref_str is None and xref_value is not None:
+                    xref_str = xref_value
+               # print(l, lvl, xref_str, tag_str, value, xref_value)
+
+                if isinstance(lvl, int):
+                    lvl = int(lvl)
+                else:
+                    raise ValueError(f"Record had a level of {lvl}")
+
+                new_record = Gedcom5xRecord(line_num=l + 1, lvl=lvl, tag_str=tag_str if tag_str else None, xref_str=xref_str, value=value)
+
+
+                if lvl == 0:
                     records.append(new_record)
                 else:
                     new_record.root = record_map[0]
-                    new_record.parent = record_map[int(level) - 1]
-                    record_map[int(level) - 1].add_sub_record(new_record)
-                record_map[int(level)] = new_record
+                    new_record.parent = record_map[int(lvl) - 1]
+                    record_map[int(lvl) - 1].add_sub_record(new_record)
+                record_map[int(lvl)] = new_record
                 with hub.use(job_id):
                     log.info(new_record.describe())
-        
-        
+
+
         return records if records else []
 
     @staticmethod
@@ -578,14 +592,15 @@ class Gedcom5x():
 
         Returns:
             Gedcom: An instance of the Gedcom class.
-        """     
+        """
         records = Gedcom5x._records_from_file(file_path)
-        
-        gedcom = Gedcom5x(records=records)      
+
+        gedcom = Gedcom5x(records=records)
 
         return gedcom
-    
+
     def load_file(self,file_path: str) -> None:
+        """Load GEDCOM content from a file path."""
         records = Gedcom5x._records_from_file(file_path)
         if records:
             self.records.extend(records)
@@ -607,9 +622,7 @@ class Gedcom5x():
                 if record.tag == 'OBJE' and record.level == 0:
                     self._objects.append(record)
                 if record.tag == 'SNOTE' and record.level == 0:
-                    record.xref = record.value
+                    record.xref = record.value or ""
                     self._snotes.append(record)
         else:
             raise ValueError("Input must be a non-empty list of Gedcom5xRecord objects")
-
-

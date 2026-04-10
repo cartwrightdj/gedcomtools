@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.conclusion - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -229,88 +229,66 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for gedcomtools.gedcomx.conclusion</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">======================================================================</span>
 <span class="sd"> Project: Gedcom-X</span>
-<span class="sd"> File:    conclusion.py</span>
+<span class="sd"> File:    gedcomx/conclusion.py</span>
 <span class="sd"> Author:  David J. Cartwright</span>
-<span class="sd"> Purpose: </span>
+<span class="sd"> Purpose: GedcomX Conclusion base class with confidence, attribution, and notes</span>
 
 <span class="sd"> Created: 2025-08-25</span>
 <span class="sd"> Updated:</span>
-<span class="sd">   - 2025-09-03: _from_json_ refactor </span>
-<span class="sd">   - 2025-09-09: added schema_class</span>
-<span class="sd">   </span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># GedcomX Conclusion base class.</span>
+<span class="c1"># Base for all genealogical assertions (Name, Fact, Relationship, etc.).</span>
+<span class="c1"># __hash__ = None — mutable object with value-based equality, not safely hashable.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Type Imports</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.attribution</span> <span class="kn">import</span> <span class="n">Attribution</span>
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.document</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">.extensible</span> <span class="kn">import</span> <span class="n">Extensible</span>
-<span class="kn">from</span> <span class="nn">.note</span> <span class="kn">import</span> <span class="n">Note</span>
-<span class="kn">from</span> <span class="nn">.qualifier</span> <span class="kn">import</span> <span class="n">Qualifier</span>
-<span class="kn">from</span> <span class="nn">.resource</span> <span class="kn">import</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">URI</span>
-<span class="kn">from</span> <span class="nn">.schemas</span> <span class="kn">import</span> <span class="n">extensible</span>
-<span class="kn">from</span> <span class="nn">.source_reference</span> <span class="kn">import</span> <span class="n">SourceReference</span>
-<span class="kn">from</span> <span class="nn">.identifier</span> <span class="kn">import</span> <span class="n">make_uid</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="c1">#=====================================================================</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.note</span><span class="w"> </span><span class="kn">import</span> <span class="n">Note</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qualifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qualifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
 
 
-
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># ConfidenceLevel  (subclass of Qualifier — special enum-like usage)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="ConfidenceLevel">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel">[docs]</a>
-<span class="k">class</span> <span class="nc">ConfidenceLevel</span><span class="p">(</span><span class="n">Qualifier</span><span class="p">):</span>
-    <span class="n">High</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/High&quot;</span>
-    <span class="n">Medium</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Medium&quot;</span>
-    <span class="n">Low</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Low&quot;</span>
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.ConfidenceLevel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfidenceLevel</span><span class="p">(</span><span class="n">Qualifier</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Qualifier subclass representing a three-level confidence assertion (High, Medium, Low).&quot;&quot;&quot;</span>
 
-    <span class="n">_NAME_TO_URI</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="n">High</span><span class="p">,</span>
-        <span class="s2">&quot;medium&quot;</span><span class="p">:</span> <span class="n">Medium</span><span class="p">,</span>
-        <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="n">Low</span><span class="p">,</span>
+    <span class="n">High</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/High&quot;</span>
+    <span class="n">Medium</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Medium&quot;</span>
+    <span class="n">Low</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/Low&quot;</span>
+    <span class="n">_name_required</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">_NAME_TO_URI</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="s2">&quot;http://gedcomx.org/High&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;medium&quot;</span><span class="p">:</span> <span class="s2">&quot;http://gedcomx.org/Medium&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="s2">&quot;http://gedcomx.org/Low&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
 <div class="viewcode-block" id="ConfidenceLevel.from_json">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conclusion.ConfidenceLevel.from_json">[docs]</a>
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.ConfidenceLevel.from_json">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span><span class="n">context</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a confidence level from various input forms.</span>
-
-<span class="sd">        Accepts:</span>
-
-<span class="sd">        - ``&quot;High&quot;`` | ``&quot;Medium&quot;`` | ``&quot;Low&quot;``</span>
-<span class="sd">        - ``&quot;http://gedcomx.org/High&quot;`` | ``&quot;.../Medium&quot;`` | ``&quot;.../Low&quot;``</span>
-<span class="sd">        - dict with keys ``type``, ``value``, ``confidence``, ``level``, or ``uri``</span>
-<span class="sd">        - existing ``ConfidenceLevel`` instance</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            ConfidenceLevel: instance with ``.value`` set to the canonical URI.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_context</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ConfidenceLevel&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize a ConfidenceLevel from a raw value, dict, or URI string.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">data</span>
-
-        <span class="c1"># Extract token from dicts or use the raw scalar</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">token</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">)</span>
@@ -321,136 +299,127 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">token</span> <span class="o">=</span> <span class="n">data</span>
-
         <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-
         <span class="n">token_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-        <span class="c1"># Normalize to canonical URI</span>
         <span class="k">if</span> <span class="n">token_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_NAME_TO_URI</span><span class="p">:</span>
             <span class="n">uri</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_NAME_TO_URI</span><span class="p">[</span><span class="n">token_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
         <span class="k">elif</span> <span class="n">token_str</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">High</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Medium</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Low</span><span class="p">):</span>
             <span class="n">uri</span> <span class="o">=</span> <span class="n">token_str</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown ConfidenceLevel: </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Create a ConfidenceLevel instance without invoking Qualifier.__init__</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="c1"># store the canonical URI on the instance; used by description and (optionally) serialization</span>
-        <span class="n">obj</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">uri</span>
-        <span class="k">return</span> <span class="n">obj</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_construct</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable description of the confidence level.&quot;&quot;&quot;</span>
         <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">High</span><span class="p">:</span> <span class="s2">&quot;The contributor has a high degree of confidence that the assertion is true.&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">Medium</span><span class="p">:</span> <span class="s2">&quot;The contributor has a medium degree of confidence that the assertion is true.&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">Low</span><span class="p">:</span> <span class="s2">&quot;The contributor has a low degree of confidence that the assertion is true.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Low</span><span class="p">:</span> <span class="s2">&quot;The contributor has a low degree of confidence that the assertion is true.&quot;</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="c1"># Works whether the instance holds .value or (edge-case) if `self` is compared directly</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;No description available.&quot;</span><span class="p">)</span></div>
 
 
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Conclusion</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="Conclusion">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion">[docs]</a>
-<span class="nd">@extensible</span><span class="p">()</span>    
-<span class="k">class</span> <span class="nc">Conclusion</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Represents a conclusion in the GEDCOM X conceptual model. A conclusion is a </span>
-<span class="sd">    genealogical assertion about a person, relationship, or event, derived from </span>
-<span class="sd">    one or more sources, with optional supporting metadata such as confidence, </span>
-<span class="sd">    attribution, and notes.</span>
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Conclusion">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Conclusion</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for genealogical assertions.&quot;&quot;&quot;</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        id (str, optional): A unique identifier for the conclusion. If not provided, </span>
-<span class="sd">            a UUID-based identifier will be automatically generated.</span>
-<span class="sd">        lang (str, optional): The language code of the conclusion. </span>
-<span class="sd">        sources (list[SourceReference], optional): A list of source references that </span>
-<span class="sd">            support the conclusion.</span>
-<span class="sd">        analysis (Document | Resource, optional): A reference to an analysis document </span>
-<span class="sd">            or resource that supports the conclusion.</span>
-<span class="sd">        notes (list[Note], optional): A list of notes providing additional context. </span>
-<span class="sd">            Defaults to an empty list.</span>
-<span class="sd">        confidence (ConfidenceLevel, optional): The contributor&#39;s confidence in the </span>
-<span class="sd">            conclusion (High, Medium, or Low).</span>
-<span class="sd">        attribution (Attribution, optional): Information about who contributed the </span>
-<span class="sd">            conclusion and when.</span>
-<span class="sd">        uri (Resource, optional): A URI reference for the conclusion. Defaults to a </span>
-<span class="sd">            URI with the fragment set to the `id`.</span>
-<span class="sd">        links (_LinkList, optional): A list of links associated with the conclusion. </span>
-<span class="sd">            Defaults to an empty `_LinkList`.  </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/v1/Conclusion&#39;</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;http://gedcomx.org/conceptual-model/v1&#39;</span>
-   
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">sources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span><span class="n">Document</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">notes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConfidenceLevel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-               
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="n">make_uid</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lang</span> <span class="o">=</span> <span class="n">lang</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">analysis</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">notes</span> <span class="o">=</span> <span class="n">notes</span> <span class="k">if</span> <span class="n">notes</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">=</span> <span class="n">confidence</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span> <span class="k">if</span> <span class="nb">id</span> <span class="k">else</span> <span class="kc">None</span>
-    
+    <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Conclusion&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
+
+    <span class="c1"># Internal URI (not serialized)</span>
+    <span class="n">_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceReference</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Union[Resource, Document] at runtime</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Note</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConfidenceLevel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Attribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Conclusion.model_post_init">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Conclusion.model_post_init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate derived state after model initialization.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Mutation helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="Conclusion.add_note">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.add_note">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="n">Note</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Note to this conclusion, skipping exact duplicates.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not a Note instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">note</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">note</span><span class="p">,</span><span class="n">Note</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">existing</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">note</span> <span class="o">==</span> <span class="n">existing</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="kc">False</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;note&#39; must be of Type &#39;Note&#39;&quot;</span><span class="p">)</span></div>
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Conclusion.add_note">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="n">Note</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Note to this conclusion, skipping duplicates.  Returns True if added.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">note</span><span class="p">,</span> <span class="n">Note</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;note&#39; must be of Type &#39;Note&#39;&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">existing</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">note</span> <span class="o">==</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="Conclusion.add_source_reference">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conclusion.Conclusion.add_source_reference">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_to_add</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceReference to this conclusion, skipping exact duplicates.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the argument is not a SourceReference instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">source_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">,</span><span class="n">SourceReference</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">current_source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">source_to_add</span> <span class="o">==</span> <span class="n">current_source</span><span class="p">:</span>
-                    <span class="k">return</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;source_to_add must be a SourceReference, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Conclusion.add_source_reference">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_source_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_to_add</span><span class="p">:</span> <span class="n">SourceReference</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a SourceReference to this conclusion, skipping duplicates.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">,</span> <span class="n">SourceReference</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;source_to_add must be a SourceReference, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">source_to_add</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_to_add</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_lang</span><span class="p">,</span> <span class="n">check_instance</span>
+        <span class="c1"># id must be a non-empty string</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;id must not be empty&quot;</span><span class="p">)</span>
+        <span class="c1"># lang: BCP-47 format</span>
+        <span class="n">check_lang</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;lang&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="p">)</span>
+        <span class="c1"># analysis: Resource or Document</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+            <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;analysis&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">,</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span>
+        <span class="c1"># attribution type</span>
+        <span class="n">check_instance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;attribution&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">,</span> <span class="n">Attribution</span><span class="p">)</span>
+        <span class="c1"># confidence</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="n">ConfidenceLevel</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ConfidenceLevel, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="o">.</span><span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ConfidenceLevel</span><span class="o">.</span><span class="n">High</span><span class="p">,</span> <span class="n">ConfidenceLevel</span><span class="o">.</span><span class="n">Medium</span><span class="p">,</span> <span class="n">ConfidenceLevel</span><span class="o">.</span><span class="n">Low</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unrecognised confidence value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># mutable object with value-based equality — not safely hashable</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        
         <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lang</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">lang</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">sources</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">analysis</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">notes</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">notes</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">confidence</span> <span class="ow">and</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">attribution</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">lang</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">sources</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">analysis</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">notes</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">notes</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">confidence</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">attribution</span>
         <span class="p">)</span></div>
+
+
 
 </pre></div>
         </article>

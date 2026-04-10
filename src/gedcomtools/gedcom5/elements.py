@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Element and record classes used by the GEDCOM 5.x parser tree."""
+
 from __future__ import annotations
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/elements.py
- Author:  David J. Cartwright
- Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records
-
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/elements.py
+#  Author:  David J. Cartwright
+#  Purpose: GEDCOM 5.x element classes representing parsed GEDCOM records
+#  Created: 2026-01-01
+# ======================================================================
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -38,11 +35,8 @@ from __future__ import annotations
 # Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html
 
 import re as regex
-"""
-Base GEDCOM element
-"""
+# Base GEDCOM element
 
-from sys import version_info
 from gedcomtools.gedcom5.helpers import deprecated
 
 from .tags import (
@@ -69,7 +63,7 @@ from .tags import (
     GEDCOM_TAG_SURNAME,
 )
 
-class Element(object):
+class Element:
     """GEDCOM element
 
     Each line in a GEDCOM file is an element with the format
@@ -118,17 +112,19 @@ class Element(object):
 
     @property
     def parent(self):
+        """Return the parent node."""
         return self.__parent
-    
+
     @property
     def level(self) -> int:
         """Returns the level of this element from within the GEDCOM file
         :rtype: int
         """
         return self.__level
-    
+
     @level.setter
     def level(self, level):
+        """Document the `level` callable."""
         self.__level = level
 
     @property
@@ -146,13 +142,16 @@ class Element(object):
         return self.__tag
     @tag.setter
     def tag(self, tag):
+        """Return the tag for this node."""
         self.__tag = tag
 
     @property
     def value(self):
+        """Document the `value` callable."""
         return self.__value
 
     def describe(self) ->str:
+        """Return a human-readable summary of this object."""
         s = f"{self._line_num} [{type(self).__name__}] {self.xref} {self.level} {self.tag} {self.get_value()}"
         return s
 
@@ -259,17 +258,20 @@ class Element(object):
 
     def __getitem__(self,item):
         return self.sub_record(item)
-    
+
     def sub_record(self, tag: str):
+        """Return the first matching child record."""
         for r in self.__children:
-            if r.tag == tag: return r
+            if r.tag == tag:
+                return r
         return None
-    
+
     def sub_records(self, tag: str | None = None):
+        """Return all matching child records."""
         if tag is None:
             return self.__children
         return [r for r in self.__children if r.tag == tag]
-    
+
     def get_child_elements(self):
         """Returns the direct child elements of this element
         :rtype: list of Element
@@ -284,7 +286,7 @@ class Element(object):
         :type value: str
         :rtype: Element
         """
-        
+
         # Differentiate between the type of the new child element
         if tag == GEDCOM_TAG_FAMILY:
             child_element = FamilyRecord(self.level + 1, pointer, tag, value, self.__crlf)
@@ -351,7 +353,7 @@ class Element(object):
         if self.get_value() != "":
             result += ' ' + self.get_value()
 
-        
+
 
         if self.level < 0:
             result = ''
@@ -363,38 +365,41 @@ class Element(object):
 
         return result
 
-    def __str__(self):
-        """:rtype: str"""
-        if version_info[0] >= 3:
-            return self.to_gedcom_string()
-
-        return self.to_gedcom_string().encode('utf-8-sig')
+    def __str__(self) -> str:
+        return self.to_gedcom_string()
 
 class RootElement(Element):
     """Virtual GEDCOM root element containing all logical records as children"""
 
     def __init__(self, level=-1, pointer="", tag="ROOT", value="", crlf="\n", multi_line=True):
-        super(RootElement, self).__init__(level, pointer, tag, value, crlf, multi_line)
+        super().__init__(level, pointer, tag, value, crlf, multi_line)
 
 class HeaderRecord(Element):
-    pass
+    """Represent the GEDCOM 5.x HEAD record."""
+
 
 class SubmitterRecord(Element):
-    pass
+    """Represent a GEDCOM 5.x SUBM record."""
 
 class FamilyRecord(Element):
 
+    """Represent a GEDCOM 5.x family record."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_FAMILY
 
 class FileElement(Element):
 
+    """Represent a GEDCOM 5.x OBJE or file-linked element."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_FILE
 
 class IndividualRecord(Element):
 
+    """Represent a GEDCOM 5.x individual record."""
     def get_tag(self):
+        """Return the GEDCOM tag associated with this record type."""
         return GEDCOM_TAG_INDIVIDUAL
 
     def is_deceased(self):
@@ -474,6 +479,7 @@ class IndividualRecord(Element):
         return given_name, surname
 
     def get_all_names(self):
+        """Return all name values found on the individual record."""
         return [a.get_value() for a in self.get_child_elements() if a.tag == GEDCOM_TAG_NAME]
 
     def surname_match(self, surname_to_match):
@@ -481,7 +487,7 @@ class IndividualRecord(Element):
         :type surname_to_match: str
         :rtype: bool
         """
-        (given_name, surname) = self.get_name()
+        (_given_name, surname) = self.get_name()
         return bool(regex.search(surname_to_match, surname, regex.IGNORECASE))
 
     @deprecated
@@ -498,7 +504,7 @@ class IndividualRecord(Element):
         :type given_name_to_match: str
         :rtype: bool
         """
-        (given_name, surname) = self.get_name()
+        (given_name, _surname) = self.get_name()
         return bool(regex.search(given_name_to_match, given_name, regex.IGNORECASE))
 
     def get_gender(self):
@@ -831,9 +837,10 @@ class IndividualRecord(Element):
             parts.append(f"Occupation: {occupation}")
 
         return "; ".join(parts)
-    
+
 class ObjectRecord(Element):
 
+    """Represent a GEDCOM 5.x multimedia object record."""
     def is_object(self):
         """Checks if this element is an actual object
         :rtype: bool
@@ -841,8 +848,8 @@ class ObjectRecord(Element):
         return self.tag == GEDCOM_TAG_OBJECT
 
 class RepositoryRecord(Element):
-    pass
+    """Represent a GEDCOM 5.x repository record."""
+
 
 class SourceRecord(Element):
-    pass
-
+    """Represent a GEDCOM 5.x source record."""

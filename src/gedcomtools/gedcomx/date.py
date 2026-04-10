@@ -8,20 +8,23 @@
  Updated:
    - 2025-11-13: added Gedcom-X Date Format API
    - 2026-03-19: migrated to pydantic GedcomXModel
+   - 2026-04-08: model normalized FamilySearch date renderings as
+                 typed DateNormalization entries
 ======================================================================
 """
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Any, ClassVar, Optional
+from datetime import datetime
+from typing import ClassVar, List, Optional
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from .gx_base import GedcomXModel
+from .textvalue import TextValue
 
 try:
-    import dateparser
+    import dateparser  # type: ignore[import-untyped]
 except ImportError:
     dateparser = None
 
@@ -32,35 +35,43 @@ except ImportError:
 
 
 class DateFormat:
-    pass
+    """Placeholder for GedcomX date format constants."""
 
 
-class DateNormalization:
-    pass
+class DateNormalization(TextValue):
+    """A normalized textual rendering of a date value."""
+
+    identifier: ClassVar[str] = "http://gedcomx.org/v1/DateNormalization"
+    version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
 
 class Date(GedcomXModel):
+    """A GedcomX date value with optional original text and formal GedcomX-format string."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Date"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     original: Optional[str] = None
     formal: Optional[str] = None
-    normalized: Optional[Any] = None  # DateNormalization
+    normalized: List[DateNormalization] = Field(default_factory=list)
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
-        from .validation import check_gedcomx_date, check_nonempty
+        from .validation import check_gedcomx_date, check_instance, check_nonempty
         if not self.original and not self.formal:
             result.warn("", "Date has neither original nor formal value")
         if self.original is not None:
             check_nonempty(result, "original", self.original)
         check_gedcomx_date(result, "formal", self.formal)
+        for i, norm in enumerate(self.normalized):
+            check_instance(result, f"normalized[{i}]", norm, DateNormalization)
 
     @model_validator(mode="after")
     def _parse_formal(self) -> "Date":
         if self.formal is None and self.original:
             try:
-                self.formal = parse_to_gedcomx_date(self.original)
+                _formal = parse_to_gedcomx_date(self.original)
+                self.formal = _formal if _formal is not None else self.formal
             except Exception:
                 pass  # parsing failures are non-fatal
         return self
@@ -70,7 +81,13 @@ class Date(GedcomXModel):
 # GedcomX Date Format parsing (unchanged from original)
 # ---------------------------------------------------------------------------
 
-def parse_to_gedcomx_date(s: str) -> str:
+def parse_to_gedcomx_date(s: str) -> str | None:
+    """Parse a natural-language or standard date string into a GedcomX formal date string.
+
+    Handles approximate prefixes (``abt``, ``circa``), range expressions
+    (``between X and Y``), and before/after qualifiers.  Returns ``None`` if
+    the input cannot be parsed.
+    """
     from .exceptions import GedcomXDateParseError
 
     original = s
@@ -119,12 +136,13 @@ def parse_to_gedcomx_date(s: str) -> str:
     # ---- simple date ----
     result = _parse_simple_to_gx(s)
     if result is None:
-        return original
+        return None
 
     return f"A{result}" if is_approx else result
 
 
 def _parse_simple_to_gx(s: str) -> str | None:
+    """Parse a single simple date string into a GedcomX ISO-style component string."""
     s = s.strip()
     if not s:
         return None
@@ -146,7 +164,8 @@ def _parse_simple_to_gx(s: str) -> str | None:
 
 
 def _infer_precision_from_text(s: str) -> str:
-    s_lower = s.lower().strip()
+    """Return the date precision level ('year', 'month', or 'day') implied by the text."""
+    s.lower().strip()
     if re.match(r"^\d{4}$", s):
         return "year"
     year_only_patterns = [
@@ -160,6 +179,7 @@ def _infer_precision_from_text(s: str) -> str:
 
 
 def _parse_to_datetime(s: str) -> datetime | None:
+    """Attempt to parse *s* into a datetime using dateutil or dateparser; returns None on failure."""
     if dateutil_parser:
         try:
             return dateutil_parser.parse(s, default=datetime(1, 1, 1))
@@ -176,6 +196,7 @@ def _parse_to_datetime(s: str) -> datetime | None:
 
 
 def date_to_timestamp(date_obj: Date | None) -> datetime | None:
+    """Convert a Date object to a Python datetime by parsing its formal or original value."""
     if date_obj is None:
         return None
     for attr in ("formal", "original"):

@@ -1,25 +1,31 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/fact.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Fact model: FactType enum and Fact/FactQualifier classes
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 import difflib
 import re
 from enum import Enum
-from typing import Any, ClassVar, List, Optional, Union
+from typing import ClassVar, List, Optional
 
-from pydantic import Field, PrivateAttr
+from pydantic import PrivateAttr
 
-from .attribution import Attribution
-from .conclusion import Conclusion, ConfidenceLevel
+from .conclusion import Conclusion
 from .date import Date
-from .document import Document
-from .gx_base import GedcomXModel
-from .note import Note
 from .place_reference import PlaceReference
-from .qualifier import Qualifier
-from .resource import Resource
-from .source_reference import SourceReference
 
 
 class FactType(Enum):
+    """Enumeration of known GedcomX fact types covering person, couple, and parent-child contexts."""
+
     # Person Fact Types
     Adoption = "http://gedcomx.org/Adoption"
     AdultChristening = "http://gedcomx.org/AdultChristening"
@@ -127,6 +133,7 @@ class FactType(Enum):
 
     @classmethod
     def from_value(cls, value: str) -> "FactType":
+        """Return the FactType whose URI matches *value*, or FactType.Unknown if not found."""
         for member in cls:
             if member.value == value:
                 return member
@@ -134,6 +141,7 @@ class FactType(Enum):
 
     @staticmethod
     def guess(description: str) -> Optional["FactType"]:
+        """Return the best-matching FactType for a keyword in *description*, or None."""
         keywords: dict = {
             "birth": FactType.Birth, "death": FactType.Death,
             "marriage": FactType.Marriage, "burial": FactType.Burial,
@@ -150,6 +158,8 @@ class FactType(Enum):
 
 
 class FactQualifier(Enum):
+    """Enumeration of qualifier types that provide additional context for a fact."""
+
     Age = "http://gedcomx.org/Age"
     Cause = "http://gedcomx.org/Cause"
     Religion = "http://gedcomx.org/Religion"
@@ -158,6 +168,8 @@ class FactQualifier(Enum):
 
 
 class Fact(Conclusion):
+    """A genealogical fact assertion with an optional type, date, place, and value."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Fact"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -168,6 +180,7 @@ class Fact(Conclusion):
     _qualifiers: List[FactQualifier] = PrivateAttr(default_factory=list)
 
     def model_post_init(self, __context: object) -> None:
+        """Populate derived state after model initialization."""
         super().model_post_init(__context)
         # Preserve qualifiers passed at construction
         raw = (self.model_extra or {}).get("qualifiers")
@@ -176,10 +189,12 @@ class Fact(Conclusion):
 
     @property
     def qualifiers(self) -> List[FactQualifier]:
+        """Return the list of FactQualifier objects attached to this fact."""
         return self._qualifiers
 
     @qualifiers.setter
     def qualifiers(self, value: List[FactQualifier]) -> None:
+        """Set the qualifiers list; all items must be FactQualifier instances."""
         if not isinstance(value, list) or not all(isinstance(i, FactQualifier) for i in value):
             raise ValueError("qualifiers must be a list of FactQualifier objects.")
         self._qualifiers = list(value)

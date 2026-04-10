@@ -1,5 +1,13 @@
 """
-Address data types for the GedcomX conceptual model.
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/address.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Address model
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
 """
 from __future__ import annotations
 from typing import ClassVar, Optional
@@ -36,12 +44,14 @@ class Address(GedcomXModel):
 
     def model_post_init(self, __context: object) -> None:
         # Preserve raw_value passed as 'value' kwarg (handled by accept_extras)
+        """Populate derived state after model initialization."""
         raw = (self.model_extra or {}).get("value")
         if raw is not None:
             self._raw_value = raw
 
     @property
     def value(self) -> str:
+        """Return a comma-separated string of all non-empty address components."""
         return ", ".join(
             filter(
                 None,
@@ -56,6 +66,7 @@ class Address(GedcomXModel):
 
     @value.setter
     def value(self, value: str) -> None:
+        """Set the raw free-form address string."""
         self._raw_value = value
 
     def _append(self, value: str) -> None:

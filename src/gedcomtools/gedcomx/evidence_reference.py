@@ -1,5 +1,16 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/evidence_reference.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX EvidenceReference model: link from a subject to an extracted conclusion
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from .attribution import Attribution
 from .gx_base import GedcomXModel
@@ -10,18 +21,20 @@ if TYPE_CHECKING:
 
 
 class EvidenceReference(GedcomXModel):
+    """A reference linking a subject to an extracted conclusion used as evidence."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/EvidenceReference"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    resource: Optional[Any] = None       # Resource | Subject
+    resource: Optional[Any] = None  # Union[Resource, Subject] at runtime
     attribution: Optional[Attribution] = None
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
         from .validation import check_instance
+        from .subject import Subject as _Subject  # pylint: disable=import-outside-toplevel
         if self.resource is None:
             result.warn("resource", "EvidenceReference has no resource")
         else:
-            from .subject import Subject
-            check_instance(result, "resource", self.resource, Resource, Subject)
+            check_instance(result, "resource", self.resource, Resource, _Subject)
         check_instance(result, "attribution", self.attribution, Attribution)

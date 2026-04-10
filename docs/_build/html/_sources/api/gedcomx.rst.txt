@@ -72,6 +72,7 @@ GedcomX API
 
 .. automodule:: gedcomtools.gedcomx.qualifier
    :members:
+   :no-index:
 
 .. automodule:: gedcomtools.gedcomx.textvalue
    :members:
@@ -101,9 +102,6 @@ GedcomX API
    :members:
 
 .. automodule:: gedcomtools.gedcomx.mutations
-   :members:
-
-.. automodule:: gedcomtools.gedcomx.header
    :members:
 
 .. automodule:: gedcomtools.gedcomx.family

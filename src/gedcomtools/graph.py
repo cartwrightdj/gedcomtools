@@ -108,8 +108,10 @@ class GedcomGraph:
         else:
             self.G.add_node(node_id, **clean)
 
-    def _add_edge(self, src: str, dst: str, rel: str, **attrs: Any) -> None:
+    def _add_edge(self, src: Optional[str], dst: Optional[str], rel: str, **attrs: Any) -> None:
         """Add a directed edge only when both endpoint nodes exist."""
+        if src is None or dst is None:
+            return
         if self.G.has_node(src) and self.G.has_node(dst):
             clean = {k: v for k, v in attrs.items() if v is not None}
             self.G.add_edge(src, dst, rel=rel, **clean)
@@ -412,7 +414,7 @@ class GedcomGraph:
                     or str(res)
                 )
                 if val:
-                    return str(val).lstrip("#").split("/")[-1] or None
+                    return str(val).lstrip("#").rsplit("/", maxsplit=1)[-1] or None
             return getattr(ref, "id", None)
 
         def _year(date_obj: Any) -> Optional[int]:
@@ -561,7 +563,7 @@ class GedcomGraph:
             visited |= next_f
             frontier = next_f
             gen += 1
-        return self.G.subgraph(visited).copy()
+        return self.G.subgraph(visited).copy()  # type: ignore[return-value]
 
     def shortest_path(self, a: str, b: str) -> List[str]:
         """Undirected shortest path between two nodes (ignores edge direction).

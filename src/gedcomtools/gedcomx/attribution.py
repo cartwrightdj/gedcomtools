@@ -1,3 +1,14 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/attribution.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Attribution model: contributor, creator, and change metadata
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,6 +48,7 @@ class Attribution(GedcomXModel):
 
     @staticmethod
     def _fmt_ts(value: Any) -> str:
+        """Format a datetime or string timestamp as an ISO 8601 string."""
         if value is None:
             return ""
         if isinstance(value, datetime):

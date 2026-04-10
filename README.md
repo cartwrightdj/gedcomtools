@@ -5,11 +5,339 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.0**
+> **ALPHA SOFTWARE — v0.7.5b1**
 >
 > `gedcomtools` is under active development. Public APIs, data models, and serialization
 > formats may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
+
+---
+
+## What's New in v0.7.5b1
+
+### FamilySearch deserialization
+
+- Added typed FamilySearch deserialization for `PersonInfo`, `NameFormInfo`,
+  normalized dates, normalized place text, and FamilySearch `display`
+  payloads.
+- Expanded `FamilySearchPlatform` deserialization so `persons`,
+  `relationships`, `places`, `links`, and `sourceDescriptions` build typed
+  model objects instead of being left as loose extra data.
+- Added `FamilySearchPersonEnvelope` for the observed outer FamilySearch web
+  payload wrapper containing `data`, `person`, `personId`, `summary`,
+  `title`, and related display fields.
+- `Person.display()` now prefers deserialized FamilySearch display data and
+  computes only the fields that are missing from the payload.
+
+### Samples and examples
+
+- Added FamilySearch sample JSON fixtures under
+  `.sample_data/familysearch/`.
+- Added disk-based tests covering both the platform payload and the outer
+  FamilySearch person envelope.
+- Added `examples/familysearch_deserialize.py` showing how to load the
+  FamilySearch extension plugin and deserialize the sample payloads.
+
+### Release packaging
+
+- Bumped the package and docs version to `0.7.5b1`.
+- Rebuilt the Sphinx HTML documentation and the release artifacts for this
+  beta cut.
+
+## Previous Development Updates
+
+### Updates from 2026-03-31
+
+- Refactored code quality hotspots across the codebase by replacing silent bare `except Exception`
+  blocks with narrower exception handling and debug logging in the GEDCOM 5 converter,
+  GedcomX conversion layer, `gctool`, and `gxcli`.
+- Split the large `gxcli.py` implementation into focused modules for output helpers, command
+  mixins, schema tools, and REPL core, while preserving the existing public `Shell` and
+  `main()` entry points.
+- Moved GEDCOM `EVEN` tag lookup helpers out of `schemas.py` and into the conversion layer,
+  keeping compatibility stubs for external callers.
+- Added a shared `GxConverterBase` abstract base class so GEDCOM 5 and GEDCOM 7 converters
+  now expose a common `convert()` interface.
+- Cleaned up circular-import model rebuild handling for GedcomX `event` and `relationship`
+  models so rebuild workarounds are explicit and do not leak `Person` into module namespaces.
+
+### Updates from 2026-03-29
+
+- Fixed `GedcomX.validate()` relationship cross-reference checking so both `resourceId`
+  references and `Resource(resource=URI(fragment="..."))` references are validated correctly.
+- Fixed `GedcomX.from_dict()` round-trips so root-level `attribution` and `groups` are no
+  longer dropped during deserialization.
+- Fixed `Serialization.serialize(dict)` so empty-list and `None` values do not leak into
+  output as unwanted `null` fields.
+- Updated `GedcomZip` naming to use `genealogy.json` instead of `tree.json`, and added
+  collision-safe archive naming for repeated top-level resources.
+- Fixed `TypeCollection.append()` and ZIP path handling so same-document resource references
+  serialize as `#P1` when appropriate, while explicit path-based URIs still preserve directory
+  structure inside the archive.
+
+### GML graph export
+
+A new `gml.py` module exports a GedcomX object graph to **GML (Graph Modelling Language)**,
+readable by Gephi, yEd, NetworkX, and other graph tools. Persons become nodes; Couple and
+ParentChild relationships become directed edges.
+
+```python
+from gedcomtools.gedcomx.gml import to_gml
+
+gml_text = to_gml(gx)
+with open("family.gml", "w") as f:
+    f.write(gml_text)
+```
+
+Node attributes: `id`, `label` (primary name), `gender`, `birth_year`, `birth_place`,
+`death_year`, `death_place`, `living`. Edge attributes: `source`, `target`, `label`
+(relationship type), `rel_type`.
+
+### Expanded `gxcli` interactive shell
+
+The `gxcli` REPL was significantly expanded with new commands:
+
+| Command | Description |
+|---|---|
+| `ahnentafel` / `ahnen` | Ancestor numbering — set, add, tree, export (decimal/binary/GEDCOM formats) |
+| `grep` PATTERN | Recursive regex search across entire object tree |
+| `schema` | Browse schema: `here`, `class`, `find`, `where`, `bases`, `toplevel`, `json`, `diff` |
+| `bookmark` / `bm` | Named bookmarks for quick navigation |
+| `dump` | Serialize current node to JSON |
+| `resolve` | Resolve resource references at current node |
+| `write` FORMAT | Export to `gx`, `zip`, `jsonl`, or `adbg` format |
+| `log` LEVEL | Set runtime log level |
+| `cfg` | Persistent configuration (set/get/tree/import/export) |
+| `ext` | Load, unload, and trust plugins |
+
+### OBJE multimedia support
+
+GEDCOM `OBJE` (multimedia object) records are now handled in both the G5→GX and G7→GX
+converters. `OBJE` records produce `SourceDescription(resourceType=DigitalArtifact)` with
+MIME type detection from the file extension.
+
+### PEDI and ABBR tag support
+
+- `PEDI` (pedigree linkage type: `adopted`, `birth`, `foster`, `sealing`) is now preserved
+  as a qualifier on `ParentChild` relationships in both the G7→GX and G5→GX paths.
+- `ABBR` (source abbreviation) is stored as a note on `SourceDescription`.
+
+### Improved date parsing (G5 → G7)
+
+The GEDCOM 5 → GEDCOM 7 date converter (`g5tog7.py`) now handles a wider range of
+date formats including approximate dates (`ABT`, `CAL`, `EST`), date ranges
+(`BEF`, `AFT`, `BET … AND …`), and French Republican / Hebrew calendar indicators.
+
+### Model correctness fixes
+
+- **`Agent.__eq__`** redesigned: person reference takes priority (if set, equality
+  is determined entirely by person match); falls back to case-insensitive name overlap
+  when person is `None`. `Agent.__hash__ = None` — mutable objects are no longer
+  accidentally hashable.
+- **`Conclusion.__hash__ = None`** — consistent with value-based `__eq__` and mutable
+  list fields (`sources`, `notes`).
+- **`Identifier.values`** — mutable default `[]` replaced with `Field(default_factory=list)`.
+  Previously all `Identifier` instances without an explicit `values` argument shared the
+  same list.
+- **`Agent.sorted_names`** — new read-only property returning names sorted alphabetically
+  (case-insensitive). `names[0]` primary-name order is preserved in the stored list.
+
+### Type annotation improvements
+
+Forward-reference circular imports resolved via `TYPE_CHECKING` guards and
+`model_rebuild()` calls, replacing several `Optional[Any]` fields with proper types:
+
+| Field | Before | After |
+|---|---|---|
+| `Relationship.person1` / `.person2` | `Optional[Any]` | `Optional[Union[Person, Resource]]` |
+| `EventRole.person` | `Optional[Any]` | `Optional[Union[Person, Resource]]` |
+| `PlaceDescription.jurisdiction` | `Optional[Any]` | `Optional[Union[Resource, PlaceDescription]]` |
+| `PlaceDescription.spatialDescription` | `Optional[Any]` | `Optional[PlaceReference]` |
+
+### Event conversion bug fix
+
+`handle_even` in `conversion.py` used the wrong `object_map` index (`record.level`
+instead of `record.level-1`) when creating an `EventRole` for an unknown EVEN type,
+silently assigning the wrong object (e.g. a `Note`) as the person. The fix adds the
+same parent-type guards (`Person` / `SourceDescription`) that the known-type branches
+already used.
+
+---
+
+## What's New in v0.7.2
+
+### GEDCOM 7 → GedcomX converter
+
+A new `Gedcom7Converter` converts a parsed GEDCOM 7 file directly to GedcomX.
+It uses the pre-assembled `Detail` objects from `gedcom7/models.py` so no
+level-tracking stack is needed.
+
+```python
+from gedcomtools.gedcom7.gedcom7 import Gedcom7
+
+g7 = Gedcom7("family.ged")
+gx = g7.to_gedcomx()           # returns GedcomX
+with open("family.json", "wb") as f:
+    f.write(gx.json)
+```
+
+Or use the converter directly:
+
+```python
+from gedcomtools.gedcom7.g7togx import Gedcom7Converter
+
+gx = Gedcom7Converter().convert(g7)
+```
+
+**What is converted:**
+
+| GEDCOM 7 | GedcomX |
+|---|---|
+| `INDI` | `Person` (id = xref) |
+| `INDI.NAME` + parts | `Name` / `NameForm` / `NamePart` (Given, Surname, Prefix, Suffix) |
+| `INDI.NAME.TRAN` | additional `NameForm` with `lang` |
+| `INDI.SEX` M/F/X/U | `Gender` (Male/Female/Intersex/Unknown) |
+| `INDI.BIRT/DEAT/BURI/…` | `Fact` with `Date`, `PlaceReference`, source citations |
+| `INDI.OCCU/TITL/RELI/NATI` | attribute `Fact` with `value` |
+| `FAM` (HUSB + WIFE) | `Relationship(type=Couple)` with marriage/divorce facts |
+| `FAM.CHIL` | `Relationship(type=ParentChild)` per parent × child |
+| `SOUR` | `SourceDescription` with title, notes, repository link |
+| `REPO` | `Agent` with name, address, phone, email, homepage |
+| `SUBM` | `Agent` with name, address, contact info |
+| `OBJE` | `SourceDescription(resourceType=DigitalArtifact)` |
+| `SNOTE` | `SourceDescription(resourceType=Record)` carrying the note text |
+| `HEAD.DATE` / `HEAD.SUBM` | `GedcomX.attribution` |
+| Place names | deduplicated `PlaceDescription`; facts reference via `{"resource": "#id"}` |
+
+### Facade conversion methods
+
+All three parsers now expose conversion methods that return the correct
+high-level type — not a raw list, not a dict:
+
+```python
+# Gedcom5
+g5 = Gedcom5("family.ged")
+g7 = g5.to_gedcom7()           # → Gedcom7
+gx = g5.to_gedcomx()           # → GedcomX
+
+# Gedcom7
+g7 = Gedcom7("family.ged")
+gx = g7.to_gedcomx()           # → GedcomX
+
+# Full chain
+gx = Gedcom5("family.ged").to_gedcom7().to_gedcomx()
+```
+
+`to_gedcom7()` previously returned a raw `List[GedcomStructure]`. It now
+returns a fully constructed `Gedcom7` object (with tag index), so all
+`Gedcom7` accessors (`individuals()`, `validate()`, `write()`, etc.) work
+immediately on the result.
+
+### Return-type test suite
+
+A new `tests/test_conversion_return_types.py` module verifies that every
+conversion method returns the correct type. Each test includes both a positive
+`isinstance` check and a negative check (not a `list`, not a `dict`) so
+regressions like the `to_gedcom7()` list-return bug are caught immediately.
+
+---
+
+## What's New in v0.7.1
+
+### GEDCOM 5 → GEDCOM 7 converter
+
+A new `Gedcom5to7` converter translates GEDCOM 5.x files to GEDCOM 7 format.
+The converter is available via the `gedcomtools convert` CLI or directly in Python:
+
+```python
+from gedcomtools.gedcom5.gedcom5 import Gedcom5
+from gedcomtools.gedcom5.g5tog7 import Gedcom5to7
+from gedcomtools.gedcom7.writer import Gedcom7Writer
+
+g5 = Gedcom5("family.ged")
+conv = Gedcom5to7(unknown_tags="convert")   # or "drop"
+records = conv.convert(g5)
+for w in conv.warnings:
+    print(f"  warning: {w}")
+Gedcom7Writer().write(records, "family7.ged")
+```
+
+The `unknown_tags` option controls vendor and non-standard G5 tags
+(`RIN`, `FSID`, `AFN`, `WWW`, `ADR4`–`ADR6`):
+
+| Value | Behaviour |
+|---|---|
+| `"drop"` *(default)* | Tags are silently discarded |
+| `"convert"` | Tags are renamed to `_TAG` extension tags and declared in `HEAD.SCHMA` |
+
+### Unified `gedcomtools convert` CLI
+
+A single entry-point replaces the previous format-specific CLI tools:
+
+```bash
+# GEDCOM 5 → GEDCOM X JSON
+gedcomtools convert family.ged family.json -gx
+
+# GEDCOM 5 → GEDCOM 7
+gedcomtools convert family.ged family7.ged -g7
+
+# Preserve vendor tags as extension tags during G5→G7
+gedcomtools convert family.ged family7.ged -g7 --on-unknown convert
+```
+
+Source format is detected automatically from file content (the `2 VERS` header
+tag) and extension. The `--on-unknown` flag only applies to the G5→G7 path.
+
+### Pydantic migration: broken resource references — and the fix
+
+The v0.7.0 Pydantic migration introduced a serialization regression in the
+GEDCOM X layer. Cross-references that should have been written as compact
+`{"resource": "#id"}` pointers were instead being inlined as full copies of the
+referenced object — causing output JSON files to be an order of magnitude larger
+than expected and breaking the spec-required reference model.
+
+**Root causes:**
+
+1. **`_GXModel` short-circuit placed too early.** `Serialization.serialize`
+   detected pydantic models and immediately called `model_dump()`, bypassing the
+   field-type lookup that was responsible for deciding when to emit a resource
+   reference instead of an inline object. Any field typed `Optional[Any]` (a
+   common migration escape-hatch) also lost its union type information at runtime,
+   so the lookup silently fell through.
+
+2. **`GedcomX._serializer` / `_as_dict` bypassed the serializer.** The container
+   object had its own serialization path that called `model_dump()` recursively,
+   never reaching `Resource._of_object`.
+
+3. **`IdentifierList._serializer` used Python-mode `model_dump()`.** URIs were
+   returned as Python objects instead of JSON-compatible strings, causing
+   `TypeError: Type is not JSON serializable: URI` downstream.
+
+**Fixes applied:**
+
+- **`_RESOURCE_REF_FIELDS`** — an explicit table of `{class_name: {field_names}}`
+  that must always serialize as resource references, regardless of annotation.
+  The full MRO is walked so inherited fields (e.g. `Conclusion.analysis` on
+  `Person`) are covered.
+- **`_normalize_field_type`** — strips `Optional[X]` wrappers and resolves union
+  types (preferring `Resource` when it appears) before the field-type dispatch.
+- **Short-circuit removed** — the `_GXModel` fast-path now sits *after* the
+  field-type loop as a fallback for pydantic models with no registered schema
+  fields, not before it.
+- **`GedcomX._to_dict()`** — replaces `_serializer` / `_as_dict`; calls
+  `Serialization.serialize()` for each item in every collection so the full
+  resource-ref path is always taken.
+- **`IdentifierList._serializer`** — fixed to `model_dump(mode="json")` so URIs
+  are serialized to strings.
+- **`Resource._of_object` hardened** — now handles `dict` inputs (already-
+  serialized refs that appear on a second round-trip) and objects with no `id`
+  attribute (logs a warning and continues instead of raising `AttributeError`).
+
+A regression test (`TestConversionLarge.test_json_size_within_expected_range`)
+was added: it serializes the Royal92 large real-world file and asserts the output
+stays under 5 MB. Inlining all objects instead of using resource references
+pushes the same file above 40 MB, making size a reliable canary for this class
+of bug.
 
 ---
 
@@ -108,20 +436,29 @@ New test modules added this release:
 - ✅ GEDCOM X **Pydantic v2** object model (`gedcomx`) — complete, 0 Pyright errors
 - ✅ GEDCOM X per-property validation (`validate()` on every model)
 - ✅ Converter — GEDCOM 5.x → GEDCOM X (including TRAN, FONE, multi-language names)
+- ✅ Converter — GEDCOM 5.x → GEDCOM 7 (vendor tag drop/convert via `--on-unknown`)
+- ✅ Converter — GEDCOM 7 → GedcomX (`Gedcom7Converter` / `g7.to_gedcomx()`)
+- ✅ Facade conversion methods on all parsers — `to_gedcom7()`, `to_gedcomx()` return correct types
+- ✅ Full conversion chain: `Gedcom5 → Gedcom7 → GedcomX` in one expression
+- ✅ `gedcomtools convert` unified CLI — auto-detects source format, supports g5→gx and g5→g7
 - ✅ `GedcomZip` — package a GEDCOM X graph into a portable zip archive
 - ✅ O(1) collection lookups by id, URI, and name
 - ✅ `ResolveStats` — reference resolution telemetry
-- ✅ CLI tools (`gxcli`, `g7cli`, `validate7`)
+- ✅ Correct `{"resource": "#id"}` pointer serialization — resource references are never inlined
+- ✅ CLI tools (`gedcomtools`, `gxcli`, `g7cli`, `validate7`)
 - ✅ Structured logging (`glog`) with `GEDCOMTOOLS_DEBUG` env var support
 - ✅ Sub-loggers (conversion, parser, io, etc.)
-- ✅ Extensible schema / extension system
+- ✅ Extensible schema / extension system with TrustLevel plugin security
 - ✅ Source, person, family, relationship modeling
 - ✅ Place and event normalization with multi-language translation support
 - ✅ Metadata and attribution handling
-- ✅ 884 tests, 0 failures
-- 🔧 GEDCOM 5.x → GEDCOM 7 converter — planned
+- ✅ OBJE multimedia record support (G5→GX and G7→GX)
+- ✅ PEDI pedigree linkage and ABBR abbreviation tag support
+- ✅ GML graph export — Gephi / yEd / NetworkX compatible
+- ✅ Expanded `gxcli` — ahnentafel, grep, schema browser, bookmarks, plugin manager
+- ✅ Correct `Agent.__eq__` — person-reference priority with name-overlap fallback
+- ✅ ~1145 tests, 0 failures
 - 🔧 GEDCOM X → GEDCOM 7 converter — planned
-- 🔧 Graph database export (ArangoDB) — in progress
 
 ---
 
@@ -215,19 +552,31 @@ for issue in issues:
 g.write("family_out.ged")
 ```
 
-### Convert GEDCOM 5.x → GEDCOM X
+### Convert between formats
+
+All parsers expose `to_gedcom7()` and `to_gedcomx()` convenience methods
+that return the correct high-level type:
 
 ```python
-from gedcomtools.gedcom5.parser import Gedcom5x
-from gedcomtools.gedcomx.conversion import GedcomConverter
+from gedcomtools.gedcom5.gedcom5 import Gedcom5
+from gedcomtools.gedcom7.gedcom7 import Gedcom7
 
-p = Gedcom5x()
-p.parse_file("family.ged")
+# GEDCOM 5 → GEDCOM 7
+g5 = Gedcom5("family.ged")
+g7 = g5.to_gedcom7()           # returns Gedcom7
+g7.write("family7.ged")
 
-gx = GedcomConverter().Gedcom5x_GedcomX(p)
+# GEDCOM 5 → GedcomX
+gx = g5.to_gedcomx()           # returns GedcomX
+with open("family.json", "wb") as f:
+    f.write(gx.json)
 
-# Serialize to JSON bytes
-json_bytes = gx.json
+# GEDCOM 7 → GedcomX
+g7 = Gedcom7("family7.ged")
+gx = g7.to_gedcomx()           # returns GedcomX
+
+# Full chain in one expression
+gx = Gedcom5("family.ged").to_gedcom7().to_gedcomx()
 ```
 
 ### Round-trip JSON serialization
@@ -285,6 +634,31 @@ for indi_node in g["INDI"]:
 ---
 
 ## CLI Tools
+
+### `gedcomtools convert` — format converter
+
+```bash
+# GEDCOM 5 → GEDCOM X JSON (auto-detects source format)
+gedcomtools convert family.ged output.json -gx
+
+# GEDCOM 5 → GEDCOM 7
+gedcomtools convert family.ged output.ged -g7
+
+# Drop vendor/non-standard tags during G5→G7 (default)
+gedcomtools convert family.ged output.ged -g7 --on-unknown drop
+
+# Rename vendor tags to _TAG extension tags instead of dropping them
+gedcomtools convert family.ged output.ged -g7 --on-unknown convert
+```
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Source file not found |
+| 2 | Cannot determine source format |
+| 3 | Conversion not supported for this format pair |
+| 4 | Conversion failed (parse or transform error) |
+| 5 | I/O error writing output |
 
 ### `validate7` — GEDCOM 7 validator
 
@@ -346,11 +720,9 @@ Set `GEDCOMTOOLS_DEBUG=1` in your environment to enable debug output.
 
 ## Roadmap
 
-- [ ] GEDCOM 5.x → GEDCOM 7 converter
 - [ ] GEDCOM X → GEDCOM 7 converter
 - [ ] JSON-LD export
 - [ ] RAG pipeline integration
-- [ ] Graph database export (ArangoDB)
 
 ---
 
@@ -367,3 +739,13 @@ David J. Cartwright
 ---
 
 > Build genealogy tooling like infrastructure: structured, observable, extensible.
+
+---
+
+## Changes Since v0.7.3-dev
+
+Note: there is no Git tag named `0.7.3-dev` in this repository. This summary is based on changes since commit `a8f2f57`, which introduced the `v0.7.3-dev` version marker in this README.
+
+- Integrated the dedicated `gxcli` Markdown guide into the Sphinx documentation as a subsection of the CLI docs.
+- Cleaned up the Sphinx configuration and docs dependencies so the HTML documentation build completes cleanly.
+- Removed the accidentally tracked `test/` and `test (2)/` ZIP artifact remnants from the repository and added ignore rules to keep them out going forward.

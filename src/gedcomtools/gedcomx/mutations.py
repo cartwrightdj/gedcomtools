@@ -11,23 +11,15 @@
  Updated:
    - 2025-08-31: cleaned up imports and documentation
    - 2025-09-01: filename PEP8 standard, imports changed accordingly
-   
+
 ======================================================================
 """
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
+# GEDCOM Module Types
 from .._gedcom5x import Gedcom5xRecord
 from .fact import Fact, FactType
 from .event import Event, EventType
-"""
-======================================================================
-Logging
-======================================================================
-"""
+# Logging
 #=====================================================================
 
 fact_event_table = {
@@ -205,13 +197,17 @@ fact_event_table = {
 }
 
 class GedcomXObject:
+    """Base wrapper capturing the GEDCOM5 record that spawned a GedcomX object."""
+
     def __init__(self,record: Gedcom5xRecord) -> None:
         self.record = record
-        self.created_with_tag: str | None = record.tag if record and isinstance(record, Gedcom5xRecord) else None    
+        self.created_with_tag: str | None = record.tag if record and isinstance(record, Gedcom5xRecord) else None
         self.created_at_level: int | None = record.level if record and isinstance(record, Gedcom5xRecord) else None
         self.created_at_line_number: int | None = record.line if record and isinstance(record, Gedcom5xRecord) else None
 
 class GedcomXSourceOrDocument(GedcomXObject):
+    """Accumulates metadata fields for a GEDCOM SOUR or OBJE record before creating a SourceDescription."""
+
     def __init__(self,record: Gedcom5xRecord) -> None:
         super().__init__(record)
         self.title: str | None = None
@@ -232,24 +228,22 @@ class GedcomXSourceOrDocument(GedcomXObject):
         self.description: str | None = None
 
 class GedcomXEventOrFact(GedcomXObject):
-    def __new__(cls,record: Gedcom5xRecord, object_stack: dict | None = None) -> object:
-        if record.tag in fact_event_table.keys():
+    """Factory that returns the correct Fact or Event instance for a GEDCOM5 tag."""
 
-            if 'Fact' in fact_event_table[record.tag].keys():
+    def __new__(cls,record: Gedcom5xRecord, _object_stack: dict | None = None) -> object:
+        if record.tag in fact_event_table:
+
+            if 'Fact' in fact_event_table[record.tag]:
                 obj = Fact(type=fact_event_table[record.tag]['Fact'])
                 return obj
-            elif 'Event' in fact_event_table[record.tag].keys():
+            if 'Event' in fact_event_table[record.tag]:
                 obj = Event(type=fact_event_table[record.tag]['Event'])
                 return obj
-            else:
-                raise ValueError(
-                    f"tag '{record.tag}' found in map but has neither 'Fact' nor 'Event' key"
-                )
-        else:
-            raise ValueError(f"{record.tag} not found in map")
+            raise ValueError(
+                f"tag '{record.tag}' found in map but has neither 'Fact' nor 'Event' key"
+            )
+        raise ValueError(f"{record.tag} not found in map")
 
 class GedcomXRelationshipBuilder(GedcomXObject):
-    def __init__(self, record: Gedcom5xRecord) -> None:
-        super().__init__(record)
-
-        
+    """Placeholder builder for constructing complex GEDCOM relationship structures."""
+    pass

@@ -12,6 +12,8 @@
    import_plugins()  → re-exported unchanged from extensible.py
 
  Created: 2026-03-19
+ Updated: 2026-04-08 — allow define_ext() to preserve generic typing
+                       metadata for extension fields like List[PersonInfo]
 ======================================================================
 """
 from __future__ import annotations
@@ -77,7 +79,7 @@ class GedcomXModel(BaseModel):
         cls,
         name: str,
         *,
-        typ: type | None = None,
+        typ: Any = None,
         default: Any = None,
         overwrite: bool = False,
     ) -> None:
@@ -100,9 +102,7 @@ class GedcomXModel(BaseModel):
         if name in cls.model_fields and not overwrite:
             return
 
-        field_type: Any = (
-            typ if typ is not None else (type(default) if default is not None else Any)
-        )
+        field_type: Any = typ if typ is not None else (type(default) if default is not None else Any)
         annotated_type = Optional[field_type]
 
         # Ensure this class has its *own* __annotations__ dict.
@@ -116,7 +116,7 @@ class GedcomXModel(BaseModel):
         # pydantic v2 — __pydantic_fields__ must be updated explicitly.
         if "__pydantic_fields__" not in vars(cls):
             cls.__pydantic_fields__ = dict(getattr(cls, "__pydantic_fields__", {}))
-        cls.__pydantic_fields__[name] = FieldInfo(annotation=annotated_type, default=default)
+        cls.__pydantic_fields__[name] = FieldInfo(annotation=annotated_type, default=default)  # type: ignore[call-arg]
 
         # Record the field name in this class's own _ext_field_names set.
         if "_ext_field_names" not in vars(cls):
@@ -148,7 +148,7 @@ class GedcomXModel(BaseModel):
     # Validation API
     # ------------------------------------------------------------------
 
-    def validate(self, _visited: Optional[set] = None) -> ValidationResult:
+    def validate(self, _visited: Optional[set] = None) -> ValidationResult:  # pylint: disable=arguments-renamed  # type: ignore[override]
         """Recursively validate this model and all nested GedcomXModel children.
 
         Returns a :class:`ValidationResult` containing errors and warnings.

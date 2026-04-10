@@ -1,24 +1,18 @@
+"""Runtime-extensible enum-like types used by GedcomX models and extensions."""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Literal
-
-"""
-======================================================================
- Project: Gedcom-X
- File:    ExtensibleEnum.py
- Author:  David J. Cartwright
- Purpose: Create a class that can act like an enum but be extended by the user at runtime.
-
- Created: 2025-08-25
- Updated:
-   - 2025-09-22: added ability to assign members normaly w/o register
-   
-======================================================================
-"""
-
-
+# ======================================================================
+#  Project: gedcomtools
+#  File:    ExtensibleEnum.py
+#  Author:  David J. Cartwright
+#  Purpose: Create a class that can act like an enum but be extended at runtime.
+#  Created: 2025-08-25
+# ======================================================================
 @dataclass(frozen=True, slots=True)
 class _EnumItem:
+    """An immutable member item held inside an ExtensibleEnum registry."""
     owner: type
     name: str
     value: Any
@@ -28,6 +22,8 @@ class _EnumItem:
         return self.name
 
 class _ExtEnumMeta(type):
+    """Metaclass that makes ExtensibleEnum classes iterable and supports runtime member registration."""
+
     def __iter__(cls) -> Iterator[_EnumItem]:
         return iter(cls._members.values())  # type: ignore[attr-defined]
 
@@ -73,7 +69,7 @@ class _ExtEnumMeta(type):
 
         # Otherwise treat as member registration via assignment
         # (no uppercase requirement; any valid identifier works)
-        item = cls.register(name, value)  # type: ignore[attr-defined]  # register will set the attribute (to _EnumItem)
+        _item = cls.register(name, value)  # type: ignore[attr-defined]  # register will set the attribute (to _EnumItem)
         # Avoid double-setting here; register() already installed the attribute.
         return None
 
@@ -97,6 +93,7 @@ class ExtensibleEnum(metaclass=_ExtEnumMeta):
 
     @classmethod
     def register(cls, name: str, value: Any) -> _EnumItem:
+        """Register a new member with the given name and value; returns the _EnumItem."""
         # Allow any identifier (no ALL-CAPS requirement)
         if not isinstance(name, str) or not name.isidentifier():
             raise ValueError("name must be a valid identifier")
@@ -115,14 +112,17 @@ class ExtensibleEnum(metaclass=_ExtEnumMeta):
 
     @classmethod
     def names(cls) -> list[str]:
+        """Return a list of all registered member names."""
         return list(cls._members.keys())
 
     @classmethod
     def items(cls) -> list[_EnumItem]:
+        """Return a list of all registered _EnumItem members."""
         return list(cls._members.values())
 
     @classmethod
     def get(cls, name: str) -> _EnumItem:
+        """Return the member with the given name, raising KeyError if not found."""
         try:
             return cls._members[name]
         except KeyError as e:
@@ -130,6 +130,7 @@ class ExtensibleEnum(metaclass=_ExtEnumMeta):
 
     @classmethod
     def from_value(cls, value: Any) -> _EnumItem:
+        """Return the member whose value equals *value*, raising KeyError if not found."""
         for m in cls._members.values():
             if m.value == value:
                 return m

@@ -1,19 +1,30 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/relationship.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Relationship model: RelationshipType enum and Relationship class
+
+ Created: 2025-08-25
+ Updated: 2026-03-31 — replaced bare bottom-of-file circular-import pattern with
+                        explicit _types_namespace={"Person": ...} rebuild call;
+                        adds del to keep Person out of module's public namespace
+======================================================================
+"""
+# GedcomX Relationship model.
+# person1/person2 typed as Union[Person, Resource]; circular import resolved via
+# bottom-of-file import and model_rebuild().
+
 from __future__ import annotations
 
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel
-from .evidence_reference import EvidenceReference
 from .fact import Fact
-from .gx_base import GedcomXModel
-from .identifier import IdentifierList
-from .note import Note
 from .resource import Resource
-from .source_reference import SourceReference
+from .uri import URI
 from .subject import Subject
 
 if TYPE_CHECKING:
@@ -21,11 +32,14 @@ if TYPE_CHECKING:
 
 
 class RelationshipType(Enum):
+    """Enumeration of known GedcomX relationship types."""
+
     Couple = "http://gedcomx.org/Couple"
     ParentChild = "http://gedcomx.org/ParentChild"
 
     @property
     def description(self) -> str:
+        """Return a human-readable description of this relationship type."""
         descriptions = {
             RelationshipType.Couple: "A relationship of a pair of persons.",
             RelationshipType.ParentChild: "A relationship from a parent to a child.",
@@ -40,9 +54,18 @@ class Relationship(Subject):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     type: Optional[RelationshipType] = None
-    person1: Optional[Any] = None       # Person | Resource
-    person2: Optional[Any] = None       # Person | Resource
+    person1: Optional[Union[Person, Resource]] = None
+    person2: Optional[Union[Person, Resource]] = None
     facts: List[Fact] = Field(default_factory=list)
+
+    @field_validator("person1", "person2", mode="before")
+    @classmethod
+    def _coerce_person(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            return Resource.model_validate(v)
+        if isinstance(v, str):
+            return Resource(resource=URI(target=v))  # type: ignore[call-arg]
+        return v
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
@@ -62,6 +85,7 @@ class Relationship(Subject):
             check_instance(result, f"facts[{i}]", f_, Fact)
 
     def add_fact(self, fact: Fact) -> None:
+        """Add a Fact to this relationship, skipping duplicates."""
         if fact is not None and isinstance(fact, Fact):
             for existing in self.facts:
                 if fact == existing:
@@ -91,7 +115,7 @@ class Relationship(Subject):
                 if pname:
                     parts.append(f"name={Relationship._short(pname)}")
                 return f"Person({', '.join(parts)})"
-        except Exception:
+        except (AttributeError, ValueError, TypeError):
             pass
         for attr in ("resource", "resourceId"):
             val = getattr(p, attr, None)
@@ -119,8 +143,11 @@ class Relationship(Subject):
         )
 
 
-# Break the Person ↔ Relationship circular reference by rebuilding after both
-# classes are fully defined.
-from .person import Person  # noqa: E402
-Relationship.model_rebuild()
-Person.model_rebuild()
+# Resolve the Person ↔ Relationship forward reference.
+# person.py does not import relationship.py at module level, so this deferred
+# import is safe.  _types_namespace makes the resolution explicit and keeps
+# 'Person' out of relationship.py's public namespace.
+from .person import Person as _Person_rebuild  # noqa: E402
+Relationship.model_rebuild(_types_namespace={"Person": _Person_rebuild})
+_Person_rebuild.model_rebuild()
+del _Person_rebuild

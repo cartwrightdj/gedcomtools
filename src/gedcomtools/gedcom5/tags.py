@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-======================================================================
- Project: gedcomtools
- File:    gedcom5/tags.py
- Author:  David J. Cartwright
- Purpose: GEDCOM 5.x tag constants and definitions
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcom5/tags.py
+#  Author:  David J. Cartwright
+#  Purpose: GEDCOM 5.x tag constants and definitions
+#  Created: 2026-01-01
+# ======================================================================
+"""Constants and tag metadata used throughout GEDCOM 5.x parsing."""
 
- Created: 2026-01-01
- Updated:
-
-======================================================================
-"""
 # Python GEDCOM Parser
 #
 # Copyright (C) 2018 Damon Brodie (damon.brodie at gmail.com)
@@ -36,9 +33,7 @@
 #
 # Further information about the license: http://www.gnu.org/licenses/gpl-2.0.html
 
-"""
-GEDCOM tags.
-"""
+# GEDCOM tags.
 
 GEDCOM_PROGRAM_DEFINED_TAG_MREL = "_MREL"
 """Value: `_MREL`

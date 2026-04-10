@@ -6,19 +6,25 @@
  Purpose: Package initializer for the Gedcom-X module exposing all public classes
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-03-31 — added GxConverterBase, G5ToGxConverter alias; added
+                        belt-and-suspenders model_rebuild() calls after all imports
+          2026-04-03 — removed redundant model_rebuild() calls; each module
+                        (event.py, relationship.py) self-rebuilds at load time
 
 ======================================================================
 """
 from .gx_base import GedcomXModel
-from .extensible import Extensible, import_plugins
-
-r = import_plugins(
-    "gedcomx",
-    subpackage="extensions",
-    local_dir="./plugins",
-    env_var="GEDCOMX_PLUGINS",
-    recursive=False,
+from .extensible import (
+    Extensible,
+    import_plugins,
+    plugin_registry,
+    set_trust_level,
+    TrustLevel,
+    PluginRegistry,
+    PluginEntry,
+    PluginStatus,
+    PluginBlockedError,
+    RegistryLockedError,
 )
 
 from .subject import Subject
@@ -26,7 +32,9 @@ from .agent import Agent
 from .address import Address
 from .attribution import Attribution
 from .conclusion import Conclusion
+from .converter_base import GxConverterBase
 from .conversion import GedcomConverter
+G5ToGxConverter = GedcomConverter  # preferred alias; GedcomConverter kept for backward compat
 from .coverage import Coverage
 from .date import Date
 from .document import Document
@@ -69,3 +77,8 @@ from .validation import ValidationIssue, ValidationResult
 
 from ..gedcom7.gedcom7 import Gedcom7, GedcomStructure
 
+# Forward-reference resolution: EventRole.person and Relationship.person1/person2
+# are typed as Union[Person, Resource].  Because person.py does not import
+# event.py or relationship.py, pydantic model_rebuild() is called at the bottom
+# of each respective module (event.py, relationship.py) immediately after a safe
+# deferred import of Person.  No additional rebuild calls are needed here.

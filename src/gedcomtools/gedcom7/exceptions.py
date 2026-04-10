@@ -23,5 +23,3 @@ class GedcomError(Exception):
 
 class GedcomParseError(GedcomError):
     """Raised when a GEDCOM file cannot be opened or is structurally invalid."""
-
-

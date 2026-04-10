@@ -1,10 +1,20 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/uri.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX URI model: structured URI with scheme, authority, path, query, and fragment
+
+ Created: 2025-08-25
+ Updated:
+======================================================================
+"""
 from __future__ import annotations
 
-from typing import Any, ClassVar, Optional
+from typing import Any, Optional
 from urllib.parse import SplitResult, urlsplit, urlunparse, urlunsplit
 
 from pydantic import model_serializer, model_validator
-from pydantic_core import core_schema
 
 from ..glog import get_logger
 from .gx_base import GedcomXModel
@@ -145,6 +155,7 @@ class URI(GedcomXModel):
 
     @property
     def value(self) -> str | None:
+        """Return the URI as a string assembled from its components, or None if all components are empty."""
         parts = [
             self.scheme or "",
             self.authority or "",
@@ -158,6 +169,7 @@ class URI(GedcomXModel):
         return str(urlunparse(parts))
 
     def split(self) -> SplitResult:
+        """Return a :class:`~urllib.parse.SplitResult` of this URI's components."""
         return SplitResult(
             self.scheme or "",
             self.authority or "",
@@ -177,4 +189,5 @@ class URI(GedcomXModel):
 
     @classmethod
     def from_url(cls, url: Any) -> "URI":
+        """Construct a URI by parsing any URL-like value via the ``target`` construction path."""
         return cls.model_validate({"target": url})

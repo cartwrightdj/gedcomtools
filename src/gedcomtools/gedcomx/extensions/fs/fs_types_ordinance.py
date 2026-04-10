@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 import enum
-from typing import Any, ClassVar, List, Optional
+from typing import ClassVar, List, Optional
 
 from pydantic import Field
 

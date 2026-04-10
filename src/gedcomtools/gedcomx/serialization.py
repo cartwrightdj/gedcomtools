@@ -1,18 +1,17 @@
+"""Serialize, deserialize, and resolve references across GedcomX object graphs."""
+
 from __future__ import annotations
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/serialization.py
- Author:  David J. Cartwright
- Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
-
- Created: 2025-08-25
- Updated:
-   - 2025-08-31: cleaned up imports and documentation
-
-======================================================================
-"""
-
+# ======================================================================
+#  Project: gedcomtools
+#  File:    gedcomx/serialization.py
+#  Author:  David J. Cartwright
+#  Purpose: Serialization and deserialization of Gedcom-X objects to/from JSON
+#  Created: 2025-08-25
+#  Updated: 2026-03-24 — restored Resource reference serialization; removed
+#                         _GXModel short-circuit; added _RESOURCE_REF_FIELDS
+#                         with MRO walk; fixed _normalize_field_type for unions;
+#                         added _to_dict dispatch for GedcomX container
+# ======================================================================
 from collections.abc import Sized
 from dataclasses import dataclass, field
 import enum
@@ -20,7 +19,6 @@ from functools import lru_cache
 from time import perf_counter
 import types
 from typing import (
-    Annotated,
     Any,
     Callable,
     Dict,
@@ -33,48 +31,77 @@ from typing import (
     get_origin,
 )
 
-"""
-======================================================================
-GEDCOM Module Types
-======================================================================
-"""
-from .address import Address
-from .agent import Agent
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel
-from .date import Date
-from .document import Document, DocumentType, TextType
-from .evidence_reference import EvidenceReference
-from .event import Event, EventType, EventRole, EventRoleType
-from .fact import Fact, FactType, FactQualifier
+# GEDCOM Module Types
 from .gedcomx import TypeCollection
-from .gender import Gender, GenderType
-from .identifier import IdentifierList, Identifier
+from .identifier import IdentifierList
 from ..glog import get_logger, hub
-from .name import Name, NameType, NameForm, NamePart, NamePartType, NamePartQualifier
-from .note import Note
-from .online_account import OnlineAccount
-from .person import Person
-from .place_description import PlaceDescription
-from .place_reference import PlaceReference
-from .qualifier import Qualifier
-from .relationship import Relationship, RelationshipType
 from .resource import Resource
 from .gx_base import GedcomXModel as _GXModel
 
 
+# Fields typed Optional[Any] during the pydantic migration that should still be
+# serialized as resource references ({"resource": "#id"}).  Keyed by class name
+# so the lookup is O(1) and import-free.  MRO is walked so subclass fields are
+# covered automatically (see _get_resource_overrides).
+_RESOURCE_REF_FIELDS: Dict[str, Set[str]] = {
+    "Conclusion":        {"analysis"},
+    "Relationship":      {"person1", "person2"},
+    "EventRole":         {"person"},
+    "GroupRole":         {"person"},
+    "SourceReference":   {"description"},   # URI | SourceDescription → resource ref
+    "SourceDescription": {"analysis"},       # Resource | Document → resource ref
+    "PlaceReference":    {"descriptionRef"}, # Resource | URI | PlaceDescription → resource ref
+}
+
+
+def _normalize_field_type(tp: Any) -> Any:
+    """Strip Optional, then prefer Resource over URI over first type in a Union."""
+    # Strip Optional[X] → X
+    origin = get_origin(tp)
+    args = get_args(tp)
+    if origin is Union and len(args) == 2 and type(None) in args:  # pylint: disable=unidiomatic-typecheck
+        tp = next(a for a in args if a is not type(None))
+        origin = get_origin(tp)
+        args = get_args(tp)
+
+    # Union[A, B, ...] → prefer Resource > URI > first
+    if origin is Union:
+        for preferred in (Resource,):
+            if any(a is preferred for a in args):
+                return preferred
+        return args[0] if args else tp
+
+    return tp
+
+
+def _get_resource_overrides(cls) -> Set[str]:
+    """Accumulate resource-reference field names across the full MRO."""
+    overrides: Set[str] = set()
+    for base in cls.__mro__:
+        overrides |= _RESOURCE_REF_FIELDS.get(base.__name__, set())
+    return overrides
+
+
 def _get_class_fields(cls) -> dict:
-    """Return {field_name: annotation} for pydantic GedcomXModel subclasses."""
-    if isinstance(cls, type) and issubclass(cls, _GXModel):
-        return {k: v.annotation for k, v in cls.model_fields.items()}
-    return {}
+    """Return {field_name: normalised_type} for pydantic GedcomXModel subclasses."""
+    if not (isinstance(cls, type) and issubclass(cls, _GXModel)):
+        return {}
+    resource_overrides = _get_resource_overrides(cls)
+    result = {}
+    for k, v in cls.model_fields.items():
+        if k in resource_overrides:
+            result[k] = Resource
+        else:
+            result[k] = _normalize_field_type(v.annotation)
+    return result
 
 
 class _SchemaBridge:
-    """Minimal SCHEMA compatibility shim using pydantic model_fields."""
+    """SCHEMA compatibility shim: normalised field types from pydantic model_fields."""
 
     @staticmethod
     def get_class_fields(name_or_cls) -> dict | None:
+        """Return normalized schema field metadata for the given class."""
         if isinstance(name_or_cls, type):
             f = _get_class_fields(name_or_cls)
             return f if f else None
@@ -82,11 +109,16 @@ class _SchemaBridge:
 
 
 SCHEMA = _SchemaBridge()
-from .source_description import SourceDescription, ResourceType, SourceCitation, Coverage
-from .source_reference import SourceReference
-from .textvalue import TextValue
 from .uri import URI
-#======================================================================
+# ======================================================================
+#  Project: gedcomtools
+#  File:    serialization.py
+#  Author:  David J. Cartwright
+#  Purpose: Serialize / deserialize GedcomX objects to/from JSON dicts
+#  Updated: 2026-03-29 — serialize(dict): filter None values after
+#                         recursive serialization; previously empty list
+#                         fields produced "key": null in output
+# ======================================================================
 
 log = get_logger(__name__)
 
@@ -95,6 +127,7 @@ deserial_log = "gedcomx.deserialization"
 
 @dataclass
 class ResolveStats:
+    """Telemetry counters and details collected during a reference-resolution pass."""
     # high-level counters
     total_refs: int = 0
     cache_hits: int = 0
@@ -115,25 +148,32 @@ class ResolveStats:
         d[k] = d.get(k, 0) + n
 
     def note_attempt(self, *, ref_type: str, key: Any, path: Tuple[str, ...], cache_hit: bool) -> None:
+        """Record a resolution attempt, incrementing total and cache hit/miss counters."""
         self.total_refs += 1
-        if cache_hit: self.cache_hits += 1
-        else:         self.cache_misses += 1
+        if cache_hit:
+            self.cache_hits += 1
+        else:
+            self.cache_misses += 1
         self._bump(self.by_ref_type, ref_type)
         self.attempts.append({"ref_type": ref_type, "key": key, "path": "/".join(path), "cache_hit": cache_hit})
 
     def note_success(self, *, target: Any) -> None:
+        """Record a successful resolution and increment the target-type counter."""
         self.resolved_ok += 1
         self._bump(self.by_target_type, type(target).__name__)
 
     def note_failure(self, *, ref_type: str, key: Any, path: Tuple[str, ...], reason: str) -> None:
+        """Record a failed resolution with the failure reason."""
         self.resolved_fail += 1
         self.failures.append({"ref_type": ref_type, "key": key, "path": "/".join(path), "reason": reason})
 
     def note_resolver_time(self, dt_ms: float) -> None:
+        """Accumulate resolver wall-clock time in milliseconds."""
         self.resolver_time_ms += dt_ms
 
 class Serialization:
- 
+    """Static utilities for serializing GedcomX objects to JSON-compatible dicts and deserializing them back."""
+
     @staticmethod
     def serialize(obj):
         """Serialize a GedcomX object (or primitive) to a JSON-compatible dict/value.
@@ -143,17 +183,17 @@ class Serialization:
         """
         if obj is not None:
             with hub.use(serial_log):
-                if hasattr(obj,'_serializer'):
+                if hasattr(obj, '_serializer'):
                     return obj._serializer
 
                 if isinstance(obj, (str, int, float, bool, type(None))):
                     return obj
                 if isinstance(obj, dict):
-                    r = {k: Serialization.serialize(v) for k, v in obj.items()}
-                    return r if r != {} else None
+                    r = {k: sv for k, v in obj.items() if (sv := Serialization.serialize(v)) is not None}
+                    return r if r else None
                 if isinstance(obj, URI):
                     return obj.value
-                if isinstance(obj, (list, tuple, set)) or isinstance(obj, TypeCollection):
+                if isinstance(obj, (list, tuple, set, TypeCollection)):
                     seq = obj if not isinstance(obj, TypeCollection) else list(obj)
                     if len(obj) == 0:
                         return None
@@ -162,30 +202,32 @@ class Serialization:
                 if isinstance(obj, enum.Enum):
                     return Serialization.serialize(obj.value)
 
-                # Pydantic models: use model_dump for serialization
-                if isinstance(obj, _GXModel):
-                    result = obj.model_dump(exclude_none=True, mode="json")
-                    return result if result else None
-
+                # Walk schema fields, handling Resource and URI specially.
+                # Pydantic models fall through to model_dump only when no fields found.
                 type_as_dict = {}
                 fields = SCHEMA.get_class_fields(type(obj))
                 if fields:
                     for field_name, type_ in fields.items():
                         if hasattr(obj, field_name):
                             if (v := getattr(obj, field_name)) is not None:
-                                if type_ == Resource or type_ == 'Resource':
+                                if type_ in (Resource, 'Resource'):
                                     res = Resource._of_object(target=v)
-                                    type_as_dict[field_name] = Serialization.serialize(res.value)
-                                elif type_ == URI or type_ == 'URI':
+                                    if res is not None:
+                                        type_as_dict[field_name] = Serialization.serialize(res.value)
+                                elif type_ in (URI, 'URI'):
                                     uri = URI.model_validate({"target": v})
                                     type_as_dict[field_name] = uri.value
                                 elif (sv := Serialization.serialize(v)) is not None:
                                     type_as_dict[field_name] = sv
                         else:
                             log.warning("{} missing expected field '{}'", type(obj).__name__, field_name)
-                    return type_as_dict if type_as_dict != {} else None
-                else:
-                    log.error("No SCHEMA fields found for {}", type(obj).__name__)
+                    return type_as_dict if type_as_dict else None
+
+                # Fallback for pydantic models with no registered schema fields
+                if isinstance(obj, _GXModel):
+                    result = obj.model_dump(exclude_none=True, mode="json")
+                    return result if result else None
+                log.error("No SCHEMA fields found for {}", type(obj).__name__)
         return None
 
     @staticmethod
@@ -199,7 +241,7 @@ class Serialization:
         def _serialize(value):
             if isinstance(value, (str, int, float, bool, type(None))):
                 return value
-            if (fields := SCHEMA.get_class_fields(type(value))) is not None:
+            if (_fields := SCHEMA.get_class_fields(type(value))) is not None:
                 # Expect your objects expose a snapshot via to_dict
                 return Serialization.serialize(value)
             if isinstance(value, dict):
@@ -224,7 +266,7 @@ class Serialization:
         return {}
 
     # --- tiny helpers --------------------------------------------------------
-       
+
     @staticmethod
     def _as_concrete_class(T: Any) -> type | None:
         """If T resolves to an actual class type, return it; else None."""
@@ -233,10 +275,34 @@ class Serialization:
 
     @staticmethod
     def _is_reference(x: Any) -> bool:
+        """Return True if *x* is a Resource or URI (i.e. a reference, not an inline value)."""
         return isinstance(x, (Resource, URI))
 
     @staticmethod
+    def _is_external_reference(x: Any) -> bool:
+        """Return True if x points to an external (non-local) resource.
+
+        External references have an authority (e.g. ``example.com``) or use a
+        network scheme (``http``, ``https``, ``ftp`` …).  Fragment-only and
+        resourceId references are always local and return False.
+        """
+        _EXTERNAL_SCHEMES = {"http", "https", "ftp", "ftps", "urn"}
+        uri: URI | None = None
+        if isinstance(x, Resource):
+            uri = x.resource
+        elif isinstance(x, URI):
+            uri = x
+        if uri is None:
+            return False
+        if uri.authority:
+            return True
+        if uri.scheme and uri.scheme.lower() in _EXTERNAL_SCHEMES:
+            return True
+        return False
+
+    @staticmethod
     def _has_reference_value(x: Any) -> bool:
+        """Return True if *x* or any nested element is a Resource or URI reference."""
         if Serialization._is_reference(x):
             return True
         if isinstance(x, (list, tuple, set)):
@@ -272,9 +338,16 @@ class Serialization:
 
             # Direct reference?
             if Serialization._is_reference(x):
+                # Skip external references — only resolve local (fragment/ID) refs
+                if Serialization._is_external_reference(x):
+                    log.debug("skipping external reference: {}", x)
+                    return x
+
                 ref_type = type(x).__name__
-                key = getattr(x, "resourceId", None) or getattr(x, "resource", None) or getattr(x, "value", None)
-                cache_hit = key in _cache
+                raw_key = getattr(x, "resourceId", None) or getattr(x, "resource", None) or getattr(x, "value", None)
+                # Normalise to a hashable string so URI objects (Pydantic, not hashable) work as cache keys
+                key = str(raw_key) if raw_key is not None else None
+                cache_hit = key in _cache if key is not None else False
                 if stats is not None:
                     stats.note_attempt(ref_type=ref_type, key=key, path=_path, cache_hit=cache_hit)
 
@@ -354,6 +427,21 @@ class Serialization:
                             log.debug("'{}' field '{}' did not resolve", type(x).__name__, fname)
                 return x
 
+            # Plain Python objects (e.g. GedcomX root): walk public __dict__ attrs so
+            # that nested TypeCollections and Pydantic models are reached by the resolver.
+            if hasattr(x, "__dict__") and not isinstance(x, type):
+                for fname, fval in list(vars(x).items()):
+                    if fname.startswith("_"):
+                        continue
+                    new = Serialization._resolve_structure(fval, resolver, _seen=_seen, _cache=_cache,
+                                                        stats=stats, _path=(*_path, fname))
+                    if new is not fval:
+                        try:
+                            setattr(x, fname, new)
+                        except Exception:
+                            log.debug("'{}' field '{}' did not resolve", type(x).__name__, fname)
+                return x
+
             # Anything else: leave as-is
             return x
 
@@ -367,7 +455,7 @@ class Serialization:
         inst._resource_setters = []
 
     # --- your deserialize with setters --------------------------------------
-    
+
     @classmethod
     def deserialize(
         cls,
@@ -379,15 +467,10 @@ class Serialization:
     ) -> Any:
         """Deserialize a JSON dict into an instance of ``class_type``.
 
-        Args:
-            data: A JSON-compatible dict whose keys correspond to ``class_type`` fields.
-            class_type: The target class to instantiate.
-            resolver: Optional callable to immediately resolve Resource/URI references.
-            queue_setters: If True, unresolved references are stored as lazy setters
-                on the instance for deferred resolution.
-
-        Returns:
-            An instance of ``class_type`` populated from ``data``.
+        ``data`` should contain keys that correspond to ``class_type`` fields.
+        If ``resolver`` is provided, Resource and URI references are resolved
+        immediately; otherwise unresolved references may be queued as lazy
+        setters when ``queue_setters`` is true.
         """
         with hub.use(deserial_log):
             t0 = perf_counter()
@@ -465,7 +548,7 @@ class Serialization:
                     int(bool(resolver)) * len(pending), len(getattr(inst, "_resource_setters", [])))
             return inst
 
-  
+
     @classmethod
     def _coerce_value(cls, value: Any, Typ: Any) -> Any:
         """Coerce `value` into `Typ` using the registry (recursively)."""
@@ -480,7 +563,6 @@ class Serialization:
 
         # Unwrap typing once
         T = cls._resolve_forward(cls._unwrap(Typ))
-        origin = get_origin(T) or T
         args = get_args(T)
 
         # Strings to Resource/URI
@@ -679,12 +761,14 @@ class Serialization:
 
         return visit(root)
 
-        
+
     # -------------------------- TYPE HELPERS --------------------------
 
-    
+
+    @staticmethod
     @lru_cache(maxsize=None)
     def _unwrap(T: Any) -> Any:
+        """Strip Optional/Annotated wrappers and flatten single-member Unions."""
         origin = get_origin(T)
         if origin is None:
             return T
@@ -692,13 +776,14 @@ class Serialization:
             args = get_args(T)
             return Serialization._unwrap(args[0]) if args else Any
         if origin in (Union, types.UnionType):
-            args = tuple(a for a in get_args(T) if a is not type(None))
+            args = tuple(a for a in get_args(T) if a is not type(None))  # pylint: disable=unidiomatic-typecheck
             return Serialization._unwrap(args[0]) if len(args) == 1 else tuple(Serialization._unwrap(a) for a in args)
         return T
 
     @staticmethod
     @lru_cache(maxsize=None)
     def _resolve_forward(T: Any) -> Any:
+        """Resolve a ForwardRef or string type annotation to the actual class if available."""
         if isinstance(T, ForwardRef):
             return globals().get(T.__forward_arg__, T)
         if isinstance(T, str):
@@ -708,6 +793,7 @@ class Serialization:
     @staticmethod
     @lru_cache(maxsize=None)
     def _is_enum_type(T: Any) -> bool:
+        """Return True if the resolved type is an Enum subclass."""
         U = Serialization._resolve_forward(Serialization._unwrap(T))
         try:
             return isinstance(U, type) and issubclass(U, enum.Enum)
@@ -716,24 +802,28 @@ class Serialization:
 
     @staticmethod
     def _is_list_like(T: Any) -> bool:
+        """Return True if T is a list or List annotation."""
         origin = get_origin(T) or T
         return origin in (list, List)
 
     @staticmethod
     def _is_set_like(T: Any) -> bool:
+        """Return True if T is a set or Set annotation."""
         origin = get_origin(T) or T
         return origin in (set, Set)
 
     @staticmethod
     def _is_tuple_like(T: Any) -> bool:
+        """Return True if T is a tuple or Tuple annotation."""
         origin = get_origin(T) or T
         return origin in (tuple, Tuple)
 
     @staticmethod
     def _is_dict_like(T: Any) -> bool:
+        """Return True if T is a dict or Dict annotation."""
         origin = get_origin(T) or T
         return origin in (dict, Dict)
-    
+
     @staticmethod
     def _is_typecollection_annot(T: Any) -> bool:
         """Return True iff the annotation is TypeCollection[...] or TypeCollection."""
@@ -750,5 +840,3 @@ class Serialization:
         U = Serialization._resolve_forward(Serialization._unwrap(T))
         args = get_args(U)
         return args[0] if args else Any
-
-    

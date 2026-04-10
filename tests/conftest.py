@@ -4,19 +4,16 @@ Shared fixtures for the gedcomtools test suite.
 import pytest
 from pathlib import Path
 
-SAMPLE_DATA = Path(__file__).parent.parent / ".sample_data"
+SAMPLE_DATA  = Path(__file__).parent.parent / ".sample_data"
+GEDCOM5_DATA = SAMPLE_DATA / "gedcom5"
 
-# Small / fast files
-GED_TINY    = SAMPLE_DATA / "555SAMPLE.GED"
-GED_SMALL   = SAMPLE_DATA / "Sui_Dynasty.ged"
-GED_MEDIUM  = SAMPLE_DATA / "allged.ged"
-GED_LARGE   = SAMPLE_DATA / "Royal92-Famous+European+Royalty+Gedcom.ged"
-GED_DJC     = SAMPLE_DATA / "_DJC_ Nunda Cartwright Family.ged"
-GED_COMPREHENSIVE = SAMPLE_DATA / "comprehensive_test.ged"
+GED_TINY          = GEDCOM5_DATA / "gedcom5_sample.ged"
+GED_SMALL         = GEDCOM5_DATA / "gedcom5_sui_dynasty.ged"
+GED_MEDIUM        = GEDCOM5_DATA / "gedcom5_all_tags_ascii.ged"
+GED_LARGE         = GEDCOM5_DATA / "gedcom5_european_royalty_large.ged"
+GED_COMPREHENSIVE = GEDCOM5_DATA / "gedcom5_comprehensive.ged"
 
-GX_TINY     = SAMPLE_DATA / "full.gedcomx"
-GX_SMALL    = SAMPLE_DATA / "blakesley_gedcomx_sample.json"
-GX_MEDIUM   = SAMPLE_DATA / "blakesley_gedcomx_fullish.json"
+GX_TINY = SAMPLE_DATA / "gedcomx" / "full.gedcomx"
 
 
 @pytest.fixture(scope="session")
@@ -49,11 +46,3 @@ def ged_comprehensive():
     return GED_COMPREHENSIVE
 
 
-@pytest.fixture(scope="session")
-def gx_small():
-    return GX_SMALL
-
-
-@pytest.fixture(scope="session")
-def gx_medium():
-    return GX_MEDIUM

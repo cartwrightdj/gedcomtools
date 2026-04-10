@@ -1,23 +1,41 @@
+"""
+======================================================================
+ Project: Gedcom-X
+ File:    gedcomx/event.py
+ Author:  David J. Cartwright
+ Purpose: GedcomX Event model: Event, EventType, and EventRole types
+
+ Created: 2025-08-25
+ Updated: 2026-03-31 — replaced bare bottom-of-file circular-import pattern with
+                        explicit _types_namespace={"Person": ...} rebuild call;
+                        adds del to keep Person out of module's public namespace
+======================================================================
+"""
+# GedcomX Event and EventRole models.
+# EventRole.person typed as Union[Person, Resource]; circular import resolved via
+# bottom-of-file import and model_rebuild().
+
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, ClassVar, List, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Union
 
-from pydantic import Field
+if TYPE_CHECKING:
+    from .person import Person
 
-from .attribution import Attribution
-from .conclusion import ConfidenceLevel, Conclusion
+from pydantic import Field, field_validator
+
+from .conclusion import Conclusion
 from .date import Date
-from .evidence_reference import EvidenceReference
-from .identifier import IdentifierList
-from .note import Note
 from .place_reference import PlaceReference
 from .resource import Resource
-from .source_reference import SourceReference
+from .uri import URI
 from .subject import Subject
 
 
 class EventRoleType(Enum):
+    """Enumeration of recognized roles a person may play in an event."""
+
     Principal = "http://gedcomx.org/Principal"
     Participant = "http://gedcomx.org/Participant"
     Official = "http://gedcomx.org/Official"
@@ -25,6 +43,7 @@ class EventRoleType(Enum):
 
     @property
     def description(self):
+        """Return a human-readable description of this event role type."""
         descriptions = {
             EventRoleType.Principal: "The person is the principal person of the event.",
             EventRoleType.Participant: "A participant in the event.",
@@ -35,12 +54,23 @@ class EventRoleType(Enum):
 
 
 class EventRole(Conclusion):
+    """A person's role in a genealogical event."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/EventRole"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    person: Optional[Any] = None
+    person: Optional[Union[Person, Resource]] = None
     type: Optional[EventRoleType] = None
     details: Optional[str] = None
+
+    @field_validator("person", mode="before")
+    @classmethod
+    def _coerce_person(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            return Resource.model_validate(v)
+        if isinstance(v, str):
+            return Resource(resource=URI(target=v))  # type: ignore[call-arg]
+        return v
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
@@ -84,6 +114,8 @@ class EventRole(Conclusion):
 
 
 class EventType(Enum):
+    """Enumeration of known genealogical event types."""
+
     Adoption = "http://gedcomx.org/Adoption"
     AdultChristening = "http://gedcomx.org/AdultChristening"
     Annulment = "http://gedcomx.org/Annulment"
@@ -119,9 +151,11 @@ class EventType(Enum):
     Ordination = "http://gedcomx.org/Ordination"
     Retirement = "http://gedcomx.org/Retirement"
     MarriageSettlment = "https://gedcom.io/terms/v7/MARS"
+    UnknowUserCreated = "https://gedcom.io/terms/v1/UUCE"
 
     @property
     def description(self):
+        """Return a human-readable description of this event type."""
         descriptions = {
             EventType.Adoption: "An adoption event.",
             EventType.AdultChristening: "An adult christening event.",
@@ -162,6 +196,7 @@ class EventType(Enum):
 
     @staticmethod
     def guess(description):
+        """Return the best-matching EventType for the given description string, or None."""
         keywords_to_event_type = {
             "adoption": EventType.Adoption,
             "christening": EventType.Christening,
@@ -206,6 +241,8 @@ class EventType(Enum):
 
 
 class Event(Subject):
+    """A genealogical event with an optional date, place, and participant roles."""
+
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Event"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
@@ -225,3 +262,12 @@ class Event(Subject):
         check_instance(result, "place", self.place, PlaceReference)
         for i, role in enumerate(self.roles):
             check_instance(result, f"roles[{i}]", role, EventRole)
+
+
+# Resolve the Person ↔ EventRole forward reference.
+# person.py does not import event.py at module level, so this deferred import
+# is safe.  _types_namespace makes the resolution explicit and keeps 'Person'
+# out of event.py's public namespace.
+from .person import Person as _Person_rebuild  # noqa: E402
+EventRole.model_rebuild(_types_namespace={"Person": _Person_rebuild})
+del _Person_rebuild

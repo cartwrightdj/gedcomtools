@@ -10,7 +10,7 @@ import pytest
 from pathlib import Path
 from gedcomtools.gedcom5.parser import Gedcom5x
 
-SAMPLE = Path(__file__).parent.parent / ".sample_data" / "555SAMPLE.GED"
+SAMPLE = Path(__file__).parent.parent / ".sample_data" / "gedcom5" / "gedcom5_sample.ged"
 
 
 @pytest.fixture(scope="module")

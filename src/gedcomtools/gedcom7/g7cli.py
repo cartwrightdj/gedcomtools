@@ -15,6 +15,7 @@
                  show command displays model summary for INDI/FAM top-level nodes;
                  find results show full node path via get_path()
    - 2026-03-16: import updated GedcomStructure.py → structure.py
+   - 2026-04-03: _is_url moved to utils.Utilities; removed Shell._is_url staticmethod
 ======================================================================
 
 g7cli — interactive GEDCOM 7 browser / editor.
@@ -50,11 +51,13 @@ import os
 import re
 import shlex
 import sys
+import urllib.error
 from pathlib import Path
 from typing import List, Optional
 
+from ..utils.Utilities import _is_url
 from .structure import GedcomStructure
-from .gedcom7 import Gedcom7, GedcomValidationError
+from .gedcom7 import Gedcom7
 from .writer import Gedcom7Writer
 from .models import individual_detail, family_detail
 
@@ -74,12 +77,18 @@ def _ansi(code: str, text: str) -> str:
     return f"\x1b[{code}m{text}\x1b[0m"
 
 
-def _green(t: str) -> str:  return _ansi("32", t)
-def _yellow(t: str) -> str: return _ansi("33", t)
-def _cyan(t: str) -> str:   return _ansi("36", t)
-def _red(t: str) -> str:    return _ansi("31", t)
-def _bold(t: str) -> str:   return _ansi("1",  t)
-def _dim(t: str) -> str:    return _ansi("2",  t)
+def _green(t: str) -> str:
+    return _ansi("32", t)
+def _yellow(t: str) -> str:
+    return _ansi("33", t)
+def _cyan(t: str) -> str:
+    return _ansi("36", t)
+def _red(t: str) -> str:
+    return _ansi("31", t)
+def _bold(t: str) -> str:
+    return _ansi("1",  t)
+def _dim(t: str) -> str:
+    return _ansi("2",  t)
 
 
 def _clip(text: str, width: int) -> str:
@@ -129,6 +138,7 @@ class Shell:
     # ------------------------------------------------------------------
 
     def run(self, initial_file: Optional[str] = None) -> None:
+        """Run the interactive shell loop."""
         print(f"g7cli {_VERSION}  —  GEDCOM 7 browser/editor  —  type 'help' or '?' for commands")
         if initial_file:
             self._do_load(initial_file)
@@ -272,13 +282,13 @@ class Shell:
     # ------------------------------------------------------------------
 
     def _cmd_load(self, args: List[str]) -> None:
-        """load <path>  — load a GEDCOM 7 file."""
+        """load <path|url>  — load a GEDCOM 7 file from disk or an HTTP/HTTPS URL."""
         if len(args) != 1:
-            print("usage: load <path.ged>")
+            print("usage: load <path.ged|url>")
             return
         self._do_load(args[0])
 
-    def _cmd_reload(self, args: List[str]) -> None:
+    def _cmd_reload(self, _args: List[str]) -> None:
         """reload  — re-read the current file from disk, discarding in-memory changes."""
         if self.filepath is None:
             print("! No file loaded. Use: load <path.ged>")
@@ -298,6 +308,31 @@ class Shell:
             if answer not in ("y", "yes"):
                 print("Load cancelled.")
                 return
+
+        if _is_url(path):
+            print(f"Fetching {path} …")
+            g = Gedcom7()
+            try:
+                g.load_url(path)
+            except urllib.error.HTTPError as exc:
+                print(f"! HTTP {exc.code}: {exc.reason}")
+                return
+            except urllib.error.URLError as exc:
+                print(f"! Cannot fetch URL: {exc.reason}")
+                return
+            self.g = g
+            self._dirty = False
+            self.filepath = None
+            self.cur = None
+            self._stack = []
+            ver = g.detect_gedcom_version() or "?"
+            print(
+                f"  Loaded {_green(str(len(g.records)))} records  "
+                f"GEDCOM {_bold(ver)}  "
+                f"{_dim(path)}"
+            )
+            return
+
         p = Path(path)
         if not p.exists():
             print(f"! File not found: {p}")
@@ -327,6 +362,7 @@ class Shell:
         """write <path>  — write the loaded records to a GEDCOM 7 file."""
         if not self._require_file():
             return
+        assert self.g is not None
         if len(args) != 1:
             print("usage: write <path.ged>")
             return
@@ -336,10 +372,11 @@ class Shell:
         print(f"Written to {_green(str(dest))}")
         self._dirty = False
 
-    def _cmd_validate(self, args: List[str]) -> None:
+    def _cmd_validate(self, _args: List[str]) -> None:
         """validate  — run the GEDCOM 7 validator."""
         if not self._require_file():
             return
+        assert self.g is not None
         issues = self.g.validate()
         errors   = [i for i in issues if i.severity == "error"]
         warnings = [i for i in issues if i.severity == "warning"]
@@ -354,10 +391,11 @@ class Shell:
         status = _red(f"{len(errors)} error(s)") if errors else _green("0 error(s)")
         print(f"\n{status}, {_yellow(str(len(warnings)))} warning(s)")
 
-    def _cmd_info(self, args: List[str]) -> None:
+    def _cmd_info(self, _args: List[str]) -> None:
         """info  — file-level summary."""
         if not self._require_file():
             return
+        assert self.g is not None
         from collections import Counter
         ver = self.g.detect_gedcom_version() or "unknown"
         counts = Counter(r.tag for r in self.g.records)
@@ -367,7 +405,7 @@ class Shell:
         for tag, n in sorted(counts.items()):
             print(f"  {tag:<8} {n}")
 
-    def _cmd_ls(self, args: List[str]) -> None:
+    def _cmd_ls(self, _args: List[str]) -> None:
         """ls  — list children of the current node (or top-level records)."""
         if not self._require_file():
             return
@@ -437,7 +475,7 @@ class Shell:
             self._stack.append(self.cur)
         self.cur = node
 
-    def _cmd_pwd(self, args: List[str]) -> None:
+    def _cmd_pwd(self, _args: List[str]) -> None:
         """pwd  — print the current path."""
         labels = self._path_labels()
         print("g7:/" + "/".join(labels))
@@ -446,6 +484,7 @@ class Shell:
         """show [--all]  — show fields of the current node.  --all includes children."""
         if not self._require_file():
             return
+        assert self.g is not None
 
         show_all = "--all" in args
 
@@ -520,6 +559,7 @@ class Shell:
             return
 
         target = pos[0].upper()
+        assert self.g is not None
         results: List[GedcomStructure] = []
 
         def _walk(node: GedcomStructure) -> None:
@@ -554,6 +594,7 @@ class Shell:
         """
         if not self._require_node():
             return
+        assert self.cur is not None
         if len(args) < 1:
             print("usage: set payload|tag|xref <value>")
             return
@@ -592,6 +633,7 @@ class Shell:
         """add <tag> [payload]  — append a child to the current node."""
         if not self._require_file():
             return
+        assert self.g is not None
         if not args:
             print("usage: add <tag> [payload]")
             return
@@ -636,6 +678,7 @@ class Shell:
         """rm <index>  — remove a child of the current node by index."""
         if not self._require_file():
             return
+        assert self.g is not None
         if not args or not re.fullmatch(r"\d+", args[0]):
             print("usage: rm <index>")
             return
@@ -659,7 +702,7 @@ class Shell:
         print(f"Removed {_green(node.tag)} (was index {idx})")
         self._dirty = True
 
-    def _cmd_help(self, args: List[str]) -> None:
+    def _cmd_help(self, _args: List[str]) -> None:
         """help  — show available commands."""
         print(__doc__)
 
@@ -669,6 +712,7 @@ class Shell:
 # ---------------------------------------------------------------------------
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Run the command-line entry point."""
     args = (argv if argv is not None else sys.argv)[1:]
     shell = Shell()
     shell.run(initial_file=args[0] if args else None)

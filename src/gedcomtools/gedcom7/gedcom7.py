@@ -16,6 +16,13 @@
                  imported models layer; get_parents/get_children_of/get_spouses
                  relationship traversal helpers
    - 2026-03-16: import updated GedcomStructure.py → structure.py
+   - 2026-03-24: added to_gedcomx() conversion helper
+   - 2026-03-31: added _rel_cache; get_parents/get_children_of/get_spouses
+                 now cache results and invalidate via parse_lines()
+   - 2026-03-31: URL support in __init__ and load_url(); .ged extension check
+   - 2026-04-01: use RelationshipCacheMixin; _rel_cache access via _cache_get/_cache_set/_cache_clear
+   - 2026-04-03: _is_url/_check_ged_url moved to utils.Utilities; import from there
+   - 2026-04-07: added from_gedcomx() classmethod (GedcomX → GEDCOM 7 conversion)
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -41,8 +48,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Iterable, List, Optional, Union
+from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
 from collections import defaultdict
+import urllib.error
+import urllib.request
+
+from ..utils.Utilities import _is_url, _check_ged_url
 
 from .structure import GedcomStructure
 from . import specification as g7specs
@@ -55,6 +66,7 @@ from .models import (
     individual_detail, family_detail, source_detail, repository_detail,
     media_detail, shared_note_detail, submitter_detail,
 )
+from ..rel_cache import RelationshipCacheMixin
 
 
 @dataclass(slots=True)
@@ -76,22 +88,31 @@ class GedcomValidationError:
     severity: str = "error"
 
 
-class Gedcom7:
+class Gedcom7(RelationshipCacheMixin):
     """Parse and validate GEDCOM 7 files."""
 
     def __init__(self, filepath: Optional[Union[str, Path]] = None) -> None:
         """Initialize the parser.
 
         Args:
-            filepath: Optional GEDCOM file path to load immediately.
+            filepath: Optional GEDCOM file path **or** HTTP/HTTPS URL to load
+                immediately.  URLs must end in ``.ged``.
         """
-        self.filepath: Optional[Path] = Path(filepath) if filepath else None
         self.records: List[GedcomStructure] = []
         self.errors: List[GedcomValidationError] = []
         self._tag_index: DefaultDict[str, List[int]] = defaultdict(list)
+        self._rel_cache: dict[str, list] = {}
 
-        if self.filepath:
-            self.loadfile(self.filepath)
+        if filepath is not None:
+            s = str(filepath)
+            if _is_url(s):
+                self.filepath: Optional[Path] = None
+                self.load_url(s)
+            else:
+                self.filepath = Path(s)
+                self.loadfile(self.filepath)
+        else:
+            self.filepath = None
 
     @staticmethod
     def _norm_tag(tag: str) -> str:
@@ -128,7 +149,7 @@ class Gedcom7:
         """Return the number of top-level records."""
         return len(self.records)
 
-    def __iter__(self) -> Iterable[GedcomStructure]:
+    def __iter__(self) -> Iterator[GedcomStructure]:
         """Iterate over top-level records."""
         return iter(self.records)
 
@@ -141,6 +162,15 @@ class Gedcom7:
         if isinstance(key, str):
             return self._norm_tag(key) in self._tag_index
         return key in self.records
+
+    @overload
+    def __getitem__(self, key: int) -> GedcomStructure: ...
+    @overload
+    def __getitem__(self, key: slice) -> List[GedcomStructure]: ...
+    @overload
+    def __getitem__(self, key: str) -> List[GedcomStructure]: ...
+    @overload
+    def __getitem__(self, key: tuple) -> Union[GedcomStructure, List[GedcomStructure]]: ...
 
     def __getitem__(
         self,
@@ -251,6 +281,44 @@ class Gedcom7:
         ext_tag, uri = parts
         g7specs.register_extension_tag(ext_tag, uri)
 
+    def load_url(self, url: str) -> None:
+        """Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.
+
+        The response body is decoded as UTF-8 (required by the GEDCOM 7
+        specification) and passed to :meth:`parse_string`.
+
+        Args:
+            url: HTTP or HTTPS URL pointing to a ``.ged`` file.
+
+        Raises:
+            ValueError:             If the URL does not end in ``.ged``.
+            urllib.error.URLError:  If the URL cannot be reached.
+            urllib.error.HTTPError: If the server returns an error status.
+            GedcomParseError:       If the response body is not valid UTF-8.
+        """
+        _check_ged_url(url)
+        try:
+            with urllib.request.urlopen(url) as resp:
+                raw = resp.read()
+        except urllib.error.HTTPError as exc:
+            raise urllib.error.HTTPError(
+                exc.url, exc.code,
+                f"HTTP {exc.code} fetching GEDCOM from {url}: {exc.reason}",
+                exc.headers, exc.fp,
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise urllib.error.URLError(
+                f"Cannot fetch GEDCOM from {url}: {exc.reason}"
+            ) from exc
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise GedcomParseError(
+                f"Response from {url} is not valid UTF-8. "
+                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
+            ) from exc
+        self.parse_string(text)
+
     def loadfile(self, filepath: Union[str, Path]) -> None:
         """Load and parse a GEDCOM file.
 
@@ -266,8 +334,14 @@ class Gedcom7:
         except OSError as exc:
             raise GedcomParseError(f"Cannot open file {path}: {exc}") from exc
         self.filepath = path
-        with handle:
-            self.parse_lines(handle)
+        try:
+            with handle:
+                self.parse_lines(handle)
+        except UnicodeDecodeError as exc:
+            raise GedcomParseError(
+                f"File {path} is not valid UTF-8. "
+                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
+            ) from exc
 
     def parse_string(self, text: str) -> None:
         """Parse GEDCOM 7 content from a string.
@@ -295,6 +369,7 @@ class Gedcom7:
         self.records = []
         self.errors = []
         self._tag_index.clear()
+        self._cache_clear()
 
         context: Dict[int, GedcomStructure] = {}
 
@@ -620,22 +695,42 @@ class Gedcom7:
         node = self._record_by_xref("SUBM", xref)
         return submitter_detail(node) if node else None
 
+    def resolve_subm(self, xref: str) -> str:
+        """Resolve a SUBM xref pointer to a human-readable name.
+
+        Returns the submitter's NAME value, or the raw *xref* string if the
+        record cannot be found or has no name.
+
+        Args:
+            xref: Xref id, e.g. ``"@S1@"`` or ``"S1"``.
+        """
+        xref = xref.strip()
+        if not xref.startswith("@"):
+            xref = f"@{xref}@"
+        detail = self.get_submitter_detail(xref)
+        if detail and detail.name:
+            return detail.name
+        return xref
+
     # ------------------------------------------------------------------
     # Relationship traversal — raw records
     # ------------------------------------------------------------------
 
-    def get_parents(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_parents(self, xref: str) -> List[GedcomStructure]:
         """Return the parents of an individual as raw records.
 
         Walks FAMC → FAM → HUSB/WIFE.
 
         Args:
-            indi_xref: Xref id of the individual (e.g. ``"@I1@"``).
+            xref: Xref id of the individual (e.g. ``"@I1@"``).
 
         Returns:
             Raw :class:`GedcomStructure` for each parent found.
         """
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        cached = self._cache_get("p", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
         result: List[GedcomStructure] = []
@@ -651,20 +746,24 @@ class Gedcom7:
                     parent = self._record_by_xref("INDI", ptr_node.payload)
                     if parent:
                         result.append(parent)
+        self._cache_set("p", xref, result)
         return result
 
-    def get_children_of(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_children_of(self, xref: str) -> List[GedcomStructure]:
         """Return the children of an individual as raw records.
 
         Walks FAMS → FAM → CHIL.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`GedcomStructure` for each child found.
         """
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        cached = self._cache_get("c", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
         result: List[GedcomStructure] = []
@@ -679,23 +778,27 @@ class Gedcom7:
                     child_node = self._record_by_xref("INDI", chil.payload)
                     if child_node:
                         result.append(child_node)
+        self._cache_set("c", xref, result)
         return result
 
-    def get_spouses(self, indi_xref: str) -> List[GedcomStructure]:
+    def get_spouses(self, xref: str) -> List[GedcomStructure]:
         """Return the spouses of an individual as raw records.
 
         For each FAMS family, returns the other HUSB or WIFE record.
 
         Args:
-            indi_xref: Xref id of the individual.
+            xref: Xref id of the individual.
 
         Returns:
             Raw :class:`GedcomStructure` for each spouse found.
         """
-        indi_node = self._record_by_xref("INDI", indi_xref)
+        norm_xref = xref.upper()
+        cached = self._cache_get("s", xref)
+        if cached is not None:
+            return cached  # type: ignore[return-value]
+        indi_node = self._record_by_xref("INDI", xref)
         if indi_node is None:
             return []
-        norm_xref = indi_xref.upper()
         result: List[GedcomStructure] = []
         for fams in indi_node.get_children("FAMS"):
             if not fams.payload_is_pointer or not fams.payload:
@@ -710,23 +813,112 @@ class Gedcom7:
                     spouse_node = self._record_by_xref("INDI", ptr_node.payload)
                     if spouse_node:
                         result.append(spouse_node)
+        self._cache_set("s", xref, result)
         return result
 
     # ------------------------------------------------------------------
     # Relationship traversal — Detail models (explicit)
     # ------------------------------------------------------------------
 
-    def get_parents_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_parents_detail(self, xref: str) -> List[IndividualDetail]:
         """Return parents as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_parents(indi_xref)]
+        return [individual_detail(r) for r in self.get_parents(xref)]
 
-    def get_children_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_children_detail(self, xref: str) -> List[IndividualDetail]:
         """Return children as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_children_of(indi_xref)]
+        return [individual_detail(r) for r in self.get_children_of(xref)]
 
-    def get_spouses_detail(self, indi_xref: str) -> List[IndividualDetail]:
+    def get_spouses_detail(self, xref: str) -> List[IndividualDetail]:
         """Return spouses as :class:`IndividualDetail` snapshots."""
-        return [individual_detail(r) for r in self.get_spouses(indi_xref)]
+        return [individual_detail(r) for r in self.get_spouses(xref)]
+
+    def to_gedcomx(self):
+        """Convert this GEDCOM 7 file to a :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Returns:
+            A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance populated
+            from this file's records.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            gx = g7.to_gedcomx()
+            with open("family.json", "wb") as f:
+                f.write(gx.json)
+        """
+        from .g7togx import Gedcom7Converter
+        return Gedcom7Converter().convert(self)
+
+    @classmethod
+    def from_gedcomx(cls, gx) -> "Gedcom7":
+        """Create a :class:`Gedcom7` from a
+        :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
+
+        Args:
+            gx: A :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` instance.
+
+        Returns:
+            A new :class:`Gedcom7` instance whose :attr:`records` hold the
+            converted GEDCOM 7 structure tree.
+
+        Example::
+
+            gx = GedcomX.from_dict(data)
+            g7 = Gedcom7.from_gedcomx(gx)
+            g7.write("output.ged")
+        """
+        from .gxtog7 import GedcomXConverter
+        g7 = cls.__new__(cls)
+        g7.records = GedcomXConverter().convert(gx)
+        return g7
+
+    def gml(self) -> str:
+        """Return the family graph as a GML string.
+
+        Converts this GEDCOM 7 file to GedcomX and serializes it to GML
+        (Graph Modelling Language) suitable for Gephi, yEd, and NetworkX.
+
+        Strings are encoded per the Himsolt 1997 GML spec: ``&quot;`` for
+        embedded double-quotes, ``&amp;`` for ampersands, ``&#NNN;`` for
+        non-ASCII and control characters.  Backslash has no special meaning
+        in GML and is passed through unchanged.
+
+        Returns:
+            GML content as a :class:`str`.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            print(g7.gml())
+        """
+        return self.to_gedcomx().gml()
+
+    def write_gml(
+        self,
+        path: Union[str, Path],
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        """Write the family graph to a GML file.
+
+        Converts this GEDCOM 7 file to GedcomX and writes it as GML
+        (Graph Modelling Language) using an atomic write via a temporary
+        file so a failed write never corrupts the destination.
+
+        Args:
+            path: Destination path.  Parent directory must exist.
+            encoding: File encoding (default UTF-8).
+
+        Raises:
+            FileNotFoundError: If the parent directory does not exist.
+
+        Example::
+
+            g7 = Gedcom7("family.ged")
+            g7.write_gml("family.gml")
+        """
+        from ..gedcomx.gml import GedcomXGmlExporter
+        GedcomXGmlExporter().write(self.to_gedcomx(), path, encoding=encoding)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the full GEDCOM file into a serializable dictionary.

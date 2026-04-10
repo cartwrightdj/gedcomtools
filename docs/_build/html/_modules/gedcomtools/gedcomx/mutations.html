@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gedcomtools.gedcomx.mutations - gedcomtools</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -242,23 +242,15 @@
 <span class="sd"> Updated:</span>
 <span class="sd">   - 2025-08-31: cleaned up imports and documentation</span>
 <span class="sd">   - 2025-09-01: filename PEP8 standard, imports changed accordingly</span>
-<span class="sd">   </span>
+
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">GEDCOM Module Types</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">.._gedcom5x</span> <span class="kn">import</span> <span class="n">Gedcom5xRecord</span>
-<span class="kn">from</span> <span class="nn">.fact</span> <span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
-<span class="kn">from</span> <span class="nn">.event</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">======================================================================</span>
-<span class="sd">Logging</span>
-<span class="sd">======================================================================</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># GEDCOM Module Types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._gedcom5x</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom5xRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
+<span class="c1"># Logging</span>
 <span class="c1">#=====================================================================</span>
 
 <span class="n">fact_event_table</span> <span class="o">=</span> <span class="p">{</span>
@@ -426,8 +418,7 @@
         <span class="c1"># no Event</span>
     <span class="p">},</span>
     <span class="s2">&quot;MARS&quot;</span><span class="p">:{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span><span class="n">EventType</span><span class="o">.</span><span class="n">MarriageSettlment</span>
-
+        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">MarriageSettlment</span>
     <span class="p">},</span>
     <span class="s2">&quot;SEPA&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Separation</span><span class="p">,</span>
@@ -438,18 +429,22 @@
 
 <div class="viewcode-block" id="GedcomXObject">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXObject">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXObject</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXObject</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base wrapper capturing the GEDCOM5 record that spawned a GedcomX object.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">record</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">created_with_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">created_with_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">created_at_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">created_at_line_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">line</span> <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="GedcomXSourceOrDocument">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXSourceOrDocument">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXSourceOrDocument</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXSourceOrDocument</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulates metadata fields for a GEDCOM SOUR or OBJE record before creating a SourceDescription.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">citation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -471,31 +466,30 @@
 
 <div class="viewcode-block" id="GedcomXEventOrFact">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXEventOrFact">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXEventOrFact</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">,</span> <span class="n">object_stack</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXEventOrFact</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factory that returns the correct Fact or Event instance for a GEDCOM5 tag.&quot;&quot;&quot;</span>
 
-            <span class="k">if</span> <span class="s1">&#39;Fact&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span><span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">,</span> <span class="n">_object_stack</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="s1">&#39;Fact&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]:</span>
                 <span class="n">obj</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Fact&#39;</span><span class="p">])</span>
                 <span class="k">return</span> <span class="n">obj</span>
-            <span class="k">elif</span> <span class="s1">&#39;Event&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s1">&#39;Event&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]:</span>
                 <span class="n">obj</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Event&#39;</span><span class="p">])</span>
                 <span class="k">return</span> <span class="n">obj</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> not found in map&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;tag &#39;</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2">&#39; found in map but has neither &#39;Fact&#39; nor &#39;Event&#39; key&quot;</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> not found in map&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomXRelationshipBuilder">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXRelationshipBuilder">[docs]</a>
-<span class="k">class</span> <span class="nc">GedcomXRelationshipBuilder</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Gedcom5xRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+<span class="k">class</span><span class="w"> </span><span class="nc">GedcomXRelationshipBuilder</span><span class="p">(</span><span class="n">GedcomXObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder builder for constructing complex GEDCOM relationship structures.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
 
-
-        
 </pre></div>
         </article>
       </div>
