@@ -1,0 +1,1120 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>pydantic._internal._model_construction - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">gedcomtools</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">gedcomtools</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for pydantic._internal._model_construction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Private logic for creating models.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span> <span class="k">as</span> <span class="n">_annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABCMeta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span><span class="p">,</span> <span class="n">partial</span><span class="p">,</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticUndefined</span><span class="p">,</span> <span class="n">SchemaSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAliasType</span><span class="p">,</span> <span class="n">dataclass_transform</span><span class="p">,</span> <span class="n">deprecated</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_inspection</span><span class="w"> </span><span class="kn">import</span> <span class="n">typing_objects</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticUndefinedAnnotation</span><span class="p">,</span> <span class="n">PydanticUserError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..plugin._schema_validator</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_schema_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericBeforeBaseModelWarning</span><span class="p">,</span> <span class="n">PydanticDeprecatedSince20</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigWrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">DecoratorInfos</span><span class="p">,</span> <span class="n">PydanticDescriptorProxy</span><span class="p">,</span> <span class="n">get_attribute_from_bases</span><span class="p">,</span> <span class="n">unwrap_wrapped_function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_model_fields</span><span class="p">,</span> <span class="n">is_valid_field_name</span><span class="p">,</span> <span class="n">is_valid_privateattr_name</span><span class="p">,</span> <span class="n">rebuild_model_fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._generate_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerateSchema</span><span class="p">,</span> <span class="n">InvalidSchemaError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticGenericMetadata</span><span class="p">,</span> <span class="n">get_model_typevars_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_cached_base_model</span><span class="p">,</span> <span class="n">import_cached_field_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._mock_val_ser</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_model_mocks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._namespace_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">NsResolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_pydantic_signature</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._typing_extra</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_make_forward_ref</span><span class="p">,</span>
+    <span class="n">eval_type_backport</span><span class="p">,</span>
+    <span class="n">is_classvar_annotation</span><span class="p">,</span>
+    <span class="n">parent_frame_namespace</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">LazyClassAttribute</span><span class="p">,</span> <span class="n">SafeGetItemProxy</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">PydanticModelField</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldInfo</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateAttr</span> <span class="k">as</span> <span class="n">PydanticModelPrivateAttr</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..main</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">PydanticModelField</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+    <span class="n">PydanticModelPrivateAttr</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+<span class="n">object_setattr</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_ModelNamespaceDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dictionary subclass that intercepts attribute setting on model classes and</span>
+<span class="sd">    warns about overriding of decorators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">existing</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">existing</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">existing</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">existing</span><span class="p">,</span> <span class="n">PydanticDescriptorProxy</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;`</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">` overrides an existing Pydantic `</span><span class="si">{</span><span class="n">existing</span><span class="o">.</span><span class="n">decorator_info</span><span class="o">.</span><span class="n">decorator_repr</span><span class="si">}</span><span class="s1">` decorator&#39;</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">NoInitField</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">init</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Only for typing purposes. Used as default value of `__pydantic_fields_set__`,</span>
+<span class="sd">    `__pydantic_extra__`, `__pydantic_private__`, so they could be ignored when</span>
+<span class="sd">    synthesizing the `__init__` signature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="c1"># For ModelMetaclass.register():</span>
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;_T&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass_transform</span><span class="p">(</span><span class="n">kw_only_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">field_specifiers</span><span class="o">=</span><span class="p">(</span><span class="n">PydanticModelField</span><span class="p">,</span> <span class="n">PydanticModelPrivateAttr</span><span class="p">,</span> <span class="n">NoInitField</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelMetaclass</span><span class="p">(</span><span class="n">ABCMeta</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span>
+        <span class="n">mcs</span><span class="p">,</span>
+        <span class="n">cls_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">__pydantic_generic_metadata__</span><span class="p">:</span> <span class="n">PydanticGenericMetadata</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">__pydantic_reset_parent_namespace__</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">_create_model_module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metaclass for creating Pydantic models.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cls_name: The name of the class to be created.</span>
+<span class="sd">            bases: The base classes of the class to be created.</span>
+<span class="sd">            namespace: The attribute dictionary of the class to be created.</span>
+<span class="sd">            __pydantic_generic_metadata__: Metadata for generic models.</span>
+<span class="sd">            __pydantic_reset_parent_namespace__: Reset parent namespace.</span>
+<span class="sd">            _create_model_module: The module of the class to be created, if created by `create_model`.</span>
+<span class="sd">            **kwargs: Catch-all for any other keyword arguments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The new class created by the metaclass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Note `ModelMetaclass` refers to `BaseModel`, but is also used to *create* `BaseModel`, so we rely on the fact</span>
+        <span class="c1"># that `BaseModel` itself won&#39;t have any bases, but any subclass of it will, to determine whether the `__new__`</span>
+        <span class="c1"># call we&#39;re in the middle of is for the `BaseModel` class.</span>
+        <span class="k">if</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="n">raw_annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">14</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="s1">&#39;__annotations__&#39;</span> <span class="ow">in</span> <span class="n">namespace</span>
+                <span class="p">):</span>  <span class="c1"># `from __future__ import annotations` was used in the model&#39;s module</span>
+                    <span class="n">raw_annotations</span> <span class="o">=</span> <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;__annotations__&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># See https://docs.python.org/3.14/library/annotationlib.html#using-annotations-in-a-metaclass:</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">annotationlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Format</span><span class="p">,</span> <span class="n">call_annotate_function</span><span class="p">,</span> <span class="n">get_annotate_from_class_namespace</span>
+
+                    <span class="k">if</span> <span class="n">annotate</span> <span class="o">:=</span> <span class="n">get_annotate_from_class_namespace</span><span class="p">(</span><span class="n">namespace</span><span class="p">):</span>
+                        <span class="n">raw_annotations</span> <span class="o">=</span> <span class="n">call_annotate_function</span><span class="p">(</span><span class="n">annotate</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">Format</span><span class="o">.</span><span class="n">FORWARDREF</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">raw_annotations</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_annotations</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__annotations__&#39;</span><span class="p">,</span> <span class="p">{})</span>
+
+            <span class="n">base_field_names</span><span class="p">,</span> <span class="n">class_vars</span><span class="p">,</span> <span class="n">base_private_attributes</span> <span class="o">=</span> <span class="n">mcs</span><span class="o">.</span><span class="n">_collect_bases_data</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+
+            <span class="n">config_wrapper</span> <span class="o">=</span> <span class="n">ConfigWrapper</span><span class="o">.</span><span class="n">for_model</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">raw_annotations</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;model_config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">config_dict</span>
+            <span class="n">private_attributes</span> <span class="o">=</span> <span class="n">inspect_namespace</span><span class="p">(</span>
+                <span class="n">namespace</span><span class="p">,</span> <span class="n">raw_annotations</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">ignored_types</span><span class="p">,</span> <span class="n">class_vars</span><span class="p">,</span> <span class="n">base_field_names</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">private_attributes</span> <span class="ow">or</span> <span class="n">base_private_attributes</span><span class="p">:</span>
+                <span class="n">original_model_post_init</span> <span class="o">=</span> <span class="n">get_model_post_init</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">bases</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">original_model_post_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># if there are private_attributes and a model_post_init function, we handle both</span>
+
+                    <span class="nd">@wraps</span><span class="p">(</span><span class="n">original_model_post_init</span><span class="p">)</span>
+                    <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">                        </span><span class="sd">&quot;&quot;&quot;We need to both initialize private attributes and call the user-defined model_post_init</span>
+<span class="sd">                        method.</span>
+<span class="sd">                        &quot;&quot;&quot;</span>
+                        <span class="n">init_private_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+                        <span class="n">original_model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+                    <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;model_post_init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapped_model_post_init</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;model_post_init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_private_attributes</span>
+
+            <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;__class_vars__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">class_vars</span>
+            <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;__private_attributes__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base_private_attributes</span><span class="p">,</span> <span class="o">**</span><span class="n">private_attributes</span><span class="p">}</span>
+
+            <span class="bp">cls</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s1">&#39;type[BaseModel]&#39;</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcs</span><span class="p">,</span> <span class="n">cls_name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="n">BaseModel_</span> <span class="o">=</span> <span class="n">import_cached_base_model</span><span class="p">()</span>
+
+            <span class="n">mro</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__mro__</span>
+            <span class="k">if</span> <span class="n">Generic</span> <span class="ow">in</span> <span class="n">mro</span> <span class="ow">and</span> <span class="n">mro</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">Generic</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">mro</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">BaseModel_</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="n">GenericBeforeBaseModelWarning</span><span class="p">(</span>
+                        <span class="s1">&#39;Classes should inherit from `BaseModel` before generic classes (e.g. `typing.Generic[T]`) &#39;</span>
+                        <span class="s1">&#39;for pydantic generics to work properly.&#39;</span>
+                    <span class="p">),</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_custom_init__</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span><span class="p">,</span> <span class="s1">&#39;__pydantic_base_init__&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_post_init__</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="kc">None</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_post_init</span> <span class="ow">is</span> <span class="n">BaseModel_</span><span class="o">.</span><span class="n">model_post_init</span> <span class="k">else</span> <span class="s1">&#39;model_post_init&#39;</span>
+            <span class="p">)</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_setattr_handlers__</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span> <span class="o">=</span> <span class="n">DecoratorInfos</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span><span class="o">.</span><span class="n">update_from_config</span><span class="p">(</span><span class="n">config_wrapper</span><span class="p">)</span>
+
+            <span class="c1"># Use the getattr below to grab the __parameters__ from the `typing.Generic` parent class</span>
+            <span class="k">if</span> <span class="n">__pydantic_generic_metadata__</span><span class="p">:</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_generic_metadata__</span> <span class="o">=</span> <span class="n">__pydantic_generic_metadata__</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parent_parameters</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__pydantic_generic_metadata__&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parameters&#39;</span><span class="p">,</span> <span class="p">())</span>
+                <span class="n">parameters</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__parameters__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">parent_parameters</span>
+                <span class="k">if</span> <span class="n">parameters</span> <span class="ow">and</span> <span class="n">parent_parameters</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parent_parameters</span><span class="p">):</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">..root_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootModelRootType</span>
+
+                    <span class="n">missing_parameters</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent_parameters</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">RootModelRootType</span> <span class="ow">in</span> <span class="n">parent_parameters</span> <span class="ow">and</span> <span class="n">RootModelRootType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+                        <span class="c1"># This is a special case where the user has subclassed `RootModel`, but has not parametrized</span>
+                        <span class="c1"># RootModel with the generic type identifiers being used. Ex:</span>
+                        <span class="c1"># class MyModel(RootModel, Generic[T]):</span>
+                        <span class="c1">#    root: T</span>
+                        <span class="c1"># Should instead just be:</span>
+                        <span class="c1"># class MyModel(RootModel[T]):</span>
+                        <span class="c1">#   root: T</span>
+                        <span class="n">parameters_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">missing_parameters</span><span class="p">])</span>
+                        <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> is a subclass of `RootModel`, but does not include the generic type identifier(s) &#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">parameters_str</span><span class="si">}</span><span class="s1"> in its parameters. &#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39;You should parametrize RootModel directly, e.g., `class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(RootModel[</span><span class="si">{</span><span class="n">parameters_str</span><span class="si">}</span><span class="s1">]): ...`.&#39;</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">combined_parameters</span> <span class="o">=</span> <span class="n">parent_parameters</span> <span class="o">+</span> <span class="n">missing_parameters</span>
+                        <span class="n">parameters_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">combined_parameters</span><span class="p">])</span>
+                        <span class="n">generic_type_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;typing.Generic[</span><span class="si">{</span><span class="n">parameters_str</span><span class="si">}</span><span class="s1">]&#39;</span>
+                        <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">&#39;All parameters must be present on typing.Generic;&#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39; you should inherit from </span><span class="si">{</span><span class="n">generic_type_label</span><span class="si">}</span><span class="s1">.&#39;</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">Generic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                            <span class="c1"># We raise an error here not because it is desirable, but because some cases are mishandled.</span>
+                            <span class="c1"># It would be nice to remove this error and still have things behave as expected, it&#39;s just</span>
+                            <span class="c1"># challenging because we are using a custom `__class_getitem__` to parametrize generic models,</span>
+                            <span class="c1"># and not returning a typing._GenericAlias from it.</span>
+                            <span class="n">bases_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">generic_type_label</span><span class="p">])</span>
+                            <span class="n">error_message</span> <span class="o">+=</span> <span class="p">(</span>
+                                <span class="sa">f</span><span class="s1">&#39; Note: `typing.Generic` must go last: `class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(</span><span class="si">{</span><span class="n">bases_str</span><span class="si">}</span><span class="s1">): ...`)&#39;</span>
+                            <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+
+                <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_generic_metadata__</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;origin&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">(),</span>
+                    <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_complete__</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Ensure this specific class gets completed</span>
+
+            <span class="c1"># preserve `__set_name__` protocol defined in https://peps.python.org/pep-0487</span>
+            <span class="c1"># for attributes not in `new_namespace` (e.g. private attributes)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">private_attributes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">__set_name__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">__pydantic_reset_parent_namespace__</span><span class="p">:</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_parent_namespace__</span> <span class="o">=</span> <span class="n">build_lenient_weakvaluedict</span><span class="p">(</span><span class="n">parent_frame_namespace</span><span class="p">())</span>
+            <span class="n">parent_namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__pydantic_parent_namespace__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_namespace</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">parent_namespace</span> <span class="o">=</span> <span class="n">unpack_lenient_weakvaluedict</span><span class="p">(</span><span class="n">parent_namespace</span><span class="p">)</span>
+
+            <span class="n">ns_resolver</span> <span class="o">=</span> <span class="n">NsResolver</span><span class="p">(</span><span class="n">parent_namespace</span><span class="o">=</span><span class="n">parent_namespace</span><span class="p">)</span>
+
+            <span class="n">set_model_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="o">=</span><span class="n">config_wrapper</span><span class="p">,</span> <span class="n">ns_resolver</span><span class="o">=</span><span class="n">ns_resolver</span><span class="p">)</span>
+
+            <span class="c1"># This is also set in `complete_model_class()`, after schema gen because they are recreated.</span>
+            <span class="c1"># We set them here as well for backwards compatibility:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_computed_fields__</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">info</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span><span class="o">.</span><span class="n">computed_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">defer_build</span><span class="p">:</span>
+                <span class="n">set_model_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Any operation that requires accessing the field infos instances should be put inside</span>
+                <span class="c1"># `complete_model_class()`:</span>
+                <span class="n">complete_model_class</span><span class="p">(</span>
+                    <span class="bp">cls</span><span class="p">,</span>
+                    <span class="n">config_wrapper</span><span class="p">,</span>
+                    <span class="n">ns_resolver</span><span class="p">,</span>
+                    <span class="n">raise_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">create_model_module</span><span class="o">=</span><span class="n">_create_model_module</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">frozen</span> <span class="ow">and</span> <span class="s1">&#39;__hash__&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespace</span><span class="p">:</span>
+                <span class="n">set_default_hash_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bases</span><span class="p">)</span>
+
+            <span class="c1"># using super(cls, cls) on the next line ensures we only call the parent class&#39;s __pydantic_init_subclass__</span>
+            <span class="c1"># I believe the `type: ignore` is only necessary because mypy doesn&#39;t realize that this code branch is</span>
+            <span class="c1"># only hit for _proper_ subclasses of BaseModel</span>
+            <span class="nb">super</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__pydantic_init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
+            <span class="k">return</span> <span class="bp">cls</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># These are instance variables, but have been assigned to `NoInitField` to trick the type checker.</span>
+            <span class="k">for</span> <span class="n">instance_slot</span> <span class="ow">in</span> <span class="s1">&#39;__pydantic_fields_set__&#39;</span><span class="p">,</span> <span class="s1">&#39;__pydantic_extra__&#39;</span><span class="p">,</span> <span class="s1">&#39;__pydantic_private__&#39;</span><span class="p">:</span>
+                <span class="n">namespace</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+                    <span class="n">instance_slot</span><span class="p">,</span>
+                    <span class="kc">None</span><span class="p">,</span>  <span class="c1"># In case the metaclass is used with a class other than `BaseModel`.</span>
+                <span class="p">)</span>
+            <span class="n">namespace</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__annotations__&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcs</span><span class="p">,</span> <span class="n">cls_name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no branch</span>
+        <span class="c1"># We put `__getattr__` in a non-TYPE_CHECKING block because otherwise, mypy allows arbitrary attribute access</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;This is necessary to keep attribute access working for class attribute access.&quot;&quot;&quot;</span>
+            <span class="n">private_attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__private_attributes__&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">private_attributes</span> <span class="ow">and</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">private_attributes</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">private_attributes</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__prepare__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">_ModelNamespaceDict</span><span class="p">()</span>
+
+    <span class="c1"># Due to performance and memory issues, in the ABCMeta.__subclasscheck__ implementation, we don&#39;t support</span>
+    <span class="c1"># registered virtual subclasses. See https://github.com/python/cpython/issues/92810#issuecomment-2762454345.</span>
+    <span class="c1"># This may change once the CPython gets fixed (possibly in 3.15), in which case we should conditionally</span>
+    <span class="c1"># define `register()`.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;For performance reasons, virtual subclasses registered using &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.register()&#39; &quot;</span>
+            <span class="s2">&quot;are not supported in &#39;isinstance()&#39; and &#39;issubclass()&#39; checks.&quot;</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
+
+    <span class="fm">__instancecheck__</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__instancecheck__</span>  <span class="c1"># pyright: ignore[reportAssignmentType]</span>
+    <span class="fm">__subclasscheck__</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span>  <span class="c1"># pyright: ignore[reportAssignmentType]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_bases_data</span><span class="p">(</span><span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">]]:</span>
+        <span class="n">BaseModel</span> <span class="o">=</span> <span class="n">import_cached_base_model</span><span class="p">()</span>
+
+        <span class="n">field_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">class_vars</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">private_attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="ow">and</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">BaseModel</span><span class="p">:</span>
+                <span class="c1"># model_fields might not be defined yet in the case of generics, so we use getattr here:</span>
+                <span class="n">field_names</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s1">&#39;__pydantic_fields__&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">class_vars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">__class_vars__</span><span class="p">)</span>
+                <span class="n">private_attributes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">__private_attributes__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field_names</span><span class="p">,</span> <span class="n">class_vars</span><span class="p">,</span> <span class="n">private_attributes</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@deprecated</span><span class="p">(</span>
+        <span class="s1">&#39;The `__fields__` attribute is deprecated, use the `model_fields` class property instead.&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__fields__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FieldInfo</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;The `__fields__` attribute is deprecated, use the `model_fields` class property instead.&#39;</span><span class="p">,</span>
+            <span class="n">PydanticDeprecatedSince20</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__pydantic_fields__&#39;</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__pydantic_fields_complete__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the fields where successfully collected (i.e. type hints were successfully resolves).</span>
+
+<span class="sd">        This is a private attribute, not meant to be used outside Pydantic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;__pydantic_fields__&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">field_infos</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s1">&#39;dict[str, FieldInfo]&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportAttributeAccessIssue]</span>
+
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">_complete</span> <span class="k">for</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="n">field_infos</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__dir__</span><span class="p">())</span>
+        <span class="k">if</span> <span class="s1">&#39;__fields__&#39;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+            <span class="n">attributes</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;__fields__&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attributes</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">init_private_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function is meant to behave like a BaseModel method to initialise private attributes.</span>
+
+<span class="sd">    It takes context as an argument since that&#39;s what pydantic-core passes when calling it.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        self: The BaseModel instance.</span>
+<span class="sd">        context: The context.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__pydantic_private__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pydantic_private</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">private_attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__private_attributes__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="n">private_attr</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">PydanticUndefined</span><span class="p">:</span>
+                <span class="n">pydantic_private</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
+        <span class="n">object_setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__pydantic_private__&#39;</span><span class="p">,</span> <span class="n">pydantic_private</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_model_post_init</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the `model_post_init` method from the namespace or the class bases, or `None` if not defined.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;model_post_init&#39;</span> <span class="ow">in</span> <span class="n">namespace</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;model_post_init&#39;</span><span class="p">]</span>
+
+    <span class="n">BaseModel</span> <span class="o">=</span> <span class="n">import_cached_base_model</span><span class="p">()</span>
+
+    <span class="n">model_post_init</span> <span class="o">=</span> <span class="n">get_attribute_from_bases</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="s1">&#39;model_post_init&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model_post_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">BaseModel</span><span class="o">.</span><span class="n">model_post_init</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model_post_init</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inspect_namespace</span><span class="p">(</span>  <span class="c1"># noqa C901</span>
+    <span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">raw_annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">ignored_types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">base_class_vars</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">base_class_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over the namespace and:</span>
+<span class="sd">    * gather private attributes</span>
+<span class="sd">    * check for items which look like fields but are not (e.g. have no annotation) and warn.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        namespace: The attribute dictionary of the class to be created.</span>
+<span class="sd">        raw_annotations: The (non-evaluated) annotations of the model.</span>
+<span class="sd">        ignored_types: A tuple of ignore types.</span>
+<span class="sd">        base_class_vars: A set of base class class variables.</span>
+<span class="sd">        base_class_fields: A set of base class fields.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dict contains private attributes info.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If there is a `__root__` field in model.</span>
+<span class="sd">        NameError: If private attribute name is invalid.</span>
+<span class="sd">        PydanticUserError:</span>
+<span class="sd">            - If a field does not have a type annotation.</span>
+<span class="sd">            - If a field on base class was overridden by a non-annotated attribute.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelPrivateAttr</span><span class="p">,</span> <span class="n">PrivateAttr</span>
+
+    <span class="n">FieldInfo</span> <span class="o">=</span> <span class="n">import_cached_field_info</span><span class="p">()</span>
+
+    <span class="n">all_ignored_types</span> <span class="o">=</span> <span class="n">ignored_types</span> <span class="o">+</span> <span class="n">default_ignored_types</span><span class="p">()</span>
+
+    <span class="n">private_attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="s1">&#39;__root__&#39;</span> <span class="ow">in</span> <span class="n">raw_annotations</span> <span class="ow">or</span> <span class="s1">&#39;__root__&#39;</span> <span class="ow">in</span> <span class="n">namespace</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;To define root models, use `pydantic.RootModel` rather than a field called &#39;__root__&#39;&quot;</span><span class="p">)</span>
+
+    <span class="n">ignored_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">namespace</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">var_name</span> <span class="o">==</span> <span class="s1">&#39;model_config&#39;</span> <span class="ow">or</span> <span class="n">var_name</span> <span class="o">==</span> <span class="s1">&#39;__pydantic_extra__&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;__module__&#39;</span><span class="p">]</span>
+            <span class="ow">and</span> <span class="s1">&#39;__qualname__&#39;</span> <span class="ow">in</span> <span class="n">namespace</span>
+            <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="vm">__qualname__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">namespace</span><span class="p">[</span><span class="s2">&quot;__qualname__&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># `value` is a nested type defined in this namespace; don&#39;t error</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">all_ignored_types</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s1">&#39;functools&#39;</span><span class="p">:</span>
+            <span class="n">ignored_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var_name</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">var_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span>
+                    <span class="s1">&#39;Private attributes must not use dunder names;&#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39; use a single underscore prefix instead of </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1">.&#39;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">is_valid_field_name</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span>
+                    <span class="s1">&#39;Private attributes must not use valid field names;&#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39; use sunder names, e.g. </span><span class="si">{</span><span class="s2">&quot;_&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">var_name</span><span class="si">!r}</span><span class="s1"> instead of </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1">.&#39;</span>
+                <span class="p">)</span>
+            <span class="n">private_attributes</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">del</span> <span class="n">namespace</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">FieldInfo</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_valid_field_name</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span>
+            <span class="n">suggested_name</span> <span class="o">=</span> <span class="n">var_name</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;my_field&#39;</span>  <span class="c1"># don&#39;t suggest &#39;&#39; for all-underscore name</span>
+            <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Fields must not use names with leading underscores;&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39; e.g., use </span><span class="si">{</span><span class="n">suggested_name</span><span class="si">!r}</span><span class="s1"> instead of </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">var_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">is_valid_privateattr_name</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">var_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_annotations</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">is_classvar_annotation</span><span class="p">(</span><span class="n">raw_annotations</span><span class="p">[</span><span class="n">var_name</span><span class="p">]):</span>
+                <span class="n">private_attributes</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ModelPrivateAttr</span><span class="p">,</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">value</span><span class="p">))</span>
+                <span class="k">del</span> <span class="n">namespace</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">base_class_vars</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">var_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_annotations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">base_class_fields</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PydanticUserError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Field </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1"> defined on a base class was overridden by a non-annotated attribute. &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;All field definitions, including overrides, require a type annotation.&#39;</span><span class="p">,</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s1">&#39;model-field-overridden&#39;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">FieldInfo</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">PydanticUserError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Field </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1"> requires a type annotation&#39;</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="s1">&#39;model-field-missing-annotation&#39;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PydanticUserError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;A non-annotated attribute was detected: `</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s1">`. All model fields require a &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;type annotation; if `</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s1">` is not meant to be a field, you may be able to resolve this &#39;</span>
+                    <span class="sa">f</span><span class="s2">&quot;error by annotating it as a `ClassVar` or updating `model_config[&#39;ignored_types&#39;]`.&quot;</span><span class="p">,</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s1">&#39;model-field-missing-annotation&#39;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ann_name</span><span class="p">,</span> <span class="n">ann_type</span> <span class="ow">in</span> <span class="n">raw_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">is_valid_privateattr_name</span><span class="p">(</span><span class="n">ann_name</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">ann_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">private_attributes</span>
+            <span class="ow">and</span> <span class="n">ann_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignored_names</span>
+            <span class="c1"># This condition can be a false negative when `ann_type` is stringified,</span>
+            <span class="c1"># but it is handled in most cases in `set_model_fields`:</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_classvar_annotation</span><span class="p">(</span><span class="n">ann_type</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">ann_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_ignored_types</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ann_type</span><span class="p">,</span> <span class="s1">&#39;__module__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;functools&#39;</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ann_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="c1"># Walking up the frames to get the module namespace where the model is defined</span>
+                <span class="c1"># (as the model class wasn&#39;t created yet, we unfortunately can&#39;t use `cls.__module__`):</span>
+                <span class="n">frame</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">ann_type</span> <span class="o">=</span> <span class="n">eval_type_backport</span><span class="p">(</span>
+                            <span class="n">_make_forward_ref</span><span class="p">(</span><span class="n">ann_type</span><span class="p">,</span> <span class="n">is_argument</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_class</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                            <span class="n">globalns</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">f_globals</span><span class="p">,</span>
+                            <span class="n">localns</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">f_locals</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="n">typing_objects</span><span class="o">.</span><span class="n">is_annotated</span><span class="p">(</span><span class="n">get_origin</span><span class="p">(</span><span class="n">ann_type</span><span class="p">)):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="o">*</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">ann_type</span><span class="p">)</span>
+                <span class="n">private_attr</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metadata</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">private_attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">private_attributes</span><span class="p">[</span><span class="n">ann_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">private_attr</span>
+                    <span class="k">continue</span>
+            <span class="n">private_attributes</span><span class="p">[</span><span class="n">ann_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">private_attributes</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">set_default_hash_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">base_hash_func</span> <span class="o">=</span> <span class="n">get_attribute_from_bases</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="s1">&#39;__hash__&#39;</span><span class="p">)</span>
+    <span class="n">new_hash_func</span> <span class="o">=</span> <span class="n">make_hash_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base_hash_func</span> <span class="ow">in</span> <span class="p">{</span><span class="kc">None</span><span class="p">,</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">}</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">base_hash_func</span><span class="p">,</span> <span class="s1">&#39;__code__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">new_hash_func</span><span class="o">.</span><span class="vm">__code__</span><span class="p">:</span>
+        <span class="c1"># If `__hash__` is some default, we generate a hash function.</span>
+        <span class="c1"># It will be `None` if not overridden from BaseModel.</span>
+        <span class="c1"># It may be `object.__hash__` if there is another</span>
+        <span class="c1"># parent class earlier in the bases which doesn&#39;t override `__hash__` (e.g. `typing.Generic`).</span>
+        <span class="c1"># It may be a value set by `set_default_hash_func` if `cls` is a subclass of another frozen model.</span>
+        <span class="c1"># In the last case we still need a new hash function to account for new `model_fields`.</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="fm">__hash__</span> <span class="o">=</span> <span class="n">new_hash_func</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_hash_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span> <span class="k">else</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">hash_func</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">getter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># In rare cases (such as when using the deprecated copy method), the __dict__ may not contain</span>
+            <span class="c1"># all model fields, which is how we can get here.</span>
+            <span class="c1"># getter(self.__dict__) is much faster than any &#39;safe&#39; method that accounts for missing keys,</span>
+            <span class="c1"># and wrapping it in a `try` doesn&#39;t slow things down much in the common case.</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">getter</span><span class="p">(</span><span class="n">SafeGetItemProxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">hash_func</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">set_model_fields</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
+    <span class="n">config_wrapper</span><span class="p">:</span> <span class="n">ConfigWrapper</span><span class="p">,</span>
+    <span class="n">ns_resolver</span><span class="p">:</span> <span class="n">NsResolver</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect and set `cls.__pydantic_fields__` and `cls.__class_vars__`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cls: BaseModel or dataclass.</span>
+<span class="sd">        config_wrapper: The config wrapper instance.</span>
+<span class="sd">        ns_resolver: Namespace resolver to use when getting model annotations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">typevars_map</span> <span class="o">=</span> <span class="n">get_model_typevars_map</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+    <span class="n">fields</span><span class="p">,</span> <span class="n">class_vars</span> <span class="o">=</span> <span class="n">collect_model_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="p">,</span> <span class="n">ns_resolver</span><span class="p">,</span> <span class="n">typevars_map</span><span class="o">=</span><span class="n">typevars_map</span><span class="p">)</span>
+
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span> <span class="o">=</span> <span class="n">fields</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__class_vars__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">class_vars</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">class_vars</span><span class="p">:</span>
+        <span class="c1"># Class vars should not be private attributes</span>
+        <span class="c1">#     We remove them _here_ and not earlier because we rely on inspecting the class to determine its classvars,</span>
+        <span class="c1">#     but private attributes are determined by inspecting the namespace _prior_ to class creation.</span>
+        <span class="c1">#     In the case that a classvar with a leading-&#39;_&#39; is defined via a ForwardRef (e.g., when using</span>
+        <span class="c1">#     `__future__.annotations`), we want to remove the private attribute which was detected _before_ we knew it</span>
+        <span class="c1">#     evaluated to a classvar</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__private_attributes__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">PydanticUndefined</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">complete_model_class</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
+    <span class="n">config_wrapper</span><span class="p">:</span> <span class="n">ConfigWrapper</span><span class="p">,</span>
+    <span class="n">ns_resolver</span><span class="p">:</span> <span class="n">NsResolver</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">raise_errors</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">call_on_complete_hook</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">create_model_module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finish building a model class.</span>
+
+<span class="sd">    This logic must be called after class has been created since validation functions must be bound</span>
+<span class="sd">    and `get_type_hints` requires a class object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cls: BaseModel or dataclass.</span>
+<span class="sd">        config_wrapper: The config wrapper instance.</span>
+<span class="sd">        ns_resolver: The namespace resolver instance to use during schema building.</span>
+<span class="sd">        raise_errors: Whether to raise errors.</span>
+<span class="sd">        call_on_complete_hook: Whether to call the `__pydantic_on_complete__` hook.</span>
+<span class="sd">        create_model_module: The module of the class to be created, if created by `create_model`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        `True` if the model is successfully completed, else `False`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        PydanticUndefinedAnnotation: If `PydanticUndefinedAnnotation` occurs in`__get_pydantic_core_schema__`</span>
+<span class="sd">            and `raise_errors=True`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">typevars_map</span> <span class="o">=</span> <span class="n">get_model_typevars_map</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields_complete__</span><span class="p">:</span>
+        <span class="c1"># Note: when coming from `ModelMetaclass.__new__()`, this results in fields being built twice.</span>
+        <span class="c1"># We do so a second time here so that we can get the `NameError` for the specific undefined annotation.</span>
+        <span class="c1"># Alternatively, we could let `GenerateSchema()` raise the error, but there are cases where incomplete</span>
+        <span class="c1"># fields are inherited in `collect_model_fields()` and can actually have their annotation resolved in the</span>
+        <span class="c1"># generate schema process. As we want to avoid having `__pydantic_fields_complete__` set to `False`</span>
+        <span class="c1"># when `__pydantic_complete__` is `True`, we rebuild here:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span> <span class="o">=</span> <span class="n">rebuild_model_fields</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="p">,</span>
+                <span class="n">config_wrapper</span><span class="o">=</span><span class="n">config_wrapper</span><span class="p">,</span>
+                <span class="n">ns_resolver</span><span class="o">=</span><span class="n">ns_resolver</span><span class="p">,</span>
+                <span class="n">typevars_map</span><span class="o">=</span><span class="n">typevars_map</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">NameError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">exc</span> <span class="o">=</span> <span class="n">PydanticUndefinedAnnotation</span><span class="o">.</span><span class="n">from_name_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">set_model_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;`</span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raise_errors</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exc</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raise_errors</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields_complete__</span><span class="p">:</span>
+            <span class="c1"># No need to continue with schema gen, it is guaranteed to fail</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields_complete__</span>
+
+    <span class="n">gen_schema</span> <span class="o">=</span> <span class="n">GenerateSchema</span><span class="p">(</span>
+        <span class="n">config_wrapper</span><span class="p">,</span>
+        <span class="n">ns_resolver</span><span class="p">,</span>
+        <span class="n">typevars_map</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">generate_schema</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PydanticUndefinedAnnotation</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">raise_errors</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="n">set_model_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;`</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">`&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">core_config</span> <span class="o">=</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">core_config</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">clean_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">InvalidSchemaError</span><span class="p">:</span>
+        <span class="n">set_model_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># This needs to happen *after* model schema generation, as the return type</span>
+    <span class="c1"># of the properties are evaluated and the `ComputedFieldInfo` are recreated:</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_computed_fields__</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">info</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span><span class="o">.</span><span class="n">computed_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="n">set_deprecated_descriptors</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_core_schema__</span> <span class="o">=</span> <span class="n">schema</span>
+
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_validator__</span> <span class="o">=</span> <span class="n">create_schema_validator</span><span class="p">(</span>
+        <span class="n">schema</span><span class="p">,</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">create_model_module</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
+        <span class="s1">&#39;create_model&#39;</span> <span class="k">if</span> <span class="n">create_model_module</span> <span class="k">else</span> <span class="s1">&#39;BaseModel&#39;</span><span class="p">,</span>
+        <span class="n">core_config</span><span class="p">,</span>
+        <span class="n">config_wrapper</span><span class="o">.</span><span class="n">plugin_settings</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_serializer__</span> <span class="o">=</span> <span class="n">SchemaSerializer</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">core_config</span><span class="p">)</span>
+
+    <span class="c1"># set __signature__ attr only for model class, but not for its instances</span>
+    <span class="c1"># (because instances can define `__call__`, and `inspect.signature` shouldn&#39;t</span>
+    <span class="c1"># use the `__signature__` attribute and instead generate from `__call__`).</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">LazyClassAttribute</span><span class="p">(</span>
+        <span class="s1">&#39;__signature__&#39;</span><span class="p">,</span>
+        <span class="n">partial</span><span class="p">(</span>
+            <span class="n">generate_pydantic_signature</span><span class="p">,</span>
+            <span class="n">init</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span><span class="p">,</span>
+            <span class="n">fields</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">,</span>
+            <span class="n">validate_by_name</span><span class="o">=</span><span class="n">config_wrapper</span><span class="o">.</span><span class="n">validate_by_name</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="n">config_wrapper</span><span class="o">.</span><span class="n">extra</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_complete__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">call_on_complete_hook</span><span class="p">:</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_on_complete__</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">set_deprecated_descriptors</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set data descriptors on the class for deprecated fields.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">field_info</span><span class="o">.</span><span class="n">deprecation_message</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="n">_DeprecatedFieldDescriptor</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">desc</span><span class="o">.</span><span class="n">__set_name__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">computed_field_info</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_computed_fields__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">computed_field_info</span><span class="o">.</span><span class="n">deprecation_message</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="c1"># Avoid having two warnings emitted:</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">unwrap_wrapped_function</span><span class="p">(</span><span class="n">computed_field_info</span><span class="o">.</span><span class="n">wrapped_property</span><span class="p">),</span> <span class="s1">&#39;__deprecated__&#39;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="n">_DeprecatedFieldDescriptor</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">computed_field_info</span><span class="o">.</span><span class="n">wrapped_property</span><span class="p">)</span>
+            <span class="n">desc</span><span class="o">.</span><span class="n">__set_name__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_DeprecatedFieldDescriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read-only data descriptor used to emit a runtime deprecation warning before accessing a deprecated field.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        msg: The deprecation message to be emitted.</span>
+<span class="sd">        wrapped_property: The property instance if the deprecated field is a computed field, or `None`.</span>
+<span class="sd">        field_name: The name of the field being deprecated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">wrapped_property</span><span class="p">:</span> <span class="nb">property</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_property</span> <span class="o">=</span> <span class="n">wrapped_property</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">BaseModel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">obj_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_property</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_property</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">obj_type</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_name</span><span class="p">)</span>
+
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_property</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_property</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">obj_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">field_name</span><span class="p">]</span>
+
+    <span class="c1"># Defined to make it a data descriptor and take precedence over the instance&#39;s dictionary.</span>
+    <span class="c1"># Note that it will not be called when setting a value on a model instance</span>
+    <span class="c1"># as `BaseModel.__setattr__` is defined and takes priority.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_name</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_PydanticWeakRef</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for `weakref.ref` that enables `pickle` serialization.</span>
+
+<span class="sd">    Cloudpickle fails to serialize `weakref.ref` objects due to an arcane error related</span>
+<span class="sd">    to abstract base classes (`abc.ABC`). This class works around the issue by wrapping</span>
+<span class="sd">    `weakref.ref` instead of subclassing it.</span>
+
+<span class="sd">    See https://github.com/pydantic/pydantic/issues/6763 for context.</span>
+
+<span class="sd">    Semantics:</span>
+<span class="sd">        - If not pickled, behaves the same as a `weakref.ref`.</span>
+<span class="sd">        - If pickled along with the referenced object, the same `weakref.ref` behavior</span>
+<span class="sd">          will be maintained between them after unpickling.</span>
+<span class="sd">        - If pickled without the referenced object, after unpickling the underlying</span>
+<span class="sd">          reference will be cleared (`__call__` will always return `None`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># The object will be `None` upon deserialization if the serialized weakref</span>
+            <span class="c1"># had lost its underlying object.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wr</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wr</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wr</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">weakref</span><span class="o">.</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="n">_PydanticWeakRef</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="p">(),)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_lenient_weakvaluedict</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Takes an input dictionary, and produces a new value that (invertibly) replaces the values with weakrefs.</span>
+
+<span class="sd">    We can&#39;t just use a WeakValueDictionary because many types (including int, str, etc.) can&#39;t be stored as values</span>
+<span class="sd">    in a WeakValueDictionary.</span>
+
+<span class="sd">    The `unpack_lenient_weakvaluedict` function can be used to reverse this operation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">_PydanticWeakRef</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">proxy</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">unpack_lenient_weakvaluedict</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Inverts the transform performed by `build_lenient_weakvaluedict`.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">_PydanticWeakRef</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="nd">@cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_ignored_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComputedFieldInfo</span>
+
+    <span class="n">ignored_types</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">FunctionType</span><span class="p">,</span>
+        <span class="nb">property</span><span class="p">,</span>
+        <span class="nb">classmethod</span><span class="p">,</span>
+        <span class="nb">staticmethod</span><span class="p">,</span>
+        <span class="n">PydanticDescriptorProxy</span><span class="p">,</span>
+        <span class="n">ComputedFieldInfo</span><span class="p">,</span>
+        <span class="n">TypeAliasType</span><span class="p">,</span>  <span class="c1"># from `typing_extensions`</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">12</span><span class="p">):</span>
+        <span class="n">ignored_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">TypeAliasType</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ignored_types</span><span class="p">)</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, David J. Cartwright
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

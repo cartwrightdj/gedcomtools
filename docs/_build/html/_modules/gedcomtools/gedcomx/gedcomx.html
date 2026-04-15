@@ -262,6 +262,29 @@
 <span class="c1">#                         Group is handled consistently with other top-level</span>
 <span class="c1">#                         collections</span>
 <span class="c1">#           2026-04-07 — added to_gedcom7() conversion helper (GedcomX → GEDCOM 7)</span>
+<span class="c1">#           2026-04-12 — TypeCollection: fixed append() rollback to also call</span>
+<span class="c1">#                         _remove_from_indexes so partial index writes don&#39;t leave</span>
+<span class="c1">#                         zombie entries when _update_indexes raises mid-way</span>
+<span class="c1">#                       — TypeCollection: added replace(old, new) for atomic item</span>
+<span class="c1">#                         swap with transactional index restore on failure</span>
+<span class="c1">#                       — TypeCollection: added reindex(item) for safe in-place</span>
+<span class="c1">#                         mutation of id/uri/names; uses object-identity scan to</span>
+<span class="c1">#                         remove stale entries before re-adding current values</span>
+<span class="c1">#                       — TypeCollection: added _rebuild_indexes() for full O(n)</span>
+<span class="c1">#                         recovery after out-of-band mutations</span>
+<span class="c1">#           2026-04-15 — release refresh for v0.7.5b1 docs/build packaging</span>
+<span class="c1">#                       — TypeCollection: added class-level docstring documenting</span>
+<span class="c1">#                         the mutation contract and safe update patterns</span>
+<span class="c1">#                       — TypeCollection: added change_id/change_uri/change_name</span>
+<span class="c1">#                         for surgical index-safe property updates with collision</span>
+<span class="c1">#                         detection; GedcomX wraps all three with auto-collection</span>
+<span class="c1">#                         discovery via _find_collection()</span>
+<span class="c1">#                       — enriched docstrings on all new TypeCollection and GedcomX</span>
+<span class="c1">#                         mutation helpers; documents edge cases, examples, and</span>
+<span class="c1">#                         what the methods do NOT do (cross-ref updates)</span>
+<span class="c1">#           2026-04-12 — added _deser_skipped counter; from_dict() now records</span>
+<span class="c1">#                         per-collection skip counts; conversion_warnings merges</span>
+<span class="c1">#                         both GEDCOM tag losses and deserialization skip counts</span>
 <span class="c1"># ======================================================================</span>
 <span class="c1"># GEDCOM Module Types</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
@@ -292,9 +315,28 @@
 <div class="viewcode-block" id="TypeCollection">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TypeCollection</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A typed, indexable, iterable container with small indexes on id/name/uri.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A typed, indexable, iterable container with small indexes on id/name/uri.</span>
+
 <span class="sd">    The class name stays &#39;Collection&#39;; the element type is carried in `item_type`.</span>
+
+<span class="sd">    **Mutation contract**: the three indexed properties — ``id``, ``uri``, and</span>
+<span class="sd">    ``names`` — must not be changed on an item that is already in the collection</span>
+<span class="sd">    without calling :meth:`reindex` afterwards.  Direct in-place mutations (e.g.</span>
+<span class="sd">    ``gx.persons[0].id = &quot;new_id&quot;``) silently stale the indexes, causing</span>
+<span class="sd">    :meth:`by_id`, :meth:`by_uri`, and :meth:`by_name` to return wrong results.</span>
+
+<span class="sd">    Safe patterns for updating indexed properties::</span>
+
+<span class="sd">        # Swap the whole item (atomic, transactional)</span>
+<span class="sd">        gx.persons.replace(old_person, new_person)</span>
+
+<span class="sd">        # Mutate in place then reindex</span>
+<span class="sd">        p = gx.persons.by_id(&quot;P1&quot;)</span>
+<span class="sd">        p.id = &quot;P1_NEW&quot;</span>
+<span class="sd">        gx.persons.reindex(p)</span>
+
+<span class="sd">        # Full rebuild after bulk out-of-band mutations</span>
+<span class="sd">        gx.persons._rebuild_indexes()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="n">item_type</span>
@@ -438,6 +480,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>  <span class="c1"># clean up any partial index writes</span>
             <span class="k">raise</span></div>
 
 
@@ -462,6 +505,228 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TypeCollection.replace">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.replace">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_item</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">new_item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Atomically replace *old_item* with *new_item*, updating all indexes.</span>
+
+<span class="sd">        The list position of the item is preserved.  If reindexing *new_item*</span>
+<span class="sd">        fails the old item&#39;s indexes are restored and the exception is re-raised,</span>
+<span class="sd">        leaving the collection unchanged.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            old_item: Item currently in the collection.</span>
+<span class="sd">            new_item: Replacement item; must be an instance of ``item_type``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If *old_item* is not present.</span>
+<span class="sd">            TypeError: If *new_item* is the wrong type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">old_item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;old_item not found in the collection.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">new_item</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">old_item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_from_indexes</span><span class="p">(</span><span class="n">old_item</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">new_item</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">old_item</span><span class="p">)</span>  <span class="c1"># restore old indexes</span>
+            <span class="k">raise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_item</span></div>
+
+
+<div class="viewcode-block" id="TypeCollection.reindex">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.reindex">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Re-read *item*&#39;s indexed properties and refresh all secondary indexes.</span>
+
+<span class="sd">        Call this after mutating an item&#39;s ``id``, ``uri``, or ``names`` in</span>
+<span class="sd">        place so that :meth:`by_id`, :meth:`by_uri`, and :meth:`by_name` return</span>
+<span class="sd">        correct results.</span>
+
+<span class="sd">        Uses object identity to locate and remove stale index entries, so it</span>
+<span class="sd">        works correctly even when the indexed properties have already changed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: An item already present in the collection.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If *item* is not in the collection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Item not found in the collection.&quot;</span><span class="p">)</span>
+        <span class="c1"># Remove stale entries by object identity, not by current property</span>
+        <span class="c1"># values — those may already hold the post-mutation values.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">item</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">item</span><span class="p">}</span>
+        <span class="n">item_py_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">item_py_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># Prune empty sub-dicts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TypeCollection.change_id">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.change_id">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change *item*&#39;s ``id`` and keep the id index consistent.</span>
+
+<span class="sd">        This is the safe way to rename an item&#39;s identifier after it has been</span>
+<span class="sd">        added to the collection.  Directly assigning ``item.id = new_id``</span>
+<span class="sd">        would leave the old key in ``_id_index`` and the new key absent,</span>
+<span class="sd">        causing :meth:`by_id` to return stale or wrong results.</span>
+
+<span class="sd">        Only the id-index entry is touched; the uri and name indexes are not</span>
+<span class="sd">        scanned.  If the item&#39;s ``_uri`` was auto-generated from its original</span>
+<span class="sd">        id (i.e. ``_uri.fragment == old_id``), it is also updated to match the</span>
+<span class="sd">        new id so ZIP document-reference URIs stay in sync.</span>
+
+<span class="sd">        Assigning the same id the item already holds is a no-op (no error).</span>
+
+<span class="sd">        This method does **not** update cross-references elsewhere in the</span>
+<span class="sd">        document (e.g. ``Relationship.person1.resourceId``).  If those need</span>
+<span class="sd">        updating, do so separately.</span>
+
+<span class="sd">        ``item`` must already be present in the collection. ``new_id`` may be</span>
+<span class="sd">        any hashable value; ``None`` clears the id and removes it from the</span>
+<span class="sd">        index. Raises ``ValueError`` if the item is missing or the replacement</span>
+<span class="sd">        id belongs to a different item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Item not found in the collection.&quot;</span><span class="p">)</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">new_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Id </span><span class="si">{</span><span class="n">new_id</span><span class="si">!r}</span><span class="s2"> is already used by another item in this collection.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">old_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">old_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">new_id</span>
+        <span class="k">if</span> <span class="n">new_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">[</span><span class="n">new_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="c1"># Keep the auto-generated document-fragment URI in sync with the new id.</span>
+        <span class="n">cur_uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cur_uri</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cur_uri</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">old_id</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="n">new_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TypeCollection.change_uri">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">new_uri</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;URI&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change *item*&#39;s ``uri`` and keep the uri index consistent.</span>
+
+<span class="sd">        The safe counterpart to directly assigning ``item.uri = …`` on an</span>
+<span class="sd">        item that is already in the collection.  Direct assignment would leave</span>
+<span class="sd">        the old URI key in ``_uri_index`` and the new key absent.</span>
+
+<span class="sd">        *new_uri* is accepted in three forms:</span>
+
+<span class="sd">        * A :class:`~gedcomtools.gedcomx.uri.URI` instance — used as-is.</span>
+<span class="sd">        * A plain ``str`` — wrapped in ``URI(value=new_uri)`` automatically.</span>
+<span class="sd">        * ``None`` — clears ``item.uri`` and removes the old entry from the</span>
+<span class="sd">          index.</span>
+
+<span class="sd">        Only the uri-index entry is touched; id and name indexes are not</span>
+<span class="sd">        scanned.</span>
+
+<span class="sd">        ``item`` must already be present in the collection. Raises</span>
+<span class="sd">        ``ValueError`` if the item is missing or the replacement URI string is</span>
+<span class="sd">        already held by a different item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Item not found in the collection.&quot;</span><span class="p">)</span>
+        <span class="c1"># Normalise to a string key and a URI object for assignment.</span>
+        <span class="k">if</span> <span class="n">new_uri</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_uri</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="n">new_uri</span> <span class="ow">or</span> <span class="kc">None</span>
+            <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">new_uri</span><span class="p">)</span> <span class="k">if</span> <span class="n">new_uri</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">new_uri</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+            <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="n">new_uri</span>
+        <span class="k">if</span> <span class="n">new_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">new_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;URI </span><span class="si">{</span><span class="n">new_key</span><span class="si">!r}</span><span class="s2"> is already used by another item in this collection.&quot;</span>
+                <span class="p">)</span>
+        <span class="n">old_u</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">old_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">old_u</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">old_u</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">old_key</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">new_uri_obj</span>
+        <span class="k">if</span> <span class="n">new_key</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span></div>
+
+
+<div class="viewcode-block" id="TypeCollection.change_name">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.change_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">old_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replace one name value on *item* and keep the name index consistent.</span>
+
+<span class="sd">        Finds the first entry in ``item.names`` whose ``.value`` equals</span>
+<span class="sd">        *old_name*, updates it to *new_name*, and adjusts ``_name_index``</span>
+<span class="sd">        accordingly — without touching the id or uri indexes.</span>
+
+<span class="sd">        Unlike :meth:`change_id` and :meth:`change_uri`, no collision check</span>
+<span class="sd">        is performed: multiple items in the same collection may legitimately</span>
+<span class="sd">        share a display name (e.g. two agents both called &quot;Smith &amp; Co&quot;).</span>
+<span class="sd">        :meth:`by_name` returns a *list* precisely to handle this case.</span>
+
+<span class="sd">        Only the first matching name entry is replaced.  If an item has</span>
+<span class="sd">        multiple names with the same value and you need to replace all of</span>
+<span class="sd">        them, call this method once per occurrence.</span>
+
+<span class="sd">        ``item`` must already be present in the collection. ``old_name`` is an</span>
+<span class="sd">        exact match with no normalization. Passing an empty ``new_name``</span>
+<span class="sd">        removes the old index entry without adding a replacement. Raises</span>
+<span class="sd">        ``ValueError`` if the item is missing, has no names, or ``old_name``</span>
+<span class="sd">        is not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Item not found in the collection.&quot;</span><span class="p">)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;names&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Item has no &#39;names&#39; attribute.&quot;</span><span class="p">)</span>
+        <span class="n">item_py_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">nv</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">TextValue</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">nv</span> <span class="o">==</span> <span class="n">old_name</span><span class="p">:</span>
+                <span class="c1"># Remove old entry from the name index.</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">old_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">item_py_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">nm</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">new_name</span>
+                <span class="k">if</span> <span class="n">new_name</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">new_name</span><span class="p">,</span> <span class="p">{})[</span><span class="n">item_py_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+                <span class="k">return</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name </span><span class="si">{</span><span class="n">old_name</span><span class="si">!r}</span><span class="s2"> not found on item.&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild all secondary indexes from scratch.</span>
+
+<span class="sd">        Use this to recover from a known-corrupt index state or after</span>
+<span class="sd">        bulk mutations that bypassed the normal :meth:`append`/:meth:`remove`</span>
+<span class="sd">        path.  O(n) over the collection size.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_indexes</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
     <span class="c1"># --- convenience / serialization ---</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
@@ -545,19 +810,30 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">__relationship_table</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_import_unhandled_tags</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deser_skipped</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1">#self.default_id_generator = make_uid</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">conversion_warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;GEDCOM tags skipped during import due to missing handlers (potential data loss).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Data-loss warnings accumulated during import or deserialization.</span>
 
-<span class="sd">        Non-empty when a converter encountered tags it could not map to GedcomX</span>
-<span class="sd">        objects.  Keys are GEDCOM tag names; values are occurrence counts.</span>
-<span class="sd">        Returns an empty dict when conversion was clean or this object was not</span>
-<span class="sd">        produced by a converter.</span>
+<span class="sd">        Two sources contribute to this dict:</span>
+
+<span class="sd">        * **GEDCOM converter** — tags encountered during GEDCOM 5/7 → GedcomX</span>
+<span class="sd">          conversion that had no handler.  Keys are uppercase GEDCOM tag names</span>
+<span class="sd">          (e.g. ``&quot;OBJE&quot;``, ``&quot;CONC&quot;``); values are occurrence counts.</span>
+<span class="sd">        * **JSON deserialization** — records skipped by :meth:`from_dict`</span>
+<span class="sd">          because ``model_validate`` raised.  Keys are lowercase collection</span>
+<span class="sd">          names (e.g. ``&quot;persons&quot;``, ``&quot;relationships&quot;``); values are skip</span>
+<span class="sd">          counts.</span>
+
+<span class="sd">        Returns an empty dict when import was clean or this object was not</span>
+<span class="sd">        produced by a converter or :meth:`from_dict`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_import_unhandled_tags</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_import_unhandled_tags</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_deser_skipped</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -854,6 +1130,118 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span></div>
 
 
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Safe id / uri / name mutation helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield every top-level :class:`TypeCollection` on this document.</span>
+
+<span class="sd">        Used internally by :meth:`_find_collection` to locate an item without</span>
+<span class="sd">        requiring the caller to know which collection it belongs to.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Each of the eight top-level collections in a consistent order:</span>
+<span class="sd">            persons, relationships, agents, events, documents, places,</span>
+<span class="sd">            sourceDescriptions, groups.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">persons</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">documents</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">places</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TypeCollection</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the :class:`TypeCollection` that owns *obj*, or ``None``.</span>
+
+<span class="sd">        Searches all eight top-level collections by object identity (``is``),</span>
+<span class="sd">        so the lookup is unaffected by stale or missing index entries.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: Any object to search for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The owning :class:`TypeCollection`, or ``None`` if *obj* is not</span>
+<span class="sd">            a member of any collection on this document.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">coll</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collections</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">coll</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">coll</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="GedcomX.change_id">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.change_id">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change *obj*&#39;s ``id`` and keep the owning collection&#39;s index consistent.</span>
+
+<span class="sd">        Convenience wrapper around :meth:`TypeCollection.change_id` that</span>
+<span class="sd">        locates the right collection automatically via</span>
+<span class="sd">        :meth:`_find_collection`, so the caller does not need to know or</span>
+<span class="sd">        remember which collection the object belongs to.</span>
+
+<span class="sd">        The auto-generated ``_uri.fragment`` is updated to match the new id</span>
+<span class="sd">        if it was derived from the original id (ZIP document-reference URIs</span>
+<span class="sd">        stay in sync automatically).</span>
+
+<span class="sd">        This method does **not** update cross-references elsewhere in the</span>
+<span class="sd">        document (e.g. ``Relationship.person1.resourceId``).  Those must be</span>
+<span class="sd">        updated separately if needed.</span>
+
+<span class="sd">        ``obj`` must already be in one of the document&#39;s top-level</span>
+<span class="sd">        collections. ``new_id`` may be ``None`` to clear the id. Raises</span>
+<span class="sd">        ``ValueError`` if the object is not found or the replacement id belongs</span>
+<span class="sd">        to a different item in the same collection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_collection</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">coll</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Object not found in any top-level collection.&quot;</span><span class="p">)</span>
+        <span class="n">coll</span><span class="o">.</span><span class="n">change_id</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomX.change_uri">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.change_uri">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">new_uri</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change *obj*&#39;s ``uri`` and keep the owning collection&#39;s index consistent.</span>
+
+<span class="sd">        Convenience wrapper around :meth:`TypeCollection.change_uri` that</span>
+<span class="sd">        locates the right collection automatically.  Accepts the new URI as a</span>
+<span class="sd">        :class:`~gedcomtools.gedcomx.uri.URI` object, a plain string, or</span>
+<span class="sd">        ``None`` to clear.</span>
+
+<span class="sd">        ``obj`` must already be in one of the document&#39;s top-level</span>
+<span class="sd">        collections. ``new_uri`` may be a ``URI`` instance, a plain string, or</span>
+<span class="sd">        ``None``. Raises ``ValueError`` if the object is not found or the</span>
+<span class="sd">        replacement URI is already held by a different item in the same</span>
+<span class="sd">        collection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_collection</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">coll</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Object not found in any top-level collection.&quot;</span><span class="p">)</span>
+        <span class="n">coll</span><span class="o">.</span><span class="n">change_uri</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">new_uri</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomX.change_name">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.change_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">old_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replace one name value on *obj* and keep the owning collection&#39;s index consistent.</span>
+
+<span class="sd">        Convenience wrapper around :meth:`TypeCollection.change_name` that</span>
+<span class="sd">        locates the right collection automatically.  Replaces the first entry</span>
+<span class="sd">        in ``obj.names`` whose value equals *old_name*.</span>
+
+<span class="sd">        No collision check is performed — multiple items may legitimately</span>
+<span class="sd">        share a display name.  See :meth:`TypeCollection.change_name` for</span>
+<span class="sd">        full behaviour details.</span>
+
+<span class="sd">        ``obj`` must already be in one of the document&#39;s top-level</span>
+<span class="sd">        collections. Raises ``ValueError`` if the object is not found or</span>
+<span class="sd">        ``old_name`` is not present among the object&#39;s names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_collection</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">coll</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Object not found in any top-level collection.&quot;</span><span class="p">)</span>
+        <span class="n">coll</span><span class="o">.</span><span class="n">change_name</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">old_name</span><span class="p">,</span> <span class="n">new_name</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="GedcomX.validate">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.GedcomX.validate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ValidationResult</span><span class="p">:</span>
@@ -927,6 +1315,10 @@
             <span class="nb">id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
             <span class="n">description</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_skip</span><span class="p">(</span><span class="n">collection_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid </span><span class="si">{}</span><span class="s2"> record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">collection_key</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">gx</span><span class="o">.</span><span class="n">_deser_skipped</span><span class="p">[</span><span class="n">collection_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gx</span><span class="o">.</span><span class="n">_deser_skipped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">collection_key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
         <span class="k">if</span> <span class="n">ad</span> <span class="o">:=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attribution&quot;</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">Attribution</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ad</span><span class="p">)</span>
@@ -936,46 +1328,46 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">Group</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">gd</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid group record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;groups&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">pd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_person</span><span class="p">(</span><span class="n">Person</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">pd</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid person record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;persons&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ad</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;agents&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_agent</span><span class="p">(</span><span class="n">Agent</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ad</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid agent record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;agents&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">Relationship</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
         <span class="k">for</span> <span class="n">rd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;relationships&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_relationship</span><span class="p">(</span><span class="n">Relationship</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">rd</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid relationship record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;relationships&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">sd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_source_description</span><span class="p">(</span><span class="n">SourceDescription</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">sd</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid sourceDescription record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;sourceDescriptions&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
         <span class="k">for</span> <span class="n">ed</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">Event</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ed</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid event record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
         <span class="k">for</span> <span class="n">dd</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;documents&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">dd</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid document record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;documents&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.place_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlaceDescription</span>  <span class="c1"># pylint: disable=redefined-outer-name</span>
         <span class="k">for</span> <span class="n">pld</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;places&quot;</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">gx</span><span class="o">.</span><span class="n">add_place_description</span><span class="p">(</span><span class="n">PlaceDescription</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">pld</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping invalid place record: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="n">_skip</span><span class="p">(</span><span class="s2">&quot;places&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">gx</span></div>
 
 

@@ -15,6 +15,8 @@
                         under the corresponding directory (e.g. persons/P1.json);
                         _unique_arcname handles collision suffix for both flat
                         and path-based names
+          2026-04-10 — bounded remote downloads with shared timeout/size helper
+          2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 
 ======================================================================
 """
@@ -22,10 +24,10 @@ import json
 import os
 import tempfile
 import urllib.error
-import urllib.request
 import zipfile
 from pathlib import Path
 
+from ..utils.Utilities import download_url_bytes
 from .gedcomx import GedcomX
 from .schemas import SCHEMA
 from .serialization import Serialization
@@ -308,8 +310,7 @@ class GedcomZip:
             ValueError:             If the archive contains no GedcomX JSON entries.
         """
         try:
-            with urllib.request.urlopen(url) as resp:
-                data = resp.read()
+            data = download_url_bytes(url)
         except urllib.error.HTTPError as exc:
             raise urllib.error.HTTPError(
                 exc.url, exc.code,
@@ -320,6 +321,8 @@ class GedcomZip:
             raise urllib.error.URLError(
                 f"Cannot fetch GedcomX ZIP from {url}: {exc.reason}"
             ) from exc
+        except ValueError as exc:
+            raise ValueError(f"Cannot fetch GedcomX ZIP from {url}: {exc}") from exc
 
         tmp_fd, tmp_path = tempfile.mkstemp(suffix=".gdxz")
         try:

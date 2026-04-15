@@ -5,10 +5,10 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.5b1**
+> **BETA SOFTWARE — v0.7.5b1**
 >
-> `gedcomtools` is under active development. Public APIs, data models, and serialization
-> formats may change between releases without notice. It is not yet recommended for
+> `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
+> *may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
 
 ---
@@ -37,6 +37,17 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
   FamilySearch person envelope.
 - Added `examples/familysearch_deserialize.py` showing how to load the
   FamilySearch extension plugin and deserialize the sample payloads.
+
+### Reliability and release refresh
+
+- Added symmetric custom deserialization hooks so `Serialization.deserialize()`
+  now checks `_deserializer(data)` and `from_json(data, None)` before falling
+  back to `model_validate`, `from_dict`, or schema-driven construction.
+- Hardened public remote-loading paths with a shared bounded download helper:
+  URL fetches now use a timeout and a hard response-size cap instead of
+  unbounded `urlopen(...).read()` calls.
+- Tightened repo tooling configuration so `pyright` ignores generated build
+  artifacts and `pylint` focuses on maintained source paths.
 
 ### Release packaging
 

@@ -11,6 +11,11 @@ from __future__ import annotations
 #                         _GXModel short-circuit; added _RESOURCE_REF_FIELDS
 #                         with MRO walk; fixed _normalize_field_type for unions;
 #                         added _to_dict dispatch for GedcomX container
+#  Updated: 2026-04-10 — added custom deserialization hook support via
+#                         _deserializer and from_json before generic fallback
+#  Updated: 2026-04-12 — _coerce_value(): re-raise TypeError on instantiation
+#                         failure instead of silently returning a raw dict
+#  Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 # ======================================================================
 from collections.abc import Sized
 from dataclasses import dataclass, field
@@ -457,6 +462,22 @@ class Serialization:
     # --- your deserialize with setters --------------------------------------
 
     @classmethod
+    def _call_custom_deserializer(cls, class_type: type, data: Any) -> Any:
+        """Return an instance from a custom class hook, or ``None`` if unsupported."""
+        if not isinstance(class_type, type):
+            return None
+
+        custom = getattr(class_type, "_deserializer", None)
+        if callable(custom):
+            return custom(data)
+
+        from_json = getattr(class_type, "from_json", None)
+        if callable(from_json):
+            return from_json(data, None)
+
+        return None
+
+    @classmethod
     def deserialize(
         cls,
         data: dict[str, Any],
@@ -474,6 +495,12 @@ class Serialization:
         """
         with hub.use(deserial_log):
             t0 = perf_counter()
+
+            custom = cls._call_custom_deserializer(class_type, data)
+            if custom is not None:
+                log.debug("deserialize[{}]: custom hook %.3f ms",
+                          class_type.__name__, (perf_counter() - t0) * 1000)
+                return custom
 
             # Pydantic models: delegate to model_validate
             if isinstance(class_type, type) and issubclass(class_type, _GXModel):
@@ -656,6 +683,9 @@ class Serialization:
 
         # Objects via registry
         if isinstance(T, type) and isinstance(value, dict):
+            custom = cls._call_custom_deserializer(T, value)
+            if custom is not None:
+                return custom
             fields = SCHEMA.get_class_fields(T) or {}
             if fields:
                 kwargs = {}
@@ -670,7 +700,7 @@ class Serialization:
                     return T(**kwargs)
                 except TypeError as e:
                     log.error("coerce: instantiate {} failed kwargs={}: {}", T.__name__, list(kwargs.keys()), e)
-                    return kwargs
+                    raise
 
         # Already correct type?
         try:

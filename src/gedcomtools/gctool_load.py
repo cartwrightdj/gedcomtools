@@ -9,6 +9,11 @@
  Updated: 2026-04-03 — return type Tuple[str, GedcomFile] replacing Tuple[str, Any]
           2026-04-03 — added comment explaining errors="replace" is intentional
                         in _sniff (ASCII-only VERS tag inspection)
+          2026-04-10 — bounded remote downloads with shared timeout/size helper
+          2026-04-12 — narrowed broad except Exception in _load() to specific types:
+                       GedcomFormatViolationError/OSError/ValueError (g5) and
+                       GedcomParseError/OSError/ValueError (g7)
+          2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 ======================================================================
 """
 
@@ -17,13 +22,13 @@ from __future__ import annotations
 import sys
 import tempfile
 import urllib.error
-import urllib.request
 import zipfile
 from pathlib import Path
 from typing import Tuple
 
 from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
+from gedcomtools.utils.Utilities import download_url_bytes
 
 log = get_logger(__name__)
 
@@ -77,13 +82,15 @@ def _load_url(url: str) -> Tuple[str, GedcomFile]:
     """Download a GEDCOM file from *url* to a temp file and call :func:`_load`."""
     print(f"Fetching {url} …")
     try:
-        with urllib.request.urlopen(url) as resp:
-            data = resp.read()
+        data = download_url_bytes(url)
     except urllib.error.HTTPError as exc:
         print(f"error: HTTP {exc.code} fetching {url}: {exc.reason}", file=sys.stderr)
         sys.exit(1)
     except urllib.error.URLError as exc:
         print(f"error: cannot fetch {url}: {exc.reason}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as exc:
+        print(f"error: cannot fetch {url}: {exc}", file=sys.stderr)
         sys.exit(1)
 
     # Preserve the filename/extension so _sniff() works correctly.
@@ -115,16 +122,18 @@ def _load(path: Path) -> Tuple[str, GedcomFile]:
 
     if fmt == "g5":
         from gedcomtools.gedcom5.gedcom5 import Gedcom5
+        from gedcomtools.gedcom5.parser import GedcomFormatViolationError
         obj = Gedcom5()
         try:
             obj.loadfile(path)
-        except Exception as exc:
+        except (GedcomFormatViolationError, OSError, ValueError) as exc:
             print(f"error loading {path}: {exc}", file=sys.stderr)
             sys.exit(1)
         return "g5", obj
 
     # g7
     from gedcomtools.gedcom7.gedcom7 import Gedcom7
+    from gedcomtools.gedcom7.exceptions import GedcomParseError
     obj = Gedcom7()
     try:
         if path.suffix.lower() == ".gdz":
@@ -136,7 +145,7 @@ def _load(path: Path) -> Tuple[str, GedcomFile]:
                 obj.parse_string(zf.read(ged_names[0]).decode("utf-8-sig"))
         else:
             obj.loadfile(path)
-    except Exception as exc:
+    except (GedcomParseError, OSError, ValueError) as exc:
         print(f"error loading {path}: {exc}", file=sys.stderr)
         sys.exit(1)
     return "g7", obj

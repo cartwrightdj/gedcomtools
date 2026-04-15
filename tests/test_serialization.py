@@ -6,6 +6,8 @@ Updates:
                and groups, which were silently dropped by from_dict() (bug #2)
              — added TestSerializeDictNullPruning: verifies None and empty-list
                values are pruned from dict serialization output (bug #4)
+  2026-04-15 — added TestDeserializeHooks for `_deserializer` / `from_json`
+               precedence and nested coercion coverage; release refresh notes
 """
 import json
 import pytest
@@ -175,5 +177,62 @@ class TestSerializeDictNullPruning:
         result = Serialization.serialize({"outer": {"inner": None, "keep": "yes"}})
         assert "inner" not in result["outer"]
         assert result["outer"]["keep"] == "yes"
+
+
+class _HookDeserialized:
+    def __init__(self, payload):
+        self.payload = payload
+
+    @classmethod
+    def _deserializer(cls, data):
+        return cls({"via": "_deserializer", "data": data})
+
+
+class _FromJsonDeserialized:
+    def __init__(self, payload):
+        self.payload = payload
+
+    @classmethod
+    def from_json(cls, data, _context=None):
+        return cls({"via": "from_json", "data": data})
+
+
+class _NestedHookContainer:
+    def __init__(self, child=None):
+        self.child = child
+
+
+class TestDeserializeHooks:
+    def test_deserialize_uses_custom_deserializer_first(self):
+        restored = Serialization.deserialize({"value": 1}, _HookDeserialized)
+        assert isinstance(restored, _HookDeserialized)
+        assert restored.payload["via"] == "_deserializer"
+        assert restored.payload["data"] == {"value": 1}
+
+    def test_deserialize_falls_back_to_from_json(self):
+        restored = Serialization.deserialize({"value": 2}, _FromJsonDeserialized)
+        assert isinstance(restored, _FromJsonDeserialized)
+        assert restored.payload["via"] == "from_json"
+        assert restored.payload["data"] == {"value": 2}
+
+    def test_nested_coercion_uses_custom_deserializer(self):
+        original_get_class_fields = Serialization.deserialize.__globals__["SCHEMA"].get_class_fields
+
+        def fake_get_class_fields(name_or_cls):
+            if name_or_cls is _NestedHookContainer:
+                return {"child": _HookDeserialized}
+            return original_get_class_fields(name_or_cls)
+
+        Serialization.deserialize.__globals__["SCHEMA"].get_class_fields = fake_get_class_fields
+        try:
+            restored = Serialization.deserialize(
+                {"child": {"value": 3}},
+                _NestedHookContainer,
+            )
+        finally:
+            Serialization.deserialize.__globals__["SCHEMA"].get_class_fields = original_get_class_fields
+
+        assert isinstance(restored.child, _HookDeserialized)
+        assert restored.child.payload["data"] == {"value": 3}
 
 

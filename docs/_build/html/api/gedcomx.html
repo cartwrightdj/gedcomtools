@@ -245,8 +245,26 @@
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.gedcomx.</span></span><span class="sig-name descname"><span class="pre">TypeCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generic" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code>]</p>
-<p>A typed, indexable, iterable container with small indexes on id/name/uri.
-The class name stays ‘Collection’; the element type is carried in <cite>item_type</cite>.</p>
+<p>A typed, indexable, iterable container with small indexes on id/name/uri.</p>
+<p>The class name stays ‘Collection’; the element type is carried in <cite>item_type</cite>.</p>
+<p><strong>Mutation contract</strong>: the three indexed properties — <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">uri</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">names</span></code> — must not be changed on an item that is already in the collection
+without calling <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.reindex" title="gedcomtools.gedcomx.gedcomx.TypeCollection.reindex"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reindex()</span></code></a> afterwards.  Direct in-place mutations (e.g.
+<code class="docutils literal notranslate"><span class="pre">gx.persons[0].id</span> <span class="pre">=</span> <span class="pre">&quot;new_id&quot;</span></code>) silently stale the indexes, causing
+<a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_id" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_id"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_id()</span></code></a>, <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_uri()</span></code></a>, and <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_name()</span></code></a> to return wrong results.</p>
+<p>Safe patterns for updating indexed properties:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Swap the whole item (atomic, transactional)</span>
+<span class="n">gx</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old_person</span><span class="p">,</span> <span class="n">new_person</span><span class="p">)</span>
+
+<span class="c1"># Mutate in place then reindex</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">gx</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="s2">&quot;P1&quot;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s2">&quot;P1_NEW&quot;</span>
+<span class="n">gx</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+<span class="c1"># Full rebuild after bulk out-of-band mutations</span>
+<span class="n">gx</span><span class="o">.</span><span class="n">persons</span><span class="o">.</span><span class="n">_rebuild_indexes</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.pop">
 <span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.pop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.pop" title="Link to this definition">¶</a></dt>
@@ -335,6 +353,129 @@ updating all secondary indexes.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.replace">
+<span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.replace" title="Link to this definition">¶</a></dt>
+<dd><p>Atomically replace <em>old_item</em> with <em>new_item</em>, updating all indexes.</p>
+<p>The list position of the item is preserved.  If reindexing <em>new_item</em>
+fails the old item’s indexes are restored and the exception is re-raised,
+leaving the collection unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>old_item: Item currently in the collection.
+new_item: Replacement item; must be an instance of <code class="docutils literal notranslate"><span class="pre">item_type</span></code>.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If <em>old_item</em> is not present.
+TypeError: If <em>new_item</em> is the wrong type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.reindex">
+<span class="sig-name descname"><span class="pre">reindex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.reindex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.reindex" title="Link to this definition">¶</a></dt>
+<dd><p>Re-read <em>item</em>’s indexed properties and refresh all secondary indexes.</p>
+<p>Call this after mutating an item’s <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">uri</span></code>, or <code class="docutils literal notranslate"><span class="pre">names</span></code> in
+place so that <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_id" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_id"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_id()</span></code></a>, <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_uri"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_uri()</span></code></a>, and <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_name()</span></code></a> return
+correct results.</p>
+<p>Uses object identity to locate and remove stale index entries, so it
+works correctly even when the indexed properties have already changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>item: An item already present in the collection.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If <em>item</em> is not in the collection.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.change_id">
+<span class="sig-name descname"><span class="pre">change_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.change_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_id" title="Link to this definition">¶</a></dt>
+<dd><p>Change <em>item</em>’s <code class="docutils literal notranslate"><span class="pre">id</span></code> and keep the id index consistent.</p>
+<p>This is the safe way to rename an item’s identifier after it has been
+added to the collection.  Directly assigning <code class="docutils literal notranslate"><span class="pre">item.id</span> <span class="pre">=</span> <span class="pre">new_id</span></code>
+would leave the old key in <code class="docutils literal notranslate"><span class="pre">_id_index</span></code> and the new key absent,
+causing <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_id" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_id"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_id()</span></code></a> to return stale or wrong results.</p>
+<p>Only the id-index entry is touched; the uri and name indexes are not
+scanned.  If the item’s <code class="docutils literal notranslate"><span class="pre">_uri</span></code> was auto-generated from its original
+id (i.e. <code class="docutils literal notranslate"><span class="pre">_uri.fragment</span> <span class="pre">==</span> <span class="pre">old_id</span></code>), it is also updated to match the
+new id so ZIP document-reference URIs stay in sync.</p>
+<p>Assigning the same id the item already holds is a no-op (no error).</p>
+<p>This method does <strong>not</strong> update cross-references elsewhere in the
+document (e.g. <code class="docutils literal notranslate"><span class="pre">Relationship.person1.resourceId</span></code>).  If those need
+updating, do so separately.</p>
+<p><code class="docutils literal notranslate"><span class="pre">item</span></code> must already be present in the collection. <code class="docutils literal notranslate"><span class="pre">new_id</span></code> may be
+any hashable value; <code class="docutils literal notranslate"><span class="pre">None</span></code> clears the id and removes it from the
+index. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the item is missing or the replacement
+id belongs to a different item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri">
+<span class="sig-name descname"><span class="pre">change_uri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_uri</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.change_uri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri" title="Link to this definition">¶</a></dt>
+<dd><p>Change <em>item</em>’s <code class="docutils literal notranslate"><span class="pre">uri</span></code> and keep the uri index consistent.</p>
+<p>The safe counterpart to directly assigning <code class="docutils literal notranslate"><span class="pre">item.uri</span> <span class="pre">=</span> <span class="pre">…</span></code> on an
+item that is already in the collection.  Direct assignment would leave
+the old URI key in <code class="docutils literal notranslate"><span class="pre">_uri_index</span></code> and the new key absent.</p>
+<p><em>new_uri</em> is accepted in three forms:</p>
+<ul class="simple">
+<li><p>A <a class="reference internal" href="#gedcomtools.gedcomx.uri.URI" title="gedcomtools.gedcomx.uri.URI"><code class="xref py py-class docutils literal notranslate"><span class="pre">URI</span></code></a> instance — used as-is.</p></li>
+<li><p>A plain <code class="docutils literal notranslate"><span class="pre">str</span></code> — wrapped in <code class="docutils literal notranslate"><span class="pre">URI(value=new_uri)</span></code> automatically.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code> — clears <code class="docutils literal notranslate"><span class="pre">item.uri</span></code> and removes the old entry from the
+index.</p></li>
+</ul>
+<p>Only the uri-index entry is touched; id and name indexes are not
+scanned.</p>
+<p><code class="docutils literal notranslate"><span class="pre">item</span></code> must already be present in the collection. Raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the item is missing or the replacement URI string is
+already held by a different item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.TypeCollection.change_name">
+<span class="sig-name descname"><span class="pre">change_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#TypeCollection.change_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_name" title="Link to this definition">¶</a></dt>
+<dd><p>Replace one name value on <em>item</em> and keep the name index consistent.</p>
+<p>Finds the first entry in <code class="docutils literal notranslate"><span class="pre">item.names</span></code> whose <code class="docutils literal notranslate"><span class="pre">.value</span></code> equals
+<em>old_name</em>, updates it to <em>new_name</em>, and adjusts <code class="docutils literal notranslate"><span class="pre">_name_index</span></code>
+accordingly — without touching the id or uri indexes.</p>
+<p>Unlike <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_id" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_id"><code class="xref py py-meth docutils literal notranslate"><span class="pre">change_id()</span></code></a> and <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri"><code class="xref py py-meth docutils literal notranslate"><span class="pre">change_uri()</span></code></a>, no collision check
+is performed: multiple items in the same collection may legitimately
+share a display name (e.g. two agents both called “Smith &amp; Co”).
+<a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name" title="gedcomtools.gedcomx.gedcomx.TypeCollection.by_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">by_name()</span></code></a> returns a <em>list</em> precisely to handle this case.</p>
+<p>Only the first matching name entry is replaced.  If an item has
+multiple names with the same value and you need to replace all of
+them, call this method once per occurrence.</p>
+<p><code class="docutils literal notranslate"><span class="pre">item</span></code> must already be present in the collection. <code class="docutils literal notranslate"><span class="pre">old_name</span></code> is an
+exact match with no normalization. Passing an empty <code class="docutils literal notranslate"><span class="pre">new_name</span></code>
+removes the old index entry without adding a replacement. Raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the item is missing, has no names, or <code class="docutils literal notranslate"><span class="pre">old_name</span></code>
+is not found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -370,11 +511,19 @@ complies with GEDCOM X Conceptual Model V1 (<a class="reference external" href="
 <dl class="py property">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.conversion_warnings">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">conversion_warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.conversion_warnings" title="Link to this definition">¶</a></dt>
-<dd><p>GEDCOM tags skipped during import due to missing handlers (potential data loss).</p>
-<p>Non-empty when a converter encountered tags it could not map to GedcomX
-objects.  Keys are GEDCOM tag names; values are occurrence counts.
-Returns an empty dict when conversion was clean or this object was not
-produced by a converter.</p>
+<dd><p>Data-loss warnings accumulated during import or deserialization.</p>
+<p>Two sources contribute to this dict:</p>
+<ul class="simple">
+<li><p><strong>GEDCOM converter</strong> — tags encountered during GEDCOM 5/7 → GedcomX
+conversion that had no handler.  Keys are uppercase GEDCOM tag names
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;OBJE&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;CONC&quot;</span></code>); values are occurrence counts.</p></li>
+<li><p><strong>JSON deserialization</strong> — records skipped by <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.from_dict" title="gedcomtools.gedcomx.gedcomx.GedcomX.from_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code></a>
+because <code class="docutils literal notranslate"><span class="pre">model_validate</span></code> raised.  Keys are lowercase collection
+names (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;persons&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;relationships&quot;</span></code>); values are skip
+counts.</p></li>
+</ul>
+<p>Returns an empty dict when import was clean or this object was not
+produced by a converter or <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.from_dict" title="gedcomtools.gedcomx.gedcomx.GedcomX.from_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -518,6 +667,71 @@ None (implicit return) if the group was successfully added.</p>
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id">
 <span class="sig-name descname"><span class="pre">source_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.source_by_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id" title="Link to this definition">¶</a></dt>
 <dd><p>Return the SourceDescription with the given id, or None if not found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.change_id">
+<span class="sig-name descname"><span class="pre">change_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.change_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_id" title="Link to this definition">¶</a></dt>
+<dd><p>Change <em>obj</em>’s <code class="docutils literal notranslate"><span class="pre">id</span></code> and keep the owning collection’s index consistent.</p>
+<p>Convenience wrapper around <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_id" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_id"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeCollection.change_id()</span></code></a> that
+locates the right collection automatically via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_find_collection()</span></code>, so the caller does not need to know or
+remember which collection the object belongs to.</p>
+<p>The auto-generated <code class="docutils literal notranslate"><span class="pre">_uri.fragment</span></code> is updated to match the new id
+if it was derived from the original id (ZIP document-reference URIs
+stay in sync automatically).</p>
+<p>This method does <strong>not</strong> update cross-references elsewhere in the
+document (e.g. <code class="docutils literal notranslate"><span class="pre">Relationship.person1.resourceId</span></code>).  Those must be
+updated separately if needed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">obj</span></code> must already be in one of the document’s top-level
+collections. <code class="docutils literal notranslate"><span class="pre">new_id</span></code> may be <code class="docutils literal notranslate"><span class="pre">None</span></code> to clear the id. Raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the object is not found or the replacement id belongs
+to a different item in the same collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.change_uri">
+<span class="sig-name descname"><span class="pre">change_uri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_uri</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.change_uri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_uri" title="Link to this definition">¶</a></dt>
+<dd><p>Change <em>obj</em>’s <code class="docutils literal notranslate"><span class="pre">uri</span></code> and keep the owning collection’s index consistent.</p>
+<p>Convenience wrapper around <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeCollection.change_uri()</span></code></a> that
+locates the right collection automatically.  Accepts the new URI as a
+<a class="reference internal" href="#gedcomtools.gedcomx.uri.URI" title="gedcomtools.gedcomx.uri.URI"><code class="xref py py-class docutils literal notranslate"><span class="pre">URI</span></code></a> object, a plain string, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to clear.</p>
+<p><code class="docutils literal notranslate"><span class="pre">obj</span></code> must already be in one of the document’s top-level
+collections. <code class="docutils literal notranslate"><span class="pre">new_uri</span></code> may be a <code class="docutils literal notranslate"><span class="pre">URI</span></code> instance, a plain string, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code>. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the object is not found or the
+replacement URI is already held by a different item in the same
+collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.gedcomx.GedcomX.change_name">
+<span class="sig-name descname"><span class="pre">change_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/gedcomx.html#GedcomX.change_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_name" title="Link to this definition">¶</a></dt>
+<dd><p>Replace one name value on <em>obj</em> and keep the owning collection’s index consistent.</p>
+<p>Convenience wrapper around <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_name" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeCollection.change_name()</span></code></a> that
+locates the right collection automatically.  Replaces the first entry
+in <code class="docutils literal notranslate"><span class="pre">obj.names</span></code> whose value equals <em>old_name</em>.</p>
+<p>No collision check is performed — multiple items may legitimately
+share a display name.  See <a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_name" title="gedcomtools.gedcomx.gedcomx.TypeCollection.change_name"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeCollection.change_name()</span></code></a> for
+full behaviour details.</p>
+<p><code class="docutils literal notranslate"><span class="pre">obj</span></code> must already be in one of the document’s top-level
+collections. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the object is not found or
+<code class="docutils literal notranslate"><span class="pre">old_name</span></code> is not present among the object’s names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -5837,6 +6051,11 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.append"><code class="docutils literal notranslate"><span class="pre">TypeCollection.append()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.extend"><code class="docutils literal notranslate"><span class="pre">TypeCollection.extend()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.remove"><code class="docutils literal notranslate"><span class="pre">TypeCollection.remove()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.replace"><code class="docutils literal notranslate"><span class="pre">TypeCollection.replace()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.reindex"><code class="docutils literal notranslate"><span class="pre">TypeCollection.reindex()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_id"><code class="docutils literal notranslate"><span class="pre">TypeCollection.change_id()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_uri"><code class="docutils literal notranslate"><span class="pre">TypeCollection.change_uri()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.TypeCollection.change_name"><code class="docutils literal notranslate"><span class="pre">TypeCollection.change_name()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX"><code class="docutils literal notranslate"><span class="pre">GedcomX</span></code></a><ul>
@@ -5855,6 +6074,9 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.extend"><code class="docutils literal notranslate"><span class="pre">GedcomX.extend()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.get_person_by_id"><code class="docutils literal notranslate"><span class="pre">GedcomX.get_person_by_id()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.source_by_id"><code class="docutils literal notranslate"><span class="pre">GedcomX.source_by_id()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_id"><code class="docutils literal notranslate"><span class="pre">GedcomX.change_id()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_uri"><code class="docutils literal notranslate"><span class="pre">GedcomX.change_uri()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.change_name"><code class="docutils literal notranslate"><span class="pre">GedcomX.change_name()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.validate"><code class="docutils literal notranslate"><span class="pre">GedcomX.validate()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.id_index"><code class="docutils literal notranslate"><span class="pre">GedcomX.id_index</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gedcomx.GedcomX.from_dict"><code class="docutils literal notranslate"><span class="pre">GedcomX.from_dict()</span></code></a></li>

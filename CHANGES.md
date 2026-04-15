@@ -1,6 +1,6 @@
 # Changes
 
-## v0.7.5b1 - 2026-04-08
+## v0.7.5b1 - 2026-04-15
 
 - Added typed FamilySearch deserialization support for `PersonInfo`,
   `NameFormInfo`, normalized dates, normalized place text, and the
@@ -16,5 +16,12 @@
   `.sample_data/familysearch/`.
 - Added disk-based tests for the FamilySearch sample data and a commented
   example script in `examples/familysearch_deserialize.py`.
+- Added symmetric custom deserialization hooks so `Serialization.deserialize()`
+  now checks `_deserializer(data)` and `from_json(data, None)` before generic
+  fallback construction.
+- Hardened public URL-loading paths with a shared bounded-download helper that
+  applies a timeout and response-size limit to remote fetches.
+- Tightened repo-level `pyright` and `pylint` configuration so generated build
+  output and docs do not hide real source diagnostics.
 - Verified the new work with pytest, pylint, and pyright in the project
   virtual environment.

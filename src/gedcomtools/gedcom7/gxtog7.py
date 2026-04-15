@@ -5,6 +5,12 @@
  Purpose: GedcomX → GEDCOM 7 converter.
 
  Created: 2026-04-07
+ Updated: 2026-04-12 — parent-pair FAM search: O(1) direct lookup for the
+                        common two-parent case; O(n²) fallback only for >2 parents
+           2026-04-12 — single-parent FAM fallback: score candidates by number of
+                        matching parents; avoids assigning a child to a FAM from a
+                        different partnership when a parent belongs to multiple families
+           2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 ======================================================================
 
 Converts a populated :class:`~gedcomtools.gedcomx.gedcomx.GedcomX`
@@ -313,23 +319,38 @@ class GedcomXConverter:
 
             found_fam: Optional[str] = None
 
-            # Try to find a FAM matching two parents
+            # Try to find a FAM matching two parents.
+            # Common case: exactly two parents — one O(1) dict lookup.
+            # Rare case: >2 parents — fall back to scanning pairs.
             if len(parent_ids) >= 2:
-                for i, pid_i in enumerate(parent_ids):
-                    for j in range(i + 1, len(parent_ids)):
-                        key = frozenset([pid_i, parent_ids[j]])
-                        if key in couple_key_xref:
-                            found_fam = couple_key_xref[key]
+                found_fam = couple_key_xref.get(frozenset(parent_ids[:2]))
+                if not found_fam and len(parent_ids) > 2:
+                    for i, pid_i in enumerate(parent_ids):
+                        for j in range(i + 1, len(parent_ids)):
+                            found_fam = couple_key_xref.get(frozenset([pid_i, parent_ids[j]]))
+                            if found_fam:
+                                break
+                        if found_fam:
                             break
-                    if found_fam:
-                        break
 
-            # Fall back: single parent already in a FAM
-            if not found_fam:
+            # Fall back: find the FAM that matches the most of this child's
+            # parents (avoids assigning a child to a FAM from a different
+            # partnership when a parent belongs to more than one family).
+            if not found_fam and parent_ids:
+                parent_id_set = set(parent_ids)
+                best_fam: Optional[str] = None
+                best_score = 0
                 for pid in parent_ids:
-                    if pid in self._person_fams:
-                        found_fam = self._person_fams[pid][0]
-                        break
+                    for fam_xref in self._person_fams.get(pid, []):
+                        fdata = self._fam_data[fam_xref]
+                        score = sum(
+                            1 for p in (fdata["person1_id"], fdata["person2_id"])
+                            if p in parent_id_set
+                        )
+                        if score > best_score:
+                            best_score = score
+                            best_fam = fam_xref
+                found_fam = best_fam
 
             # Last resort: create an implicit FAM for the parent(s)
             if not found_fam and parent_ids:

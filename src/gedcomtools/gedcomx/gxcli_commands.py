@@ -9,6 +9,8 @@ from __future__ import annotations
 #           Import order: gxcli_core assembles Shell from these mixins.
 #  Created: 2026-03-31 — split from gxcli.py
 #  Updated: 2026-04-03 — _is_url moved to utils.Utilities; removed _LoadMixin._is_url staticmethod
+#           2026-04-10 — bounded remote downloads with shared timeout/size helper
+#           2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 # ======================================================================
 import inspect
 import logging
@@ -19,7 +21,6 @@ import shutil
 import sys
 import tempfile
 import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any, get_args, get_origin
 
@@ -30,7 +31,7 @@ from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.cli import write_jsonl, objects_to_schema_table
 from gedcomtools.glog import get_logger, LoggerSpec
-from gedcomtools.utils.Utilities import _is_url
+from gedcomtools.utils.Utilities import _is_url, download_url_bytes
 
 from gedcomtools.gedcomx.gxcli_output import (
     ANSI,
@@ -1369,13 +1370,15 @@ class _LoadMixin:
     def _fetch_url(url: str) -> bytes:
         """Download *url* and return the raw bytes, or print an error and return b''."""
         try:
-            with urllib.request.urlopen(url) as resp:
-                return resp.read()
+            return download_url_bytes(url)
         except urllib.error.HTTPError as exc:
             print(f"! HTTP {exc.code} fetching {url}: {exc.reason}")
             return b""
         except urllib.error.URLError as exc:
             print(f"! Cannot fetch {url}: {exc.reason}")
+            return b""
+        except ValueError as exc:
+            print(f"! Cannot fetch {url}: {exc}")
             return b""
 
     def _load_ged_url(self, url: str) -> Any:

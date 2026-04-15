@@ -246,7 +246,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conclusion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Conclusion</span>
@@ -316,7 +316,7 @@
 
 
 <span class="c1"># Resolve forward references that point back to Document or SourceDescription.</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>  <span class="c1"># noqa: E402</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>  <span class="c1"># noqa: E402  # pylint: disable=unused-import</span>
 <span class="c1"># Include SourceDescription so the cascade rebuild of SourceReference also resolves.</span>
 <span class="n">SourceDescription</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">(</span><span class="n">_types_namespace</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Document&quot;</span><span class="p">:</span> <span class="n">Document</span><span class="p">,</span> <span class="s2">&quot;SourceDescription&quot;</span><span class="p">:</span> <span class="n">SourceDescription</span><span class="p">})</span>
 </pre></div>

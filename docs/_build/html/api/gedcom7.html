@@ -626,6 +626,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">individual_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.individual_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code> for every INDI record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">get_individual_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_individual_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return <code class="xref py py-class docutils literal notranslate"><span class="pre">IndividualDetail</span></code> for a single INDI by xref.</p>
 <dl class="field-list simple">
@@ -642,6 +653,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">FamilyDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">family_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.family_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">FamilyDetail</span></code> for every FAM record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">FamilyDetail</span></code>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -670,6 +692,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">source_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.source_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">SourceDetail</span></code> for every SOUR record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SourceDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">get_source_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_source_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return <code class="xref py py-class docutils literal notranslate"><span class="pre">SourceDetail</span></code> for a single SOUR by xref.</p>
 <dl class="field-list simple">
@@ -686,6 +719,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">repository_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.repository_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryDetail</span></code> for every REPO record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryDetail</span></code>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -714,6 +758,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">media_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.media_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">MediaDetail</span></code> for every OBJE record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">MediaDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">get_media_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_media_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return <code class="xref py py-class docutils literal notranslate"><span class="pre">MediaDetail</span></code> for a single OBJE by xref.</p>
 <dl class="field-list simple">
@@ -736,6 +791,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">shared_note_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.shared_note_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">SharedNoteDetail</span></code> for every SNOTE record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SharedNoteDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">get_shared_note_detail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.get_shared_note_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Return <code class="xref py py-class docutils literal notranslate"><span class="pre">SharedNoteDetail</span></code> for a single SNOTE by xref.</p>
 <dl class="field-list simple">
@@ -752,6 +818,17 @@ bom: Whether to write a UTF-8 BOM (discouraged by the spec).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SubmitterDetail</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">submitter_details_iter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.submitter_details_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Yield <code class="xref py py-class docutils literal notranslate"><span class="pre">SubmitterDetail</span></code> for every SUBM record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SubmitterDetail</span></code>]</span></p>
 </dd>
 </dl>
 </dd></dl>

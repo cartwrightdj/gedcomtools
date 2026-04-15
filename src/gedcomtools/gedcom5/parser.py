@@ -8,6 +8,10 @@
 #  Updated: 2026-04-06 — detect UTF-8/UTF-16 BOMs and decode the full byte
 #                         stream before splitting lines so UTF-16 GEDCOM 5
 #                         files load through the normal facade and CLI paths
+#           2026-04-10 — bounded remote downloads with shared timeout/size helper
+#           2026-04-12 — pre-compile GEDCOM line-parse regexes at module load;
+#                         removed per-line pattern construction in __parse_line()
+#           2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
 # ======================================================================
 """Parse GEDCOM 5.x files into the project’s element tree representation."""
 
@@ -42,9 +46,9 @@
 import io
 import re as regex
 import urllib.error
-import urllib.request
 from typing import List, Union
 
+from ..utils.Utilities import download_url_bytes
 from .elements import (
     Element, FamilyRecord, FileElement, HeaderRecord,
     IndividualRecord, ObjectRecord, RepositoryRecord,
@@ -74,6 +78,25 @@ def _normalize_xref(xref: str) -> str:
 
 class GedcomFormatViolationError(Exception):
     """Raised when a line violates the GEDCOM 5.5 format."""
+
+
+# Pre-compiled line-parse patterns — assembled once at module load rather than
+# on every call to __parse_line().
+_EOL_RE = r'([\r\n]{1,2})'
+_GEDCOM_LINE_RE: regex.Pattern = regex.compile(
+    r'^(0|[1-9]+[0-9]*) '
+    r'(@[^@]+@\s|)'
+    r'([A-Za-z0-9_]+)'
+    r'( [^\n\r]*|)'
+    + _EOL_RE
+)
+_LAST_LINE_RE: regex.Pattern = regex.compile(
+    r'^(0|[1-9]+[0-9]*) '
+    r'(@[^@]+@\s|)'
+    r'([A-Za-z0-9_]+)'
+    r'( [^\n\r]*|)'
+)
+_CONT_LINE_RE: regex.Pattern = regex.compile(r'([^\n\r]*|)' + _EOL_RE)
 
 
 class Gedcom5x:
@@ -170,8 +193,7 @@ class Gedcom5x:
             urllib.error.HTTPError: If the server returns an error status.
         """
         try:
-            with urllib.request.urlopen(url) as resp:
-                self.parse(io.BytesIO(resp.read()), strict)
+            self.parse(io.BytesIO(download_url_bytes(url)), strict)
         except urllib.error.HTTPError as exc:
             raise urllib.error.HTTPError(
                 exc.url, exc.code,
@@ -182,6 +204,8 @@ class Gedcom5x:
             raise urllib.error.URLError(
                 f"Cannot fetch GEDCOM from {url}: {exc.reason}"
             ) from exc
+        except ValueError as exc:
+            raise ValueError(f"Cannot fetch GEDCOM from {url}: {exc}") from exc
 
     def parse_file(self, file_path: str, strict: bool = True) -> None:
         """Open and parse a GEDCOM 5.x file.
@@ -269,14 +293,7 @@ class Gedcom5x:
     def __parse_line(line_number: int, line: str, strict: bool = True, violations: list | None = None) -> Element:
         """Parse one GEDCOM line and return the appropriate Element subclass."""
 
-        level_regex = '^(0|[1-9]+[0-9]*) '
-        pointer_regex = r'(@[^@]+@\s|)'
-        tag_regex = '([A-Za-z0-9_]+)'
-        value_regex = '( [^\n\r]*|)'
-        end_of_line_regex = '([\r\n]{1,2})'
-        gedcom_line_regex = level_regex + pointer_regex + tag_regex + value_regex + end_of_line_regex
-
-        regex_match = regex.match(gedcom_line_regex, line)
+        regex_match = _GEDCOM_LINE_RE.match(line)
 
         if regex_match is None:
             if strict:
@@ -287,8 +304,7 @@ class Gedcom5x:
             if violations is not None:
                 violations.append(f"line {line_number}: {line.rstrip()}")
             # Quirk: last line may be missing CRLF
-            last_line_regex = level_regex + pointer_regex + tag_regex + value_regex
-            regex_match = regex.match(last_line_regex, line)
+            regex_match = _LAST_LINE_RE.match(line)
             if regex_match is not None:
                 line_parts = regex_match.groups()
                 level = int(line_parts[0])
@@ -299,8 +315,7 @@ class Gedcom5x:
             else:
                 # Quirk: embedded CR produces a fragment with no level/tag —
                 # treat as CONC so text is not silently dropped.
-                cont_line_regex = '([^\n\r]*|)' + end_of_line_regex
-                regex_match = regex.match(cont_line_regex, line)
+                regex_match = _CONT_LINE_RE.match(line)
                 if regex_match is None:
                     raise GedcomFormatViolationError(
                         f"Line <{line_number}> could not be parsed even in recovery mode"

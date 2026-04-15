@@ -4,6 +4,304 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## Release refresh — v0.7.5b1 (2026-04-15)
+
+- Added symmetric custom deserialization hooks in `Serialization.deserialize()`
+  so project types can provide `_deserializer(data)` or `from_json(data, None)`
+  just as serialization already supports `_serializer`.
+- Hardened public remote-loading paths with a shared bounded download helper
+  that adds timeouts and response-size caps for GEDCOM and GedcomX URL loads.
+- Tightened `pyright` and `pylint` configuration to ignore generated build and
+  docs output so repo-level checks report maintained-source issues clearly.
+- Rebuilt Sphinx docs and refreshed the release artifacts for the `v0.7.5b1`
+  beta tag.
+
+---
+
+## Bug fixes — deserialization losses and spouse lookup (2026-04-12)
+
+### Fix — `from_dict()` deserialization losses now captured in `conversion_warnings`
+
+When `GedcomX.from_dict()` skipped an invalid record (because `model_validate`
+raised), the failure was only logged as a warning.  Callers had no way to
+programmatically detect how many records were silently dropped.
+
+A new `_deser_skipped: Dict[str, int]` counter is initialised in `__init__`
+and incremented for every skipped record, keyed by collection name
+(``"persons"``, ``"relationships"``, etc.).  `conversion_warnings` is updated
+to merge both sources:
+
+* **GEDCOM tag losses** — uppercase tag names from the GEDCOM converter
+  (unchanged).
+* **Deserialization skips** — lowercase collection names from `from_dict()`.
+
+Callers can now inspect either or both::
+
+    gx = GedcomX.from_dict(data)
+    if gx.conversion_warnings:
+        print("Data lost during import:", gx.conversion_warnings)
+        # e.g. {"persons": 2, "OBJE": 5}
+
+### Fix — `get_spouses()` redundant `.upper()` self-exclusion
+
+`get_spouses()` computed `norm_xref = xref.upper()` and then compared
+``ptr_node.payload.upper() != norm_xref`` to exclude the individual from
+their own spouse list.  Since `_record_by_xref` now resolves through
+`_xref_index` (which stores pre-normalised keys), normalising the string again
+was redundant.
+
+The check is replaced with an object-identity comparison
+(`candidate is not indi_node`), which is both cheaper and semantically
+clearer: the exclusion is about the *object*, not the string form of its id.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | `_deser_skipped` counter; `from_dict()` records per-collection skips; `conversion_warnings` merges both |
+| `src/gedcomtools/gedcom7/gedcom7.py` | `get_spouses()`: identity check replaces string `.upper()` comparison |
+
+---
+
+## `change_id` / `change_uri` / `change_name` mutation helpers (2026-04-12)
+
+### New — surgical index-safe property updates on `TypeCollection` and `GedcomX`
+
+Mutating an item's `id`, `uri`, or `names` after it is already in a collection
+required either `reindex()` (full three-index scan) or `replace()` (whole-item
+swap).  Three new surgical methods update only the affected index entry:
+
+**`TypeCollection.change_id(item, new_id)`**
+Swaps the id-index entry, updates `item.id`, and keeps the auto-generated
+`_uri.fragment` in sync.  Raises `ValueError` if `new_id` is already used by a
+*different* item in the same collection.
+
+**`TypeCollection.change_uri(item, new_uri)`**
+Accepts a `URI` object, a plain string (wrapped automatically), or `None` to
+clear.  Raises `ValueError` on URI collision with a different item.
+
+**`TypeCollection.change_name(item, old_name, new_name)`**
+Replaces the first name entry matching `old_name` and updates the name index.
+Names are not collision-checked — multiple items may legitimately share a name.
+Raises `ValueError` if `old_name` is not found on the item.
+
+**`GedcomX.change_id / change_uri / change_name`**
+Convenience wrappers that locate the right collection automatically via a new
+`_find_collection(obj)` helper (searches all eight top-level collections by
+object identity) and delegate to the corresponding `TypeCollection` method.
+
+Typical usage::
+
+    p = gx.persons.by_id("P1")
+    gx.change_id(p, "P1_CORRECTED")           # id + index + _uri.fragment
+
+    agent = gx.agents.by_name("Old Corp")[0]
+    gx.change_name(agent, "Old Corp", "New Corp")
+
+    gx.change_uri(p, "http://example.com/persons/p1")
+
+All six methods carry full docstrings covering: what the method does, the three
+accepted URI forms, edge cases (same-id no-op, ``None`` clearing, multi-name
+items), what the method does *not* do (cross-reference updates), and runnable
+examples.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | `TypeCollection.change_id/uri/name`; `GedcomX._find_collection`, `_collections`, `change_id/uri/name`; enriched docstrings |
+| `tests/test_gedcomx.py` | 16 new tests across `TestTypeCollectionChangeId/Uri/Name` and `TestGedcomXChangeMethods` |
+
+---
+
+## TypeCollection index safety (2026-04-12)
+
+### Fix — `append()` rollback leaves zombie index entries
+
+When `_update_indexes()` raised an exception part-way through (e.g. after
+writing the id index but before finishing the name index), the existing rollback
+only popped the item from `_items` — it did not clean up the partial index
+writes.  Subsequent `by_id()` / `by_name()` / `by_uri()` calls would return the
+half-indexed item even though it was no longer in the collection.
+
+The rollback now calls `_remove_from_indexes(item)` before re-raising, so all
+partial writes are cleaned up atomically.
+
+### Fix — `reindex()` for safe in-place mutation of indexed properties
+
+Mutating an item's `id`, `uri`, or `names` after it has been appended to a
+collection silently staled the secondary indexes, causing `by_id()`, `by_uri()`,
+and `by_name()` to return wrong results.  There was no safe way to update these
+properties without removing and re-adding the whole item.
+
+`reindex(item)` removes all stale index entries for the item using object
+identity (scanning `is` rather than reading the current property values, which
+are already the post-mutation values), then re-adds the current values.  Safe
+update pattern::
+
+    p = gx.persons.by_id("P1")
+    p.id = "P1_NEW"
+    gx.persons.reindex(p)
+
+### New — `replace(old_item, new_item)` for atomic item swap
+
+Provides a transactional way to swap an item while keeping its list position.
+If reindexing the new item fails, the old item's indexes are restored and the
+exception is re-raised, leaving the collection unchanged::
+
+    gx.persons.replace(old_person, new_person)
+
+### New — `_rebuild_indexes()` for full recovery
+
+Clears and rebuilds all secondary indexes from `_items` in one O(n) pass.
+Useful after bulk out-of-band mutations or as a recovery tool::
+
+    gx.persons._rebuild_indexes()
+
+### Documentation
+
+`TypeCollection` now carries a class-level docstring that explicitly states the
+mutation contract and shows all three safe update patterns.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/gedcomx.py` | Rollback fix; `reindex()`; `replace()`; `_rebuild_indexes()`; class docstring |
+| `tests/test_gedcomx.py` | 9 new tests covering all four behaviours |
+
+---
+
+## Bug fixes (2026-04-12)
+
+### Fix — `Serialization._coerce_value()` returned `dict` instead of `T`
+
+When generic object instantiation via `T(**kwargs)` raised `TypeError`, the
+fallback path logged the error and silently returned the raw `kwargs` dict.
+Callers expecting a `T` instance received a `dict`, causing confusing
+`AttributeError`s elsewhere.  The fallback now re-raises so the error surfaces
+at the actual point of failure.
+
+### Fix — `GedcomXConverter` wrong parent assignment when a parent belongs to multiple families
+
+The single-parent FAM fallback in `_build_relationships()` took the first FAM
+any matching parent was found in (`_person_fams[pid][0]`), without checking
+whether the other parents also belonged to that FAM.  In blended-family trees
+where a parent appears in more than one FAM, children could be silently
+assigned to the wrong partnership's family record.
+
+The fallback now scores every candidate FAM by how many of the child's parents
+appear in it and picks the highest-scoring match, making the assignment correct
+for the common case and best-effort for ambiguous multi-parent structures.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/serialization.py` | `_coerce_value()`: re-raise `TypeError` instead of returning `dict` |
+| `src/gedcomtools/gedcom7/gxtog7.py` | Single-parent fallback: score candidates by parent-count match |
+
+---
+
+## Performance optimisations (2026-04-12)
+
+### Opt 1 — Pre-compile GEDCOM 5 line-parse regex
+
+`Gedcom5x.__parse_line()` was assembling five regex fragments into a single
+string and calling `re.match()` on every line, causing the pattern to be
+compiled on every call.  Three module-level compiled patterns (`_GEDCOM_LINE_RE`,
+`_LAST_LINE_RE`, `_CONT_LINE_RE`) now replace the per-call construction.
+For a 50 000-line GEDCOM 5 file this eliminates ~50 000 redundant compilations.
+
+### Opt 2 — O(1) xref lookups in `Gedcom7` via `_xref_index`
+
+`_record_by_xref()` previously performed a linear scan of `self.records` with
+a `.upper()` call on every element's xref.  A new `_xref_index: Dict[str,
+GedcomStructure]` (keyed on uppercase xref) is maintained alongside the
+existing `_tag_index` and provides O(1) lookups.  The index is populated
+incrementally in `_append_record()` and rebuilt in `_rebuild_tag_index()`, and
+is cleared on every `parse_lines()` / `parse_string()` reset.  All relationship
+traversal helpers (`get_parents`, `get_children_of`, `get_spouses`) benefit
+immediately.
+
+### Opt 3 — `_records_by_tag()` uses `_tag_index`
+
+`_records_by_tag()` was scanning all of `self.records` with `r.tag == tag`
+even though `_tag_index` already maps each tag to a list of record positions.
+It now reads positions directly from the index, making `individuals()`,
+`families()`, `sources()`, etc. O(k) where k is the number of matching records
+rather than O(n) over all records.
+
+### Opt 4 — Consolidate payload strip in `parse_gedcom_line()`
+
+`parse_gedcom_line()` called `rstrip("\r\n")` on the raw line and then
+`payload.strip()` later.  Changing the initial strip to `rstrip()` (all
+trailing whitespace) makes the second strip redundant and removes it.
+
+### Opt 5 — Generator variants for all detail accessors
+
+All `*_details()` methods on `Gedcom7` now delegate to a matching
+`*_details_iter()` generator (e.g. `individual_details_iter()`).  Callers that
+only need to stream records avoid materialising the full list; existing callers
+of `*_details()` are unaffected.
+
+### Opt 6 — O(1) parent-pair lookup in `GedcomXConverter`
+
+The parent-to-family mapping search in `gxtog7._build_relationships()` used
+a nested loop over all parent pairs.  The common two-parent case is now a
+single `dict.get()` call on the `couple_key_xref` map; the nested loop is
+retained only for the rare >2-parent edge case.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom5/parser.py` | Pre-compile `_GEDCOM_LINE_RE`, `_LAST_LINE_RE`, `_CONT_LINE_RE` at module load |
+| `src/gedcomtools/gedcom7/gedcom7.py` | Add `_xref_index`; fix `_records_by_tag` / `_record_by_xref`; consolidate strip; add `*_details_iter()` generators |
+| `src/gedcomtools/gedcom7/gxtog7.py` | Replace O(n²) pair search with O(1) direct lookup for common case |
+
+---
+
+## Code quality fixes (2026-04-12)
+
+### Fix — `Gedcom7.from_gedcomx()` uninitialized object state
+
+`from_gedcomx()` was calling `cls.__new__(cls)` to bypass `__init__()`, leaving
+`errors`, `_tag_index`, `_rel_cache`, and `filepath` unset on the returned
+instance.  Any subsequent call to `validate()`, `__getitem__()`, relationship
+helpers, or `write()` would raise `AttributeError`.  Replaced with `cls()` so
+all instance attributes are properly initialized before records are populated.
+Also added a `GedcomX` type annotation on the `gx` parameter.
+
+### Fix — `download_url_bytes()` backwards `ValueError` re-raise
+
+The `Content-Length` size check caught both `int()` parse failures and the
+custom size-limit error in the same `except ValueError` block, then used
+`content_length.isdigit()` to decide whether to re-raise — which was inverted.
+A non-digit header value would be silently swallowed; the size-limit error
+(which always has a digit string) would be correctly re-raised only by
+coincidence.  The fix parses the header integer in a dedicated `try/except` and
+checks the limit independently, making the two code paths explicit.
+
+### Fix — `gctool_load._load()` broad exception catch
+
+Both `except Exception` blocks in `_load()` were replaced with the specific
+exception types each loader can raise: `(GedcomFormatViolationError, OSError,
+ValueError)` for GEDCOM 5 and `(GedcomParseError, OSError, ValueError)` for
+GEDCOM 7.
+
+### Fix — `Gedcom5.get_shared_note_detail()` redundant suppression
+
+Removed the redundant `# pylint: disable=unused-argument` comment (already
+suppressed via `# noqa: ARG002`) and added an underscore prefix to the unused
+`xref` parameter for consistency with the adjacent `get_shared_note()` method.
+
+### Test coverage
+
+Added `test_download_url_bytes_ignores_non_numeric_content_length` to
+`tests/test_utilities_download.py` to cover the non-digit `Content-Length`
+edge case that the previous logic silently mishandled.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom7/gedcom7.py` | `from_gedcomx()`: `cls.__new__` → `cls()`; `GedcomX` type annotation |
+| `src/gedcomtools/utils/Utilities.py` | `download_url_bytes()`: split int-parse and limit-check into separate branches |
+| `src/gedcomtools/gctool_load.py` | `_load()`: narrow `except Exception` to specific exception types |
+| `src/gedcomtools/gedcom5/gedcom5.py` | `get_shared_note_detail()`: remove redundant suppression; underscore prefix |
+| `tests/test_utilities_download.py` | Add non-numeric `Content-Length` test case |
+
+---
+
 ## RS 1.0 link-map deserialization for FamilySearch payloads (2026-04-08)
 
 ### Fix 17 — make FamilySearch RS `links` accept JSON link maps in inherited GedcomX fields

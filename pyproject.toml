@@ -34,3 +34,7 @@ include = ["gedcomtools*"]
 
 [tool.setuptools.package-data]
 "gedcomtools.gedcom7" = ["spec_rules.json"]
+
+[tool.pyright]
+include = ["src"]
+exclude = ["build", "dist", "docs/_build", ".venv", ".spec_cache"]
