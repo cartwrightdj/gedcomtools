@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **BETA SOFTWARE — v0.7.5b1**
+> **BETA SOFTWARE — v0.7.5b2**
 >
 > `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
 > *may change between releases without notice. It is not yet recommended for
@@ -13,7 +13,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-## What's New in v0.7.5b1
+## What's New in v0.7.5b2
 
 ### FamilySearch deserialization
 
@@ -51,7 +51,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ### Release packaging
 
-- Bumped the package and docs version to `0.7.5b1`.
+- Bumped the package and docs version to `0.7.5b2`.
 - Rebuilt the Sphinx HTML documentation and the release artifacts for this
   beta cut.
 

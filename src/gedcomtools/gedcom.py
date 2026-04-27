@@ -6,7 +6,8 @@
  Purpose: Top-level Gedcom helper for reading GEDCOM file version info
 
  Created: 2025-07-01
- Updated:
+ Updated: 2026-04-17 — use utf-8-sig encoding in read_gedcom_version to strip
+                     UTF-8 BOM; plain utf-8 caused ValueError on BOM-prefixed files
 
 ======================================================================
 """
@@ -37,7 +38,7 @@ class Gedcom():
         inside_head = False
         inside_gedc = False
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
             for line in f:
                 parts = line.strip().split(maxsplit=2)
                 if not parts:

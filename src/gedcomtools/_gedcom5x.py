@@ -15,6 +15,15 @@ from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
 #  Author:  David J. Cartwright
 #  Purpose:
 #  Created: 2025-08-25
+#  Updated: 2026-04-17 — open GEDCOM files with utf-8-sig in _records_from_file;
+#                        removes need for manual per-line BOM strip
+#           2026-04-18 — fix tuple arity in _records_from_file fallback (4→5 Nones);
+#                        fix sub_record() to return first match not a list
+#           2026-04-27 — remove dead manual pre-parse block in _records_from_file
+#                        (parse_gedcom7_line was already authoritative and overwrote
+#                        all results); replace raise on unparseable line with
+#                        log.warning + continue; rename loop var l → line_idx;
+#                        remove redundant int() cast; remove stale debug print
 # ======================================================================
 # GEDCOM Module Types
 from .glog import get_logger, hub, ChannelConfig
@@ -32,8 +41,6 @@ hub.start_channel(
         rotation="size:10MB:3",
     )
 )
-
-BOM = '\ufeff'
 
 GEDCOM7_LINE_RE = re.compile(
     r"""^
@@ -156,8 +163,10 @@ class Gedcom5xRecord():
     # ───────────────────────────────
     def sub_record(self, tag_str: str):
         """Return the first matching child record."""
-        result = [r for r in self._subRecords if r.tag == tag_str]
-        return None if not result else result
+        for r in self._subRecords:
+            if r.tag == tag_str:
+                return r
+        return None
 
     def sub_records(self, tag_str: str | None = None) -> List['Gedcom5xRecord']:
         """Return all matching child records."""
@@ -523,59 +532,40 @@ class Gedcom5x():
             raise ValueError(f"File does not have a .ged extension: {file_path}")
 
         log.debug("Reading from GEDCOM file: {}", file_path)
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8-sig') as file:
             lines = [raw_line.strip() for raw_line in file]
 
             records = []
             record_map: dict[int,Any] = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
 
-            for l, raw_line in enumerate(lines):
-                if raw_line.startswith(BOM):
-                    raw_line = raw_line.lstrip(BOM)
+            for line_idx, raw_line in enumerate(lines):
                 raw_line = html.unescape(raw_line).replace('&quot;', '')
 
-                if raw_line.strip() == '':
+                if not raw_line:
                     continue
 
-                lvl, tag_str, value = '', '', ''
-
-                # Split the line into the first two columns and the rest
-                parts = raw_line.split(maxsplit=2)
-                if len(parts) == 3:
-                    lvl, col2, col3 = parts
-
-                    if col3 in Gedcom5x._top_level_tags:
-                        tag_str = col3
-                        value = col2
-                    else:
-                        tag_str = col2
-                        value = col3
-
-                else:
-                    lvl, tag_str = parts
-
-                lvl, xref_str, tag_str, value, xref_value = parse_gedcom7_line(raw_line) or tuple([None, None, None, None])
-
+                lvl, xref_str, tag_str, value, xref_value = parse_gedcom7_line(raw_line) or (None, None, None, None, None)
 
                 if xref_str is None and xref_value is not None:
                     xref_str = xref_value
-               # print(l, lvl, xref_str, tag_str, value, xref_value)
 
-                if isinstance(lvl, int):
-                    lvl = int(lvl)
-                else:
-                    raise ValueError(f"Record had a level of {lvl}")
+                if not isinstance(lvl, int):
+                    log.warning("Skipping unparseable line {}: {!r}", line_idx + 1, raw_line)
+                    continue
 
-                new_record = Gedcom5xRecord(line_num=l + 1, lvl=lvl, tag_str=tag_str if tag_str else None, xref_str=xref_str, value=value)
+                new_record = Gedcom5xRecord(line_num=line_idx + 1, lvl=lvl, tag_str=tag_str if tag_str else None, xref_str=xref_str, value=value)
 
 
                 if lvl == 0:
                     records.append(new_record)
+                elif lvl > 5 or record_map[lvl - 1] is None:
+                    log.warning("Skipping line {}: level {} has no parent in record_map", line_idx + 1, lvl)
+                    continue
                 else:
                     new_record.root = record_map[0]
-                    new_record.parent = record_map[int(lvl) - 1]
-                    record_map[int(lvl) - 1].add_sub_record(new_record)
-                record_map[int(lvl)] = new_record
+                    new_record.parent = record_map[lvl - 1]
+                    record_map[lvl - 1].add_sub_record(new_record)
+                record_map[lvl] = new_record
                 with hub.use(job_id):
                     log.info(new_record.describe())
 

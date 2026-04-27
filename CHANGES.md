@@ -1,6 +1,6 @@
 # Changes
 
-## v0.7.5b1 - 2026-04-15
+## v0.7.5b2 - 2026-04-25
 
 - Added typed FamilySearch deserialization support for `PersonInfo`,
   `NameFormInfo`, normalized dates, normalized place text, and the

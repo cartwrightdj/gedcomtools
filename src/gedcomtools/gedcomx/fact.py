@@ -6,7 +6,8 @@
  Purpose: GedcomX Fact model: FactType enum and Fact/FactQualifier classes
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — added __eq__ comparing type/date/place/value so Facts
+                     with id=None are correctly distinguished during dedup
 ======================================================================
 """
 from __future__ import annotations
@@ -208,6 +209,19 @@ class Fact(Conclusion):
         check_instance(result, "place", self.place, PlaceReference)
         if self.value is not None:
             check_nonempty(result, "value", self.value)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Fact):
+            return False
+        return (
+            super().__eq__(other)
+            and self.type == other.type
+            and self.date == other.date
+            and self.place == other.place
+            and self.value == other.value
+        )
+
+    __hash__ = None  # type: ignore[assignment]
 
     def __str__(self) -> str:
         return f"{self.type.value if self.type else ''} {self.value or ''}"

@@ -43,7 +43,9 @@ class Note(GedcomXModel):
         if text_to_add and isinstance(text_to_add, str):
             self.text = (self.text + text_to_add) if self.text else text_to_add
         else:
-            raise ValueError("The text to add must be a non-empty string.")
+            pass
+            # TODO: Log this error, or set a strict mode and lazy mode to skip this
+            #raise ValueError("The text to add must be a non-empty string.")
 
     @staticmethod
     def _norm(s: str | None) -> str:

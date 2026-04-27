@@ -1,21 +1,13 @@
-"""
-======================================================================
- Project: Gedcom-X
- File:    gedcomx/document.py
- Author:  David J. Cartwright
- Purpose: GedcomX Document model: abstract, transcription, translation, or analysis text
-
- Created: 2025-08-25
- Updated:
-======================================================================
-"""
+v
 from __future__ import annotations
 
 from enum import Enum
 from typing import ClassVar, Optional
 
+from pydantic import Field
 
 from .conclusion import Conclusion
+from .identifier import make_uid
 from .source_description import SourceDescription
 
 
@@ -51,6 +43,8 @@ class Document(Conclusion):
 
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Document"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
+
+    id: str = Field(default_factory=make_uid)
 
     type: Optional[DocumentType] = None
     extracted: Optional[bool] = None

@@ -6,7 +6,11 @@
  Purpose: GedcomX Conclusion base class with confidence, attribution, and notes
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — id changed to Optional[str]=None; auto-IDs moved to
+                     Subject (top-level entities) and Document; validation
+                     now only rejects id set to an empty string, not None
+          2026-04-27 — unknown ConfidenceLevel values now log a warning and
+                     return None instead of raising ValueError; added logger
 ======================================================================
 """
 # GedcomX Conclusion base class.
@@ -21,12 +25,14 @@ from pydantic import Field, PrivateAttr
 
 from .attribution import Attribution
 from .gx_base import GedcomXModel
-from .identifier import make_uid
 from .note import Note
 from .qualifier import Qualifier
 from .resource import Resource
 from .source_reference import SourceReference
 from .uri import URI
+from ..glog import get_logger
+
+log = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +78,8 @@ class ConfidenceLevel(Qualifier):
         elif token_str in (cls.High, cls.Medium, cls.Low):
             uri = token_str
         else:
-            raise ValueError(f"Unknown ConfidenceLevel: {token!r}")
+            log.warning("Unknown ConfidenceLevel value {!r} — skipping", token)
+            return None
         return cls.model_construct(value=uri)
 
     @property
@@ -99,7 +106,7 @@ class Conclusion(GedcomXModel):
     # Internal URI (not serialized)
     _uri: Optional[URI] = PrivateAttr(default=None)
 
-    id: str = Field(default_factory=make_uid)
+    id: Optional[str] = None
     lang: Optional[str] = None
     sources: List[SourceReference] = Field(default_factory=list)
     analysis: Optional[Any] = None  # Union[Resource, Document] at runtime
@@ -109,7 +116,8 @@ class Conclusion(GedcomXModel):
 
     def model_post_init(self, __context: object) -> None:
         """Populate derived state after model initialization."""
-        self._uri = URI(fragment=self.id)
+        if self.id is not None:
+            self._uri = URI(fragment=self.id)
 
     # ------------------------------------------------------------------
     # Mutation helpers
@@ -138,8 +146,8 @@ class Conclusion(GedcomXModel):
 
     def _validate_self(self, result: Any) -> None:
         from .validation import check_lang, check_instance
-        # id must be a non-empty string
-        if not self.id or not str(self.id).strip():
+        # id must not be set to an empty string
+        if self.id is not None and not str(self.id).strip():
             result.error("id", "id must not be empty")
         # lang: BCP-47 format
         check_lang(result, "lang", self.lang)

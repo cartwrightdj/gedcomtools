@@ -6,7 +6,9 @@
  Purpose: GedcomX Subject base class: extracted flag, identifiers, evidence, and media references
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — override id with default_factory=make_uid so all
+                     Subject subclasses (Person, Relationship, Event, etc.)
+                     auto-generate IDs; Conclusion base no longer does
 ======================================================================
 """
 from __future__ import annotations
@@ -17,7 +19,7 @@ from pydantic import Field
 
 from .conclusion import Conclusion
 from .evidence_reference import EvidenceReference
-from .identifier import Identifier, IdentifierList
+from .identifier import Identifier, IdentifierList, make_uid
 from .source_reference import SourceReference
 from ..glog import get_logger
 
@@ -29,6 +31,8 @@ class Subject(Conclusion):
 
     identifier = "http://gedcomx.org/v1/Subject"
     version = "http://gedcomx.org/conceptual-model/v1"
+
+    id: str = Field(default_factory=make_uid)
 
     extracted: Optional[bool] = None
     evidence: List[EvidenceReference] = Field(default_factory=list)

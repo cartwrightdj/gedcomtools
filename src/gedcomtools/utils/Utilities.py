@@ -13,6 +13,8 @@
                        non-numeric Content-Length headers are now silently ignored
                        instead of being swallowed by the wrong except branch
  Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
+ Updated: 2026-04-27 — download_url_bytes() now validates URL scheme is
+                       http/https before opening; rejects file://, ftp://, etc.
 
 ======================================================================
 """
@@ -44,13 +46,16 @@ def download_url_bytes(
     *,
     timeout: int = DEFAULT_DOWNLOAD_TIMEOUT,
     max_bytes: int = DEFAULT_DOWNLOAD_MAX_BYTES,
-    user_agent: str = "gedcomtools/0.7.5b1",
+    user_agent: str = "gedcomtools/0.7.5b2",
 ) -> bytes:
     """Download *url* with a timeout and a hard response-size cap.
 
     The body is streamed in chunks so very large responses do not need to be
     buffered by the HTTP client before the size check is enforced.
     """
+    parsed_scheme = urllib.parse.urlparse(url).scheme
+    if parsed_scheme not in ("http", "https"):
+        raise ValueError(f"Only http/https URLs are supported, got scheme: {parsed_scheme!r}")
     req = urllib.request.Request(url, headers={"User-Agent": user_agent})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         content_length = resp.headers.get("Content-Length")

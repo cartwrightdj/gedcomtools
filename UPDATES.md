@@ -4,7 +4,109 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
-## Release refresh — v0.7.5b1 (2026-04-15)
+## Code quality fixes — raises, dead code, security (2026-04-27)
+
+### Fix — `_gedcom5x.py`: remove dead manual parse block and harden line loop
+
+The `_records_from_file` parse loop contained a manual `str.split` pre-parse
+block (lines that set `lvl`, `tag_str`, `value` from a plain split) immediately
+before a call to `parse_gedcom7_line()` that unconditionally overwrote all five
+variables.  The manual block was dead code in every branch and has been removed.
+
+Additional cleanup in the same loop:
+
+- A `raise ValueError` on lines that failed the regex (resulting in `lvl=None`)
+  is replaced with `log.warning(...) + continue` so one malformed line no longer
+  aborts the entire file load.
+- Loop variable `l` renamed to `line_idx` (avoids visual ambiguity with `1`).
+- Redundant `int(lvl)` cast removed (already confirmed `int` by `isinstance`).
+- Stale commented-out `print(...)` debug line removed.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/_gedcom5x.py` | Remove dead pre-parse block; log.warning + continue on bad line; rename `l`; remove dead cast and debug print |
+
+### Fix — `conclusion.py`: unknown ConfidenceLevel no longer raises on deserialize
+
+`ConfidenceLevel.from_json()` raised `ValueError` for any unrecognised confidence
+string.  Real-world genealogy exports (FamilySearch, Ancestry) occasionally contain
+non-standard values; the raise aborted deserialization of the entire record.
+
+The method now logs a `WARNING` and returns `None`, consistent with how other
+optional fields handle unrecognised data.  A logger was added to the module.
+The matching test was updated from `pytest.raises(ValueError)` to assert `None`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/conclusion.py` | `ConfidenceLevel.from_json`: raise → log.warning + return None; add get_logger/log |
+| `tests/test_confidence.py` | `test_unknown_string_raises` → `test_unknown_string_returns_none` |
+
+### Security fix — `download_url_bytes()` scheme validation
+
+`urllib.request.urlopen` accepts `file://` and `ftp://` URLs.  `download_url_bytes`
+relied entirely on callers to validate the scheme via the separate `_is_url()`
+helper before calling it.  Any call site that skipped that check could read
+arbitrary local files or hit internal FTP servers.
+
+The function now validates the scheme itself before opening any connection,
+raising `ValueError` for anything other than `http` or `https`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/utils/Utilities.py` | `download_url_bytes()`: validate scheme is http/https; raise ValueError otherwise |
+
+### Fix — `identifier.py`: unreachable `elif` in `Identifier.model_post_init`
+
+The inner branch `elif raw is not None:` was unreachable — the outer
+`if raw is not None` already guaranteed `raw` was non-None inside the block.
+Changed to a plain `else`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcomx/identifier.py` | `Identifier.model_post_init`: `elif raw is not None` → `else` |
+
+---
+
+## Feature — selective auto-ID for GedcomX conclusions (2026-04-18)
+
+Top-level entities now auto-generate IDs; sub-elements default to `id=None`.
+
+- `Conclusion.id` changed from `str = Field(default_factory=make_uid)` to
+  `Optional[str] = None`.  Sub-elements (Name, Gender, Fact, EventRole, etc.)
+  no longer receive auto-generated UUIDs unless the caller explicitly sets one.
+- `Subject.id` overrides with `default_factory=make_uid`, so Person,
+  Relationship, Event, Group, PlaceDescription, and
+  ChildAndParentsRelationship still get auto-IDs.
+- `Document.id` similarly overrides with `default_factory=make_uid` (Document
+  is a top-level GedcomX collection member).
+- `AutoIdModel` added to `identifier.py` as a shared base with
+  `id: str = Field(default_factory=make_uid)`.  `Agent` and `SourceDescription`
+  now inherit from `AutoIdModel` instead of `GedcomXModel` directly, removing
+  their individual `id` field declarations.
+- `Conclusion.model_post_init` now guards `URI(fragment=…)` construction so it
+  is skipped when `id` is `None`, avoiding a pydantic validation error.
+- `Conclusion._validate_self` relaxed: only errors if `id` is set to an empty
+  string, not if it is `None`.
+- `Fact`, `Name`, and `Gender` gained concrete `__eq__` methods that compare
+  their type-specific fields (type, date, place, value / nameForms).  Without
+  this, `add_fact` / `add_name` duplicate checks collapsed all id-less
+  sub-elements of the same base-class fields into false duplicates.
+
+---
+
+## Bug fix — UTF-8 BOM handling in GEDCOM 5 readers (2026-04-17)
+
+- `gedcom.py` — `read_gedcom_version()` was opened with `encoding="utf-8"`,
+  causing `ValueError: invalid literal for int() with base 10: '\ufeff0'` on
+  any BOM-prefixed GEDCOM file.  Fixed by switching to `encoding="utf-8-sig"`.
+- `_gedcom5x.py` — `_records_from_file()` was opened with `encoding="utf-8"`
+  and manually stripped the BOM character per-line in the parse loop.  Switched
+  to `encoding="utf-8-sig"` so Python handles the BOM automatically; the
+  redundant manual strip is removed.
+
+---
+
+## Release refresh — v0.7.5b2 (2026-04-25)
 
 - Added symmetric custom deserialization hooks in `Serialization.deserialize()`
   so project types can provide `_deserializer(data)` or `from_json(data, None)`
@@ -13,7 +115,7 @@ Track of changes made to gedcomtools after v0.7.0.
   that adds timeouts and response-size caps for GEDCOM and GedcomX URL loads.
 - Tightened `pyright` and `pylint` configuration to ignore generated build and
   docs output so repo-level checks report maintained-source issues clearly.
-- Rebuilt Sphinx docs and refreshed the release artifacts for the `v0.7.5b1`
+- Rebuilt Sphinx docs and refreshed the release artifacts for the `v0.7.5b2`
   beta tag.
 
 ---

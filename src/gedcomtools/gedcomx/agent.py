@@ -6,7 +6,7 @@
  Purpose: GedcomX Agent model: person, organisation, or software that created or modified data
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — inherit from AutoIdModel; removed local id field
 ======================================================================
 """
 # GedcomX Agent model.
@@ -25,21 +25,19 @@ if TYPE_CHECKING:
 from pydantic import Field, PrivateAttr, field_validator
 
 from .address import Address
-from .gx_base import GedcomXModel
-from .identifier import Identifier, IdentifierList, make_uid
+from .identifier import AutoIdModel, Identifier, IdentifierList
 from .online_account import OnlineAccount
 from .resource import Resource
 from .textvalue import TextValue
 from .uri import URI
 
 
-class Agent(GedcomXModel):
+class Agent(AutoIdModel):
     """A GedcomX Agent — a person, organisation, or software that created/modified data."""
 
     # Internal URI (not serialized)
     _uri: Optional[URI] = PrivateAttr(default=None)
 
-    id: str = Field(default_factory=make_uid)
     identifiers: IdentifierList = Field(default_factory=IdentifierList)
     names: List[TextValue] = Field(default_factory=list)
     homepage: Optional[URI] = None

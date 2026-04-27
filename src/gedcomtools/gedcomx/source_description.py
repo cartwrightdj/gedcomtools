@@ -9,6 +9,7 @@
  Updated:
    - 2026-04-08: accept the FamilySearch-specific `FamilyTree`
                  resource type during source-description deserialization
+   - 2026-04-18: inherit from AutoIdModel; removed local id field
 ======================================================================
 """
 from __future__ import annotations
@@ -22,8 +23,7 @@ from .agent import Agent
 from .attribution import Attribution
 from .coverage import Coverage
 from .date import Date
-from .gx_base import GedcomXModel
-from .identifier import Identifier, IdentifierList, make_uid
+from .identifier import AutoIdModel, Identifier, IdentifierList
 from .note import Note
 from .resource import Resource
 from .source_citation import SourceCitation
@@ -58,7 +58,7 @@ class ResourceType(Enum):
         return descriptions.get(self, "No description available.")
 
 
-class SourceDescription(GedcomXModel):
+class SourceDescription(AutoIdModel):
     """Description of a genealogical information source."""
 
     identifier: ClassVar[str] = "http://gedcomx.org/v1/SourceDescription"
@@ -67,7 +67,6 @@ class SourceDescription(GedcomXModel):
     _uri: Optional[URI] = PrivateAttr(default=None)
     _place_holder: bool = PrivateAttr(default=False)
 
-    id: str = Field(default_factory=make_uid)
     resourceType: Optional[ResourceType] = None
     citations: List[SourceCitation] = Field(default_factory=list)
     mediaType: Optional[str] = None

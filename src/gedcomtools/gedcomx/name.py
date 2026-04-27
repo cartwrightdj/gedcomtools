@@ -9,6 +9,8 @@
  Updated:
    - 2026-04-08: coerce FamilySearch `nameFormInfo` extension entries
                  into typed NameFormInfo models after deserialization
+   - 2026-04-18: added __eq__ comparing type/nameForms/date so Names
+                 with id=None are correctly distinguished during dedup
 ======================================================================
 """
 from __future__ import annotations
@@ -150,6 +152,18 @@ class Name(Conclusion):
     type: Optional[NameType] = None
     nameForms: List[NameForm] = Field(default_factory=list)
     date: Optional[Date] = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Name):
+            return False
+        return (
+            super().__eq__(other)
+            and self.type == other.type
+            and self.nameForms == other.nameForms
+            and self.date == other.date
+        )
+
+    __hash__ = None  # type: ignore[assignment]
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)
