@@ -38,7 +38,7 @@ import orjson
 #                         remove stale entries before re-adding current values
 #                       — TypeCollection: added _rebuild_indexes() for full O(n)
 #                         recovery after out-of-band mutations
-#           2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
+#           2026-04-15 — release refresh for v0.7.5b3 docs/build packaging
 #                       — TypeCollection: added class-level docstring documenting
 #                         the mutation contract and safe update patterns
 #                       — TypeCollection: added change_id/change_uri/change_name
@@ -71,8 +71,6 @@ from .validation import ValidationResult
 #=====================================================================
 
 log = get_logger(__name__)
-serial_log = "gedcomx.serialization"
-deserial_log = "gedcomx.serialization"
 
 
 
@@ -200,12 +198,12 @@ class TypeCollection(Generic[T]):
         key = (uri.value or "") if isinstance(uri, URI) else str(uri)
         return self._uri_index.get(key) if key else None
 
-    def by_name(self, sname: str | None) -> list[T] | None:
-        """Return items whose name matches sname (stripped), or None if not found."""
+    def by_name(self, sname: str | None) -> list[T]:
+        """Return items whose name matches sname (stripped), or [] if not found."""
         if not sname:
-            return None
+            return []
         d = self._name_index.get(sname.strip())
-        return list(d.values()) if d else None
+        return list(d.values()) if d else []
 
     # --- mutation ---
     def append(self, item: T) -> None:

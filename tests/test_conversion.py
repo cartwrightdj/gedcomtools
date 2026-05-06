@@ -353,3 +353,177 @@ class TestGedcom5FacadeAccepted:
         g5 = Gedcom5(ged_tiny)
         gx = GedcomConverter().Gedcom5x_GedcomX(g5)
         assert len(gx.persons) > 0
+
+
+class TestAnnulmentConversion:
+    """ANUL tags convert to GedcomX Annulment facts in family and individual contexts."""
+
+    def _convert_text(self, tmp_path, text):
+        path = tmp_path / "annulment.ged"
+        path.write_text(text, encoding="utf-8")
+        parser = Gedcom5x()
+        parser.parse_file(str(path), strict=True)
+        return GedcomConverter().Gedcom5x_GedcomX(parser)
+
+    def test_family_anul_attaches_annulment_fact_to_spouses(self, tmp_path):
+        from gedcomtools.gedcomx.fact import FactType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Alex /Able/",
+                    "0 @I2@ INDI",
+                    "1 NAME Blake /Baker/",
+                    "0 @F1@ FAM",
+                    "1 HUSB @I1@",
+                    "1 WIFE @I2@",
+                    "1 ANUL",
+                    "2 DATE 1 JAN 2000",
+                    "2 PLAC Reno, Nevada",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        for person_id in ("@I1@", "@I2@"):
+            person = gx.persons.by_id(person_id)
+            annulment = next(f for f in person.facts if f.type == FactType.Annulment)
+            assert annulment.date.original == "1 JAN 2000"
+            assert annulment.place.original == "Reno, Nevada"
+        assert "ANUL" not in gx._import_unhandled_tags
+
+    def test_individual_anul_creates_person_fact(self, tmp_path):
+        from gedcomtools.gedcomx.fact import FactType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Casey /Clark/",
+                    "1 ANUL",
+                    "2 DATE 2 FEB 2001",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        person = gx.persons.by_id("@I1@")
+        annulment = next(f for f in person.facts if f.type == FactType.Annulment)
+        assert annulment.date.original == "2 FEB 2001"
+        assert "ANUL" not in gx._import_unhandled_tags
+
+
+class TestObjectFormConversion:
+    """GEDCOM 5.5 OBJE FORM/TYPE records preserve media metadata."""
+
+    def _convert_text(self, tmp_path, text):
+        path = tmp_path / "object_form.ged"
+        path.write_text(text, encoding="utf-8")
+        parser = Gedcom5x()
+        parser.parse_file(str(path), strict=True)
+        return GedcomConverter().Gedcom5x_GedcomX(parser)
+
+    def test_top_level_obje_form_type_sets_media_metadata(self, tmp_path):
+        from gedcomtools.gedcomx.source_description import ResourceType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Avery /Archer/",
+                    "1 OBJE @M1@",
+                    "0 @M1@ OBJE",
+                    "1 FORM jpg",
+                    "2 TYPE photo",
+                    "1 FILE portraits/avery.jpg",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        media = gx.sourceDescriptions.by_id("@M1@")
+        assert media.mediaType == "image/jpeg"
+        assert media.resourceType == ResourceType.DigitalArtifact
+        assert media.about == "portraits/avery.jpg"
+        assert "FORM" not in gx._import_unhandled_tags
+
+    def test_inline_obje_form_type_uses_inline_container(self, tmp_path):
+        from gedcomtools.gedcomx.source_description import ResourceType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Bailey /Bennett/",
+                    "1 OBJE",
+                    "2 FORM gif",
+                    "3 TYPE photo",
+                    "2 FILE portraits/bailey.gif",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        media = next(sd for sd in gx.sourceDescriptions if sd.about == "portraits/bailey.gif")
+        assert media.mediaType == "image/gif"
+        assert media.resourceType == ResourceType.DigitalArtifact
+        assert "FORM" not in gx._import_unhandled_tags
+
+    def test_family_inline_obje_form_uses_family_media_container(self, tmp_path):
+        from gedcomtools.gedcomx.source_description import ResourceType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Cameron /Cole/",
+                    "0 @I2@ INDI",
+                    "1 NAME Drew /Diaz/",
+                    "0 @F1@ FAM",
+                    "1 HUSB @I1@",
+                    "1 WIFE @I2@",
+                    "1 OBJE",
+                    "2 FORM bmp",
+                    "2 FILE family/cameron-drew.bmp",
+                    "1 CHAN",
+                    "2 DATE 1 JAN 2001",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        media = next(sd for sd in gx.sourceDescriptions if sd.about == "family/cameron-drew.bmp")
+        assert media.mediaType == "image/bmp"
+        assert media.resourceType == ResourceType.DigitalArtifact
+        assert "FORM" not in gx._import_unhandled_tags

@@ -32,7 +32,7 @@
  Updated: 2026-04-10 — bounded remote downloads with shared timeout/size helper
  Updated: 2026-04-12 — get_shared_note_detail(): removed redundant pylint suppression;
                        added underscore prefix to unused xref parameter for consistency
- Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
+ Updated: 2026-04-15 — release refresh for v0.7.5b3 docs/build packaging
 ======================================================================
 """
 

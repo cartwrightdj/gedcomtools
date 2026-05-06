@@ -75,8 +75,9 @@ class URI(GedcomXModel):
     @classmethod
     def _parse_value_string(cls, s: str) -> dict:
         sp = urlsplit(s)
+        scheme = sp.scheme or (_DEFAULT_SCHEME if sp.netloc else None)
         return {
-            "scheme": sp.scheme or _DEFAULT_SCHEME,
+            "scheme": scheme,
             "authority": sp.netloc or None,
             "path": sp.path or None,
             "query": sp.query or None,

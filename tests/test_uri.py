@@ -23,6 +23,19 @@ class TestURIConstruction:
     def test_fragment_only(self):
         u = URI(fragment="abc123")
         assert u.fragment == "abc123"
+        assert str(u) == "#abc123"
+
+    def test_fragment_value_round_trips_without_default_scheme(self):
+        u = URI(value="#abc123")
+        assert u.scheme is None
+        assert u.fragment == "abc123"
+        assert str(u) == "#abc123"
+
+    def test_path_value_round_trips_without_default_scheme(self):
+        u = URI(value="/persons/P1")
+        assert u.scheme is None
+        assert u.path == "/persons/P1"
+        assert str(u) == "/persons/P1"
 
     def test_from_url_factory(self):
         u = URI.from_url("https://gedcomx.org/v1/Person")

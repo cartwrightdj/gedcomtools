@@ -6,7 +6,7 @@
  Purpose: GedcomX Note model
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-05-02: AddNote, now raises ValueError on non Note
 ======================================================================
 """
 from __future__ import annotations
@@ -43,9 +43,7 @@ class Note(GedcomXModel):
         if text_to_add and isinstance(text_to_add, str):
             self.text = (self.text + text_to_add) if self.text else text_to_add
         else:
-            pass
-            # TODO: Log this error, or set a strict mode and lazy mode to skip this
-            #raise ValueError("The text to add must be a non-empty string.")
+            raise ValueError(f"text_to_add must be a non-empty str, got {type(text_to_add).__name__}")
 
     @staticmethod
     def _norm(s: str | None) -> str:

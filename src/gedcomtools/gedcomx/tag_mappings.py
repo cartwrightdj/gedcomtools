@@ -145,7 +145,7 @@ GEDCOM7_FAM_FACT_MAP: dict[str, str] = {
     "MARB": "http://gedcomx.org/MarriageBanns",
     "MARC": "http://gedcomx.org/MarriageContract",
     "MARL": "http://gedcomx.org/MarriageLicense",
-    "MARS": "http://gedcomx.org/Separation",
+    "MARS": "http://gedcomx.org/MarriageSettlement",
     "ANUL": "http://gedcomx.org/Annulment",
     "DIVF": "http://gedcomx.org/DivorceFiling",
 }

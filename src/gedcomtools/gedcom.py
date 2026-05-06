@@ -17,7 +17,6 @@ from .glog import get_logger
 # Logging
 # ======================================================================
 log = get_logger(__name__)
-serial_log = "gedcomx.serialization"
 #=====================================================================
 
 class Gedcom():

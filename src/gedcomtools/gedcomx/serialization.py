@@ -15,7 +15,7 @@ from __future__ import annotations
 #                         _deserializer and from_json before generic fallback
 #  Updated: 2026-04-12 — _coerce_value(): re-raise TypeError on instantiation
 #                         failure instead of silently returning a raw dict
-#  Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging
+#  Updated: 2026-04-15 — release refresh for v0.7.5b3 docs/build packaging
 # ======================================================================
 from collections.abc import Sized
 from dataclasses import dataclass, field

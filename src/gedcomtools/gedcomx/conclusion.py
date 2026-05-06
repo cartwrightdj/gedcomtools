@@ -30,6 +30,7 @@ from .qualifier import Qualifier
 from .resource import Resource
 from .source_reference import SourceReference
 from .uri import URI
+from .validation import check_instance, check_lang
 from ..glog import get_logger
 
 log = get_logger(__name__)
@@ -145,7 +146,6 @@ class Conclusion(GedcomXModel):
         self.sources.append(source_to_add)
 
     def _validate_self(self, result: Any) -> None:
-        from .validation import check_lang, check_instance
         # id must not be set to an empty string
         if self.id is not None and not str(self.id).strip():
             result.error("id", "id must not be empty")

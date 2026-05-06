@@ -13,17 +13,19 @@ from __future__ import annotations
 #  Updated: 2026-04-08 — pass full extension field types through to
 #                         GedcomXModel.define_ext so generic model lists
 #                         stay typed during deserialization
+#  Updated: 2026-05-02 — merged parallel field-table maintenance into
+#                         Pydantic model_fields; field_type_table, _bases,
+#                         _subclasses, _inherited_extras are now computed
+#                         properties; kept legacy helper exports for callers
 # ======================================================================
 import functools
 import inspect
 import operator
-import sys
 import threading
 import types
 from functools import reduce
 from typing import Any, Callable, Dict, Union, get_args, get_origin, get_type_hints
 try:
-    # typing.Annotated may not exist in older 3.9 without typing_extensions
     from typing import Annotated  # type: ignore
 except ImportError:  # pragma: no cover
     Annotated = None  # type: ignore
@@ -33,38 +35,77 @@ _UNION_ORIGINS = tuple(
 )
 
 
+def _gx_base_cls():
+    """Return GedcomXModel if importable, else None."""
+    try:
+        from .gx_base import GedcomXModel
+        return GedcomXModel
+    except ImportError:
+        return None
+
+
+def _all_gx_subclasses(base) -> list:
+    """Recursively collect all live subclasses of *base*."""
+    result = []
+    for sub in base.__subclasses__():
+        result.append(sub)
+        result.extend(_all_gx_subclasses(sub))
+    return result
+
+
 class Schema:
     """
     Central registry of fields for classes.
 
-    - field_type_table: {"ClassName": {"field": <type or type-string>}}
-    - URI/Resource preference in unions: URI > Resource > first-declared
-    - Optional/None is stripped
-    - Containers are preserved; their inner args are normalized recursively
+    For GedcomXModel subclasses all field information is derived directly
+    from Pydantic's ``model_fields`` rather than maintained in a separate
+    table.  Computed properties (``field_type_table``, ``_bases``,
+    ``_subclasses``, ``_inherited_extras``) build their dicts on demand
+    from the live class hierarchy.
+
+    For non-Pydantic classes the old explicit-registration path is still
+    available for backward compatibility (used by ``@extensible`` on plain
+    classes).
     """
 
     def __init__(self) -> None:
-        self.field_type_table: Dict[str, Dict[str, Any]] = {}
-        self._extras: Dict[str, Dict[str, Any]] = {}
+        # Top-level class registry — no Pydantic equivalent.
         self._toplevel: Dict[str, Dict[str, Any]] = {}
 
-        # NEW: inheritance tracking + inherited extras cache
-        self._bases: Dict[str, list[str]] = {}              # class_name -> [base names]
-        self._subclasses: Dict[str, set[str]] = {}          # base_name -> {subclass names}
-        self._inherited_extras: Dict[str, Dict[str, Any]] = {}  # class_name -> {field: type}
+        # Extras declared by plugins via register_extra().
+        # For GedcomXModel subclasses this mirrors what define_ext() stores
+        # in _ext_field_names; kept here so register_extra() callers can
+        # still introspect what they registered.
+        self._extras: Dict[str, Dict[str, Any]] = {}
 
-        # Optional binding to concrete classes to avoid name-only matching.
+        # Fields for non-Pydantic classes registered via register_class().
+        # GedcomXModel subclasses are never stored here — they use model_fields.
+        self._np_fields: Dict[str, Dict[str, Any]] = {}
+
+        # Inheritance tracking for non-Pydantic classes only.
+        self._np_bases: Dict[str, list] = {}
+        self._np_subclasses: Dict[str, set] = {}
+        self._np_extras: Dict[str, Dict[str, Any]] = {}
+        self._np_inh_extras: Dict[str, Dict[str, Any]] = {}
+
+        # String-name → class object cache (populated lazily).
+        self._class_registry: Dict[str, type] = {}
+
+        # Per-class field dict cache.  Invalidated by register_extra().
+        # Keyed by the class object itself (not id, which can be reused).
+        self._fields_cache: Dict[type, Dict[str, Any]] = {}
+        self._fields_cache_lock = threading.Lock()
+
+        # Cached merged table (np_fields + all GX classes).  Set to None to
+        # invalidate; rebuilt lazily by field_type_table.
+        self._gx_table_cache: Dict[str, Dict[str, Any]] | None = None
+
+        # Optional bindings used by the normalization pipeline.
         self._uri_cls: type | None = None
         self._resource_cls: type | None = None
 
     # ──────────────────────────────
-    # Utils
-    # ──────────────────────────────
-    def _cls_name(self, cls_or_name: type | str) -> str:
-        return cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
-
-    # ──────────────────────────────
-    # Bind concrete classes (optional)
+    # Bind concrete classes (optional, improves Union resolution)
     # ──────────────────────────────
     def set_uri_class(self, cls: type | None) -> None:
         """Register the URI class used by schema helpers."""
@@ -75,8 +116,106 @@ class Schema:
         self._resource_cls = cls
 
     # ──────────────────────────────
+    # Internal helpers
+    # ──────────────────────────────
+
+    def _all_gx_classes(self) -> list[type]:
+        """Return all currently imported GedcomXModel subclasses."""
+        base = _gx_base_cls()
+        return _all_gx_subclasses(base) if base else []
+
+    def _resolve_class(self, cls_or_name: type | str) -> type | None:
+        """Return the class object for *cls_or_name*, scanning GX subclasses if needed."""
+        if isinstance(cls_or_name, type):
+            self._class_registry[cls_or_name.__name__] = cls_or_name
+            return cls_or_name
+        name = str(cls_or_name)
+        if name in self._class_registry:
+            return self._class_registry[name]
+        for cls in self._all_gx_classes():
+            self._class_registry[cls.__name__] = cls
+        return self._class_registry.get(name)
+
+    def _pydantic_fields(self, cls: type) -> Dict[str, Any]:
+        """Return {field_name: normalized_type} derived from cls.model_fields."""
+        result = {}
+        for k, fi in cls.model_fields.items():
+            result[k] = self._normalize_field_type(fi.annotation)
+        return result
+
+    def _is_gx_model(self, cls: type) -> bool:
+        base = _gx_base_cls()
+        return base is not None and isinstance(cls, type) and issubclass(cls, base)
+
+    # ──────────────────────────────
+    # Computed properties (replace maintained dicts for GX models)
+    # ──────────────────────────────
+
+    @property
+    def field_type_table(self) -> Dict[str, Dict[str, Any]]:
+        """Field map for all known classes.
+
+        Built once and cached; invalidated when register_extra() clears
+        _fields_cache (e.g. after a plugin wires a new field).
+        """
+        if self._gx_table_cache is None:
+            result = dict(self._np_fields)
+            for cls in self._all_gx_classes():
+                self._class_registry[cls.__name__] = cls
+                result[cls.__name__] = self._cached_pydantic_fields(cls)
+            self._gx_table_cache = result
+        return self._gx_table_cache
+
+    def _cached_pydantic_fields(self, cls: type) -> Dict[str, Any]:
+        if cls not in self._fields_cache:
+            with self._fields_cache_lock:
+                if cls not in self._fields_cache:
+                    self._fields_cache[cls] = self._pydantic_fields(cls)
+        return self._fields_cache[cls]
+
+    @property
+    def _bases(self) -> Dict[str, list]:
+        """Inheritance bases per class name, computed from Python MRO."""
+        result = dict(self._np_bases)
+        for cls in self._all_gx_classes():
+            result[cls.__name__] = [b.__name__ for b in cls.__mro__[1:] if b is not object]
+        return result
+
+    @property
+    def _subclasses(self) -> Dict[str, set]:
+        """Subclass mapping per class name, computed from Python MRO."""
+        result: Dict[str, set] = {k: set(v) for k, v in self._np_subclasses.items()}
+        for cls in self._all_gx_classes():
+            for b in cls.__mro__[1:]:
+                if b is not object:
+                    result.setdefault(b.__name__, set()).add(cls.__name__)
+        return result
+
+    @property
+    def _inherited_extras(self) -> Dict[str, Dict[str, Any]]:
+        """Extras that a class inherits but did not declare directly."""
+        result = dict(self._np_inh_extras)
+        base = _gx_base_cls()
+        if not base:
+            return result
+        for cls in self._all_gx_classes():
+            direct_names: set = vars(cls).get("_ext_field_names", set())
+            all_names: set = set()
+            for klass in cls.__mro__:
+                all_names.update(vars(klass).get("_ext_field_names", set()))
+            inh_names = all_names - direct_names
+            if inh_names:
+                result[cls.__name__] = {
+                    name: self._normalize_field_type(cls.model_fields[name].annotation)
+                    for name in inh_names
+                    if name in cls.model_fields
+                }
+        return result
+
+    # ──────────────────────────────
     # Public API
     # ──────────────────────────────
+
     def register_class(
         self,
         cls: type,
@@ -90,17 +229,27 @@ class Schema:
         toplevel: bool = False,
         toplevel_meta: Dict[str, Any] | None = None,
     ) -> None:
-        """
-        Introspect and register fields for a class.
+        """Register a class.
 
-        - reads class __annotations__ (preferred) or __init__ annotations
-        - merges base classes (MRO) if include_bases=True
-        - applies `mapping` overrides last
-        - normalizes each type:
-            strip Optional → prefer URI/Resource → collapse union to single
+        For GedcomXModel subclasses this simply records the class in the
+        string-name registry and invalidates the per-class field cache —
+        field information is always derived from ``model_fields``.
+
+        For non-Pydantic classes the legacy annotation-introspection path
+        is used to populate ``_np_fields``.
         """
+        if self._is_gx_model(cls):
+            self._class_registry[cls.__name__] = cls
+            self._fields_cache.pop(cls, None)
+            self._gx_table_cache = None
+            if toplevel:
+                self._toplevel[cls.__name__] = dict(toplevel_meta or {})
+            return
+
+        # ── Non-Pydantic path ─────────────────────────────────────────────
         cname = cls.__name__
         ignore = ignore or set()
+        self._class_registry[cname] = cls
 
         def collect(c: type) -> Dict[str, Any]:
             d: Dict[str, Any] = {}
@@ -108,11 +257,9 @@ class Schema:
                 d.update(self._get_hints_from_class(c))
             if use_init and not d:
                 d.update(self._get_hints_from_init(c))
-            # filter private / ignored
             for k in list(d.keys()):
                 if k in ignore or k.startswith("_"):
                     d.pop(k, None)
-            # normalize each
             for k, v in list(d.items()):
                 d[k] = self._normalize_field_type(v)
             return d
@@ -128,52 +275,45 @@ class Schema:
             for k, v in mapping.items():
                 fields[k] = self._normalize_field_type(v)
 
-        # Track inheritance relationships
         bases = [b.__name__ for b in cls.mro()[1:] if b is not object]
-        self._bases[cname] = bases
+        self._np_bases[cname] = bases
         for b in bases:
-            self._subclasses.setdefault(b, set()).add(cname)
+            self._np_subclasses.setdefault(b, set()).add(cname)
 
-        # Apply extras defined directly for this class (if registered earlier)
-        direct_extras = dict(self._extras.get(cname, {}))
+        direct_extras = dict(self._np_extras.get(cname, {}))
         if direct_extras:
             for k, v in direct_extras.items():
                 fields.setdefault(k, v)
 
-        # Inherit extras from bases (direct + their inherited), without overriding subclass fields
         inherited: Dict[str, Any] = {}
         for bname in bases:
-            for src in (self._extras.get(bname, {}), self._inherited_extras.get(bname, {})):
-                if not src:
-                    continue
+            for src in (self._np_extras.get(bname, {}), self._np_inh_extras.get(bname, {})):
                 for k, v in src.items():
                     if k not in fields:
                         inherited.setdefault(k, v)
-
         if inherited:
-            merged = self._inherited_extras.get(cname, {})
+            merged = self._np_inh_extras.get(cname, {})
             merged.update(inherited)
-            self._inherited_extras[cname] = merged
+            self._np_inh_extras[cname] = merged
             fields.update(inherited)
 
-        # Commit the table
-        if not overwrite and cname in self.field_type_table:
-            self.field_type_table[cname].update(fields)
+        if not overwrite and cname in self._np_fields:
+            self._np_fields[cname].update(fields)
         else:
-            self.field_type_table[cname] = fields
+            self._np_fields[cname] = fields
 
         if toplevel:
             self._toplevel[cname] = dict(toplevel_meta or {})
 
-    def _propagate_extra_down(self, subclass_name: str, name: str, typ: Any, *, overwrite: bool) -> None:
-        """Apply an inherited extra to subclass and its descendants if not overridden."""
-        fields = self.field_type_table.setdefault(subclass_name, {})
+    def _propagate_extra_np(self, subclass_name: str, name: str, typ: Any, *, overwrite: bool) -> None:
+        """Propagate a non-Pydantic extra to subclasses."""
+        fields = self._np_fields.setdefault(subclass_name, {})
         if overwrite or name not in fields:
             fields[name] = typ
-            inh = self._inherited_extras.setdefault(subclass_name, {})
+            inh = self._np_inh_extras.setdefault(subclass_name, {})
             inh[name] = typ
-        for deeper in self._subclasses.get(subclass_name, set()):
-            self._propagate_extra_down(deeper, name, typ, overwrite=overwrite)
+        for deeper in self._np_subclasses.get(subclass_name, set()):
+            self._propagate_extra_np(deeper, name, typ, overwrite=overwrite)
 
     def register_extra(
         self,
@@ -185,59 +325,53 @@ class Schema:
     ) -> None:
         """Register a single extra field (normalized) and propagate to subclasses.
 
-        For pydantic GedcomXModel subclasses, also calls ``define_ext()`` so the
-        field becomes a proper model field (not just an ``extra``-captured value).
+        For GedcomXModel subclasses also calls ``define_ext()`` so the field
+        becomes a proper model field (not just an ``extra``-captured value).
+        Clears the per-class field cache so ``get_class_fields()`` reflects
+        the new field immediately.
         """
         cname = self._cls_name(cls)
-        self.field_type_table.setdefault(cname, {})
         nt = self._normalize_field_type(typ)
-
-        # record on declaring class
-        if overwrite or name not in self.field_type_table[cname]:
-            self.field_type_table[cname][name] = nt
         self._extras.setdefault(cname, {})[name] = nt
 
-        # propagate to current subclasses
-        for sub in self._subclasses.get(cname, set()):
-            self._propagate_extra_down(sub, name, nt, overwrite=overwrite)
+        actual_cls = cls if isinstance(cls, type) else self._resolve_class(cls)
 
-        # For pydantic models, also wire up as a proper model field.
-        if isinstance(cls, type) and hasattr(cls, "define_ext"):
-            cls.define_ext(name, typ=typ, overwrite=overwrite)
+        if actual_cls is not None and hasattr(actual_cls, "define_ext"):
+            # Pydantic model: wire up as a proper model field and clear caches.
+            actual_cls.define_ext(name, typ=typ, overwrite=overwrite)
+            # define_ext() rebuilds cls and all its subclasses, so invalidate
+            # the entire field cache rather than hunting individual subclasses.
+            self._fields_cache.clear()
+            self._gx_table_cache = None
+        else:
+            # Non-Pydantic: maintain _np_fields manually.
+            if actual_cls is not None:
+                self._np_fields.setdefault(cname, {})[name] = nt
+                self._np_extras.setdefault(cname, {})[name] = nt
+                for sub in self._np_subclasses.get(cname, set()):
+                    self._propagate_extra_np(sub, name, nt, overwrite=overwrite)
 
     def normalize_all(self) -> None:
-        """Re-run normalization across all registered fields."""
-        for _, fields in self.field_type_table.items():
+        """Re-run normalization across all non-Pydantic registered fields."""
+        for _, fields in self._np_fields.items():
             for k, v in list(fields.items()):
                 fields[k] = self._normalize_field_type(v)
 
-    # lookups
+    # ── Lookups ───────────────────────────────────────────────────────────────
+
     def get_class_fields(self, type_name: str | type) -> Dict[str, Any] | None:
         """Return normalised field map for *type_name*.
 
-        Explicit registrations (via ``register_class``) take priority.  For
-        any ``GedcomXModel`` subclass that hasn't been explicitly registered,
-        the fields are auto-derived from Pydantic ``model_fields`` and cached
-        so that the resolver and gxcli type-inference work without needing
-        manual decoration on every model class.
+        For GedcomXModel subclasses derived from ``model_fields`` with a
+        per-class cache.  For non-Pydantic classes returns the explicitly
+        registered field map, if any.
         """
-        name: str = type_name if isinstance(type_name, str) else type_name.__name__
-        if name in self.field_type_table:
-            return self.field_type_table[name]
-
-        # Fallback: auto-register from Pydantic model_fields for GedcomXModel subclasses
-        cls: type | None = type_name if isinstance(type_name, type) else None
+        cls = self._resolve_class(type_name)
         if cls is None:
             return None
-        try:
-            from .gx_base import GedcomXModel as _GXBase
-        except ImportError:
-            return None
-        if not (isinstance(cls, type) and issubclass(cls, _GXBase)):
-            return None
-
-        self.register_class(cls)
-        return self.field_type_table.get(name)
+        if self._is_gx_model(cls):
+            return self._cached_pydantic_fields(cls)
+        return self._np_fields.get(cls.__name__)
 
     def set_toplevel(self, cls: type, *, meta: Dict[str, Any] | None = None) -> None:
         """Register a class as a top-level GedcomX type."""
@@ -249,9 +383,7 @@ class Schema:
         return name in self._toplevel
 
     def is_toplevel_obj(self, obj: Any) -> bool:
-        """
-        Like is_toplevel, but takes an arbitrary object and checks its class.
-        """
+        """Like is_toplevel, but takes an arbitrary object and checks its class."""
         if isinstance(obj, (str, type)):
             return self.is_toplevel(obj)
         return self.is_toplevel(obj.__class__)
@@ -262,66 +394,48 @@ class Schema:
 
     def get_extras(self, cls_or_name: type | str) -> Dict[str, Any]:
         """Direct extras declared on this class (not inherited)."""
-        name = cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
-        return dict(self._extras.get(name, {}))
+        cls = self._resolve_class(cls_or_name)
+        if cls is None:
+            return {}
+        if self._is_gx_model(cls):
+            direct_names: set = vars(cls).get("_ext_field_names", set())
+            return {
+                name: self._normalize_field_type(cls.model_fields[name].annotation)
+                for name in direct_names
+                if name in cls.model_fields
+            }
+        cname = cls.__name__
+        return dict(self._np_extras.get(cname, {}))
 
     def get_all_extras(self, cls_or_name: type | str) -> Dict[str, Any]:
         """Direct + inherited extras for this class."""
-        name = self._cls_name(cls_or_name)
-        out = {}
-        out.update(self._inherited_extras.get(name, {}))
-        out.update(self._extras.get(name, {}))
-        return dict(out)
+        cls = self._resolve_class(cls_or_name)
+        if cls is None:
+            return {}
+        if self._is_gx_model(cls):
+            all_names: set = set()
+            for klass in cls.__mro__:
+                all_names.update(vars(klass).get("_ext_field_names", set()))
+            return {
+                name: self._normalize_field_type(cls.model_fields[name].annotation)
+                for name in all_names
+                if name in cls.model_fields
+            }
+        cname = cls.__name__
+        out: Dict[str, Any] = {}
+        out.update(self._np_inh_extras.get(cname, {}))
+        out.update(self._np_extras.get(cname, {}))
+        return out
+
+    # ── Utils ─────────────────────────────────────────────────────────────────
+
+    def _cls_name(self, cls_or_name: type | str) -> str:
+        return cls_or_name if isinstance(cls_or_name, str) else cls_or_name.__name__
 
     @property
     def json(self) -> dict[str, dict[str, str]]:
         """Return a JSON-compatible representation of the current data."""
         return schema_to_jsonable(self)
-
-    # ──────────────────────────────
-    # Introspection helpers
-    # ──────────────────────────────
-    def _get_hints_from_class(self, cls: type) -> Dict[str, Any]:
-        module = sys.modules.get(cls.__module__)
-        gns = dict(module.__dict__) if module else {}
-        # Ensure these names exist even if the module didn't import them:
-        if self._uri_cls is not None:
-            gns.setdefault("URI", self._uri_cls)
-        if self._resource_cls is not None:
-            gns.setdefault("Resource", self._resource_cls)
-
-        lns = dict(vars(cls))
-        try:
-            return get_type_hints(cls, include_extras=True, globalns=gns, localns=lns)
-        except (NameError, AttributeError, TypeError):
-            # fallback keeps strings — but we’ll fix those below
-            return dict(getattr(cls, "__annotations__", {}) or {})
-
-    def _get_hints_from_init(self, cls: type) -> Dict[str, Any]:
-        """Parameter annotations from __init__ (excluding self/return/*args/**kwargs)."""
-        fn = cls.__dict__.get("__init__", getattr(cls, "__init__", None))
-        if not callable(fn):
-            return {}
-        module = sys.modules.get(cls.__module__)
-        gns = module.__dict__ if module else {}
-        # Ensure these names exist even if the module didn't import them:
-        if self._uri_cls is not None:
-            gns.setdefault("URI", self._uri_cls)
-        if self._resource_cls is not None:
-            gns.setdefault("Resource", self._resource_cls)
-        lns = dict(vars(cls))
-        try:
-            hints = get_type_hints(fn, include_extras=True, globalns=gns, localns=lns)
-        except (NameError, AttributeError, TypeError):
-            hints = dict(getattr(fn, "__annotations__", {}) or {})
-        hints.pop("return", None)
-        hints.pop("self", None)
-        # drop *args/**kwargs
-        sig = inspect.signature(fn)
-        for pname, p in list(sig.parameters.items()):
-            if p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
-                hints.pop(pname, None)
-        return hints
 
     # ──────────────────────────────
     # Normalization pipeline
@@ -334,50 +448,37 @@ class Schema:
         tp = self._collapse_unions(tp)
         return tp
 
-    # 1) Remove None from unions and strip Optional[...] wrappers
     def _strip_optional(self, tp: Any) -> Any:
         if isinstance(tp, str):
             return self._strip_optional_str(tp)
-
         origin = get_origin(tp)
         args = get_args(tp)
-
         if Annotated is not None and origin is Annotated:
             return self._strip_optional(args[0])
-
         if origin in _UNION_ORIGINS:
-            kept = tuple(a for a in args if a is not type(None))  # noqa: E721  # pylint: disable=unidiomatic-typecheck
+            kept = tuple(a for a in args if a is not type(None))  # noqa: E721
             if not kept:
                 return Any
             if len(kept) == 1:
                 return self._strip_optional(kept[0])
-            # rebuild union (still a union; later steps will collapse)
             return self._rebuild_union_tuple(kept)
-
         if origin in (list, set, tuple, dict):
             sub = tuple(self._strip_optional(a) for a in args)
             return self._rebuild_param(origin, sub, fallback=tp)
-
         return tp
 
-    # 2) In any union, prefer URI (if present), else Resource (if present), else first declared
     def _prefer_uri_or_resource_or_first(self, tp: Any) -> Any:
         if isinstance(tp, str):
-            # if these are strings but we know the classes, return the classes
             if tp == "URI" and self._uri_cls:
                 return self._uri_cls
             if tp == "Resource" and self._resource_cls:
                 return self._resource_cls
-            return self._prefer_str(tp)  # legacy fallback
-
+            return self._prefer_str(tp)
         origin = get_origin(tp)
         args = get_args(tp)
-
         if Annotated is not None and origin is Annotated:
             return self._prefer_uri_or_resource_or_first(args[0])
-
         if origin in _UNION_ORIGINS:
-            # pick URI if present, else Resource, else first
             pick = None
             for a in args:
                 name = a if isinstance(a, str) else getattr(a, "__name__", "")
@@ -393,51 +494,37 @@ class Schema:
             if pick is None:
                 pick = args[0]
             return self._prefer_uri_or_resource_or_first(pick)
-
         if origin in (list, set, tuple, dict):
             sub = tuple(self._prefer_uri_or_resource_or_first(a) for a in args)
             return self._rebuild_param(origin, sub, fallback=tp)
-
         return tp
 
-
-    # 3) If any union still remains (it shouldn't after step 2), collapse to first
     def _collapse_unions(self, tp: Any) -> Any:
         if isinstance(tp, str):
             return self._collapse_unions_str(tp)
-
         origin = get_origin(tp)
         args = get_args(tp)
-
         if Annotated is not None and origin is Annotated:
             return self._collapse_unions(args[0])
-
         if origin in _UNION_ORIGINS:
-            return self._collapse_unions(args[0])  # first only
-
+            return self._collapse_unions(args[0])
         if origin in (list, set, tuple, dict):
             sub = tuple(self._collapse_unions(a) for a in args)
             return self._rebuild_param(origin, sub, fallback=tp)
-
         return tp
 
-    # ──────────────────────────────
-    # Helpers: typing objects
-    # ──────────────────────────────
     def _name_of(self, a: Any) -> str:
         if isinstance(a, str):
             return a.strip()
         if isinstance(a, type):
             return getattr(a, "__name__", str(a))
-        # typing objects: str(...) fallback
         return str(a).replace("typing.", "")
 
     def _rebuild_union_tuple(self, args: tuple[Any, ...]) -> Any:
-        # Prefer PEP 604 A|B|C; fall back to typing.Union
         try:
-            return reduce(operator.or_, args)  # e.g., A | B | C
+            return reduce(operator.or_, args)
         except TypeError:
-            return Union.__getitem__(args)  # type: ignore[attr-defined]  # typing.Union[A, B, C]
+            return Union.__getitem__(args)  # type: ignore[attr-defined]
 
     def _rebuild_param(self, origin: Any, sub: tuple[Any, ...], *, fallback: Any) -> Any:
         try:
@@ -445,38 +532,28 @@ class Schema:
         except TypeError:
             return fallback
 
-    # ──────────────────────────────
-    # Helpers: strings
-    # ──────────────────────────────
+    # ── String-based normalization (legacy forward-ref support) ───────────────
+
     def _strip_optional_str(self, s: str) -> str:
         s = s.strip().replace("typing.", "")
-        # peel Optional[...] wrappers
         while s.startswith("Optional[") and s.endswith("]"):
             s = s[len("Optional["):-1].strip()
-
-        # Union[A, B, None]
         if s.startswith("Union[") and s.endswith("]"):
             inner = s[len("Union["):-1].strip()
             parts = [p for p in self._split_top_level(inner, ",") if p.strip() not in ("None", "NoneType", "")]
             return f"Union[{', '.join(parts)}]" if len(parts) > 1 else (parts[0].strip() if parts else "Any")
-
-        # A | B | None
         if "|" in s:
             parts = [p.strip() for p in self._split_top_level(s, "|")]
             parts = [p for p in parts if p not in ("None", "NoneType", "")]
             return " | ".join(parts) if len(parts) > 1 else (parts[0] if parts else "Any")
-
-        # containers: normalize inside
         for head in ("List", "Set", "Tuple", "Dict", "Annotated"):
             if s.startswith(head + "[") and s.endswith("]"):
                 inner = s[len(head) + 1:-1]
                 if head == "Annotated":
-                    # Annotated[T, ...] -> T
                     items = self._split_top_level(inner, ",")
                     return self._strip_optional_str(items[0].strip()) if items else "Any"
                 if head in ("List", "Set"):
-                    elem = self._strip_optional_str(inner)
-                    return f"{head}[{elem}]"
+                    return f"{head}[{self._strip_optional_str(inner)}]"
                 if head == "Tuple":
                     elems = [self._strip_optional_str(p.strip()) for p in self._split_top_level(inner, ",")]
                     return f"Tuple[{', '.join(elems)}]"
@@ -485,12 +562,10 @@ class Schema:
                     k = self._strip_optional_str(kv[0].strip()) if kv else "Any"
                     v = self._strip_optional_str(kv[1].strip()) if len(kv) > 1 else "Any"
                     return f"Dict[{k}, {v}]"
-
         return s
 
     def _prefer_str(self, s: str) -> str:
         s = s.strip().replace("typing.", "")
-        # Union[...] form
         if s.startswith("Union[") and s.endswith("]"):
             inner = s[len("Union["):-1]
             parts = [p.strip() for p in self._split_top_level(inner, ",")]
@@ -499,8 +574,6 @@ class Schema:
             if "Resource" in parts:
                 return "Resource"
             return parts[0] if parts else "Any"
-
-        # PEP 604 bars
         if "|" in s:
             parts = [p.strip() for p in self._split_top_level(s, "|")]
             if "URI" in parts:
@@ -508,8 +581,6 @@ class Schema:
             if "Resource" in parts:
                 return "Resource"
             return parts[0] if parts else "Any"
-
-        # containers
         for head in ("List", "Set", "Tuple", "Dict", "Annotated"):
             if s.startswith(head + "[") and s.endswith("]"):
                 inner = s[len(head) + 1:-1]
@@ -517,8 +588,7 @@ class Schema:
                     items = self._split_top_level(inner, ",")
                     return self._prefer_str(items[0].strip()) if items else "Any"
                 if head in ("List", "Set"):
-                    elem = self._prefer_str(inner)
-                    return f"{head}[{elem}]"
+                    return f"{head}[{self._prefer_str(inner)}]"
                 if head == "Tuple":
                     elems = [self._prefer_str(p.strip()) for p in self._split_top_level(inner, ",")]
                     return f"Tuple[{', '.join(elems)}]"
@@ -527,7 +597,6 @@ class Schema:
                     k = self._prefer_str(kv[0].strip()) if kv else "Any"
                     v = self._prefer_str(kv[1].strip()) if len(kv) > 1 else "Any"
                     return f"Dict[{k}, {v}]"
-
         return s
 
     def _collapse_unions_str(self, s: str) -> str:
@@ -539,8 +608,6 @@ class Schema:
         if "|" in s:
             parts = [p.strip() for p in self._split_top_level(s, "|")]
             return parts[0] if parts else "Any"
-
-        # containers
         for head in ("List", "Set", "Tuple", "Dict", "Annotated"):
             if s.startswith(head + "[") and s.endswith("]"):
                 inner = s[len(head) + 1:-1]
@@ -548,8 +615,7 @@ class Schema:
                     items = self._split_top_level(inner, ",")
                     return self._collapse_unions_str(items[0].strip()) if items else "Any"
                 if head in ("List", "Set"):
-                    elem = self._collapse_unions_str(inner)
-                    return f"{head}[{elem}]"
+                    return f"{head}[{self._collapse_unions_str(inner)}]"
                 if head == "Tuple":
                     elems = [self._collapse_unions_str(p.strip()) for p in self._split_top_level(inner, ",")]
                     return f"Tuple[{', '.join(elems)}]"
@@ -561,9 +627,7 @@ class Schema:
         return s
 
     def _split_top_level(self, s: str, sep: str) -> list[str]:
-        """
-        Split `s` by single-char separator (',' or '|') at top level (not inside brackets).
-        """
+        """Split *s* by single-char *sep* at top level (not inside brackets)."""
         out: list[str] = []
         buf: list[str] = []
         depth = 0
@@ -580,6 +644,46 @@ class Schema:
         out.append("".join(buf).strip())
         return [p for p in out if p != ""]
 
+    # ── Annotation introspection (used only for non-Pydantic register_class) ──
+
+    def _get_hints_from_class(self, cls: type) -> Dict[str, Any]:
+        import sys as _sys
+        module = _sys.modules.get(cls.__module__)
+        gns = dict(module.__dict__) if module else {}
+        if self._uri_cls is not None:
+            gns.setdefault("URI", self._uri_cls)
+        if self._resource_cls is not None:
+            gns.setdefault("Resource", self._resource_cls)
+        lns = dict(vars(cls))
+        try:
+            return get_type_hints(cls, include_extras=True, globalns=gns, localns=lns)
+        except (NameError, AttributeError, TypeError):
+            return dict(getattr(cls, "__annotations__", {}) or {})
+
+    def _get_hints_from_init(self, cls: type) -> Dict[str, Any]:
+        import sys as _sys
+        fn = cls.__dict__.get("__init__", getattr(cls, "__init__", None))
+        if not callable(fn):
+            return {}
+        module = _sys.modules.get(cls.__module__)
+        gns = module.__dict__ if module else {}
+        if self._uri_cls is not None:
+            gns.setdefault("URI", self._uri_cls)
+        if self._resource_cls is not None:
+            gns.setdefault("Resource", self._resource_cls)
+        lns = dict(vars(cls))
+        try:
+            hints = get_type_hints(fn, include_extras=True, globalns=gns, localns=lns)
+        except (NameError, AttributeError, TypeError):
+            hints = dict(getattr(fn, "__annotations__", {}) or {})
+        hints.pop("return", None)
+        hints.pop("self", None)
+        sig = inspect.signature(fn)
+        for pname, p in list(sig.parameters.items()):
+            if p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
+                hints.pop(pname, None)
+        return hints
+
 
 # ──────────────────────────────
 # Stringification helpers (JSON dump)
@@ -588,18 +692,14 @@ def type_repr(tp: Any) -> str:
     """Return a readable string representation of a type annotation."""
     if isinstance(tp, str):
         return tp
-
     origin = get_origin(tp)
     args = get_args(tp)
-
     if origin is None:
         if isinstance(tp, type):
             return tp.__name__
         return str(tp).replace("typing.", "")
-
     if origin in _UNION_ORIGINS:
         return " | ".join(type_repr(a) for a in args)
-
     if origin is list:
         return f"List[{type_repr(args[0])}]" if args else "List[Any]"
     if origin is set:
@@ -609,7 +709,6 @@ def type_repr(tp: Any) -> str:
     if origin is dict:
         k, v = args or (Any, Any)
         return f"Dict[{type_repr(k)}, {type_repr(v)}]"
-
     return str(tp).replace("typing.", "")
 
 
@@ -649,6 +748,7 @@ def schema_class(
         return cls
     return deco
 
+
 def bind_schema_property(
     cls: type,
     fget: Callable[..., Any],
@@ -661,26 +761,20 @@ def bind_schema_property(
     overwrite: bool = False,
     doc: str | None = None,
 ) -> property:
-    """
-    Bind module-level getter (and optional setter/deleter) as a property on cls,
-    and register it in schema.
-    """
+    """Bind a module-level getter as a property on *cls* and register it in *schema*."""
     prop_name = name or fget.__name__
-
-    # infer schema type from getter return annotation (preferred)
     if typ is None:
         hints = get_type_hints(fget, include_extras=True)
         typ = hints.get("return", Any)
-
     p = property(fget, doc=doc or fget.__doc__)
     if fset is not None:
         p = p.setter(fset)
     if fdel is not None:
         p = p.deleter(fdel)
-
     setattr(cls, prop_name, p)
     schema.register_extra(cls, prop_name, typ, overwrite=overwrite)
     return p
+
 
 def schema_property(
     *,
@@ -689,13 +783,7 @@ def schema_property(
     name: str | None = None,
     overwrite: bool = False,
 ):
-    """
-    Use on a method inside a class.
-
-    Example:
-        @schema_property(schema=SCHEMA)
-        def display_name(self) -> str: ...
-    """
+    """Decorator: register a method as a schema-visible computed property."""
     def deco(fn: Callable[..., Any]):
         prop_name = name or fn.__name__
 
@@ -708,7 +796,6 @@ def schema_property(
 
         p = property(fn)
 
-        # Hook: when class is created, Python calls __set_name__ on descriptors.
         class _RegisteredProperty(property):
             def __set_name__(self, owner: type, attr_name: str) -> None:
                 _register(owner)
@@ -716,6 +803,7 @@ def schema_property(
         return _RegisteredProperty(p.fget, p.fset, p.fdel, p.__doc__)
 
     return deco
+
 
 def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
     """Create a plugin that binds a computed schema property."""
@@ -725,7 +813,7 @@ def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
 
         def setter(fset):
             meta["fset"] = fset
-            return fget   # <-- IMPORTANT: keep name bound to getter (like @property.setter does)
+            return fget
 
         def deleter(fdel):
             meta["fdel"] = fdel
@@ -736,6 +824,7 @@ def schema_property_plugin(*, name: str | None = None, typ: Any | None = None):
         return fget
     return deco
 
+
 def apply_schema_property(cls: type, fget, *, schema: Schema, overwrite: bool = False):
     """Apply a schema-bound computed property to a class."""
     meta = getattr(fget, "__schema_prop__", None)
@@ -743,7 +832,6 @@ def apply_schema_property(cls: type, fget, *, schema: Schema, overwrite: bool = 
         raise TypeError(
             f"{getattr(fget, '__name__', fget)!r} missing @schema_property_plugin metadata"
         )
-
     return bind_schema_property(
         cls,
         fget,
@@ -754,20 +842,23 @@ def apply_schema_property(cls: type, fget, *, schema: Schema, overwrite: bool = 
         fdel=meta["fdel"],
         overwrite=overwrite,
     )
+
+
 # ──────────────────────────────
-# Accept unknown kwargs (propagates to subclasses)
+# accept_extras — wraps __init__ to absorb unknown kwargs (for plain classes)
+# Note: GedcomXModel subclasses handle this via model_config extra='allow'.
 # ──────────────────────────────
+import threading as _threading
+
+
 def accept_extras(*, stash_attr: str = "_extras",
-                  allow_only=None  # e.g., lambda cls: set(SCHEMA.get_all_extras(cls).keys())
-                 ):
-    """
-    Wraps the class __init__ to swallow unknown kwargs, and propagates to subclasses.
-    - If a subclass defines its own __init__, it gets wrapped automatically via __init_subclass__.
-    - Unknown kwargs are attached as attributes, or stashed in `stash_attr` if __slots__ present.
-    - If `allow_only` is provided (callable(cls) -> set[str]), only those keys are accepted.
+                  allow_only=None):
+    """Wrap a plain class __init__ to absorb unknown kwargs.
+
+    Not needed for GedcomXModel subclasses (``extra='allow'`` handles it).
     """
     WRAPPED_FLAG = "__extras_wrapped__"
-    lock = threading.RLock()
+    lock = _threading.RLock()
 
     def _wrap_init(klass):
         with lock:
@@ -778,23 +869,17 @@ def accept_extras(*, stash_attr: str = "_extras",
 
             @functools.wraps(orig)
             def __init__(self, *args, **kwargs):
-                # Split known from extras using THIS class's signature
                 known = {}
-                for name, _p in sig.parameters.items():
-                    if name == "self":
+                for pname, _p in sig.parameters.items():
+                    if pname == "self":
                         continue
-                    if name in kwargs:
-                        known[name] = kwargs.pop(name)
-
-                # Call original with only known kwargs
+                    if pname in kwargs:
+                        known[pname] = kwargs.pop(pname)
                 orig(self, *args, **known)
-
-                # Filter extras if requested
                 extras = kwargs
                 if allow_only is not None:
                     allowed = set(allow_only(self.__class__) or ())
                     extras = {k: v for k, v in extras.items() if k in allowed}
-
                 if extras:
                     if hasattr(self, "__slots__"):
                         stash = getattr(self, stash_attr, None)
@@ -810,62 +895,60 @@ def accept_extras(*, stash_attr: str = "_extras",
             setattr(klass, WRAPPED_FLAG, True)
 
     def _decorator(klass):
-        # wrap the base class now
         _wrap_init(klass)
-
-        # chain any existing __init_subclass__
         prev = getattr(klass, "__init_subclass__", None)
         prev_func = prev.__func__ if isinstance(prev, classmethod) else prev
 
         @classmethod
         def __init_subclass__(subcls, **kw):
             if prev_func:
-                prev_func(**kw)  # type: ignore[call-arg]  # call original
-            _wrap_init(subcls)   # wrap subclass' __init__ too
+                prev_func(**kw)
+            _wrap_init(subcls)
 
-        klass.__init_subclass__ = __init_subclass__  # propagate to future subclasses
+        klass.__init_subclass__ = __init_subclass__
         return klass
 
     return _decorator
 
+
 def extensible(*, allow_only=None, **schema_kwargs):
-    """
-    Apply schema_class then accept_extras in the right order.
-    Example: @extensible(toplevel=True)
-    """
+    """Apply schema_class then accept_extras.  For plain (non-Pydantic) classes."""
     def deco(cls):
-        # 1) register class with schema (inner)
         cls = schema_class(**schema_kwargs)(cls)
-        # 2) wrap for extras (outer) using an effective allow_only
         eff_allow = allow_only or (lambda c: set(SCHEMA.get_all_extras(c).keys()))
         cls = accept_extras(allow_only=eff_allow)(cls)
         return cls
     return deco
 
+
 def extensible_dataclass(*d_args, allow_only=None, **schema_kwargs):
-    """Decorate a dataclass so it participates in the extension system."""
+    """Decorate a dataclass so it participates in the legacy extension system."""
     from dataclasses import dataclass as _dc
+
     def deco(cls):
-        cls = _dc(*d_args)(cls)                          # generate __init__
-        cls = schema_class(**schema_kwargs)(cls)         # register with SCHEMA
+        cls = _dc(*d_args)(cls)
+        cls = schema_class(**schema_kwargs)(cls)
         eff_allow = allow_only or (lambda c: set(SCHEMA.get_all_extras(c).keys()))
-        cls = accept_extras(allow_only=eff_allow)(cls)   # wrap for extras
-        return cls
+        return accept_extras(allow_only=eff_allow)(cls)
+
     return deco
 
 
 class ExtrasAwareMeta(type):
-    """Metaclass that intercepts ``cls(*args, **kwargs)`` and ensures registered extras are accepted.
+    """Compatibility metaclass that accepts registered extension kwargs.
 
-    - Only passes constructor-known kwargs into ``__init__``.
-    - Allowed extras (from SCHEMA) are attached after construction.
+    New GedcomXModel subclasses use Pydantic ``extra='allow'`` instead.  This
+    class remains for external plain-class callers that imported it from here.
     """
-    def __call__(cls, *args, **kwargs):
-        # what extras are allowed for this class?
-        allow_fn = getattr(cls, "__extras_allow__", None)
-        allowed = set(allow_fn(cls)) if callable(allow_fn) else set(SCHEMA.get_all_extras(cls).keys())  # type: ignore[arg-type]
 
-        # inspect the CURRENT __init__ (dataclass/custom OK)
+    def __call__(cls, *args, **kwargs):
+        allow_fn = getattr(cls, "__extras_allow__", None)
+        allowed = (
+            set(allow_fn(cls))
+            if callable(allow_fn)
+            else set(SCHEMA.get_all_extras(cls).keys())  # type: ignore[arg-type]
+        )
+
         try:
             sig = inspect.signature(cls.__init__)
         except (TypeError, ValueError):
@@ -875,17 +958,15 @@ class ExtrasAwareMeta(type):
         accepts_varkw = False
         if sig:
             accepts_varkw = any(p.kind == p.VAR_KEYWORD for p in sig.parameters.values())
-            for name, p in sig.parameters.items():
-                if name == "self" or p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
+            for pname, p in sig.parameters.items():
+                if pname == "self" or p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
                     continue
-                if name in kwargs:
-                    known[name] = kwargs.pop(name)
+                if pname in kwargs:
+                    known[pname] = kwargs.pop(pname)
 
-        # call __init__: pass only known, and optionally extras if it already accepts **kwargs
         call_kwargs = {**known, **(kwargs if accepts_varkw else {})}
         obj = super().__call__(*args, **call_kwargs)
 
-        # attach remaining extras that are allowed
         extras = {k: v for k, v in kwargs.items() if k in allowed}
         if extras:
             if hasattr(obj, "__slots__"):
@@ -900,106 +981,21 @@ class ExtrasAwareMeta(type):
         return obj
 
 
-
-# Singleton instance
+# Singleton
 SCHEMA = Schema()
 
+
 # ---------------------------------------------------------------------------
-# NOTE: fact_from_even_tag and event_from_even_tag have been moved to
-# conversion.py where they are used.  The stubs below are kept for any
-# external callers that imported them from here.
+# Backward-compat stubs: fact_from_even_tag / event_from_even_tag moved to
+# conversion.py.  Kept here for any external callers.
 # ---------------------------------------------------------------------------
 def fact_from_even_tag(even_value):
     """Return the GedcomX fact type mapped from a GEDCOM EVEN tag."""
-    from .fact import FactType
-    gedcom_even_to_fact = {
-        # Person Fact Types
-        "CHR": FactType.AdultChristening,
-        "EVEN": FactType.Amnesty,  # and other FactTypes with no direct GEDCOM tag
-        "BAPM": FactType.Baptism,
-        "BARM": FactType.BarMitzvah,
-        "BASM": FactType.BatMitzvah,
-        "BIRT": FactType.Birth,
-        "BIRT, CHR": FactType.Birth,
-        "BLES": FactType.Blessing,
-        "BURI": FactType.Burial,
-        "CAST": FactType.Caste,
-        "CENS": FactType.Census,
-        "CIRC": FactType.Circumcision,
-        "CONF": FactType.Confirmation,
-        "CREM": FactType.Cremation,
-        "DEAT": FactType.Death,
-        "EDUC": FactType.Education,
-        "EMIG": FactType.Emigration,
-        "FCOM": FactType.FirstCommunion,
-        "GRAD": FactType.Graduation,
-        "IMMI": FactType.Immigration,
-        "MIL": FactType.MilitaryService,
-        "NATI": FactType.Nationality,
-        "NATU": FactType.Naturalization,
-        "OCCU": FactType.Occupation,
-        "ORDN": FactType.Ordination,
-        "DSCR": FactType.PhysicalDescription,
-        "PROB": FactType.Probate,
-        "PROP": FactType.Property,
-        "RELI": FactType.Religion,
-        "RESI": FactType.Residence,
-        "WILL": FactType.Will,
+    from .tag_mappings import fact_from_even_tag as _fact_from_even_tag
+    return _fact_from_even_tag(even_value)
 
-        # Couple Relationship Fact Types
-        "ANUL": FactType.Annulment,
-        "DIV": FactType.Divorce,
-        "DIVF": FactType.DivorceFiling,
-        "ENGA": FactType.Engagement,
-        "MARR": FactType.Marriage,
-        "MARB": FactType.MarriageBanns,
-        "MARC": FactType.MarriageContract,
-        "MARL": FactType.MarriageLicense,
-        "SEPA": FactType.Separation,
-
-        # Parent-Child Relationship Fact Types
-        # (Note: Only ADOPTION has a direct GEDCOM tag, others are under "EVEN")
-        "ADOP": FactType.AdoptiveParent
-        }
-    return gedcom_even_to_fact.get(even_value,None)
 
 def event_from_even_tag(even_value):
     """Return the GedcomX event type mapped from a GEDCOM EVEN tag."""
-    from .event import EventType
-    gedcom_even_to_evnt = {
-        # Person Fact Types
-        "ADOP": EventType.Adoption,
-        "CHR": EventType.AdultChristening,
-        "BAPM": EventType.Baptism,
-        "BARM": EventType.BarMitzvah,
-        "BASM": EventType.BatMitzvah,
-        "BIRT": EventType.Birth,
-        "BIRT, CHR": EventType.Birth,
-        "BLES": EventType.Blessing,
-        "BURI": EventType.Burial,
-
-        "CENS": EventType.Census,
-        "CIRC": EventType.Circumcision,
-        "CONF": EventType.Confirmation,
-        "CREM": EventType.Cremation,
-        "DEAT": EventType.Death,
-        "EDUC": EventType.Education,
-        "EMIG": EventType.Emigration,
-        "FCOM": EventType.FirstCommunion,
-
-        "IMMI": EventType.Immigration,
-
-        "NATU": EventType.Naturalization,
-
-        "ORDN": EventType.Ordination,
-
-
-        # Couple Relationship Fact Types
-        "ANUL": EventType.Annulment,
-        "DIV": EventType.Divorce,
-        "DIVF": EventType.DivorceFiling,
-        "ENGA": EventType.Engagement,
-        "MARR": EventType.Marriage
-
-    }
-    return gedcom_even_to_evnt.get(even_value,None)
+    from .tag_mappings import event_from_even_tag as _event_from_even_tag
+    return _event_from_even_tag(even_value)

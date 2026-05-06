@@ -1,6 +1,6 @@
 """Tests for shared bounded URL download helpers.
 
-Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging.
+Updated: 2026-04-15 — release refresh for v0.7.5b3 docs/build packaging.
 """
 
 from __future__ import annotations

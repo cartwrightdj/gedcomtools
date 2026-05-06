@@ -5,7 +5,7 @@ Updated: 2026-04-06 — add regression coverage for polymorphic
 ``GedcomX.add(Group(...))`` support.
 Updated: 2026-04-12 — TypeCollection index-safety tests: replace(), reindex(),
 _rebuild_indexes(), and append() partial-rollback correctness.
-Updated: 2026-04-15 — release refresh for v0.7.5b1 docs/build packaging.
+Updated: 2026-04-15 — release refresh for v0.7.5b3 docs/build packaging.
 """
 import pytest
 from gedcomtools.gedcomx.gedcomx import GedcomX, TypeCollection
@@ -232,7 +232,7 @@ class TestTypeCollectionIndexSafety:
         gx.add_agent(a)
         a.names[0] = TextValue(value="New Name")
         gx.agents.reindex(a)
-        assert gx.agents.by_name("Old Name") is None
+        assert gx.agents.by_name("Old Name") == []
         assert gx.agents.by_name("New Name") == [a]
 
     def test_reindex_item_not_in_collection_raises(self) -> None:
@@ -389,7 +389,7 @@ class TestTypeCollectionChangeName:
         a = Agent(id="A1", names=[TextValue(value="Acme Corp")])
         coll.append(a)
         coll.change_name(a, "Acme Corp", "New Corp")
-        assert coll.by_name("Acme Corp") is None
+        assert coll.by_name("Acme Corp") == []
         assert coll.by_name("New Corp") == [a]
 
     def test_change_name_not_found_raises(self) -> None:
@@ -435,7 +435,7 @@ class TestGedcomXChangeMethods:
         a = Agent(id="A1", names=[TextValue(value="Old Name")])
         gx.add_agent(a)
         gx.change_name(a, "Old Name", "New Name")
-        assert gx.agents.by_name("Old Name") is None
+        assert gx.agents.by_name("Old Name") == []
         assert gx.agents.by_name("New Name") == [a]
 
     def test_gx_change_id_object_not_in_any_collection_raises(self) -> None:
