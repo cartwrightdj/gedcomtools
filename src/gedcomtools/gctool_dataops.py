@@ -345,6 +345,12 @@ def _write_detail_csv(path: Path, headers: List[str], rows: List[List[Any]]) -> 
     return len(rows)
 
 
+def export_gedcom_to_csv(file: "Path | str", out: "Path | str") -> int:
+    """Export a GEDCOM 5/7 file to one CSV per top-level entity type."""
+    from argparse import Namespace
+    return cmd_export(Namespace(file=str(file), to="csv", out=str(out), json=False))
+
+
 def cmd_export(args) -> int:
     """Dump each top-level GEDCOM entity type to CSV files."""
     path = Path(args.file)

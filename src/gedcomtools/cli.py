@@ -234,11 +234,21 @@ def _convert_gx_to_g7(source_path: Path, dest_path: Path) -> int:
     return OK
 
 
+def _convert_gedcom_to_csv(source_path: Path, dest_path: Path) -> int:
+    """Export a GEDCOM 5/7 file to one CSV per top-level entity type."""
+    from gedcomtools.gctool_dataops import export_gedcom_to_csv
+
+    print(f"Exporting top-level GEDCOM entities from {source_path} to CSV ...")
+    return export_gedcom_to_csv(source_path, dest_path)
+
+
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
 _CONVERSIONS = {
     ("g5", "gx"): _convert_g5_to_gx,
     ("g5", "g7"): _convert_g5_to_g7,
+    ("g5", "csv"): _convert_gedcom_to_csv,
     ("g7", "gx"): _convert_g7_to_gx,
+    ("g7", "csv"): _convert_gedcom_to_csv,
     ("gx", "g7"): _convert_gx_to_g7,
 }
 
@@ -310,11 +320,16 @@ def main() -> None:
         description=(
             "Convert a genealogy file from its detected format to a target format.\n\n"
             "Supported conversions:\n"
-            "  g5 → gx\n\n"
+            "  g5 → gx\n"
+            "  g5 → g7\n"
+            "  g7 → gx\n"
+            "  gx → g7\n"
+            "  g5/g7 → csv\n\n"
             "Formats:\n"
             "  g5   GEDCOM 5.x  (.ged)\n"
             "  g7   GEDCOM 7.x  (.ged)\n"
             "  gx   GedcomX     (.json)\n"
+            "  csv  One CSV per top-level GEDCOM entity\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -324,6 +339,7 @@ def main() -> None:
     fmt_group.add_argument("-g5", dest="dest_type", action="store_const", const="g5", help="Convert to GEDCOM 5.x")
     fmt_group.add_argument("-g7", dest="dest_type", action="store_const", const="g7", help="Convert to GEDCOM 7.x")
     fmt_group.add_argument("-gx", dest="dest_type", action="store_const", const="gx", help="Convert to GedcomX JSON")
+    fmt_group.add_argument("-csv", dest="dest_type", action="store_const", const="csv", help="Export to CSV files")
     p_convert.add_argument(
         "--on-unknown",
         dest="on_unknown",
