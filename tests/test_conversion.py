@@ -72,7 +72,6 @@ class TestConversionSmall:
         assert len(persons_with_names) > 0
 
 
-@pytest.mark.xfail(reason="allged.ged contains tags not yet handled by GedcomConverter", strict=False)
 class TestConversionMedium:
     """allged.ged — broader tag coverage."""
 
@@ -332,7 +331,6 @@ class TestConversionSerializable:
         data = gx._to_dict()
         assert isinstance(data, dict)
 
-    @pytest.mark.xfail(reason="allged.ged causes ConversionErrorDump", strict=False)
     def test_medium_serializes(self, ged_medium):
         gx = _convert(ged_medium)
         data = gx._to_dict()
@@ -353,6 +351,52 @@ class TestGedcom5FacadeAccepted:
         g5 = Gedcom5(ged_tiny)
         gx = GedcomConverter().Gedcom5x_GedcomX(g5)
         assert len(gx.persons) > 0
+
+
+class TestDisplayPropertiesConversion:
+    """GEDCOM 5 conversion materializes Person.displayProperties."""
+
+    def _convert_text(self, tmp_path, text):
+        path = tmp_path / "display_properties.ged"
+        path.write_text(text, encoding="utf-8")
+        parser = Gedcom5x()
+        parser.parse_file(str(path), strict=True)
+        return GedcomConverter().Gedcom5x_GedcomX(parser)
+
+    def test_person_display_properties_populated_from_converted_data(self, tmp_path):
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "1 CHAR UTF-8",
+                    "0 @I1@ INDI",
+                    "1 NAME Alice /Able/",
+                    "1 SEX F",
+                    "1 BIRT",
+                    "2 DATE 1 JAN 1900",
+                    "2 PLAC Boston, Massachusetts",
+                    "1 DEAT",
+                    "2 DATE 2 FEB 1980",
+                    "2 PLAC Denver, Colorado",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        person = gx.persons.by_id("@I1@")
+        display = person.displayProperties
+        assert display is not None
+        assert display.name == "Alice Able"
+        assert display.gender == "Female"
+        assert display.birthDate == "1 JAN 1900"
+        assert display.birthPlace == "Boston, Massachusetts"
+        assert display.deathDate == "2 FEB 1980"
+        assert display.deathPlace == "Denver, Colorado"
+        assert display.lifespan == "1 JAN 1900-2 FEB 1980"
 
 
 class TestAnnulmentConversion:
@@ -527,3 +571,125 @@ class TestObjectFormConversion:
         assert media.mediaType == "image/bmp"
         assert media.resourceType == ResourceType.DigitalArtifact
         assert "FORM" not in gx._import_unhandled_tags
+
+
+class TestAdditionalGedcom5TagHandlers:
+    """Additional GEDCOM 5 tags convert to typed facts or preserved metadata."""
+
+    def _convert_text(self, tmp_path, text):
+        path = tmp_path / "additional_tags.ged"
+        path.write_text(text, encoding="utf-8")
+        parser = Gedcom5x()
+        parser.parse_file(str(path), strict=True)
+        return GedcomConverter().Gedcom5x_GedcomX(parser)
+
+    def test_common_unhandled_tags_convert_or_preserve(self, tmp_path):
+        from gedcomtools.gedcomx.fact import FactQualifier, FactType
+        from gedcomtools.gedcomx.relationship import RelationshipType
+
+        gx = self._convert_text(
+            tmp_path,
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 DEST gedcomtools",
+                    "1 GEDC",
+                    "2 VERS 5.5",
+                    "1 CHAR UTF-8",
+                    "1 SUBN @N1@",
+                    "0 @S1@ SOUR",
+                    "1 TITL Source Title",
+                    "1 CORP Source Corp",
+                    "1 COPR Copyright Holder",
+                    "0 @I1@ INDI",
+                    "1 NAME Child /Example/",
+                    "1 SEX M",
+                    "1 CAST Farmer",
+                    "1 DSCR Tall",
+                    "1 EDUC College",
+                    "1 FCOM",
+                    "1 IDNO A-123",
+                    "1 NATI Canadian",
+                    "1 NCHI 2",
+                    "1 NMR 1",
+                    "1 PROP House",
+                    "1 RELI Quaker",
+                    "1 SSN 111-22-3333",
+                    "1 _MYOWNTAG Custom value",
+                    "1 BIRT",
+                    "2 DATE 1 JAN 2000",
+                    "2 AGE 0d",
+                    "2 SOUR @S1@",
+                    "3 QUAY 3",
+                    "1 FAMC @F1@",
+                    "2 PEDI ADOPTED",
+                    "1 CHAN",
+                    "2 DATE 2 FEB 2020",
+                    "3 TIME 12:34:56",
+                    "0 @I2@ INDI",
+                    "1 NAME Parent /One/",
+                    "0 @I3@ INDI",
+                    "1 NAME Parent /Two/",
+                    "0 @F1@ FAM",
+                    "1 HUSB @I2@",
+                    "1 WIFE @I3@",
+                    "1 CHIL @I1@",
+                    "1 ENGA",
+                    "2 DATE 1 JAN 1990",
+                    "1 MARB",
+                    "1 MARC",
+                    "1 MARL",
+                    "1 MARS",
+                    "1 DIV",
+                    "1 DIVF",
+                    "0 TRLR",
+                    "",
+                ]
+            ),
+        )
+
+        expected_handled = {
+            "AGE", "CAST", "CHAR", "COPR", "CORP", "DEST", "DIV", "DIVF", "DSCR",
+            "EDUC", "ENGA", "FCOM", "GEDC", "IDNO", "MARB", "MARC", "MARL", "MARS",
+            "NATI", "NCHI", "NMR", "PEDI", "PROP", "QUAY", "RELI", "SSN", "SUBN",
+            "TIME", "VERS", "_MYOWNTAG",
+        }
+        assert expected_handled.isdisjoint(gx._import_unhandled_tags)
+
+        child = gx.persons.by_id("@I1@")
+        child_fact_types = {fact.type for fact in child.facts}
+        assert {
+            FactType.Caste,
+            FactType.PhysicalDescription,
+            FactType.Education,
+            FactType.FirstCommunion,
+            FactType.NationalId,
+            FactType.Nationality,
+            FactType.NumberOfChildren,
+            FactType.NumberOfMarriages,
+            FactType.Property,
+            FactType.Religion,
+        }.issubset(child_fact_types)
+
+        birth = next(fact for fact in child.facts if fact.type == FactType.Birth)
+        assert FactQualifier.Age in birth.qualifiers
+        assert birth.sources[0].qualifiers[0].value == "3"
+        assert child.attribution.modified == "2 FEB 2020 12:34:56"
+
+        parent_child = [
+            rel for rel in gx.relationships
+            if rel.type == RelationshipType.ParentChild and rel.person2.id == "@I1@"
+        ]
+        assert parent_child
+        assert all(rel.facts[0].type == FactType.AdoptiveParent for rel in parent_child)
+
+        spouse_fact_types = {fact.type for fact in gx.persons.by_id("@I2@").facts}
+        assert {
+            FactType.Engagement,
+            FactType.MarriageBanns,
+            FactType.MarriageContract,
+            FactType.MarriageLicense,
+            FactType.MarriageSettlement,
+            FactType.Divorce,
+            FactType.DivorceFiling,
+        }.issubset(spouse_fact_types)
