@@ -26,6 +26,12 @@ def _convert(path: Path) -> GedcomX:
     return Gedcom7Converter().convert(g7)
 
 
+def _convert_text(text: str) -> GedcomX:
+    g7 = Gedcom7()
+    g7.parse_string(text)
+    return Gedcom7Converter().convert(g7)
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -87,6 +93,39 @@ class TestPersons:
         # At least one person should have living set
         flags = [p.living for p in gx_maximal.persons if p.living is not None]
         assert len(flags) > 0
+
+    def test_display_properties_populated_from_converted_data(self):
+        gx = _convert_text(
+            "\n".join(
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 7.0",
+                    "0 @I1@ INDI",
+                    "1 NAME Alice /Able/",
+                    "1 SEX F",
+                    "1 BIRT",
+                    "2 DATE 1 JAN 1900",
+                    "2 PLAC Boston, Massachusetts",
+                    "1 DEAT",
+                    "2 DATE 2 FEB 1980",
+                    "2 PLAC Denver, Colorado",
+                    "0 TRLR",
+                    "",
+                ]
+            )
+        )
+
+        person = gx.persons.by_id("@I1@")
+        display = person.displayProperties
+        assert display is not None
+        assert display.name == "Alice Able"
+        assert display.gender == "Female"
+        assert display.birthDate == "1 JAN 1900"
+        assert display.birthPlace == "Boston, Massachusetts"
+        assert display.deathDate == "2 FEB 1980"
+        assert display.deathPlace == "Denver, Colorado"
+        assert display.lifespan == "1 JAN 1900-2 FEB 1980"
 
 
 # ---------------------------------------------------------------------------
