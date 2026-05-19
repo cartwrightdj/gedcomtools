@@ -48,7 +48,7 @@ Commands:
   edit    [XREF]           Browse and modify the GEDCOM tree
   merge FILE2 [OUT]        Merge current file with FILE2
   diff  FILE2              Structural diff against FILE2
-  export [csv [OUT]]       Dump individuals/families to CSV
+  export [csv [OUT]]       Dump top-level GEDCOM entities to CSV
   repair [OUT]             Auto-fix common validation issues
   help                     Show this message
   exit / quit              Exit the REPL
