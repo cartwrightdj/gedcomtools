@@ -324,8 +324,29 @@ def cmd_repair(args) -> int:
 # Command: export
 # ---------------------------------------------------------------------------
 
+def _csv_join(values) -> str:
+    """Join repeated detail values into a stable CSV cell."""
+    return ";".join(str(v) for v in values if v is not None and str(v) != "")
+
+
+def _csv_notes(values) -> str:
+    """Join note text with newlines collapsed so spreadsheet rows stay readable."""
+    return _csv_join(" ".join(str(v).split()) for v in values)
+
+
+def _write_detail_csv(path: Path, headers: List[str], rows: List[List[Any]]) -> int:
+    """Write a detail CSV and return the number of data rows written."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = _csv.writer(f)
+        w.writerow(headers)
+        for row in rows:
+            w.writerow(["" if value is None else value for value in row])
+    return len(rows)
+
+
 def cmd_export(args) -> int:
-    """Dump individuals and families to CSV files."""
+    """Dump each top-level GEDCOM entity type to CSV files."""
     path = Path(args.file)
     _fmt, obj = _load(path)
 
@@ -334,56 +355,184 @@ def cmd_export(args) -> int:
         return 1
 
     base = Path(args.out) if args.out else path.with_suffix("")
-    indi_path = base.parent / (base.name + "_individuals.csv")
-    fam_path  = base.parent / (base.name + "_families.csv")
+    if not base.name:
+        print(f"error: --out must be a file prefix, not a bare directory: {base}", file=sys.stderr)
+        return 1
 
     indis = obj.individual_details()
-    fams  = obj.family_details()
+    fams = obj.family_details()
+    sources = obj.source_details()
+    repos = obj.repository_details()
+    media = obj.media_details()
+    submitters = obj.submitter_details()
+    shared_notes = obj.shared_note_details()
 
-    with open(indi_path, "w", newline="", encoding="utf-8") as f:
-        w = _csv.writer(f)
-        w.writerow(["xref", "full_name", "sex",
-                    "birth_date", "birth_year", "birth_place",
-                    "death_date", "death_year", "death_place",
-                    "occupation", "families_as_child", "families_as_spouse"])
-        for d in indis:
-            w.writerow([
-                d.xref, d.full_name, d.sex or "",
-                (d.birth.date  or "") if d.birth  else "",
-                d.birth_year or "",
-                (d.birth.place or "") if d.birth  else "",
-                (d.death.date  or "") if d.death  else "",
-                d.death_year or "",
-                (d.death.place or "") if d.death  else "",
-                d.occupation or "",
-                ";".join(lnk.xref for lnk in d.families_as_child),
-                ";".join(d.families_as_spouse),
-            ])
+    outputs = {
+        "individuals": {
+            "path": base.parent / (base.name + "_individuals.csv"),
+            "headers": [
+                "xref", "full_name", "sex",
+                "birth_date", "birth_year", "birth_place",
+                "death_date", "death_year", "death_place",
+                "occupation", "title", "religion", "nationality",
+                "families_as_child", "families_as_spouse",
+                "source_refs", "note_texts", "shared_note_refs", "media_refs",
+                "uid", "restriction", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.full_name, d.sex or "",
+                    (d.birth.date or "") if d.birth else "",
+                    d.birth_year or "",
+                    (d.birth.place or "") if d.birth else "",
+                    (d.death.date or "") if d.death else "",
+                    d.death_year or "",
+                    (d.death.place or "") if d.death else "",
+                    d.occupation or "", d.title or "", d.religion or "", d.nationality or "",
+                    _csv_join(lnk.xref for lnk in d.families_as_child),
+                    _csv_join(d.families_as_spouse),
+                    _csv_join(c.xref for c in d.source_citations),
+                    _csv_notes(d.note_texts),
+                    _csv_join(d.shared_note_refs),
+                    _csv_join(d.media_refs),
+                    d.uid or "", d.restriction or "", d.last_changed or "",
+                ]
+                for d in indis
+            ],
+        },
+        "families": {
+            "path": base.parent / (base.name + "_families.csv"),
+            "headers": [
+                "xref", "husband_xref", "wife_xref",
+                "marriage_date", "marriage_year", "marriage_place",
+                "divorce_date", "divorce_year", "num_children", "children_xrefs",
+                "source_refs", "note_texts", "shared_note_refs", "media_refs",
+                "uid", "restriction", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.husband_xref or "", d.wife_xref or "",
+                    (d.marriage.date or "") if d.marriage else "",
+                    d.marriage_year or "",
+                    (d.marriage.place or "") if d.marriage else "",
+                    (d.divorce.date or "") if d.divorce else "",
+                    d.divorce_year or "",
+                    len(d.children_xrefs),
+                    _csv_join(d.children_xrefs),
+                    _csv_join(c.xref for c in d.source_citations),
+                    _csv_notes(d.note_texts),
+                    _csv_join(d.shared_note_refs),
+                    _csv_join(d.media_refs),
+                    d.uid or "", d.restriction or "", d.last_changed or "",
+                ]
+                for d in fams
+            ],
+        },
+        "sources": {
+            "path": base.parent / (base.name + "_sources.csv"),
+            "headers": [
+                "xref", "title", "author", "publication", "abbreviation",
+                "repository_refs", "note_texts", "shared_note_refs", "media_refs",
+                "uid", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.title or "", d.author or "", d.publication or "",
+                    d.abbreviation or "", _csv_join(d.repository_refs),
+                    _csv_notes(d.note_texts), _csv_join(d.shared_note_refs),
+                    _csv_join(d.media_refs), d.uid or "", d.last_changed or "",
+                ]
+                for d in sources
+            ],
+        },
+        "repositories": {
+            "path": base.parent / (base.name + "_repositories.csv"),
+            "headers": [
+                "xref", "name", "address", "phone", "email", "website",
+                "note_texts", "shared_note_refs", "uid", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.name or "", d.address or "", d.phone or "",
+                    d.email or "", d.website or "", _csv_notes(d.note_texts),
+                    _csv_join(d.shared_note_refs), d.uid or "", d.last_changed or "",
+                ]
+                for d in repos
+            ],
+        },
+        "media": {
+            "path": base.parent / (base.name + "_media.csv"),
+            "headers": [
+                "xref", "title", "files", "media_types",
+                "note_texts", "shared_note_refs", "uid", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.title or "",
+                    _csv_join(file_path for file_path, _media_type in d.files),
+                    _csv_join(media_type for _file_path, media_type in d.files),
+                    _csv_notes(d.note_texts), _csv_join(d.shared_note_refs),
+                    d.uid or "", d.last_changed or "",
+                ]
+                for d in media
+            ],
+        },
+        "submitters": {
+            "path": base.parent / (base.name + "_submitters.csv"),
+            "headers": [
+                "xref", "name", "address", "phone", "email", "website", "language",
+                "note_texts", "shared_note_refs", "uid", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, d.name or "", d.address or "", d.phone or "",
+                    d.email or "", d.website or "", d.language or "",
+                    _csv_notes(d.note_texts), _csv_join(d.shared_note_refs),
+                    d.uid or "", d.last_changed or "",
+                ]
+                for d in submitters
+            ],
+        },
+        "shared_notes": {
+            "path": base.parent / (base.name + "_shared_notes.csv"),
+            "headers": [
+                "xref", "text", "mime", "language", "source_refs", "uid", "last_changed",
+            ],
+            "rows": [
+                [
+                    d.xref, " ".join(d.text.split()), d.mime or "", d.language or "",
+                    _csv_join(c.xref for c in d.source_citations),
+                    d.uid or "", d.last_changed or "",
+                ]
+                for d in shared_notes
+            ],
+        },
+    }
 
-    with open(fam_path, "w", newline="", encoding="utf-8") as f:
-        w = _csv.writer(f)
-        w.writerow(["xref", "husband_xref", "wife_xref",
-                    "marriage_date", "marriage_year", "marriage_place",
-                    "divorce_date", "num_children", "children_xrefs"])
-        for d in fams:
-            w.writerow([
-                d.xref, d.husband_xref or "", d.wife_xref or "",
-                (d.marriage.date  or "") if d.marriage else "",
-                (d.marriage.year  or "") if d.marriage else "",
-                (d.marriage.place or "") if d.marriage else "",
-                (d.divorce.date   or "") if d.divorce  else "",
-                len(d.children_xrefs),
-                ";".join(d.children_xrefs),
-            ])
+    for spec in outputs.values():
+        spec["rows_written"] = _write_detail_csv(
+            spec["path"], spec["headers"], spec["rows"]
+        )
 
     if args.json:
         print(json.dumps({
-            "individuals": {"path": str(indi_path), "rows": len(indis)},
-            "families":    {"path": str(fam_path),  "rows": len(fams)},
+            key: {"path": str(spec["path"]), "rows": spec["rows_written"]}
+            for key, spec in outputs.items()
         }, indent=2))
     else:
-        print(f"Individuals: {indi_path}  ({len(indis)} rows)")
-        print(f"Families:    {fam_path}  ({len(fams)} rows)")
+        labels = {
+            "individuals": "Individuals",
+            "families": "Families",
+            "sources": "Sources",
+            "repositories": "Repositories",
+            "media": "Media",
+            "submitters": "Submitters",
+            "shared_notes": "Shared notes",
+        }
+        width = max(len(label) for label in labels.values())
+        for key, label in labels.items():
+            spec = outputs[key]
+            print(f"{label + ':':<{width + 1}} {spec['path']}  ({spec['rows_written']} rows)")
     return 0
 
 
