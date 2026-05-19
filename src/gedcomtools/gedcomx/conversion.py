@@ -580,15 +580,9 @@ class GedcomConverter(GxConverterBase):
             raise ValueError(f"I do not know how to handle an 'ADDR' tag for a {type(self.object_map[record.level-1])}")
 
     def handle_age(self, record: Element):
-        """Handle AGE tag: preserve the literal age on the active Fact or family event fact."""
+        """Handle AGE tag: mark the qualifier on the active Fact and preserve the literal value as a note."""
         parent = self.object_map.get(record.level - 1)
-        if isinstance(parent, FamilyParser):
-            if FactQualifier.Age not in parent.last_event_fact.qualifiers:
-                parent.last_event_fact.qualifiers = parent.last_event_fact.qualifiers + [FactQualifier.Age]
-            if record.value:
-                parent.add_note(Note(text=f"Age: {self.clean_str(record.value)}"))
-            self.object_map[record.level] = parent.last_event_fact
-        elif isinstance(parent, Fact):
+        if isinstance(parent, Fact):
             if FactQualifier.Age not in parent.qualifiers:
                 parent.qualifiers = parent.qualifiers + [FactQualifier.Age]
             if record.value:
