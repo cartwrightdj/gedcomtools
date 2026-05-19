@@ -50,6 +50,7 @@ GEDCOM_TAG_TO_FACT_TYPE: dict[str, FactType] = {
     "MARB": FactType.MarriageBanns,
     "MARC": FactType.MarriageContract,
     "MARL": FactType.MarriageLicense,
+    "MARS": FactType.MarriageSettlement,
     "SEPA": FactType.Separation,
     "ADOP": FactType.AdoptiveParent,
 }

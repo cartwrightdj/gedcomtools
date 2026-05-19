@@ -118,6 +118,7 @@ class FactType(Enum):
     MarriageContract = "http://gedcomx.org/MarriageContract"
     MarriageLicense = "http://gedcomx.org/MarriageLicense"
     MarriageNotice = "http://gedcomx.org/MarriageNotice"
+    MarriageSettlement = "http://gedcomx.org/MarriageSettlement"
     Separation = "http://gedcomx.org/Separation"
     # Parent-Child
     AdoptiveParent = "http://gedcomx.org/AdoptiveParent"
