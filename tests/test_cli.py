@@ -118,6 +118,14 @@ class TestExitCodes:
         assert result.returncode == OK
         assert out.exists()
 
+    def test_successful_g5_to_csv_export(self, ged_tiny, tmp_path):
+        out = tmp_path / "csv" / "family"
+        result = run_cli("convert", str(ged_tiny), str(out), "-csv")
+        assert result.returncode == OK
+        assert (tmp_path / "csv" / "family_individuals.csv").exists()
+        assert (tmp_path / "csv" / "family_families.csv").exists()
+        assert (tmp_path / "csv" / "family_sources.csv").exists()
+
     def test_output_file_created(self, ged_tiny, tmp_path):
         out = tmp_path / "out.json"
         run_cli("convert", str(ged_tiny), str(out), "-gx")
@@ -172,6 +180,7 @@ class TestHelp:
         assert "-gx" in result.stdout
         assert "-g5" in result.stdout
         assert "-g7" in result.stdout
+        assert "-csv" in result.stdout
 
     def test_no_args_exits_nonzero(self):
         result = run_cli()
