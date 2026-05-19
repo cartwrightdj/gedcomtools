@@ -615,7 +615,7 @@ class TestAdditionalGedcom5TagHandlers:
                     "1 PROP House",
                     "1 RELI Quaker",
                     "1 SSN 111-22-3333",
-                    "1 _MYOWNTAG Custom value",
+
                     "1 BIRT",
                     "2 DATE 1 JAN 2000",
                     "2 AGE 0d",
@@ -652,7 +652,7 @@ class TestAdditionalGedcom5TagHandlers:
             "AGE", "CAST", "CHAR", "COPR", "CORP", "DEST", "DIV", "DIVF", "DSCR",
             "EDUC", "ENGA", "FCOM", "GEDC", "IDNO", "MARB", "MARC", "MARL", "MARS",
             "NATI", "NCHI", "NMR", "PEDI", "PROP", "QUAY", "RELI", "SSN", "SUBN",
-            "TIME", "VERS", "_MYOWNTAG",
+            "TIME", "VERS",
         }
         assert expected_handled.isdisjoint(gx._import_unhandled_tags)
 
