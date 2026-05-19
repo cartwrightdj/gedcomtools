@@ -36,7 +36,6 @@ class FamilyParser:
         self.parent1: Optional[Person] = None
         self.parent2: Optional[Person] = None
         self.children: list[Person] = []
-        self.last_event_fact = None
         self.family_xref: Optional[str] = None
         self.pedigree = pedigree if pedigree is not None else {}
         self.couple: Relationship = Relationship(type=RelationshipType.Couple)
