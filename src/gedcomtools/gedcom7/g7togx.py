@@ -140,6 +140,9 @@ class Gedcom7Converter(GxConverterBase):
         for d in gedcom7.family_details():
             self._convert_fam(d)
 
+        for person in gx.persons:
+            person.ensure_display_properties()
+
         # Phase 3 — attach diagnostics
         gx._import_unhandled_tags = dict(self._unhandled)
         return gx
