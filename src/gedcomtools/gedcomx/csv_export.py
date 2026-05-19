@@ -45,13 +45,18 @@ def _join(values: Iterable[Any]) -> str:
 
 
 def _notes(obj: Any) -> str:
-    return _join(" ".join(note.text.split()) for note in getattr(obj, "notes", []) if getattr(note, "text", None))
+    return ";".join(
+        " ".join(note.text.split())
+        for note in getattr(obj, "notes", [])
+        if getattr(note, "text", None)
+    )
 
 
 def _sources(obj: Any) -> str:
-    return _join(
-        source.descriptionId or source.description or ""
+    return ";".join(
+        ref
         for source in getattr(obj, "sources", [])
+        if (ref := source.descriptionId or _text(source.description))
     )
 
 
