@@ -27,6 +27,7 @@ from typing import Any, get_args, get_origin
 import orjson
 
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
+from gedcomtools.gedcomx.csv_export import export_gedcomx_csv
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.cli import write_jsonl, objects_to_schema_table
@@ -99,7 +100,7 @@ class _InfoMixin:
             "Load / Save:\n"
             "  load PATH                load .ged / .json / .zip\n"
             "  extend PATH              load and merge into current root\n"
-            "  write gx|zip|jsonl PATH  write current root to a file\n"
+            "  write gx|zip|jsonl|csv PATH  write current root to a file\n"
             "\nNavigation:\n"
             "  cd PATH                  change node (.., /, indices, id strings)\n"
             "  back                     return to previous location\n"
@@ -2423,9 +2424,18 @@ class _DataMixin:
         write gx PATH      Write current root as GEDCOM-X JSON.
         write zip PATH     Write current root as a GEDCOM-X ZIP archive.
         write jsonl PATH   Write current node as JSON-L.
+        write csv PATH     Write one CSV per GedcomX top-level collection.
         """
-        if len(args) < 2 or args[0] not in ["gx", "zip", "jsonl"]:
-            print("usage: write FORMAT[gx | zip | jsonl] PATH")
+        if len(args) < 2 or args[0] not in ["gx", "zip", "jsonl", "csv"]:
+            print("usage: write FORMAT[gx | zip | jsonl | csv] PATH")
+            return None
+        if args[0] == "csv":
+            if self.gedcomx is None:  # type: ignore[attr-defined]
+                print("No GEDCOM-X data loaded.")
+                return None
+            outputs = export_gedcomx_csv(self.gedcomx, args[1].strip('"').strip("'"))  # type: ignore[attr-defined]
+            for name, info in outputs.items():
+                print(f"{name}: {info['path']} ({info['rows']} rows)")
             return None
         if args[0] == "zip":
             from gedcomtools.gedcomx.zip import GedcomZip
