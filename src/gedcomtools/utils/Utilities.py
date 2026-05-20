@@ -12,7 +12,7 @@
  Updated: 2026-04-12 — fixed backwards ValueError re-raise in download_url_bytes();
                        non-numeric Content-Length headers are now silently ignored
                        instead of being swallowed by the wrong except branch
- Updated: 2026-04-15 — release refresh for v0.7.5b3 docs/build packaging
+ Updated: 2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
  Updated: 2026-04-27 — download_url_bytes() now validates URL scheme is
                        http/https before opening; rejects file://, ftp://, etc.
 
@@ -46,7 +46,7 @@ def download_url_bytes(
     *,
     timeout: int = DEFAULT_DOWNLOAD_TIMEOUT,
     max_bytes: int = DEFAULT_DOWNLOAD_MAX_BYTES,
-    user_agent: str = "gedcomtools/0.7.5b3",
+    user_agent: str = "gedcomtools/0.8.0b3",
 ) -> bytes:
     """Download *url* with a timeout and a hard response-size cap.
 

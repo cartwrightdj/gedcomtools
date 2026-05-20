@@ -33,7 +33,7 @@
                  parse_gedcom_line() consolidates payload strip via rstrip() on line;
                  added *_details_iter() generator variants alongside *_details() methods
    - 2026-04-12: get_spouses(): replaced string .upper() self-exclusion with object
-   - 2026-04-15: release refresh for v0.7.5b3 docs/build packaging
+   - 2026-04-15: release refresh for v0.8.0b3 docs/build packaging
                  identity check (candidate is not indi_node); clearer and avoids
                  a redundant normalisation now that _xref_index handles case folding
 ======================================================================
@@ -926,6 +926,7 @@ class Gedcom7(RelationshipCacheMixin):
         from .gxtog7 import GedcomXConverter
         g7 = cls()
         g7.records = GedcomXConverter().convert(gx)
+        g7._rebuild_tag_index()
         return g7
 
     def gml(self) -> str:

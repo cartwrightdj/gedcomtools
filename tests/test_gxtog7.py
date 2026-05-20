@@ -152,11 +152,19 @@ class TestReturnType:
         assert isinstance(g7, Gedcom7)
         assert isinstance(g7.records, list)
         assert len(g7.records) > 0
+        assert len(g7["HEAD"]) == 1
+        assert len(g7.individuals()) == 3
+        assert g7.get_individual("@I1@") is not None
+        assert g7.detect_gedcom_version() == "7.0"
+        assert not [e for e in g7.validate() if e.code == "not_gedcom7"]
 
     def test_facade_to_gedcom7(self, gx_minimal):
         g7 = gx_minimal.to_gedcom7()
         assert isinstance(g7, Gedcom7)
         assert len(g7.records) > 0
+        assert len(g7["HEAD"]) == 1
+        assert len(g7.individuals()) == 3
+        assert g7.get_individual("@I1@") is not None
 
     def test_conversion_warnings_property(self, gx_minimal):
         conv = GedcomXConverter()

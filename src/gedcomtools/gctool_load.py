@@ -13,7 +13,7 @@
           2026-04-12 — narrowed broad except Exception in _load() to specific types:
                        GedcomFormatViolationError/OSError/ValueError (g5) and
                        GedcomParseError/OSError/ValueError (g7)
-          2026-04-15 — release refresh for v0.7.5b3 docs/build packaging
+          2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
 ======================================================================
 """
 

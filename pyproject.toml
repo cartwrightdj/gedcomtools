@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gedcomtools"
-version = "0.7.5b3"
+version = "0.8.0b3"
 description = "gedcomtools — GEDCOM 5/7/X toolkit (alpha)"
 readme = "README.md"
 requires-python = ">=3.10"

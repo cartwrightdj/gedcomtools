@@ -106,7 +106,7 @@ Top-level entities now auto-generate IDs; sub-elements default to `id=None`.
 
 ---
 
-## Release refresh — v0.7.5b3 (2026-04-25)
+## Release refresh — v0.8.0b3 (2026-04-25)
 
 - Added symmetric custom deserialization hooks in `Serialization.deserialize()`
   so project types can provide `_deserializer(data)` or `from_json(data, None)`
@@ -115,7 +115,7 @@ Top-level entities now auto-generate IDs; sub-elements default to `id=None`.
   that adds timeouts and response-size caps for GEDCOM and GedcomX URL loads.
 - Tightened `pyright` and `pylint` configuration to ignore generated build and
   docs output so repo-level checks report maintained-source issues clearly.
-- Rebuilt Sphinx docs and refreshed the release artifacts for the `v0.7.5b3`
+- Rebuilt Sphinx docs and refreshed the release artifacts for the `v0.8.0b3`
   beta tag.
 
 ---
