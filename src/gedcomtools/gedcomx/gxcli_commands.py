@@ -9,6 +9,8 @@ from __future__ import annotations
 #           Import order: gxcli_core assembles Shell from these mixins.
 #  Created: 2026-03-31 — split from gxcli.py
 #  Updated: 2026-04-03 — _is_url moved to utils.Utilities; removed _LoadMixin._is_url staticmethod
+#           2026-04-10 — bounded remote downloads with shared timeout/size helper
+#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
 # ======================================================================
 import inspect
 import logging
@@ -19,18 +21,18 @@ import shutil
 import sys
 import tempfile
 import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any, get_args, get_origin
 
 import orjson
 
 from gedcomtools.gedcomx import GedcomConverter, GedcomX
+from gedcomtools.gedcomx.csv_export import export_gedcomx_csv
 from gedcomtools.gedcomx.serialization import ResolveStats, Serialization
 from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
-from gedcomtools.gedcomx.cli import write_jsonl
+from gedcomtools.gedcomx.cli import write_jsonl, objects_to_schema_table
 from gedcomtools.glog import get_logger, LoggerSpec
-from gedcomtools.utils.Utilities import _is_url
+from gedcomtools.utils.Utilities import _is_url, download_url_bytes
 
 from gedcomtools.gedcomx.gxcli_output import (
     ANSI,
@@ -63,7 +65,6 @@ from gedcomtools.gedcomx.gxcli_output import (
     _sans_ansi,
     _clip,
     _red,
-    objects_to_schema_table,
 )
 
 # readline is optional
@@ -99,7 +100,7 @@ class _InfoMixin:
             "Load / Save:\n"
             "  load PATH                load .ged / .json / .zip\n"
             "  extend PATH              load and merge into current root\n"
-            "  write gx|zip|jsonl PATH  write current root to a file\n"
+            "  write gx|zip|jsonl|csv PATH  write current root to a file\n"
             "\nNavigation:\n"
             "  cd PATH                  change node (.., /, indices, id strings)\n"
             "  back                     return to previous location\n"
@@ -1337,13 +1338,16 @@ class _LoadMixin:
 
         if src_type == "g7":
             from gedcomtools.gedcom7.validator import GedcomValidator
+            from gedcomtools.gedcom7.g7togx import Gedcom7Converter
             print("  Parsing GEDCOM 7…")
             g7 = _load_g7(Path(path))
             print("  Validating GEDCOM 7…")
             issues = GedcomValidator(g7.records).validate()
             self._print_validation_results(issues)
-            print("  Note: GEDCOM 7 → GedcomX conversion is not yet implemented.")
-            return None
+            print("  Converting to GedcomX…")
+            gx = Gedcom7Converter().convert(g7)
+            self.gedcomx = gx  # type: ignore[attr-defined]
+            return gx
 
         raise ValueError(f"Cannot determine GEDCOM version for: {path}")
 
@@ -1367,13 +1371,15 @@ class _LoadMixin:
     def _fetch_url(url: str) -> bytes:
         """Download *url* and return the raw bytes, or print an error and return b''."""
         try:
-            with urllib.request.urlopen(url) as resp:
-                return resp.read()
+            return download_url_bytes(url)
         except urllib.error.HTTPError as exc:
             print(f"! HTTP {exc.code} fetching {url}: {exc.reason}")
             return b""
         except urllib.error.URLError as exc:
             print(f"! Cannot fetch {url}: {exc.reason}")
+            return b""
+        except ValueError as exc:
+            print(f"! Cannot fetch {url}: {exc}")
             return b""
 
     def _load_ged_url(self, url: str) -> Any:
@@ -2418,9 +2424,18 @@ class _DataMixin:
         write gx PATH      Write current root as GEDCOM-X JSON.
         write zip PATH     Write current root as a GEDCOM-X ZIP archive.
         write jsonl PATH   Write current node as JSON-L.
+        write csv PATH     Write one CSV per GedcomX top-level collection.
         """
-        if len(args) < 2 or args[0] not in ["gx", "zip", "jsonl"]:
-            print("usage: write FORMAT[gx | zip | jsonl] PATH")
+        if len(args) < 2 or args[0] not in ["gx", "zip", "jsonl", "csv"]:
+            print("usage: write FORMAT[gx | zip | jsonl | csv] PATH")
+            return None
+        if args[0] == "csv":
+            if self.gedcomx is None:  # type: ignore[attr-defined]
+                print("No GEDCOM-X data loaded.")
+                return None
+            outputs = export_gedcomx_csv(self.gedcomx, args[1].strip('"').strip("'"))  # type: ignore[attr-defined]
+            for name, info in outputs.items():
+                print(f"{name}: {info['path']} ({info['rows']} rows)")
             return None
         if args[0] == "zip":
             from gedcomtools.gedcomx.zip import GedcomZip

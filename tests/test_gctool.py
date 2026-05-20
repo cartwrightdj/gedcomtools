@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+import csv
 import zipfile
 from io import StringIO
 from pathlib import Path
@@ -533,6 +534,52 @@ class TestStats:
         assert "with_birth_year" in indi
         assert "male" in indi
         assert "female" in indi
+
+
+# ---------------------------------------------------------------------------
+# export command
+# ---------------------------------------------------------------------------
+
+class TestExport:
+    def test_csv_export_writes_each_top_level_entity_file(self, tmp_path):
+        source = _make_g5(tmp_path)
+        out = tmp_path / "exported"
+
+        rc = _run(["export", str(source), "--to", "csv", "--out", str(out)])
+
+        assert rc == 0
+        expected = {
+            "individuals": ["xref", "full_name", "sex", "birth_date"],
+            "families": ["xref", "husband_xref", "wife_xref", "marriage_date"],
+            "sources": ["xref", "title", "author", "publication"],
+            "repositories": ["xref", "name", "address", "phone"],
+            "media": ["xref", "title", "files", "media_types"],
+            "submitters": ["xref", "name", "address", "phone"],
+            "shared_notes": ["xref", "text", "mime", "language"],
+        }
+        for suffix, header_start in expected.items():
+            csv_path = tmp_path / f"exported_{suffix}.csv"
+            assert csv_path.exists()
+            with open(csv_path, newline="", encoding="utf-8") as f:
+                header = next(csv.reader(f))
+            assert header[: len(header_start)] == header_start
+
+    def test_csv_export_json_lists_all_outputs(self, tmp_path):
+        source = _make_g5(tmp_path)
+        out = tmp_path / "exported"
+
+        rc, stdout = _capture(["--json", "export", str(source), "--to", "csv", "--out", str(out)])
+
+        assert rc == 0
+        data = json.loads(stdout)
+        assert set(data) == {
+            "individuals", "families", "sources", "repositories",
+            "media", "submitters", "shared_notes",
+        }
+        assert data["individuals"]["rows"] == 2
+        assert data["families"]["rows"] == 1
+        assert data["repositories"]["rows"] == 1
+        assert data["submitters"]["rows"] == 1
 
 
 # ---------------------------------------------------------------------------

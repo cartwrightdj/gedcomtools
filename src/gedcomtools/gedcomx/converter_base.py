@@ -27,4 +27,3 @@ class GxConverterBase(ABC):
     @abstractmethod
     def convert(self, source: Any) -> "GedcomX":
         """Convert *source* and return a populated :class:`GedcomX` object."""
-        ...

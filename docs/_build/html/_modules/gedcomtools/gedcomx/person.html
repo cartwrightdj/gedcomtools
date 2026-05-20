@@ -404,10 +404,10 @@
         <span class="n">death_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">death_place</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">fact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">facts</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span> <span class="ow">and</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">:</span>
                 <span class="n">birth_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_date_display_value</span><span class="p">(</span><span class="n">fact</span><span class="p">)</span>
                 <span class="n">birth_place</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_place_display_value</span><span class="p">(</span><span class="n">fact</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span> <span class="ow">and</span> <span class="n">fact</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">fact</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span><span class="p">:</span>
                 <span class="n">death_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_date_display_value</span><span class="p">(</span><span class="n">fact</span><span class="p">)</span>
                 <span class="n">death_place</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_place_display_value</span><span class="p">(</span><span class="n">fact</span><span class="p">)</span>
 
@@ -443,6 +443,15 @@
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">display</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="n">display</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">display</span></div>
+
+
+<div class="viewcode-block" id="Person.ensure_display_properties">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.person.Person.ensure_display_properties">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ensure_display_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DisplayProperties&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Materialize display properties from current person data.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.fs.fs_types_rs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplayProperties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_object</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span></div>
 
 
 <div class="viewcode-block" id="Person.display">
@@ -514,7 +523,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

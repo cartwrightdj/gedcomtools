@@ -5,15 +5,15 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **ALPHA SOFTWARE — v0.7.5b1**
+> **BETA SOFTWARE — v0.8.0b3**
 >
-> `gedcomtools` is under active development. Public APIs, data models, and serialization
-> formats may change between releases without notice. It is not yet recommended for
+> `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
+> *may change between releases without notice. It is not yet recommended for
 > production use. Feedback and bug reports are welcome.
 
 ---
 
-## What's New in v0.7.5b1
+## What's New in v0.8.0b3
 
 ### FamilySearch deserialization
 
@@ -38,11 +38,28 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 - Added `examples/familysearch_deserialize.py` showing how to load the
   FamilySearch extension plugin and deserialize the sample payloads.
 
+### Reliability and release refresh
+
+- Added symmetric custom deserialization hooks so `Serialization.deserialize()`
+  now checks `_deserializer(data)` and `from_json(data, None)` before falling
+  back to `model_validate`, `from_dict`, or schema-driven construction.
+- Fixed the GedcomX -> GEDCOM 7 facade path so `Gedcom7.from_gedcomx()` and
+  `GedcomX.to_gedcom7()` rebuild their GEDCOM 7 tag/xref indexes after
+  conversion. Converted objects now work immediately with `g7["HEAD"]`,
+  `individuals()`, `get_individual()`, validation, version detection, and
+  relationship traversal without requiring a write/read round trip.
+- Hardened public remote-loading paths with a shared bounded download helper:
+  URL fetches now use a timeout and a hard response-size cap instead of
+  unbounded `urlopen(...).read()` calls.
+- Tightened repo tooling configuration so `pyright` ignores generated build
+  artifacts and `pylint` focuses on maintained source paths.
+
 ### Release packaging
 
-- Bumped the package and docs version to `0.7.5b1`.
-- Rebuilt the Sphinx HTML documentation and the release artifacts for this
-  beta cut.
+- Bumped the package and docs version to `0.8.0b3`.
+- Rebuilt the Sphinx HTML documentation and release artifacts for this beta
+  cut, including `gedcomtools-0.8.0b3.tar.gz` and
+  `gedcomtools-0.8.0b3-py3-none-any.whl`.
 
 ## Previous Development Updates
 

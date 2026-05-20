@@ -153,7 +153,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.set_defaults(func=cmd_repair)
 
     # export
-    p = sub.add_parser("export", help="Dump individuals/families to CSV")
+    p = sub.add_parser("export", help="Dump top-level GEDCOM entities to CSV")
     _file(p)
     p.add_argument("--to", required=True, metavar="FORMAT", choices=["csv"],
                    help="Output format (csv)")

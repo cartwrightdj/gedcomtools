@@ -150,8 +150,8 @@ class EventType(Enum):
     Naturalization = "http://gedcomx.org/Naturalization"
     Ordination = "http://gedcomx.org/Ordination"
     Retirement = "http://gedcomx.org/Retirement"
-    MarriageSettlment = "https://gedcom.io/terms/v7/MARS"
-    UnknowUserCreated = "https://gedcom.io/terms/v1/UUCE"
+    MarriageSettlement = "https://gedcom.io/terms/v7/MARS"
+    UnknownUserCreated = "https://gedcom.io/terms/v1/UUCE"
 
     @property
     def description(self):

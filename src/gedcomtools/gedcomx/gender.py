@@ -6,7 +6,8 @@
  Purpose: GedcomX Gender model and GenderType enum
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — added __eq__ comparing type; Gender now correctly
+                     distinguishes instances with id=None
 ======================================================================
 """
 from __future__ import annotations
@@ -44,6 +45,13 @@ class Gender(Conclusion):
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
     type: Optional[GenderType] = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Gender):
+            return False
+        return super().__eq__(other) and self.type == other.type
+
+    __hash__ = None  # type: ignore[assignment]
 
     def _validate_self(self, result) -> None:
         super()._validate_self(result)

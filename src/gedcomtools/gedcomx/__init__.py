@@ -34,6 +34,7 @@ from .attribution import Attribution
 from .conclusion import Conclusion
 from .converter_base import GxConverterBase
 from .conversion import GedcomConverter
+from .csv_export import export_gedcomx_csv
 G5ToGxConverter = GedcomConverter  # preferred alias; GedcomConverter kept for backward compat
 from .coverage import Coverage
 from .date import Date

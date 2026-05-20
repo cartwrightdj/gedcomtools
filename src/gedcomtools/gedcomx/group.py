@@ -27,7 +27,7 @@ from .textvalue import TextValue
 
 class GroupRoleType(ExtensibleEnum):
     """Runtime-extensible enum of role types a person may hold within a group."""
-    pass
+
 
 
 class GroupRole(Conclusion):

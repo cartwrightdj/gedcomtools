@@ -179,10 +179,77 @@ def _convert_g5_to_g7(source_path: Path, dest_path: Path, *, unknown_tags: str =
     return OK
 
 
+def _convert_g7_to_gx(source_path: Path, dest_path: Path) -> int:
+    from gedcomtools.gedcom7.g7togx import Gedcom7Converter
+    print(f"Loading GEDCOM 7 from {source_path} ...")
+    try:
+        g7 = _load_g7(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GedcomX ...")
+    try:
+        gx = Gedcom7Converter().convert(g7)
+        data = gx._to_dict()
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest_path, "wb") as f:
+            f.write(_json_dumps(data))
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    print(f"Written to {dest_path}")
+    if gx._import_unhandled_tags:
+        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}")
+    return OK
+
+
+def _convert_gx_to_g7(source_path: Path, dest_path: Path) -> int:
+    from gedcomtools.gedcom7.gxtog7 import GedcomXConverter
+    from gedcomtools.gedcom7.writer import Gedcom7Writer
+    print(f"Loading GedcomX from {source_path} ...")
+    try:
+        gx = _load_gx(source_path)
+    except Exception as e:
+        print(f"Error: failed to parse source file: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    print("Converting to GEDCOM 7 ...")
+    try:
+        records = GedcomXConverter().convert(gx)
+    except Exception as e:
+        print(f"Error: conversion failed: {e}", file=sys.stderr)
+        return ERR_CONVERSION_FAILED
+    try:
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        Gedcom7Writer().write(records, dest_path)
+    except OSError as e:
+        print(f"Error: could not write output file: {e}", file=sys.stderr)
+        return ERR_IO
+    n_indi = sum(1 for r in records if r.tag == "INDI")
+    n_fam  = sum(1 for r in records if r.tag == "FAM")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    return OK
+
+
+def _convert_gedcom_to_csv(source_path: Path, dest_path: Path) -> int:
+    """Export a GEDCOM 5/7 file to one CSV per top-level entity type."""
+    from gedcomtools.gctool_dataops import export_gedcom_to_csv
+
+    print(f"Exporting top-level GEDCOM entities from {source_path} to CSV ...")
+    return export_gedcom_to_csv(source_path, dest_path)
+
+
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
 _CONVERSIONS = {
     ("g5", "gx"): _convert_g5_to_gx,
     ("g5", "g7"): _convert_g5_to_g7,
+    ("g5", "csv"): _convert_gedcom_to_csv,
+    ("g7", "gx"): _convert_g7_to_gx,
+    ("g7", "csv"): _convert_gedcom_to_csv,
+    ("gx", "g7"): _convert_gx_to_g7,
 }
 
 
@@ -253,11 +320,16 @@ def main() -> None:
         description=(
             "Convert a genealogy file from its detected format to a target format.\n\n"
             "Supported conversions:\n"
-            "  g5 → gx\n\n"
+            "  g5 → gx\n"
+            "  g5 → g7\n"
+            "  g7 → gx\n"
+            "  gx → g7\n"
+            "  g5/g7 → csv\n\n"
             "Formats:\n"
             "  g5   GEDCOM 5.x  (.ged)\n"
             "  g7   GEDCOM 7.x  (.ged)\n"
             "  gx   GedcomX     (.json)\n"
+            "  csv  One CSV per top-level GEDCOM entity\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -267,6 +339,7 @@ def main() -> None:
     fmt_group.add_argument("-g5", dest="dest_type", action="store_const", const="g5", help="Convert to GEDCOM 5.x")
     fmt_group.add_argument("-g7", dest="dest_type", action="store_const", const="g7", help="Convert to GEDCOM 7.x")
     fmt_group.add_argument("-gx", dest="dest_type", action="store_const", const="gx", help="Convert to GedcomX JSON")
+    fmt_group.add_argument("-csv", dest="dest_type", action="store_const", const="csv", help="Export to CSV files")
     p_convert.add_argument(
         "--on-unknown",
         dest="on_unknown",

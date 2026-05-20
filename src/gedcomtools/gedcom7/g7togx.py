@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from ..gedcomx.converter_base import GxConverterBase
+from ..gedcomx.tag_mappings import GEDCOM7_FAM_FACT_MAP, GEDCOM7_INDI_FACT_MAP
 from ..glog import get_logger
 
 if TYPE_CHECKING:
@@ -36,49 +37,7 @@ if TYPE_CHECKING:
 log = get_logger("g7togx")
 
 
-# ---------------------------------------------------------------------------
-# GEDCOM 7 tag → FactType URI  (individual events)
-# ---------------------------------------------------------------------------
-
-_INDI_FACT_MAP: Dict[str, str] = {
-    "BIRT": "http://gedcomx.org/Birth",
-    "CHR":  "http://gedcomx.org/Christening",
-    "DEAT": "http://gedcomx.org/Death",
-    "BURI": "http://gedcomx.org/Burial",
-    "CREM": "http://gedcomx.org/Cremation",
-    "ADOP": "http://gedcomx.org/Adoption",
-    "BAPM": "http://gedcomx.org/Baptism",
-    "BARM": "http://gedcomx.org/BarMitzvah",
-    "BASM": "http://gedcomx.org/BatMitzvah",
-    "BLES": "http://gedcomx.org/Blessing",
-    "CENS": "http://gedcomx.org/Census",
-    "CONF": "http://gedcomx.org/Confirmation",
-    "EMIG": "http://gedcomx.org/Emigration",
-    "GRAD": "http://gedcomx.org/Graduation",
-    "IMMI": "http://gedcomx.org/Immigration",
-    "NATU": "http://gedcomx.org/Naturalization",
-    "ORDN": "http://gedcomx.org/Ordination",
-    "PROB": "http://gedcomx.org/Probate",
-    "RETI": "http://gedcomx.org/Retirement",
-    "WILL": "http://gedcomx.org/Will",
-    "RESI": "http://gedcomx.org/Residence",
-    "OCCU": "http://gedcomx.org/Occupation",
-    "TITL": "http://gedcomx.org/OfficialPosition",
-    "RELI": "http://gedcomx.org/Religion",
-    "NATI": "http://gedcomx.org/Nationality",
-}
-
-_FAM_FACT_MAP: Dict[str, str] = {
-    "MARR": "http://gedcomx.org/Marriage",
-    "DIV":  "http://gedcomx.org/Divorce",
-    "ENGA": "http://gedcomx.org/Engagement",
-    "MARB": "http://gedcomx.org/MarriageBanns",
-    "MARC": "http://gedcomx.org/MarriageContract",
-    "MARL": "http://gedcomx.org/MarriageLicense",
-    "MARS": "http://gedcomx.org/Separation",
-    "ANUL": "http://gedcomx.org/Annulment",
-    "DIVF": "http://gedcomx.org/DivorceFiling",
-}
+# GEDCOM7_INDI_FACT_MAP and GEDCOM7_FAM_FACT_MAP imported from tag_mappings.
 
 _NAME_TYPE_MAP: Dict[str, str] = {
     "BIRTH":     "http://gedcomx.org/BirthName",
@@ -180,6 +139,9 @@ class Gedcom7Converter(GxConverterBase):
             self._convert_indi(d)
         for d in gedcom7.family_details():
             self._convert_fam(d)
+
+        for person in gx.persons:
+            person.ensure_display_properties()
 
         # Phase 3 — attach diagnostics
         gx._import_unhandled_tags = dict(self._unhandled)
@@ -437,7 +399,7 @@ class Gedcom7Converter(GxConverterBase):
         for value, tag in attr_pairs:
             if value:
                 from ..gedcomx.fact import Fact, FactType
-                ft = FactType.from_value(_INDI_FACT_MAP[tag])
+                ft = FactType.from_value(GEDCOM7_INDI_FACT_MAP[tag])
                 person.add_fact(Fact(type=ft, value=value))
 
         # Record-level source citations and media links
@@ -573,7 +535,7 @@ class Gedcom7Converter(GxConverterBase):
         from ..gedcomx.date import Date
 
         # Determine FactType
-        fact_uri = _INDI_FACT_MAP.get(tag) or _FAM_FACT_MAP.get(tag)
+        fact_uri = GEDCOM7_INDI_FACT_MAP.get(tag) or GEDCOM7_FAM_FACT_MAP.get(tag)
         if fact_uri:
             fact_type = FactType.from_value(fact_uri)
         elif tag == "EVEN" and event.event_type:

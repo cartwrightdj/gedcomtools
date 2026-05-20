@@ -240,7 +240,7 @@
 <span class="sd"> Purpose: GedcomX Agent model: person, organisation, or software that created or modified data</span>
 
 <span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
+<span class="sd"> Updated: 2026-04-18 — inherit from AutoIdModel; removed local id field</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># GedcomX Agent model.</span>
@@ -259,8 +259,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span><span class="p">,</span> <span class="n">field_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.address</span><span class="w"> </span><span class="kn">import</span> <span class="n">Address</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoIdModel</span><span class="p">,</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.online_account</span><span class="w"> </span><span class="kn">import</span> <span class="n">OnlineAccount</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
@@ -269,13 +268,12 @@
 
 <div class="viewcode-block" id="Agent">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.agent.Agent">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Agent</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Agent</span><span class="p">(</span><span class="n">AutoIdModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A GedcomX Agent — a person, organisation, or software that created/modified data.&quot;&quot;&quot;</span>
 
     <span class="c1"># Internal URI (not serialized)</span>
     <span class="n">_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
     <span class="n">identifiers</span><span class="p">:</span> <span class="n">IdentifierList</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IdentifierList</span><span class="p">)</span>
     <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TextValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">homepage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -414,8 +412,6 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">self_names</span> <span class="o">&amp;</span> <span class="n">other_names</span><span class="p">)</span></div>
 </div>
 
-
-
 </pre></div>
         </article>
       </div>
@@ -448,7 +444,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

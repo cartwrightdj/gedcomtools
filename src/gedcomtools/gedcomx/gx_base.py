@@ -26,7 +26,7 @@ from pydantic.fields import FieldInfo
 from .validation import ValidationResult
 
 
-def _rebuild_subclasses(cls: type, name: str, fi: "FieldInfo") -> None:
+def _rebuild_subclasses(cls: type, name: str, fi: "FieldInfo", _seen: set[type] | None = None) -> None:
     """Recursively propagate a FieldInfo to subclasses and rebuild their schemas.
 
     Pydantic v2 ``model_rebuild()`` only rebuilds the called class.  When a
@@ -34,7 +34,12 @@ def _rebuild_subclasses(cls: type, name: str, fi: "FieldInfo") -> None:
     default) into every subclass's ``__pydantic_fields__`` and then rebuild,
     otherwise pydantic infers the field as required from the bare annotation.
     """
+    if _seen is None:
+        _seen = set()
     for sub in cls.__subclasses__():
+        if sub in _seen:
+            continue
+        _seen.add(sub)
         if not hasattr(sub, "model_rebuild"):
             continue
         # Copy __pydantic_fields__ so we don't mutate the parent's dict.
@@ -42,7 +47,7 @@ def _rebuild_subclasses(cls: type, name: str, fi: "FieldInfo") -> None:
             sub.__pydantic_fields__ = dict(getattr(sub, "__pydantic_fields__", {}))
         sub.__pydantic_fields__.setdefault(name, fi)
         sub.model_rebuild(force=True)
-        _rebuild_subclasses(sub, name, fi)
+        _rebuild_subclasses(sub, name, fi, _seen)
 
 
 class GedcomXModel(BaseModel):
@@ -116,7 +121,7 @@ class GedcomXModel(BaseModel):
         # pydantic v2 — __pydantic_fields__ must be updated explicitly.
         if "__pydantic_fields__" not in vars(cls):
             cls.__pydantic_fields__ = dict(getattr(cls, "__pydantic_fields__", {}))
-        cls.__pydantic_fields__[name] = FieldInfo(annotation=annotated_type, default=default)  # type: ignore[call-arg]
+        cls.__pydantic_fields__[name] = FieldInfo.from_annotated_attribute(annotated_type, default)
 
         # Record the field name in this class's own _ext_field_names set.
         if "_ext_field_names" not in vars(cls):

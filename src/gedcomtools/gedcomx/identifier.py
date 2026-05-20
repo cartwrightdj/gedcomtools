@@ -6,7 +6,9 @@
  Purpose: GedcomX Identifier model: Identifier, IdentifierType, and IdentifierList
 
  Created: 2025-08-25
- Updated:
+ Updated: 2026-04-18 — added AutoIdModel mixin base for Agent/SourceDescription
+          2026-04-27 — fix unreachable elif in Identifier.model_post_init
+                     (outer if already guards raw is not None; inner elif → else)
 ======================================================================
 """
 # GedcomX Identifier model and IdentifierList container.
@@ -39,12 +41,27 @@ def make_uid(length: int = 10, alphabet: str = string.ascii_letters + string.dig
 
 
 # ---------------------------------------------------------------------------
+# AutoIdModel — base for top-level models that always carry an auto-generated id
+# ---------------------------------------------------------------------------
+
+class AutoIdModel(GedcomXModel):
+    """Mixin base for GedcomX models that always carry an auto-generated id.
+
+    Inherit from this instead of GedcomXModel when the model is a top-level
+    entity that must always have an id (Agent, SourceDescription, etc.).
+    Subject subclasses (Person, Relationship, …) get their auto-id via
+    Subject's own override of Conclusion.id.
+    """
+    id: str = Field(default_factory=make_uid)
+
+
+# ---------------------------------------------------------------------------
 # IdentifierType
 # ---------------------------------------------------------------------------
 
 class IdentifierType(ExtensibleEnum):
     """Runtime-extensible enum of identifier type URIs (Primary, Authority, Deprecated, etc.)."""
-    pass
+
 
 
 IdentifierType.register("Primary", "http://gedcomx.org/Primary")
@@ -77,7 +94,7 @@ class Identifier(GedcomXModel):
         if raw is not None and not self.values:
             if isinstance(raw, list):
                 object.__setattr__(self, "values", raw)
-            elif raw is not None:
+            else:
                 object.__setattr__(self, "values", [raw])
         if self.type is None:
             object.__setattr__(self, "type", IdentifierType.Primary)  # type: ignore[attr-defined]

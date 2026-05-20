@@ -23,6 +23,19 @@
    - 2026-04-01: use RelationshipCacheMixin; _rel_cache access via _cache_get/_cache_set/_cache_clear
    - 2026-04-03: _is_url/_check_ged_url moved to utils.Utilities; import from there
    - 2026-04-07: added from_gedcomx() classmethod (GedcomX → GEDCOM 7 conversion)
+   - 2026-04-10: bounded remote downloads with shared timeout/size helper
+   - 2026-04-12: fixed from_gedcomx() using cls.__new__(cls) — replaced with cls()
+                 so errors/_tag_index/_rel_cache/filepath are properly initialized;
+                 added GedcomX type annotation on from_gedcomx() gx parameter
+   - 2026-04-12: added _xref_index (Dict[str,GedcomStructure]) for O(1) xref lookups;
+                 _records_by_tag() now uses _tag_index instead of linear scan;
+                 _record_by_xref() now uses _xref_index instead of linear scan;
+                 parse_gedcom_line() consolidates payload strip via rstrip() on line;
+                 added *_details_iter() generator variants alongside *_details() methods
+   - 2026-04-12: get_spouses(): replaced string .upper() self-exclusion with object
+   - 2026-04-15: release refresh for v0.8.0b3 docs/build packaging
+                 identity check (candidate is not indi_node); clearer and avoids
+                 a redundant normalisation now that _xref_index handles case folding
 ======================================================================
 
 This module parses GEDCOM 7 files into an in-memory tree and exposes
@@ -48,12 +61,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Union, overload
+
+if TYPE_CHECKING:
+    from gedcomtools.gedcomx.gedcomx import GedcomX
 from collections import defaultdict
 import urllib.error
-import urllib.request
 
-from ..utils.Utilities import _is_url, _check_ged_url
+from ..utils.Utilities import _is_url, _check_ged_url, download_url_bytes
 
 from .structure import GedcomStructure
 from . import specification as g7specs
@@ -101,6 +116,7 @@ class Gedcom7(RelationshipCacheMixin):
         self.records: List[GedcomStructure] = []
         self.errors: List[GedcomValidationError] = []
         self._tag_index: DefaultDict[str, List[int]] = defaultdict(list)
+        self._xref_index: Dict[str, GedcomStructure] = {}
         self._rel_cache: dict[str, list] = {}
 
         if filepath is not None:
@@ -133,17 +149,23 @@ class Gedcom7(RelationshipCacheMixin):
             record: Top-level record to append.
         """
         self.records.append(record)
-        self._tag_index[self._norm_tag(record.tag)].append(len(self.records) - 1)
+        idx = len(self.records) - 1
+        self._tag_index[self._norm_tag(record.tag)].append(idx)
+        if record.xref_id:
+            self._xref_index[record.xref_id.upper()] = record
 
     def _rebuild_tag_index(self) -> None:
-        """Rebuild the tag index from the current records list.
+        """Rebuild the tag and xref indexes from the current records list.
 
         Call this after any direct mutation of ``self.records`` (e.g. pop or
         insert) to keep ``g["TAG"]`` lookups consistent.
         """
         self._tag_index.clear()
+        self._xref_index.clear()
         for i, record in enumerate(self.records):
             self._tag_index[self._norm_tag(record.tag)].append(i)
+            if record.xref_id:
+                self._xref_index[record.xref_id.upper()] = record
 
     def __len__(self) -> int:
         """Return the number of top-level records."""
@@ -216,8 +238,8 @@ class Gedcom7(RelationshipCacheMixin):
         Raises:
             ValueError: If the line is malformed.
         """
-        line = line.lstrip("\ufeff").rstrip("\r\n")
-        if not line.strip():
+        line = line.lstrip("\ufeff").rstrip()
+        if not line:
             return None
 
         parts = line.split(maxsplit=3)
@@ -245,7 +267,6 @@ class Gedcom7(RelationshipCacheMixin):
             tag = parts[1].upper()
             payload = " ".join(parts[2:]) if len(parts) > 2 else ""
 
-        payload = payload.strip()
         payload_is_pointer = (
             bool(payload)
             and payload.startswith("@")
@@ -298,8 +319,7 @@ class Gedcom7(RelationshipCacheMixin):
         """
         _check_ged_url(url)
         try:
-            with urllib.request.urlopen(url) as resp:
-                raw = resp.read()
+            raw = download_url_bytes(url)
         except urllib.error.HTTPError as exc:
             raise urllib.error.HTTPError(
                 exc.url, exc.code,
@@ -310,6 +330,8 @@ class Gedcom7(RelationshipCacheMixin):
             raise urllib.error.URLError(
                 f"Cannot fetch GEDCOM from {url}: {exc.reason}"
             ) from exc
+        except ValueError as exc:
+            raise ValueError(f"Cannot fetch GEDCOM from {url}: {exc}") from exc
         try:
             text = raw.decode("utf-8")
         except UnicodeDecodeError as exc:
@@ -356,6 +378,7 @@ class Gedcom7(RelationshipCacheMixin):
         self.records = []
         self.errors = []
         self._tag_index.clear()
+        self._xref_index.clear()
         self.parse_lines(text.splitlines(keepends=True))
 
     def parse_lines(self, lines: Iterable[str]) -> None:
@@ -369,6 +392,7 @@ class Gedcom7(RelationshipCacheMixin):
         self.records = []
         self.errors = []
         self._tag_index.clear()
+        self._xref_index.clear()
         self._cache_clear()
 
         context: Dict[int, GedcomStructure] = {}
@@ -558,15 +582,14 @@ class Gedcom7(RelationshipCacheMixin):
     # ------------------------------------------------------------------
 
     def _records_by_tag(self, tag: str) -> List[GedcomStructure]:
-        return [r for r in self.records if r.tag == tag]
+        indexes = self._tag_index.get(self._norm_tag(tag), [])
+        return [self.records[i] for i in indexes]
 
     def _record_by_xref(self, tag: str, xref: str) -> Optional[GedcomStructure]:
-        key = xref.upper()
-        return next(
-            (r for r in self.records if r.tag == tag
-             and r.xref_id and r.xref_id.upper() == key),
-            None,
-        )
+        record = self._xref_index.get(xref.upper())
+        if record is None or record.tag != self._norm_tag(tag):
+            return None
+        return record
 
     # ------------------------------------------------------------------
     # Raw record accessors
@@ -634,7 +657,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def individual_details(self) -> List[IndividualDetail]:
         """Return :class:`IndividualDetail` for every INDI record."""
-        return [individual_detail(r) for r in self._records_by_tag("INDI")]
+        return list(self.individual_details_iter())
+
+    def individual_details_iter(self) -> Iterator[IndividualDetail]:
+        """Yield :class:`IndividualDetail` for every INDI record."""
+        for r in self._records_by_tag("INDI"):
+            yield individual_detail(r)
 
     def get_individual_detail(self, xref: str) -> Optional[IndividualDetail]:
         """Return :class:`IndividualDetail` for a single INDI by xref."""
@@ -643,7 +671,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def family_details(self) -> List[FamilyDetail]:
         """Return :class:`FamilyDetail` for every FAM record."""
-        return [family_detail(r) for r in self._records_by_tag("FAM")]
+        return list(self.family_details_iter())
+
+    def family_details_iter(self) -> Iterator[FamilyDetail]:
+        """Yield :class:`FamilyDetail` for every FAM record."""
+        for r in self._records_by_tag("FAM"):
+            yield family_detail(r)
 
     def get_family_detail(self, xref: str) -> Optional[FamilyDetail]:
         """Return :class:`FamilyDetail` for a single FAM by xref."""
@@ -652,7 +685,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def source_details(self) -> List[SourceDetail]:
         """Return :class:`SourceDetail` for every SOUR record."""
-        return [source_detail(r) for r in self._records_by_tag("SOUR")]
+        return list(self.source_details_iter())
+
+    def source_details_iter(self) -> Iterator[SourceDetail]:
+        """Yield :class:`SourceDetail` for every SOUR record."""
+        for r in self._records_by_tag("SOUR"):
+            yield source_detail(r)
 
     def get_source_detail(self, xref: str) -> Optional[SourceDetail]:
         """Return :class:`SourceDetail` for a single SOUR by xref."""
@@ -661,7 +699,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def repository_details(self) -> List[RepositoryDetail]:
         """Return :class:`RepositoryDetail` for every REPO record."""
-        return [repository_detail(r) for r in self._records_by_tag("REPO")]
+        return list(self.repository_details_iter())
+
+    def repository_details_iter(self) -> Iterator[RepositoryDetail]:
+        """Yield :class:`RepositoryDetail` for every REPO record."""
+        for r in self._records_by_tag("REPO"):
+            yield repository_detail(r)
 
     def get_repository_detail(self, xref: str) -> Optional[RepositoryDetail]:
         """Return :class:`RepositoryDetail` for a single REPO by xref."""
@@ -670,7 +713,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def media_details(self) -> List[MediaDetail]:
         """Return :class:`MediaDetail` for every OBJE record."""
-        return [media_detail(r) for r in self._records_by_tag("OBJE")]
+        return list(self.media_details_iter())
+
+    def media_details_iter(self) -> Iterator[MediaDetail]:
+        """Yield :class:`MediaDetail` for every OBJE record."""
+        for r in self._records_by_tag("OBJE"):
+            yield media_detail(r)
 
     def get_media_detail(self, xref: str) -> Optional[MediaDetail]:
         """Return :class:`MediaDetail` for a single OBJE by xref."""
@@ -679,7 +727,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def shared_note_details(self) -> List[SharedNoteDetail]:
         """Return :class:`SharedNoteDetail` for every SNOTE record."""
-        return [shared_note_detail(r) for r in self._records_by_tag("SNOTE")]
+        return list(self.shared_note_details_iter())
+
+    def shared_note_details_iter(self) -> Iterator[SharedNoteDetail]:
+        """Yield :class:`SharedNoteDetail` for every SNOTE record."""
+        for r in self._records_by_tag("SNOTE"):
+            yield shared_note_detail(r)
 
     def get_shared_note_detail(self, xref: str) -> Optional[SharedNoteDetail]:
         """Return :class:`SharedNoteDetail` for a single SNOTE by xref."""
@@ -688,7 +741,12 @@ class Gedcom7(RelationshipCacheMixin):
 
     def submitter_details(self) -> List[SubmitterDetail]:
         """Return :class:`SubmitterDetail` for every SUBM record."""
-        return [submitter_detail(r) for r in self._records_by_tag("SUBM")]
+        return list(self.submitter_details_iter())
+
+    def submitter_details_iter(self) -> Iterator[SubmitterDetail]:
+        """Yield :class:`SubmitterDetail` for every SUBM record."""
+        for r in self._records_by_tag("SUBM"):
+            yield submitter_detail(r)
 
     def get_submitter_detail(self, xref: str) -> Optional[SubmitterDetail]:
         """Return :class:`SubmitterDetail` for a single SUBM by xref."""
@@ -792,7 +850,6 @@ class Gedcom7(RelationshipCacheMixin):
         Returns:
             Raw :class:`GedcomStructure` for each spouse found.
         """
-        norm_xref = xref.upper()
         cached = self._cache_get("s", xref)
         if cached is not None:
             return cached  # type: ignore[return-value]
@@ -808,11 +865,10 @@ class Gedcom7(RelationshipCacheMixin):
                 continue
             for tag in ("HUSB", "WIFE"):
                 ptr_node = fam_node.first_child(tag)
-                if (ptr_node and ptr_node.payload_is_pointer and ptr_node.payload
-                        and ptr_node.payload.upper() != norm_xref):
-                    spouse_node = self._record_by_xref("INDI", ptr_node.payload)
-                    if spouse_node:
-                        result.append(spouse_node)
+                if ptr_node and ptr_node.payload_is_pointer and ptr_node.payload:
+                    candidate = self._record_by_xref("INDI", ptr_node.payload)
+                    if candidate is not None and candidate is not indi_node:
+                        result.append(candidate)
         self._cache_set("s", xref, result)
         return result
 
@@ -850,7 +906,7 @@ class Gedcom7(RelationshipCacheMixin):
         return Gedcom7Converter().convert(self)
 
     @classmethod
-    def from_gedcomx(cls, gx) -> "Gedcom7":
+    def from_gedcomx(cls, gx: "GedcomX") -> "Gedcom7":
         """Create a :class:`Gedcom7` from a
         :class:`~gedcomtools.gedcomx.gedcomx.GedcomX` object.
 
@@ -868,8 +924,9 @@ class Gedcom7(RelationshipCacheMixin):
             g7.write("output.ged")
         """
         from .gxtog7 import GedcomXConverter
-        g7 = cls.__new__(cls)
+        g7 = cls()
         g7.records = GedcomXConverter().convert(gx)
+        g7._rebuild_tag_index()
         return g7
 
     def gml(self) -> str:

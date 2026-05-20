@@ -28,6 +28,29 @@ import orjson
 #                         Group is handled consistently with other top-level
 #                         collections
 #           2026-04-07 — added to_gedcom7() conversion helper (GedcomX → GEDCOM 7)
+#           2026-04-12 — TypeCollection: fixed append() rollback to also call
+#                         _remove_from_indexes so partial index writes don't leave
+#                         zombie entries when _update_indexes raises mid-way
+#                       — TypeCollection: added replace(old, new) for atomic item
+#                         swap with transactional index restore on failure
+#                       — TypeCollection: added reindex(item) for safe in-place
+#                         mutation of id/uri/names; uses object-identity scan to
+#                         remove stale entries before re-adding current values
+#                       — TypeCollection: added _rebuild_indexes() for full O(n)
+#                         recovery after out-of-band mutations
+#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+#                       — TypeCollection: added class-level docstring documenting
+#                         the mutation contract and safe update patterns
+#                       — TypeCollection: added change_id/change_uri/change_name
+#                         for surgical index-safe property updates with collision
+#                         detection; GedcomX wraps all three with auto-collection
+#                         discovery via _find_collection()
+#                       — enriched docstrings on all new TypeCollection and GedcomX
+#                         mutation helpers; documents edge cases, examples, and
+#                         what the methods do NOT do (cross-ref updates)
+#           2026-04-12 — added _deser_skipped counter; from_dict() now records
+#                         per-collection skip counts; conversion_warnings merges
+#                         both GEDCOM tag losses and deserialization skip counts
 # ======================================================================
 # GEDCOM Module Types
 from .agent import Agent
@@ -48,17 +71,34 @@ from .validation import ValidationResult
 #=====================================================================
 
 log = get_logger(__name__)
-serial_log = "gedcomx.serialization"
-deserial_log = "gedcomx.serialization"
 
 
 
 T = TypeVar("T")
 
 class TypeCollection(Generic[T]):
-    """
-    A typed, indexable, iterable container with small indexes on id/name/uri.
+    """A typed, indexable, iterable container with small indexes on id/name/uri.
+
     The class name stays 'Collection'; the element type is carried in `item_type`.
+
+    **Mutation contract**: the three indexed properties — ``id``, ``uri``, and
+    ``names`` — must not be changed on an item that is already in the collection
+    without calling :meth:`reindex` afterwards.  Direct in-place mutations (e.g.
+    ``gx.persons[0].id = "new_id"``) silently stale the indexes, causing
+    :meth:`by_id`, :meth:`by_uri`, and :meth:`by_name` to return wrong results.
+
+    Safe patterns for updating indexed properties::
+
+        # Swap the whole item (atomic, transactional)
+        gx.persons.replace(old_person, new_person)
+
+        # Mutate in place then reindex
+        p = gx.persons.by_id("P1")
+        p.id = "P1_NEW"
+        gx.persons.reindex(p)
+
+        # Full rebuild after bulk out-of-band mutations
+        gx.persons._rebuild_indexes()
     """
     def __init__(self, item_type: type[T]):
         self.item_type: type[T] = item_type
@@ -158,12 +198,12 @@ class TypeCollection(Generic[T]):
         key = (uri.value or "") if isinstance(uri, URI) else str(uri)
         return self._uri_index.get(key) if key else None
 
-    def by_name(self, sname: str | None) -> list[T] | None:
-        """Return items whose name matches sname (stripped), or None if not found."""
+    def by_name(self, sname: str | None) -> list[T]:
+        """Return items whose name matches sname (stripped), or [] if not found."""
         if not sname:
-            return None
+            return []
         d = self._name_index.get(sname.strip())
-        return list(d.values()) if d else None
+        return list(d.values()) if d else []
 
     # --- mutation ---
     def append(self, item: T) -> None:
@@ -188,6 +228,7 @@ class TypeCollection(Generic[T]):
             self._update_indexes(item)
         except Exception:
             self._items.pop()
+            self._remove_from_indexes(item)  # clean up any partial index writes
             raise
 
     def extend(self, items: Iterable[T]) -> None:
@@ -205,6 +246,213 @@ class TypeCollection(Generic[T]):
             raise ValueError("Item not found in the collection.")
         self._items.remove(item)
         self._remove_from_indexes(item)
+
+    def replace(self, old_item: T, new_item: T) -> None:
+        """Atomically replace *old_item* with *new_item*, updating all indexes.
+
+        The list position of the item is preserved.  If reindexing *new_item*
+        fails the old item's indexes are restored and the exception is re-raised,
+        leaving the collection unchanged.
+
+        Args:
+            old_item: Item currently in the collection.
+            new_item: Replacement item; must be an instance of ``item_type``.
+
+        Raises:
+            ValueError: If *old_item* is not present.
+            TypeError: If *new_item* is the wrong type.
+        """
+        if old_item not in self._items:
+            raise ValueError("old_item not found in the collection.")
+        if not isinstance(new_item, self.item_type):
+            raise TypeError(
+                f"Expected {self.item_type.__name__}, got {type(new_item).__name__}"
+            )
+        if getattr(new_item, "_uri", None) is None:
+            setattr(new_item, "_uri", URI(fragment=getattr(new_item, "id", None)))
+
+        idx = self._items.index(old_item)
+        self._remove_from_indexes(old_item)
+        try:
+            self._update_indexes(new_item)
+        except Exception:
+            self._update_indexes(old_item)  # restore old indexes
+            raise
+        self._items[idx] = new_item
+
+    def reindex(self, item: T) -> None:
+        """Re-read *item*'s indexed properties and refresh all secondary indexes.
+
+        Call this after mutating an item's ``id``, ``uri``, or ``names`` in
+        place so that :meth:`by_id`, :meth:`by_uri`, and :meth:`by_name` return
+        correct results.
+
+        Uses object identity to locate and remove stale index entries, so it
+        works correctly even when the indexed properties have already changed.
+
+        Args:
+            item: An item already present in the collection.
+
+        Raises:
+            ValueError: If *item* is not in the collection.
+        """
+        if item not in self._items:
+            raise ValueError("Item not found in the collection.")
+        # Remove stale entries by object identity, not by current property
+        # values — those may already hold the post-mutation values.
+        self._id_index = {k: v for k, v in self._id_index.items() if v is not item}
+        self._uri_index = {k: v for k, v in self._uri_index.items() if v is not item}
+        item_py_id = id(item)
+        for d in self._name_index.values():
+            d.pop(item_py_id, None)
+        # Prune empty sub-dicts
+        self._name_index = {k: d for k, d in self._name_index.items() if d}
+        self._update_indexes(item)
+
+    def change_id(self, item: T, new_id: Any) -> None:
+        """Change *item*'s ``id`` and keep the id index consistent.
+
+        This is the safe way to rename an item's identifier after it has been
+        added to the collection.  Directly assigning ``item.id = new_id``
+        would leave the old key in ``_id_index`` and the new key absent,
+        causing :meth:`by_id` to return stale or wrong results.
+
+        Only the id-index entry is touched; the uri and name indexes are not
+        scanned.  If the item's ``_uri`` was auto-generated from its original
+        id (i.e. ``_uri.fragment == old_id``), it is also updated to match the
+        new id so ZIP document-reference URIs stay in sync.
+
+        Assigning the same id the item already holds is a no-op (no error).
+
+        This method does **not** update cross-references elsewhere in the
+        document (e.g. ``Relationship.person1.resourceId``).  If those need
+        updating, do so separately.
+
+        ``item`` must already be present in the collection. ``new_id`` may be
+        any hashable value; ``None`` clears the id and removes it from the
+        index. Raises ``ValueError`` if the item is missing or the replacement
+        id belongs to a different item.
+        """
+        if item not in self._items:
+            raise ValueError("Item not found in the collection.")
+        existing = self._id_index.get(new_id)
+        if existing is not None and existing is not item:
+            raise ValueError(
+                f"Id {new_id!r} is already used by another item in this collection."
+            )
+        old_id = getattr(item, "id", None)
+        if old_id is not None:
+            self._id_index.pop(old_id, None)
+        item.id = new_id
+        if new_id is not None:
+            self._id_index[new_id] = item
+        # Keep the auto-generated document-fragment URI in sync with the new id.
+        cur_uri = getattr(item, "_uri", None)
+        if cur_uri is not None and getattr(cur_uri, "fragment", None) == old_id:
+            item._uri = URI(fragment=new_id)
+
+    def change_uri(self, item: T, new_uri: Union["URI", str, None]) -> None:
+        """Change *item*'s ``uri`` and keep the uri index consistent.
+
+        The safe counterpart to directly assigning ``item.uri = …`` on an
+        item that is already in the collection.  Direct assignment would leave
+        the old URI key in ``_uri_index`` and the new key absent.
+
+        *new_uri* is accepted in three forms:
+
+        * A :class:`~gedcomtools.gedcomx.uri.URI` instance — used as-is.
+        * A plain ``str`` — wrapped in ``URI(value=new_uri)`` automatically.
+        * ``None`` — clears ``item.uri`` and removes the old entry from the
+          index.
+
+        Only the uri-index entry is touched; id and name indexes are not
+        scanned.
+
+        ``item`` must already be present in the collection. Raises
+        ``ValueError`` if the item is missing or the replacement URI string is
+        already held by a different item.
+        """
+        if item not in self._items:
+            raise ValueError("Item not found in the collection.")
+        # Normalise to a string key and a URI object for assignment.
+        if new_uri is None:
+            new_key: Optional[str] = None
+            new_uri_obj = None
+        elif isinstance(new_uri, str):
+            new_key = new_uri or None
+            new_uri_obj = URI(value=new_uri) if new_uri else None
+        else:
+            new_key = getattr(new_uri, "value", None) or None
+            new_uri_obj = new_uri
+        if new_key is not None:
+            existing = self._uri_index.get(new_key)
+            if existing is not None and existing is not item:
+                raise ValueError(
+                    f"URI {new_key!r} is already used by another item in this collection."
+                )
+        old_u = getattr(item, "uri", None)
+        old_key = getattr(old_u, "value", None) if old_u is not None else None
+        if old_key:
+            self._uri_index.pop(old_key, None)
+        item.uri = new_uri_obj
+        if new_key:
+            self._uri_index[new_key] = item
+
+    def change_name(self, item: T, old_name: str, new_name: str) -> None:
+        """Replace one name value on *item* and keep the name index consistent.
+
+        Finds the first entry in ``item.names`` whose ``.value`` equals
+        *old_name*, updates it to *new_name*, and adjusts ``_name_index``
+        accordingly — without touching the id or uri indexes.
+
+        Unlike :meth:`change_id` and :meth:`change_uri`, no collision check
+        is performed: multiple items in the same collection may legitimately
+        share a display name (e.g. two agents both called "Smith & Co").
+        :meth:`by_name` returns a *list* precisely to handle this case.
+
+        Only the first matching name entry is replaced.  If an item has
+        multiple names with the same value and you need to replace all of
+        them, call this method once per occurrence.
+
+        ``item`` must already be present in the collection. ``old_name`` is an
+        exact match with no normalization. Passing an empty ``new_name``
+        removes the old index entry without adding a replacement. Raises
+        ``ValueError`` if the item is missing, has no names, or ``old_name``
+        is not found.
+        """
+        if item not in self._items:
+            raise ValueError("Item not found in the collection.")
+        names = getattr(item, "names", None)
+        if not names:
+            raise ValueError("Item has no 'names' attribute.")
+        item_py_id = id(item)
+        for nm in names:
+            nv = nm.value if isinstance(nm, TextValue) else getattr(nm, "value", None)
+            if nv == old_name:
+                # Remove old entry from the name index.
+                d = self._name_index.get(old_name)
+                if d:
+                    d.pop(item_py_id, None)
+                    if not d:
+                        self._name_index.pop(old_name, None)
+                nm.value = new_name
+                if new_name:
+                    self._name_index.setdefault(new_name, {})[item_py_id] = item
+                return
+        raise ValueError(f"Name {old_name!r} not found on item.")
+
+    def _rebuild_indexes(self) -> None:
+        """Rebuild all secondary indexes from scratch.
+
+        Use this to recover from a known-corrupt index state or after
+        bulk mutations that bypassed the normal :meth:`append`/:meth:`remove`
+        path.  O(n) over the collection size.
+        """
+        self._id_index.clear()
+        self._name_index.clear()
+        self._uri_index.clear()
+        for item in self._items:
+            self._update_indexes(item)
 
     # --- convenience / serialization ---
     def __call__(self, **kwargs) -> list[T]:
@@ -285,19 +533,30 @@ class GedcomX:
 
         self.__relationship_table = {}
         self._import_unhandled_tags = {}
+        self._deser_skipped: Dict[str, int] = {}
 
         #self.default_id_generator = make_uid
 
     @property
     def conversion_warnings(self) -> Dict[str, int]:
-        """GEDCOM tags skipped during import due to missing handlers (potential data loss).
+        """Data-loss warnings accumulated during import or deserialization.
 
-        Non-empty when a converter encountered tags it could not map to GedcomX
-        objects.  Keys are GEDCOM tag names; values are occurrence counts.
-        Returns an empty dict when conversion was clean or this object was not
-        produced by a converter.
+        Two sources contribute to this dict:
+
+        * **GEDCOM converter** — tags encountered during GEDCOM 5/7 → GedcomX
+          conversion that had no handler.  Keys are uppercase GEDCOM tag names
+          (e.g. ``"OBJE"``, ``"CONC"``); values are occurrence counts.
+        * **JSON deserialization** — records skipped by :meth:`from_dict`
+          because ``model_validate`` raised.  Keys are lowercase collection
+          names (e.g. ``"persons"``, ``"relationships"``); values are skip
+          counts.
+
+        Returns an empty dict when import was clean or this object was not
+        produced by a converter or :meth:`from_dict`.
         """
-        return dict(self._import_unhandled_tags)
+        result = dict(self._import_unhandled_tags)
+        result.update(self._deser_skipped)
+        return result
 
     @property
     def contents(self):
@@ -558,6 +817,109 @@ class GedcomX:
         """Return the SourceDescription with the given id, or None if not found."""
         return self.sourceDescriptions.by_id(obj_id)
 
+    # ------------------------------------------------------------------
+    # Safe id / uri / name mutation helpers
+    # ------------------------------------------------------------------
+
+    def _collections(self):
+        """Yield every top-level :class:`TypeCollection` on this document.
+
+        Used internally by :meth:`_find_collection` to locate an item without
+        requiring the caller to know which collection it belongs to.
+
+        Yields:
+            Each of the eight top-level collections in a consistent order:
+            persons, relationships, agents, events, documents, places,
+            sourceDescriptions, groups.
+        """
+        yield from (
+            self.persons, self.relationships, self.agents, self.events,
+            self.documents, self.places, self.sourceDescriptions, self.groups,
+        )
+
+    def _find_collection(self, obj) -> Optional[TypeCollection]:
+        """Return the :class:`TypeCollection` that owns *obj*, or ``None``.
+
+        Searches all eight top-level collections by object identity (``is``),
+        so the lookup is unaffected by stale or missing index entries.
+
+        Args:
+            obj: Any object to search for.
+
+        Returns:
+            The owning :class:`TypeCollection`, or ``None`` if *obj* is not
+            a member of any collection on this document.
+        """
+        for coll in self._collections():
+            if obj in coll:
+                return coll
+        return None
+
+    def change_id(self, obj, new_id) -> None:
+        """Change *obj*'s ``id`` and keep the owning collection's index consistent.
+
+        Convenience wrapper around :meth:`TypeCollection.change_id` that
+        locates the right collection automatically via
+        :meth:`_find_collection`, so the caller does not need to know or
+        remember which collection the object belongs to.
+
+        The auto-generated ``_uri.fragment`` is updated to match the new id
+        if it was derived from the original id (ZIP document-reference URIs
+        stay in sync automatically).
+
+        This method does **not** update cross-references elsewhere in the
+        document (e.g. ``Relationship.person1.resourceId``).  Those must be
+        updated separately if needed.
+
+        ``obj`` must already be in one of the document's top-level
+        collections. ``new_id`` may be ``None`` to clear the id. Raises
+        ``ValueError`` if the object is not found or the replacement id belongs
+        to a different item in the same collection.
+        """
+        coll = self._find_collection(obj)
+        if coll is None:
+            raise ValueError("Object not found in any top-level collection.")
+        coll.change_id(obj, new_id)
+
+    def change_uri(self, obj, new_uri) -> None:
+        """Change *obj*'s ``uri`` and keep the owning collection's index consistent.
+
+        Convenience wrapper around :meth:`TypeCollection.change_uri` that
+        locates the right collection automatically.  Accepts the new URI as a
+        :class:`~gedcomtools.gedcomx.uri.URI` object, a plain string, or
+        ``None`` to clear.
+
+        ``obj`` must already be in one of the document's top-level
+        collections. ``new_uri`` may be a ``URI`` instance, a plain string, or
+        ``None``. Raises ``ValueError`` if the object is not found or the
+        replacement URI is already held by a different item in the same
+        collection.
+        """
+        coll = self._find_collection(obj)
+        if coll is None:
+            raise ValueError("Object not found in any top-level collection.")
+        coll.change_uri(obj, new_uri)
+
+    def change_name(self, obj, old_name: str, new_name: str) -> None:
+        """Replace one name value on *obj* and keep the owning collection's index consistent.
+
+        Convenience wrapper around :meth:`TypeCollection.change_name` that
+        locates the right collection automatically.  Replaces the first entry
+        in ``obj.names`` whose value equals *old_name*.
+
+        No collision check is performed — multiple items may legitimately
+        share a display name.  See :meth:`TypeCollection.change_name` for
+        full behaviour details.
+
+        ``obj`` must already be in one of the document's top-level
+        collections. Raises ``ValueError`` if the object is not found or
+        ``old_name`` is not present among the object's names.
+        """
+        coll = self._find_collection(obj)
+        if coll is None:
+            raise ValueError("Object not found in any top-level collection.")
+        coll.change_name(obj, old_name, new_name)
+
     def validate(self) -> ValidationResult:
         """Validate this GedcomX document.
 
@@ -626,6 +988,10 @@ class GedcomX:
             id=data.get("id"),
             description=data.get("description"),
         )
+        def _skip(collection_key: str, exc: Exception) -> None:
+            log.warning("Skipping invalid {} record: {}", collection_key, exc)
+            gx._deser_skipped[collection_key] = gx._deser_skipped.get(collection_key, 0) + 1
+
         if ad := data.get("attribution"):
             try:
                 gx.attribution = Attribution.model_validate(ad)
@@ -635,46 +1001,46 @@ class GedcomX:
             try:
                 gx.groups.append(item=Group.model_validate(gd))
             except Exception as e:
-                log.warning("Skipping invalid group record: {}", e)
+                _skip("groups", e)
         for pd in data.get("persons", []):
             try:
                 gx.add_person(Person.model_validate(pd))
             except Exception as e:
-                log.warning("Skipping invalid person record: {}", e)
+                _skip("persons", e)
         for ad in data.get("agents", []):
             try:
                 gx.add_agent(Agent.model_validate(ad))
             except Exception as e:
-                log.warning("Skipping invalid agent record: {}", e)
+                _skip("agents", e)
         from .relationship import Relationship  # pylint: disable=redefined-outer-name
         for rd in data.get("relationships", []):
             try:
                 gx.add_relationship(Relationship.model_validate(rd))
             except Exception as e:
-                log.warning("Skipping invalid relationship record: {}", e)
+                _skip("relationships", e)
         for sd in data.get("sourceDescriptions", []):
             try:
                 gx.add_source_description(SourceDescription.model_validate(sd))
             except Exception as e:
-                log.warning("Skipping invalid sourceDescription record: {}", e)
+                _skip("sourceDescriptions", e)
         from .event import Event  # pylint: disable=redefined-outer-name
         for ed in data.get("events", []):
             try:
                 gx.add_event(Event.model_validate(ed))
             except Exception as e:
-                log.warning("Skipping invalid event record: {}", e)
+                _skip("events", e)
         from .document import Document  # pylint: disable=redefined-outer-name
         for dd in data.get("documents", []):
             try:
                 gx.add_document(Document.model_validate(dd))
             except Exception as e:
-                log.warning("Skipping invalid document record: {}", e)
+                _skip("documents", e)
         from .place_description import PlaceDescription  # pylint: disable=redefined-outer-name
         for pld in data.get("places", []):
             try:
                 gx.add_place_description(PlaceDescription.model_validate(pld))
             except Exception as e:
-                log.warning("Skipping invalid place record: {}", e)
+                _skip("places", e)
         return gx
 
     def _to_dict(self) -> dict[str, Any]:

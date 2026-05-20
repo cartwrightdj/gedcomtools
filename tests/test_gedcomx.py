@@ -3,9 +3,12 @@ Tests for gedcomtools.gedcomx.gedcomx.GedcomX — collections, lookups, merge
 
 Updated: 2026-04-06 — add regression coverage for polymorphic
 ``GedcomX.add(Group(...))`` support.
+Updated: 2026-04-12 — TypeCollection index-safety tests: replace(), reindex(),
+_rebuild_indexes(), and append() partial-rollback correctness.
+Updated: 2026-04-15 — release refresh for v0.8.0b3 docs/build packaging.
 """
 import pytest
-from gedcomtools.gedcomx.gedcomx import GedcomX
+from gedcomtools.gedcomx.gedcomx import GedcomX, TypeCollection
 from gedcomtools.gedcomx.person import Person, QuickPerson
 from gedcomtools.gedcomx.relationship import Relationship, RelationshipType
 from gedcomtools.gedcomx.agent import Agent
@@ -207,6 +210,247 @@ class TestGedcomXContents:
         c = gx.contents
         assert isinstance(c, dict)
         assert c.get("persons") == 2
+
+
+class TestTypeCollectionIndexSafety:
+    """Cover the index-consistency guarantees of TypeCollection."""
+
+    def test_reindex_after_id_mutation(self) -> None:
+        """by_id() reflects the new id after reindex()."""
+        gx = GedcomX()
+        p = Person(id="P1")
+        gx.add_person(p)
+        p.id = "P1_NEW"
+        gx.persons.reindex(p)
+        assert gx.persons.by_id("P1") is None
+        assert gx.persons.by_id("P1_NEW") is p
+
+    def test_reindex_after_name_mutation(self) -> None:
+        """by_name() reflects the new name after reindex()."""
+        gx = GedcomX()
+        a = Agent(id="A1", names=[TextValue(value="Old Name")])
+        gx.add_agent(a)
+        a.names[0] = TextValue(value="New Name")
+        gx.agents.reindex(a)
+        assert gx.agents.by_name("Old Name") == []
+        assert gx.agents.by_name("New Name") == [a]
+
+    def test_reindex_item_not_in_collection_raises(self) -> None:
+        gx = GedcomX()
+        p = Person(id="P1")
+        with pytest.raises(ValueError):
+            gx.persons.reindex(p)
+
+    def test_replace_swaps_item_and_indexes(self) -> None:
+        """replace() swaps the item at the same position and updates indexes."""
+        gx = GedcomX()
+        p_old = Person(id="P1")
+        p_new = Person(id="P2")
+        gx.add_person(p_old)
+        gx.persons.replace(p_old, p_new)
+        assert len(gx.persons) == 1
+        assert gx.persons[0] is p_new
+        assert gx.persons.by_id("P1") is None
+        assert gx.persons.by_id("P2") is p_new
+
+    def test_replace_preserves_list_position(self) -> None:
+        """replace() keeps the item at its original index."""
+        gx = GedcomX()
+        p0 = Person(id="P0")
+        p1 = Person(id="P1")
+        p2 = Person(id="P2")
+        for p in (p0, p1, p2):
+            gx.add_person(p)
+        p1_new = Person(id="P1_NEW")
+        gx.persons.replace(p1, p1_new)
+        assert gx.persons[1] is p1_new
+
+    def test_replace_old_not_in_collection_raises(self) -> None:
+        gx = GedcomX()
+        with pytest.raises(ValueError):
+            gx.persons.replace(Person(id="GHOST"), Person(id="X"))
+
+    def test_replace_wrong_type_raises(self) -> None:
+        gx = GedcomX()
+        p = Person(id="P1")
+        gx.add_person(p)
+        with pytest.raises(TypeError):
+            gx.persons.replace(p, Agent(id="A1"))  # type: ignore[arg-type]
+
+    def test_rebuild_indexes_repairs_stale_index(self) -> None:
+        """_rebuild_indexes() heals indexes after out-of-band mutation."""
+        gx = GedcomX()
+        p = Person(id="P1")
+        gx.add_person(p)
+        p.id = "P1_DIRTY"          # mutate without reindex — stale state
+        gx.persons._rebuild_indexes()
+        assert gx.persons.by_id("P1") is None
+        assert gx.persons.by_id("P1_DIRTY") is p
+
+    def test_append_rollback_leaves_clean_indexes(self) -> None:
+        """A failed append() leaves no zombie entries in the indexes."""
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+
+        # Patch _update_indexes to fail after writing the id index
+        original = coll._update_indexes
+        def partial_update(item):  # type: ignore[no-untyped-def]
+            coll._id_index[getattr(item, "id")] = item  # write id index
+            raise RuntimeError("simulated partial failure")
+        coll._update_indexes = partial_update  # type: ignore[method-assign]
+
+        with pytest.raises(RuntimeError):
+            coll.append(p)
+
+        # Restore and verify
+        coll._update_indexes = original  # type: ignore[method-assign]
+        assert p not in coll
+        assert coll._id_index.get("P1") is None   # zombie entry must be gone
+        assert len(coll) == 0
+
+
+class TestTypeCollectionChangeId:
+    def test_change_id_updates_index(self) -> None:
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+        coll.append(p)
+        coll.change_id(p, "P2")
+        assert coll.by_id("P1") is None
+        assert coll.by_id("P2") is p
+        assert p.id == "P2"
+
+    def test_change_id_updates_auto_uri_fragment(self) -> None:
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+        coll.append(p)
+        coll.change_id(p, "P2")
+        assert getattr(p, "_uri").fragment == "P2"
+
+    def test_change_id_collision_raises(self) -> None:
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p1 = Person(id="P1")
+        p2 = Person(id="P2")
+        coll.append(p1)
+        coll.append(p2)
+        with pytest.raises(ValueError, match="already used"):
+            coll.change_id(p1, "P2")
+
+    def test_change_id_same_id_is_noop(self) -> None:
+        """Changing to the same id is allowed (no collision with self)."""
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+        coll.append(p)
+        coll.change_id(p, "P1")
+        assert coll.by_id("P1") is p
+
+    def test_change_id_item_not_in_collection_raises(self) -> None:
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        with pytest.raises(ValueError):
+            coll.change_id(Person(id="GHOST"), "X")
+
+
+class TestTypeCollectionChangeUri:
+    def test_change_uri_string(self) -> None:
+        from gedcomtools.gedcomx.uri import URI
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+        p.uri = URI(value="http://example.com/p1")
+        coll.append(p)
+        coll.change_uri(p, "http://example.com/p1-new")
+        assert coll.by_uri("http://example.com/p1") is None
+        assert coll.by_uri("http://example.com/p1-new") is p
+
+    def test_change_uri_collision_raises(self) -> None:
+        from gedcomtools.gedcomx.uri import URI
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p1 = Person(id="P1")
+        p2 = Person(id="P2")
+        p1.uri = URI(value="http://example.com/p1")
+        p2.uri = URI(value="http://example.com/p2")
+        coll.append(p1)
+        coll.append(p2)
+        with pytest.raises(ValueError, match="already used"):
+            coll.change_uri(p1, "http://example.com/p2")
+
+    def test_change_uri_clear(self) -> None:
+        from gedcomtools.gedcomx.uri import URI
+        coll: TypeCollection[Person] = TypeCollection(Person)
+        p = Person(id="P1")
+        p.uri = URI(value="http://example.com/p1")
+        coll.append(p)
+        coll.change_uri(p, None)
+        assert coll.by_uri("http://example.com/p1") is None
+        assert p.uri is None
+
+
+class TestTypeCollectionChangeName:
+    def test_change_name_updates_index(self) -> None:
+        coll: TypeCollection[Agent] = TypeCollection(Agent)
+        a = Agent(id="A1", names=[TextValue(value="Acme Corp")])
+        coll.append(a)
+        coll.change_name(a, "Acme Corp", "New Corp")
+        assert coll.by_name("Acme Corp") == []
+        assert coll.by_name("New Corp") == [a]
+
+    def test_change_name_not_found_raises(self) -> None:
+        coll: TypeCollection[Agent] = TypeCollection(Agent)
+        a = Agent(id="A1", names=[TextValue(value="Acme")])
+        coll.append(a)
+        with pytest.raises(ValueError, match="not found"):
+            coll.change_name(a, "Other", "Whatever")
+
+    def test_change_name_no_collision_check(self) -> None:
+        """Two agents may share a name — no error should be raised."""
+        coll: TypeCollection[Agent] = TypeCollection(Agent)
+        a1 = Agent(id="A1", names=[TextValue(value="Smith")])
+        a2 = Agent(id="A2", names=[TextValue(value="Jones")])
+        coll.append(a1)
+        coll.append(a2)
+        coll.change_name(a2, "Jones", "Smith")
+        result = coll.by_name("Smith")
+        assert result is not None and len(result) == 2
+
+
+class TestGedcomXChangeMethods:
+    def test_gx_change_id(self) -> None:
+        gx = GedcomX()
+        p = Person(id="P1")
+        gx.add_person(p)
+        gx.change_id(p, "P1_NEW")
+        assert gx.persons.by_id("P1") is None
+        assert gx.persons.by_id("P1_NEW") is p
+
+    def test_gx_change_uri(self) -> None:
+        from gedcomtools.gedcomx.uri import URI
+        gx = GedcomX()
+        p = Person(id="P1")
+        p.uri = URI(value="http://example.com/p1")
+        gx.add_person(p)
+        gx.change_uri(p, "http://example.com/p1-updated")
+        assert gx.persons.by_uri("http://example.com/p1") is None
+        assert gx.persons.by_uri("http://example.com/p1-updated") is p
+
+    def test_gx_change_name(self) -> None:
+        gx = GedcomX()
+        a = Agent(id="A1", names=[TextValue(value="Old Name")])
+        gx.add_agent(a)
+        gx.change_name(a, "Old Name", "New Name")
+        assert gx.agents.by_name("Old Name") == []
+        assert gx.agents.by_name("New Name") == [a]
+
+    def test_gx_change_id_object_not_in_any_collection_raises(self) -> None:
+        gx = GedcomX()
+        with pytest.raises(ValueError, match="not found"):
+            gx.change_id(Person(id="GHOST"), "X")
+
+    def test_gx_change_id_finds_correct_collection(self) -> None:
+        """change_id searches all collections, not just persons."""
+        gx = GedcomX()
+        a = Agent(id="A1")
+        gx.add_agent(a)
+        gx.change_id(a, "A1_NEW")
+        assert gx.agents.by_id("A1") is None
+        assert gx.agents.by_id("A1_NEW") is a
 
 
 class TestGedcomXPolymorphicAdd:

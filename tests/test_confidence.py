@@ -74,9 +74,8 @@ class TestConfidenceLevelFromJson:
         result = ConfidenceLevel.from_json(original, None)
         assert _value(result) == ConfidenceLevel.High
 
-    def test_unknown_string_raises(self):
-        with pytest.raises(ValueError):
-            ConfidenceLevel.from_json("bogus", None)
+    def test_unknown_string_returns_none(self):
+        assert ConfidenceLevel.from_json("bogus", None) is None
 
     def test_description_high(self):
         cl = ConfidenceLevel.from_json("High", None)

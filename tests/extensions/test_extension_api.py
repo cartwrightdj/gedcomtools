@@ -322,6 +322,55 @@ class TestSchemaRegisterExtra:
         SCHEMA.register_extra(Agent, "_test_agent_extra", str)
         assert "_test_agent_extra" in Agent.model_fields
 
+    def test_register_extra_by_class_name_adds_model_field(self):
+        """String-based pydantic registration must still call define_ext."""
+        from gedcomtools.gedcomx.agent import Agent
+        from gedcomtools.gedcomx.schemas import SCHEMA
+
+        SCHEMA.register_class(Agent)
+        SCHEMA.register_extra("Agent", "_test_agent_name_extra", str)
+
+        assert "_test_agent_name_extra" in Agent.model_fields
+        assert "_test_agent_name_extra" in (SCHEMA.get_class_fields("Agent") or {})
+
+    def test_plain_registered_class_lookup_by_name(self):
+        """Legacy plain classes registered with schema_class remain name-addressable."""
+        from gedcomtools.gedcomx.schemas import Schema
+
+        schema = Schema()
+
+        class PlainRegistered:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+        schema.register_class(PlainRegistered)
+
+        assert schema.get_class_fields("PlainRegistered") == {"value": str}
+
+    def test_legacy_schema_exports_still_work(self):
+        from gedcomtools.gedcomx.schemas import (
+            ExtrasAwareMeta,
+            SCHEMA,
+            extensible_dataclass,
+        )
+
+        @extensible_dataclass()
+        class LegacyData:
+            value: str
+
+        SCHEMA.register_extra(LegacyData, "tag", str)
+        legacy_data = LegacyData("core", tag="extra")
+        assert legacy_data.tag == "extra"
+
+        class LegacyMeta(metaclass=ExtrasAwareMeta):
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+        SCHEMA.register_class(LegacyMeta)
+        SCHEMA.register_extra(LegacyMeta, "tag", str)
+        legacy_meta = LegacyMeta("core", tag="extra")
+        assert legacy_meta.tag == "extra"
+
     def test_rs10_living_in_person_model_fields(self):
         """After rs10 loads, Person.living must be a proper model field."""
         from gedcomtools.gedcomx.extensible import import_plugins

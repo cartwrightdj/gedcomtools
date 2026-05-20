@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 # Re-export the public surface so that callers who do
 #   from gedcomtools.gedcomx.gxcli import Shell, main
@@ -91,11 +92,25 @@ def main(argv: list[str] | None = None) -> int:
     init_logging(app_name="gedcomtools")
     parser = argparse.ArgumentParser(description="GEDCOM-X Inspector (schema-aware, cleaned)")
     parser.add_argument("path", nargs="?", help="optional file to load at start (.ged or .json)")
+    parser.add_argument("--csv", metavar="OUT_BASE", help="export loaded GedcomX to CSV files and exit")
     args = parser.parse_args(argv)
 
     sh = Shell()
     if args.path:
         sh._cmd_load([args.path])
+    if args.csv:
+        if not args.path:
+            print("error: --csv requires a file path argument", file=sys.stderr)
+            return 1
+        if sh.gedcomx is None:
+            print(f"error: failed to load {args.path!r}", file=sys.stderr)
+            return 1
+        from gedcomtools.gedcomx.csv_export import export_gedcomx_csv
+
+        outputs = export_gedcomx_csv(sh.gedcomx, Path(args.csv))
+        for name, info in outputs.items():
+            print(f"{name}: {info['path']} ({info['rows']} rows)")
+        return 0
     sh.run()
     return 0
 

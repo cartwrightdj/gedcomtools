@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -237,7 +240,7 @@
 <span class="sd"> Purpose: GedcomX Note model</span>
 
 <span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
+<span class="sd"> Updated: 2026-05-02: AddNote, now raises ValueError on non Note</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -278,7 +281,7 @@
         <span class="k">if</span> <span class="n">text_to_add</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_to_add</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="n">text_to_add</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="k">else</span> <span class="n">text_to_add</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The text to add must be a non-empty string.&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;text_to_add must be a non-empty str, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">text_to_add</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
     <span class="nd">@staticmethod</span>
@@ -332,7 +335,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

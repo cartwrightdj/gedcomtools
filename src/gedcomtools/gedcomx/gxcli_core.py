@@ -144,7 +144,7 @@ class Shell(_NavMixin, _LoadMixin, _AhnenMixin, _DataMixin, _InfoMixin, _SchemaM
                         elif cmd in ("load", "extend", "diff"):
                             matches = _glob_mod.glob(text + "*")
                         elif cmd == "write":
-                            matches = [f for f in ["gx ", "zip ", "jsonl ", "adbg "] if f.startswith(text)]
+                            matches = [f for f in ["gx ", "zip ", "jsonl ", "csv "] if f.startswith(text)]
                         elif cmd in ("ext", "extension"):
                             matches = [s for s in ["ls", "show", "scan", "authorize", "load", "trust"] if s.startswith(text)]
                         elif cmd == "cfg":

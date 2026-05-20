@@ -162,10 +162,10 @@ class Person(Subject):
         death_date: Optional[str] = None
         death_place: Optional[str] = None
         for fact in self.facts:
-            if fact.type == FactType.Birth and fact.date:
+            if fact.type == FactType.Birth:
                 birth_date = self._date_display_value(fact)
                 birth_place = self._place_display_value(fact)
-            elif fact.type == FactType.Death and fact.date:
+            elif fact.type == FactType.Death:
                 death_date = self._date_display_value(fact)
                 death_place = self._place_display_value(fact)
 
@@ -199,6 +199,12 @@ class Person(Subject):
             if getattr(display, field_name, None) is None:
                 setattr(display, field_name, value)
         return display
+
+    def ensure_display_properties(self) -> "DisplayProperties":
+        """Materialize display properties from current person data."""
+        from .extensions.fs.fs_types_rs import DisplayProperties
+        self.displayProperties = self.display_object()
+        return self.displayProperties
 
     def display(self) -> dict:
         """Return display data, preferring FamilySearch JSON values and falling back to computed ones."""

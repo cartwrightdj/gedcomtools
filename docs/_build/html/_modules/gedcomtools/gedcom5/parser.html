@@ -242,6 +242,10 @@
 <span class="c1">#  Updated: 2026-04-06 — detect UTF-8/UTF-16 BOMs and decode the full byte</span>
 <span class="c1">#                         stream before splitting lines so UTF-16 GEDCOM 5</span>
 <span class="c1">#                         files load through the normal facade and CLI paths</span>
+<span class="c1">#           2026-04-10 — bounded remote downloads with shared timeout/size helper</span>
+<span class="c1">#           2026-04-12 — pre-compile GEDCOM line-parse regexes at module load;</span>
+<span class="c1">#                         removed per-line pattern construction in __parse_line()</span>
+<span class="c1">#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging</span>
 <span class="c1"># ======================================================================</span>
 <span class="sd">&quot;&quot;&quot;Parse GEDCOM 5.x files into the project’s element tree representation.&quot;&quot;&quot;</span>
 
@@ -276,9 +280,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">regex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.error</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.Utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_url_bytes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.elements</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Element</span><span class="p">,</span> <span class="n">FamilyRecord</span><span class="p">,</span> <span class="n">FileElement</span><span class="p">,</span> <span class="n">HeaderRecord</span><span class="p">,</span>
     <span class="n">IndividualRecord</span><span class="p">,</span> <span class="n">ObjectRecord</span><span class="p">,</span> <span class="n">RepositoryRecord</span><span class="p">,</span>
@@ -311,6 +315,25 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">GedcomFormatViolationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a line violates the GEDCOM 5.5 format.&quot;&quot;&quot;</span></div>
 
+
+
+<span class="c1"># Pre-compiled line-parse patterns — assembled once at module load rather than</span>
+<span class="c1"># on every call to __parse_line().</span>
+<span class="n">_EOL_RE</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;([\r\n]{1,2})&#39;</span>
+<span class="n">_GEDCOM_LINE_RE</span><span class="p">:</span> <span class="n">regex</span><span class="o">.</span><span class="n">Pattern</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s1">&#39;^(0|[1-9]+[0-9]*) &#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;(@[^@]+@\s|)&#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;([A-Za-z0-9_]+)&#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;( [^\n\r]*|)&#39;</span>
+    <span class="o">+</span> <span class="n">_EOL_RE</span>
+<span class="p">)</span>
+<span class="n">_LAST_LINE_RE</span><span class="p">:</span> <span class="n">regex</span><span class="o">.</span><span class="n">Pattern</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s1">&#39;^(0|[1-9]+[0-9]*) &#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;(@[^@]+@\s|)&#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;([A-Za-z0-9_]+)&#39;</span>
+    <span class="sa">r</span><span class="s1">&#39;( [^\n\r]*|)&#39;</span>
+<span class="p">)</span>
+<span class="n">_CONT_LINE_RE</span><span class="p">:</span> <span class="n">regex</span><span class="o">.</span><span class="n">Pattern</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([^\n\r]*|)&#39;</span> <span class="o">+</span> <span class="n">_EOL_RE</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Gedcom5x">
@@ -417,8 +440,7 @@
 <span class="sd">            urllib.error.HTTPError: If the server returns an error status.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()),</span> <span class="n">strict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">download_url_bytes</span><span class="p">(</span><span class="n">url</span><span class="p">)),</span> <span class="n">strict</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">(</span>
                 <span class="n">exc</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
@@ -428,7 +450,9 @@
         <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Cannot fetch GEDCOM from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot fetch GEDCOM from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="Gedcom5x.parse_file">
@@ -523,14 +547,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">__parse_line</span><span class="p">(</span><span class="n">line_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">violations</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Element</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one GEDCOM line and return the appropriate Element subclass.&quot;&quot;&quot;</span>
 
-        <span class="n">level_regex</span> <span class="o">=</span> <span class="s1">&#39;^(0|[1-9]+[0-9]*) &#39;</span>
-        <span class="n">pointer_regex</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;(@[^@]+@\s|)&#39;</span>
-        <span class="n">tag_regex</span> <span class="o">=</span> <span class="s1">&#39;([A-Za-z0-9_]+)&#39;</span>
-        <span class="n">value_regex</span> <span class="o">=</span> <span class="s1">&#39;( [^</span><span class="se">\n\r</span><span class="s1">]*|)&#39;</span>
-        <span class="n">end_of_line_regex</span> <span class="o">=</span> <span class="s1">&#39;([</span><span class="se">\r\n</span><span class="s1">]{1,2})&#39;</span>
-        <span class="n">gedcom_line_regex</span> <span class="o">=</span> <span class="n">level_regex</span> <span class="o">+</span> <span class="n">pointer_regex</span> <span class="o">+</span> <span class="n">tag_regex</span> <span class="o">+</span> <span class="n">value_regex</span> <span class="o">+</span> <span class="n">end_of_line_regex</span>
-
-        <span class="n">regex_match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gedcom_line_regex</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="n">regex_match</span> <span class="o">=</span> <span class="n">_GEDCOM_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">regex_match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
@@ -541,8 +558,7 @@
             <span class="k">if</span> <span class="n">violations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;line </span><span class="si">{</span><span class="n">line_number</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="c1"># Quirk: last line may be missing CRLF</span>
-            <span class="n">last_line_regex</span> <span class="o">=</span> <span class="n">level_regex</span> <span class="o">+</span> <span class="n">pointer_regex</span> <span class="o">+</span> <span class="n">tag_regex</span> <span class="o">+</span> <span class="n">value_regex</span>
-            <span class="n">regex_match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">last_line_regex</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+            <span class="n">regex_match</span> <span class="o">=</span> <span class="n">_LAST_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">regex_match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">line_parts</span> <span class="o">=</span> <span class="n">regex_match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
                 <span class="n">level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -553,8 +569,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Quirk: embedded CR produces a fragment with no level/tag —</span>
                 <span class="c1"># treat as CONC so text is not silently dropped.</span>
-                <span class="n">cont_line_regex</span> <span class="o">=</span> <span class="s1">&#39;([^</span><span class="se">\n\r</span><span class="s1">]*|)&#39;</span> <span class="o">+</span> <span class="n">end_of_line_regex</span>
-                <span class="n">regex_match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">cont_line_regex</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="n">regex_match</span> <span class="o">=</span> <span class="n">_CONT_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">regex_match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">GedcomFormatViolationError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;Line &lt;</span><span class="si">{</span><span class="n">line_number</span><span class="si">}</span><span class="s2">&gt; could not be parsed even in recovery mode&quot;</span>

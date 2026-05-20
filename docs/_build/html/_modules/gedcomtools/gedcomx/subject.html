@@ -195,7 +195,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gedcom7.html">GEDCOM 7 API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/cli.html">CLI Reference</a><input aria-label="Toggle navigation of CLI Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -237,7 +240,9 @@
 <span class="sd"> Purpose: GedcomX Subject base class: extracted flag, identifiers, evidence, and media references</span>
 
 <span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
+<span class="sd"> Updated: 2026-04-18 — override id with default_factory=make_uid so all</span>
+<span class="sd">                     Subject subclasses (Person, Relationship, Event, etc.)</span>
+<span class="sd">                     auto-generate IDs; Conclusion base no longer does</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -248,7 +253,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conclusion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Conclusion</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evidence_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvidenceReference</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">make_uid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 
@@ -262,6 +267,8 @@
 
     <span class="n">identifier</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/Subject&quot;</span>
     <span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/conceptual-model/v1&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
 
     <span class="n">extracted</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">evidence</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EvidenceReference</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -325,7 +332,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

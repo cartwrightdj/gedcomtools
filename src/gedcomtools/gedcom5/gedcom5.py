@@ -29,6 +29,10 @@
  Updated: 2026-04-01 — use RelationshipCacheMixin; replace _rel_cache
                         direct access with _cache_get/_cache_set/_cache_clear
  Updated: 2026-04-03 — _is_url/_check_ged_url moved to utils.Utilities; import from there
+ Updated: 2026-04-10 — bounded remote downloads with shared timeout/size helper
+ Updated: 2026-04-12 — get_shared_note_detail(): removed redundant pylint suppression;
+                       added underscore prefix to unused xref parameter for consistency
+ Updated: 2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
 ======================================================================
 """
 
@@ -38,9 +42,8 @@ from pathlib import Path
 from typing import List, Optional, Union
 import io
 import urllib.error
-import urllib.request
 
-from ..utils.Utilities import _is_url, _check_ged_url
+from ..utils.Utilities import _is_url, _check_ged_url, download_url_bytes
 
 from .elements import (
     FamilyRecord,
@@ -142,8 +145,7 @@ class Gedcom5(RelationshipCacheMixin):
         """
         _check_ged_url(url)
         try:
-            with urllib.request.urlopen(url) as resp:
-                raw = resp.read()
+            raw = download_url_bytes(url)
         except urllib.error.HTTPError as exc:
             raise urllib.error.HTTPError(
                 exc.url, exc.code,
@@ -154,6 +156,8 @@ class Gedcom5(RelationshipCacheMixin):
             raise urllib.error.URLError(
                 f"Cannot fetch GEDCOM from {url}: {exc.reason}"
             ) from exc
+        except ValueError as exc:
+            raise ValueError(f"Cannot fetch GEDCOM from {url}: {exc}") from exc
         self._cache_clear()
         self._parser.parse(io.BytesIO(raw))
 
@@ -325,7 +329,7 @@ class Gedcom5(RelationshipCacheMixin):
         """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
         return None
 
-    def get_shared_note_detail(self, xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002  # pylint: disable=unused-argument
+    def get_shared_note_detail(self, _xref: str) -> Optional[SharedNoteDetail]:  # noqa: ARG002
         """Always returns ``None`` — GEDCOM 5.x has no SNOTE records."""
         return None
 

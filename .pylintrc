@@ -1,7 +1,7 @@
 [MASTER]
 # Ignore the broken example extension module and compiled artefacts
-ignore=mod12.7.2025.py,__pycache__
-ignore-paths=src/gedcomtools/gedcomx/extensions/module
+ignore=mod12.7.2025.py,__pycache__,build,dist
+ignore-paths=src/gedcomtools/gedcomx/extensions/module,docs/_build,.venv,tests,examples,example.py
 
 [MESSAGES CONTROL]
 disable=
