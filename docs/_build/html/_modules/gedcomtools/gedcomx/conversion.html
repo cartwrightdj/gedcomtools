@@ -249,10 +249,12 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Conversion routines between GEDCOM 5.x, GEDCOM 7, and GedcomX models.</span>
 
-<span class="c1"># GEDCOM Module Types</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="c1"># GEDCOM FORM values are often bare extensions in upper or lower case (JPEG,</span>
 <span class="c1"># jpg, pdf, …).  mimetypes.guess_type is case-sensitive on some platforms and</span>
@@ -282,10 +284,6 @@
         <span class="k">return</span> <span class="n">_G5_FORM_MIME</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
     <span class="n">mime</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mime</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..gedcom5.elements</span><span class="w"> </span><span class="kn">import</span> <span class="n">Element</span>
@@ -298,7 +296,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span><span class="p">,</span> <span class="n">EventRole</span><span class="p">,</span> <span class="n">EventRoleType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TagConversionError</span><span class="p">,</span> <span class="n">ConversionErrorDump</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactQualifier</span><span class="p">,</span> <span class="n">FactType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.family</span><span class="w"> </span><span class="kn">import</span> <span class="n">FamilyParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.gender</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gender</span><span class="p">,</span> <span class="n">GenderType</span>
@@ -312,103 +310,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.converter_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GxConverterBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.source_description</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceDescription</span><span class="p">,</span> <span class="n">ResourceType</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.source_reference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceReference</span><span class="p">,</span> <span class="n">KnownSourceReference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tag_mappings</span><span class="w"> </span><span class="kn">import</span> <span class="n">event_from_even_tag</span><span class="p">,</span> <span class="n">fact_from_even_tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.Utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_url</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.textvalue</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextValue</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.uri</span><span class="w"> </span><span class="kn">import</span> <span class="n">URI</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 <span class="n">K</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># GEDCOM EVEN tag → GedcomX type lookup tables</span>
-<span class="c1"># (moved here from schemas.py; schemas.py retains the Schema infrastructure)</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-<div class="viewcode-block" id="fact_from_even_tag">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.fact_from_even_tag">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">fact_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FactType</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the GedcomX FactType mapped from a GEDCOM EVEN tag, or None.&quot;&quot;&quot;</span>
-    <span class="n">_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FactType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;CHR&quot;</span><span class="p">:</span>       <span class="n">FactType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
-        <span class="s2">&quot;EVEN&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Amnesty</span><span class="p">,</span>
-        <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
-        <span class="s2">&quot;BARM&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;BASM&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;BIRT&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;BLES&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
-        <span class="s2">&quot;BURI&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
-        <span class="s2">&quot;CAST&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Caste</span><span class="p">,</span>
-        <span class="s2">&quot;CENS&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
-        <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
-        <span class="s2">&quot;CONF&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
-        <span class="s2">&quot;CREM&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
-        <span class="s2">&quot;DEAT&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
-        <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
-        <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
-        <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
-        <span class="s2">&quot;GRAD&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Graduation</span><span class="p">,</span>
-        <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
-        <span class="s2">&quot;MIL&quot;</span><span class="p">:</span>       <span class="n">FactType</span><span class="o">.</span><span class="n">MilitaryService</span><span class="p">,</span>
-        <span class="s2">&quot;NATI&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Nationality</span><span class="p">,</span>
-        <span class="s2">&quot;NATU&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
-        <span class="s2">&quot;OCCU&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Occupation</span><span class="p">,</span>
-        <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
-        <span class="s2">&quot;DSCR&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">PhysicalDescription</span><span class="p">,</span>
-        <span class="s2">&quot;PROB&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Probate</span><span class="p">,</span>
-        <span class="s2">&quot;PROP&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Property</span><span class="p">,</span>
-        <span class="s2">&quot;RELI&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Religion</span><span class="p">,</span>
-        <span class="s2">&quot;RESI&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Residence</span><span class="p">,</span>
-        <span class="s2">&quot;WILL&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Will</span><span class="p">,</span>
-        <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
-        <span class="s2">&quot;DIV&quot;</span><span class="p">:</span>       <span class="n">FactType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
-        <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
-        <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
-        <span class="s2">&quot;MARR&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">,</span>
-        <span class="s2">&quot;MARB&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageBanns</span><span class="p">,</span>
-        <span class="s2">&quot;MARC&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageContract</span><span class="p">,</span>
-        <span class="s2">&quot;MARL&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageLicense</span><span class="p">,</span>
-        <span class="s2">&quot;SEPA&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">Separation</span><span class="p">,</span>
-        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span>      <span class="n">FactType</span><span class="o">.</span><span class="n">AdoptiveParent</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">even_value</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="event_from_even_tag">
-<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.event_from_even_tag">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">event_from_even_tag</span><span class="p">(</span><span class="n">even_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventType</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the GedcomX EventType mapped from a GEDCOM EVEN tag, or None.&quot;&quot;&quot;</span>
-    <span class="n">_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
-        <span class="s2">&quot;CHR&quot;</span><span class="p">:</span>       <span class="n">EventType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
-        <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
-        <span class="s2">&quot;BARM&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;BASM&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;BIRT&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;BLES&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
-        <span class="s2">&quot;BURI&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
-        <span class="s2">&quot;CENS&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
-        <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
-        <span class="s2">&quot;CONF&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
-        <span class="s2">&quot;CREM&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
-        <span class="s2">&quot;DEAT&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
-        <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
-        <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
-        <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
-        <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
-        <span class="s2">&quot;NATU&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
-        <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
-        <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
-        <span class="s2">&quot;DIV&quot;</span><span class="p">:</span>       <span class="n">EventType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
-        <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
-        <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
-        <span class="s2">&quot;MARR&quot;</span><span class="p">:</span>      <span class="n">EventType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">even_value</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="GxoObjectStack">
@@ -538,7 +447,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">missing_handler_count</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_line_num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span> <span class="o">=</span> <span class="n">FamilyParser</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pedigree</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span> <span class="o">=</span> <span class="n">FamilyParser</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pedigree</span><span class="p">)</span>
 
         <span class="c1"># Build dispatch table once.</span>
         <span class="c1"># Keys are GEDCOM tags (e.g., &quot;NAME&quot;, &quot;_APID&quot;) mapped to bound methods.</span>
@@ -601,6 +511,37 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">subs</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">()</span>
         <span class="k">return</span> <span class="n">subs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_fact_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">fact_type</span><span class="p">:</span> <span class="n">FactType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a typed GedcomX Fact for a GEDCOM event/attribute tag.&quot;&quot;&quot;</span>
+        <span class="n">fact_type</span> <span class="o">=</span> <span class="n">fact_type</span> <span class="ow">or</span> <span class="n">fact_from_even_tag</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fact_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">FamilyParser</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">family_fact</span><span class="p">(</span><span class="n">fact_type</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">add_fact</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;add_fact&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">add_fact</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">fact_type</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">add_fact</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_note_on_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach low-risk metadata to the nearest parent that supports notes.&quot;&quot;&quot;</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">note_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">label</span> <span class="ow">and</span> <span class="n">text</span> <span class="k">else</span> <span class="n">label</span> <span class="ow">or</span> <span class="n">text</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">note_text</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;add_note&quot;</span><span class="p">):</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="n">Note</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">note_text</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">note</span>
+        <span class="k">elif</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Main parse loop</span>
@@ -843,6 +784,9 @@
             <span class="n">sd</span><span class="o">.</span><span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">notes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">.</span><span class="n">_key</span><span class="p">())</span>
             <span class="n">sd</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">descriptions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">.</span><span class="n">_key</span><span class="p">())</span>
 
+        <span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">persons</span><span class="p">:</span>
+            <span class="n">person</span><span class="o">.</span><span class="n">ensure_display_properties</span><span class="p">()</span>
+
         <span class="c1"># record unhandled tags for diagnostics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">_import_unhandled_tags</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_handler_count</span><span class="p">)</span>
 
@@ -907,9 +851,10 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Person</span><span class="p">):</span>
             <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
-
-
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Fact</span><span class="p">):</span>
+            <span class="c1"># ADOP inside FAMC specifies which parent adopted (HUSB/WIFE/BOTH); no GedcomX equivalent.</span>
+            <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
 
@@ -919,8 +864,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_addr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle ADDR tag: add an Address to the parent Agent.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Agent</span><span class="p">):</span>
-            <span class="c1"># TODO CHeck if URL?</span>
             <span class="k">if</span> <span class="n">v</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">_is_url</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">homepage</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+                    <span class="k">return</span>
                 <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Address</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Address</span><span class="p">()</span>
@@ -932,6 +879,117 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;I do not know how to handle an &#39;ADDR&#39; tag for a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_age">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_age">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_age</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle AGE tag: mark the qualifier on the active Fact and preserve the literal value as a note.&quot;&quot;&quot;</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">Fact</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">FactQualifier</span><span class="o">.</span><span class="n">Age</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">qualifiers</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">qualifiers</span> <span class="o">+</span> <span class="p">[</span><span class="n">FactQualifier</span><span class="o">.</span><span class="n">Age</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">Note</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Age: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_anul">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_anul">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_anul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle ANUL tag: add an Annulment fact in family or individual context.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">anul_marriage</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Person</span><span class="p">):</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">add_fact</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;add_fact&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">FactType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">)</span>
+            <span class="n">add_fact</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_cast">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_cast">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_cast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle CAST tag as a Caste fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_char">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_char">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_char</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle HEAD.CHAR as non-genealogical encoding metadata.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_copr">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_copr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_copr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle COPR as copyright metadata on the nearest note-capable object.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Copyright&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_corp">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_corp">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_corp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle CORP as organization metadata on the nearest note-capable object.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Corporation&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_dest">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_dest">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_dest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle HEAD.DEST as transmission metadata.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_div">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_div">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_div</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle DIV tag as a Divorce fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_divf">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_divf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_divf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle DIVF tag as a DivorceFiling fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_dscr">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_dscr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_dscr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle DSCR tag as a PhysicalDescription fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_educ">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_educ">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_educ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle EDUC tag as an Education fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_enga">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_enga">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_enga</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle ENGA tag as an Engagement fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_fcom">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fcom">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_fcom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FCOM tag as a FirstCommunion fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.handle_adr1">
@@ -1032,7 +1090,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_auth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle AUTH tag: find or create an Agent for the author and attach to the parent SourceDescription.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">):</span>
-            <span class="n">existing_agents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">existing_agents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="k">if</span> <span class="n">existing_agents</span><span class="p">:</span>
                 <span class="n">gxobject</span> <span class="o">=</span> <span class="n">existing_agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1129,8 +1187,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_identifier</span><span class="p">(</span><span class="n">Identifier</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IdentifierType</span><span class="o">.</span><span class="n">Other</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="n">URI</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="s1">&#39;Call Number:&#39;</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)]))</span> <span class="c1"># type: ignore</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Agent</span><span class="p">):</span>
-            <span class="k">pass</span>
-            <span class="c1"># TODO Why is GEDCOM so shitty? A callnumber for a repository?</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_identifier</span><span class="p">(</span><span class="n">Identifier</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IdentifierType</span><span class="o">.</span><span class="n">Other</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="n">URI</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="s1">&#39;Call Number:&#39;</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)]))</span> <span class="c1"># type: ignore</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
 
@@ -1143,6 +1200,7 @@
             <span class="n">date</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">sub_record</span><span class="p">(</span><span class="s1">&#39;DATE&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">Date</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Agent</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">attribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Attribution</span><span class="p">()</span>
@@ -1157,6 +1215,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">):</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Attribution</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
 
@@ -1301,18 +1362,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle DATE tag: set the date on the parent Fact, Event, SourceDescription, or Attribution.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;PUBL&#39;</span><span class="p">:</span>
-            <span class="c1">#gxobject = Date(original=record.value) #TODO Make a parser for solid timestamps</span>
-            <span class="c1">#self.object_map[0].published = gxobject</span>
-            <span class="c1">#self.object_map[0].published = date_to_timestamp(record.value) if record.value else None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
-            <span class="c1">#</span>
-            <span class="c1">#self.object_map[record.level] = gxobject</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_marr_date</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_event_date</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">last_event_fact</span><span class="o">.</span><span class="n">date</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Event</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">Date</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">date</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Fact</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">Date</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">date</span>
         <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;DATA&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">SourceReference</span><span class="p">):</span>
             <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Note</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">&#39;Date: &#39;</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
@@ -1320,8 +1379,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ObjectParsingContainer</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sourceDescription</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Attribution</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;CREA&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
@@ -1329,6 +1390,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
             <span class="k">elif</span> <span class="p">(</span><span class="n">_created</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 
         <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;CREA&#39;</span><span class="p">,</span><span class="s1">&#39;CHAN&#39;</span><span class="p">]:</span>
@@ -1372,8 +1434,7 @@
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_even">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_even</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle EVEN tag: create a Fact or Event on the parent Person or SourceDescription based on the event type.&quot;&quot;&quot;</span>
-        <span class="c1"># TODO If events in a @S, check if only 1 person matches?</span>
-        <span class="c1"># TODO, how to deal with and diferentiate Events</span>
+        <span class="c1"># Person parent → Fact; SourceDescription/SourceReference parent → Event with source role.</span>
         <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Yes&#39;</span><span class="p">):</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
             <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
@@ -1442,7 +1503,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
                     <span class="k">return</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EVEN type &#39;</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2">&#39; is not known and could not be guessed&quot;</span><span class="p">)</span>
-                <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">UnknowUserCreated</span><span class="p">)</span>
+                <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">UnknownUserCreated</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
                     <span class="k">return</span>
@@ -1467,7 +1528,7 @@
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fam">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_fam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FAM tag: reset the family parser for a new family record.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">xref</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span></div>
 
 
@@ -1515,18 +1576,86 @@
 
 <div class="viewcode-block" id="GedcomConverter.handle_famc">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_famc">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">handle_famc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_record</span><span class="p">:</span> <span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FAMC tag: child-to-family link (not yet implemented; placeholder).&quot;&quot;&quot;</span>
-        <span class="c1">#TODO</span>
-        <span class="k">return</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_famc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FAMC tag: child-to-family link — intentionally skipped.</span>
+
+<span class="sd">        Redundant back-pointer; relationships are built from FAM records via FamilyParser.</span>
+<span class="sd">        Propagates parent context so sub-tags (ADOP, PEDI, NOTE) see a valid object_map entry.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.handle_fams">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_fams">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_fams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_record</span><span class="p">:</span> <span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FAMS tag: spouse-to-family link (not yet implemented; placeholder).&quot;&quot;&quot;</span>
-        <span class="c1">#TODO</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FAMS tag: spouse-to-family link — intentionally skipped.</span>
+
+<span class="sd">        Redundant back-pointer; relationships are built from FAM records via FamilyParser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_gedc">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_gedc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_gedc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle HEAD.GEDC as GEDCOM control metadata.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_idno">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_idno">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_idno</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle IDNO as a NationalId fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">FactType</span><span class="o">.</span><span class="n">NationalId</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_marb">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_marb">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_marb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle MARB tag as a MarriageBanns fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_marc">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_marc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_marc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle MARC tag as a MarriageContract fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_marl">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_marl">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_marl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle MARL tag as a MarriageLicense fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_mars">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_mars">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_mars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle MARS tag as a MarriageSettlement fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_nati">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_nati">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_nati</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle NATI tag as a Nationality fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_nchi">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_nchi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_nchi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle NCHI tag as a NumberOfChildren fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">FactType</span><span class="o">.</span><span class="n">NumberOfChildren</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_nmr">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_nmr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_nmr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle NMR tag as a NumberOfMarriages fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">FactType</span><span class="o">.</span><span class="n">NumberOfMarriages</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.handle_file">
@@ -1567,22 +1696,32 @@
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_form">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_form</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle FORM tag: map media format to MIME type on a SourceDescription, or place name on a PlaceDescription.&quot;&quot;&quot;</span>
-        <span class="n">parent_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;FILE&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                <span class="n">mime_type</span> <span class="o">=</span> <span class="n">_form_to_mime</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
-                    <span class="n">parent_obj</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mime_type</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;FILE&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                <span class="n">mime_type</span> <span class="o">=</span> <span class="n">_form_to_mime</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
-                    <span class="n">parent_obj</span><span class="o">.</span><span class="n">sourceDescription</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mime_type</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">PlaceDescription</span><span class="p">):</span>
+        <span class="n">parent_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">grandparent_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;GEDC&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_obj</span> <span class="k">if</span> <span class="n">parent_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;FILE&#39;</span><span class="p">:</span>
+            <span class="n">media_parent</span> <span class="o">=</span> <span class="n">parent_obj</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="p">(</span><span class="n">SourceDescription</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span><span class="p">))</span> <span class="k">else</span> <span class="n">grandparent_obj</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">media_parent</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">mime_type</span> <span class="o">=</span> <span class="n">_form_to_mime</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
+                        <span class="n">media_parent</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mime_type</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">media_parent</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">media_parent</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">mime_type</span> <span class="o">=</span> <span class="n">_form_to_mime</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
+                        <span class="n">media_parent</span><span class="o">.</span><span class="n">sourceDescription</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mime_type</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">media_parent</span>
+                <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">PlaceDescription</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ObjectParsingContainer</span><span class="p">):</span>
             <span class="n">container</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -1593,6 +1732,16 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">container</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">):</span>
+            <span class="n">source_description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="n">mime_type</span> <span class="o">=</span> <span class="n">_form_to_mime</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
+                    <span class="n">source_description</span><span class="o">.</span><span class="n">mediaType</span> <span class="o">=</span> <span class="n">mime_type</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not determine mime type from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">source_description</span>
 
         <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;TRAN&#39;</span><span class="p">:</span>
             <span class="c1"># FORM under TRAN specifies the script/encoding of the transliteration</span>
@@ -1707,7 +1856,7 @@
 <span class="sd">        called directly on the parent object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;FAM&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span><span class="o">.</span><span class="n">marriage</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_family_parser</span>
             <span class="k">return</span>
 
@@ -1886,9 +2035,37 @@
                 <span class="n">gxobject</span> <span class="o">=</span> <span class="n">ObjectParsingContainer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">gxobject</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
 
-        <span class="c1"># TODO, tie in with SOurceReference, description?</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">SourceReference</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceReference</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">gxobject</span> <span class="o">=</span> <span class="n">ObjectParsingContainer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">ObjectParsingContainer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ref_id</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span> <span class="ow">or</span> <span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ref_id</span> <span class="ow">and</span> <span class="p">(</span><span class="n">existing_sd</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gxobject_sd</span> <span class="o">=</span> <span class="n">existing_sd</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span><span class="p">}</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span> <span class="k">else</span> <span class="p">{}</span>
+                <span class="n">gxobject_sd</span> <span class="o">=</span> <span class="n">SourceDescription</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_source_description</span><span class="p">(</span><span class="n">gxobject_sd</span><span class="p">)</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">ObjectParsingContainer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">gxobject_sd</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Conclusion</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Inline OBJE inside a person/fact/event: wrap existing or create a new SourceDescription.</span>
+            <span class="c1"># record.value holds the @xref@ pointer when it&#39;s a reference (1 OBJE @M1@);</span>
+            <span class="c1"># record.xref holds the id when it&#39;s a record definition (0 @M1@ OBJE).</span>
+            <span class="n">ref_id</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span> <span class="ow">or</span> <span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ref_id</span> <span class="ow">and</span> <span class="p">(</span><span class="n">existing_sd</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">sourceDescriptions</span><span class="o">.</span><span class="n">by_id</span><span class="p">(</span><span class="n">ref_id</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gxobject_sd</span> <span class="o">=</span> <span class="n">existing_sd</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span><span class="p">}</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">xref</span> <span class="k">else</span> <span class="p">{}</span>
+                <span class="n">gxobject_sd</span> <span class="o">=</span> <span class="n">SourceDescription</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_source_description</span><span class="p">(</span><span class="n">gxobject_sd</span><span class="p">)</span>
+            <span class="n">gxobject</span> <span class="o">=</span> <span class="n">ObjectParsingContainer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">gxobject_sd</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span></div>
 
 
@@ -1903,6 +2080,19 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gx_object</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_pedi">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_pedi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_pedi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle PEDI under FAMC for later parent-child relationship facts.&quot;&quot;&quot;</span>
+        <span class="n">person</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">famc</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="n">Person</span><span class="p">)</span> <span class="ow">and</span> <span class="n">person</span><span class="o">.</span><span class="n">id</span> <span class="ow">and</span> <span class="n">famc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">famc</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;FAMC&quot;</span> <span class="ow">and</span> <span class="n">famc</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pedigree</span><span class="p">[(</span><span class="n">famc</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">person</span><span class="o">.</span><span class="n">id</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">person</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Pedigree&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.jls_extract_def">
@@ -1923,7 +2113,7 @@
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">FamilyParser</span><span class="p">):</span>
             <span class="c1"># 3/30 why was this pointng to set_date and not updating stack?</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_marr_plac</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_event_plac</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
 
         <span class="c1"># 3/30 unsure how this was missed, but PLAC is not being built out for EVEN</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">Event</span><span class="p">):</span>
@@ -1942,7 +2132,6 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">gx_object</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gx_object</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gx_object type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gx_object</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Fact</span><span class="p">):</span>
@@ -1955,12 +2144,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">place_des</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">SourceDescription</span><span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">place</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">place</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="n">place</span> <span class="o">=</span> <span class="n">existing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">place</span> <span class="o">=</span> <span class="n">PlaceDescription</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">add_place_description</span><span class="p">(</span><span class="n">place</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">place</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">place</span><span class="p">)</span>
             <span class="n">gxobject</span> <span class="o">=</span> <span class="n">Note</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">&#39;Place: &#39;</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="s1">&#39;WARNING: NOTE had no value&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">gxobject</span><span class="p">)</span>
 
@@ -1968,7 +2158,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ObjectParsingContainer</span><span class="p">):</span>
             <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">places</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
-                <span class="n">place</span> <span class="o">=</span> <span class="n">existing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">existing</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">existing</span>
+                <span class="n">place</span> <span class="o">=</span> <span class="n">existing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sourceDescription</span><span class="o">.</span><span class="n">place</span> <span class="o">=</span> <span class="n">PlaceReference</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">place</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">place</span> <span class="o">=</span> <span class="n">PlaceDescription</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span>
@@ -2001,7 +2191,7 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">date</span> <span class="o">:=</span> <span class="n">record</span><span class="p">[</span><span class="s1">&#39;DATE&#39;</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="n">date</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">existing_agents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">existing_agents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="p">[]</span>
                 <span class="k">if</span> <span class="n">existing_agents</span><span class="p">:</span>
                     <span class="n">gxobject</span> <span class="o">=</span> <span class="n">existing_agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -2025,6 +2215,27 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_prop">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_prop">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_prop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle PROP tag as a Property fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_quay">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_quay">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle QUAY source quality as a SourceReference qualifier.&quot;&quot;&quot;</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">SourceReference</span><span class="p">):</span>
+            <span class="n">qualifier</span> <span class="o">=</span> <span class="n">Qualifier</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;https://gedcom.io/terms/v5/QUAY&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">add_qualifier</span><span class="p">(</span><span class="n">qualifier</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">qualifier</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Source quality&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.handle_uid">
@@ -2055,6 +2266,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">gxobject</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GedcomConverter.handle_reli">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_reli">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_reli</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle RELI tag as a Religion fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GedcomConverter.handle_repo">
@@ -2128,6 +2346,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">convert_exception_dump</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="GedcomConverter.handle_ssn">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_ssn">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_ssn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle SSN as a NationalId fact.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_fact_tag</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">FactType</span><span class="o">.</span><span class="n">NationalId</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="GedcomConverter.handle_sour">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_sour">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_sour</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
@@ -2187,6 +2412,13 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;I do not know how to handle an &#39;STAE&#39; tag for a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="GedcomConverter.handle_subn">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_subn">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_subn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle SUBN as GEDCOM submission metadata.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gedcomx</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="GedcomConverter.handle_subm">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_subm">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_subm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
@@ -2241,6 +2473,27 @@
             <span class="k">raise</span> <span class="n">TagConversionError</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="GedcomConverter.handle_time">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle TIME as metadata on the active parent object.&quot;&quot;&quot;</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_str</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">Date</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parent</span><span class="o">.</span><span class="n">original</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">Attribution</span><span class="p">):</span>
+            <span class="n">date_parent</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">parent</span>
+            <span class="n">container</span> <span class="o">=</span> <span class="n">date_parent</span><span class="o">.</span><span class="n">parent</span> <span class="k">if</span> <span class="n">date_parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">container</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">container</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;CHAN&quot;</span> <span class="ow">and</span> <span class="n">parent</span><span class="o">.</span><span class="n">modified</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parent</span><span class="o">.</span><span class="n">modified</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">parent</span><span class="o">.</span><span class="n">created</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parent</span><span class="o">.</span><span class="n">created</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="GedcomConverter.handle_titl">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_titl">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_titl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
@@ -2263,6 +2516,13 @@
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Could not parse TITLE&quot;</span><span class="p">)</span></div>
 
            <span class="c1">#log.debug(self.convert_exception_dump(record=record))</span>
+
+<div class="viewcode-block" id="GedcomConverter.handle_vers">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_vers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_vers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle VERS as version metadata on the active parent object.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_note_on_parent</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">&quot;Version&quot;</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="GedcomConverter.handle_tran">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.conversion.GedcomConverter.handle_tran">[docs]</a>
@@ -2320,12 +2580,11 @@
             <span class="c1"># TYPE under FORM classifies the object (e.g. &quot;photo&quot;, &quot;Certificate&quot;).</span>
             <span class="c1"># Map known media categories to ResourceType; store free text as description.</span>
             <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">level0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">sd</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">level0</span><span class="o">.</span><span class="n">sourceDescription</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">level0</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span><span class="p">)</span>
-                <span class="k">else</span> <span class="n">level0</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">level0</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">)</span>
+                <span class="n">parent_obj</span><span class="o">.</span><span class="n">sourceDescription</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="n">ObjectParsingContainer</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">parent_obj</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="n">SourceDescription</span><span class="p">)</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">val</span><span class="p">:</span>
@@ -2334,6 +2593,7 @@
                     <span class="n">sd</span><span class="o">.</span><span class="n">resourceType</span> <span class="o">=</span> <span class="n">rt</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">sd</span><span class="o">.</span><span class="n">add_description</span><span class="p">(</span><span class="n">TextValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">object_map</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_obj</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_obj</span><span class="p">,</span> <span class="n">Event</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">EventType</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
@@ -2423,7 +2683,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

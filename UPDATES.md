@@ -4,6 +4,42 @@ Track of changes made to gedcomtools after v0.7.0.
 
 ---
 
+## Conversion fix and v0.8.0b3 build refresh (2026-05-20)
+
+### Fix — GedcomX -> GEDCOM 7 facade objects now rebuild indexes
+
+`Gedcom7.from_gedcomx()` assigned the converted top-level records directly to
+`g7.records` but did not rebuild the GEDCOM 7 tag and xref indexes.  The
+resulting object could still be written to disk, but normal facade operations
+treated it like an empty or unknown-version file until it was serialized and
+parsed again.
+
+The facade now calls `_rebuild_tag_index()` after conversion, matching the
+parser/indexing model used by loaded GEDCOM 7 files.  Converted objects now
+work immediately with:
+
+- `g7["HEAD"]` and other tag lookups
+- `individuals()`, `families()`, `sources()`, and xref accessors
+- `detect_gedcom_version()` and `validate()`
+- parent, child, and spouse relationship traversal
+
+Regression coverage was added for both `Gedcom7.from_gedcomx(gx)` and
+`gx.to_gedcom7()`.
+
+| File | Change |
+|------|--------|
+| `src/gedcomtools/gedcom7/gedcom7.py` | `from_gedcomx()`: rebuild tag/xref indexes after assigning converted records |
+| `tests/test_gxtog7.py` | Added facade assertions for tag lookup, individual lookup, version detection, and validation |
+
+### Build refresh
+
+- Rebuilt Sphinx HTML documentation into `docs/_build/html`.
+- Rebuilt package artifacts for `0.8.0b3`:
+  - `dist/gedcomtools-0.8.0b3.tar.gz`
+  - `dist/gedcomtools-0.8.0b3-py3-none-any.whl`
+
+---
+
 ## Code quality fixes — raises, dead code, security (2026-04-27)
 
 ### Fix — `_gedcom5x.py`: remove dead manual parse block and harden line loop

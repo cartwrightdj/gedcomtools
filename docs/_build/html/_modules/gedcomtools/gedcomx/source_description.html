@@ -243,6 +243,7 @@
 <span class="sd"> Updated:</span>
 <span class="sd">   - 2026-04-08: accept the FamilySearch-specific `FamilyTree`</span>
 <span class="sd">                 resource type during source-description deserialization</span>
+<span class="sd">   - 2026-04-18: inherit from AutoIdModel; removed local id field</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -256,8 +257,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Attribution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.coverage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coverage</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.date</span><span class="w"> </span><span class="kn">import</span> <span class="n">Date</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.gx_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span><span class="p">,</span> <span class="n">make_uid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.identifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoIdModel</span><span class="p">,</span> <span class="n">Identifier</span><span class="p">,</span> <span class="n">IdentifierList</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.note</span><span class="w"> </span><span class="kn">import</span> <span class="n">Note</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.resource</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.source_citation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceCitation</span>
@@ -297,7 +297,7 @@
 
 <div class="viewcode-block" id="SourceDescription">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.source_description.SourceDescription">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SourceDescription</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceDescription</span><span class="p">(</span><span class="n">AutoIdModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Description of a genealogical information source.&quot;&quot;&quot;</span>
 
     <span class="n">identifier</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://gedcomx.org/v1/SourceDescription&quot;</span>
@@ -306,7 +306,6 @@
     <span class="n">_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">URI</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">_place_holder</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span>
     <span class="n">resourceType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResourceType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">citations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SourceCitation</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">mediaType</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -466,7 +465,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

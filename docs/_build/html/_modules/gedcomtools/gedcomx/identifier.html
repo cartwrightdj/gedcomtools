@@ -240,7 +240,9 @@
 <span class="sd"> Purpose: GedcomX Identifier model: Identifier, IdentifierType, and IdentifierList</span>
 
 <span class="sd"> Created: 2025-08-25</span>
-<span class="sd"> Updated:</span>
+<span class="sd"> Updated: 2026-04-18 — added AutoIdModel mixin base for Agent/SourceDescription</span>
+<span class="sd">          2026-04-27 — fix unreachable elif in Identifier.model_post_init</span>
+<span class="sd">                     (outer if already guards raw is not None; inner elif → else)</span>
 <span class="sd">======================================================================</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># GedcomX Identifier model and IdentifierList container.</span>
@@ -272,6 +274,24 @@
     <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;length must be &gt; 0&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">secrets</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">))</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># AutoIdModel — base for top-level models that always carry an auto-generated id</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="AutoIdModel">
+<a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.identifier.AutoIdModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AutoIdModel</span><span class="p">(</span><span class="n">GedcomXModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin base for GedcomX models that always carry an auto-generated id.</span>
+
+<span class="sd">    Inherit from this instead of GedcomXModel when the model is a top-level</span>
+<span class="sd">    entity that must always have an id (Agent, SourceDescription, etc.).</span>
+<span class="sd">    Subject subclasses (Person, Relationship, …) get their auto-id via</span>
+<span class="sd">    Subject&#39;s own override of Conclusion.id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">make_uid</span><span class="p">)</span></div>
 
 
 
@@ -321,7 +341,7 @@
         <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="n">raw</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">else</span><span class="p">:</span>
                 <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">raw</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">IdentifierType</span><span class="o">.</span><span class="n">Primary</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span></div>
@@ -579,7 +599,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

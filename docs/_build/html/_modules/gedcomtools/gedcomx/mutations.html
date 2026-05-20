@@ -251,184 +251,13 @@
 
 <span class="c1"># GEDCOM Module Types</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.._gedcom5x</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom5xRecord</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tag_mappings</span><span class="w"> </span><span class="kn">import</span> <span class="n">GEDCOM_TAG_TO_FACT_EVENT_TYPE</span>
 <span class="c1"># Logging</span>
 <span class="c1">#=====================================================================</span>
 
-<span class="n">fact_event_table</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="c1"># Person Fact / Event Types</span>
-    <span class="s2">&quot;ADOP&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">AdoptiveParent</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Adoption</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CHR&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">AdultChristening</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;EVEN&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Amnesty</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BAPM&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Baptism</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BARM&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">BarMitzvah</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BASM&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">BatMitzvah</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BIRT&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BIRT, CHR&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Birth</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BLES&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Blessing</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;BURI&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Burial</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CAST&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Caste</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CENS&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Census</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CIRC&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Circumcision</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CONF&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Confirmation</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;CREM&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Cremation</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;DEAT&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Death</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;EDUC&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Education</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;EMIG&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Emigration</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;FCOM&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">FirstCommunion</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;GRAD&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Graduation</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;IMMI&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Immigration</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MIL&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MilitaryService</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;NATI&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Nationality</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;NATU&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Naturalization</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;OCCU&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Occupation</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;ORDN&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Ordination</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;DSCR&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">PhysicalDescription</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;PROB&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Probate</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;PROP&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Property</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;RELI&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Religion</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;RESI&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Residence</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;WILL&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Will</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-
-    <span class="c1"># Couple Relationship Fact / Event Types</span>
-    <span class="s2">&quot;ANUL&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Annulment</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;DIV&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Divorce</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;DIVF&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">DivorceFiling</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;ENGA&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Engagement</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MARR&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">,</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">Marriage</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MARB&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageBanns</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MARC&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageContract</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MARL&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">MarriageLicense</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;MARS&quot;</span><span class="p">:{</span>
-        <span class="s2">&quot;Event&quot;</span><span class="p">:</span> <span class="n">EventType</span><span class="o">.</span><span class="n">MarriageSettlment</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;SEPA&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Fact&quot;</span><span class="p">:</span> <span class="n">FactType</span><span class="o">.</span><span class="n">Separation</span><span class="p">,</span>
-        <span class="c1"># no Event</span>
-    <span class="p">},</span>
-
-<span class="p">}</span>
+<span class="n">fact_event_table</span> <span class="o">=</span> <span class="n">GEDCOM_TAG_TO_FACT_EVENT_TYPE</span>
 
 <div class="viewcode-block" id="GedcomXObject">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.mutations.GedcomXObject">[docs]</a>
@@ -524,7 +353,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
