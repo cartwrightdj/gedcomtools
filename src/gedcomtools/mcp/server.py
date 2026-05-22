@@ -883,7 +883,7 @@ TOOL_MANUAL: dict[str, dict[str, Any]] = {
     "export_arango_graph": {
         "purpose": "Convert GEDCOM 5.x and write graph JSONL files.",
         "when_to_use": "Graph database import/export workflows.",
-        "parameters": {"file_path": "GEDCOM path.", "output_dir": "Directory for JSONL files.", "strict": "Parser strictness.", "overwrite": "Allow replacing output."},
+        "parameters": {"file_path": "GEDCOM path.", "output_dir": "Directory for nodes.jsonl and edges.jsonl.", "strict": "Parser strictness.", "overwrite": "Allow replacing output."},
     },
     "validate_gedcom7": {
         "purpose": "Parse and validate GEDCOM 7 file structure/content.",
@@ -1416,7 +1416,7 @@ def export_arango_graph(
     strict: bool = True,
     overwrite: bool = False,
 ) -> dict[str, Any]:
-    """Convert GEDCOM 5.x and export persons/relationships JSONL graph files."""
+    """Convert GEDCOM 5.x and export graph nodes/edges JSONL files."""
     from gedcomtools.graph import GedcomGraph
 
     gedcomx, converter = _convert_gedcom5x(file_path, strict=strict)
@@ -1426,8 +1426,8 @@ def export_arango_graph(
     out_dir = Path(output_dir).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    nodes_path = out_dir / "persons.jsonl"
-    edges_path = out_dir / "person_to_person.jsonl"
+    nodes_path = out_dir / "nodes.jsonl"
+    edges_path = out_dir / "edges.jsonl"
     existing = [path for path in (nodes_path, edges_path) if path.exists()]
     if existing and not overwrite:
         raise FileExistsError(f"Output file exists: {existing[0]}")
@@ -1439,8 +1439,8 @@ def export_arango_graph(
         "output_dir": str(out_dir),
         "strict": strict,
         "written": {
-            "persons": {"path": str(nodes_path)},
-            "person_to_person": {"path": str(edges_path)},
+            "nodes": {"path": str(nodes_path)},
+            "edges": {"path": str(edges_path)},
         },
         "summary": graph.summary(),
         "unhandled_tags": converter.ignored_tags or {},

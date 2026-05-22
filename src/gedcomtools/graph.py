@@ -660,9 +660,8 @@ class GedcomGraph:
     def to_jsonl(self, nodes_path: str, edges_path: str) -> None:
         """Write nodes and edges as JSONL.
 
-        Follows the existing ``graph/persons.jsonl`` /
-        ``graph/person_to_person.jsonl`` convention: one JSON object
-        per line, ``None`` values omitted.
+        Writes every graph node and edge as one JSON object per line,
+        omitting ``None`` values.
 
         Args:
             nodes_path: Output path for node records.
