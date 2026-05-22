@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **BETA SOFTWARE — v0.8.0b4**
+> **BETA SOFTWARE — v0.8.1b4**
 >
 > `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
 > *may change between releases without notice. It is not yet recommended for
@@ -13,7 +13,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-## What's New in v0.8.0b4
+## What's New in v0.8.1b4
 
 ### Cross-platform GEDCOM loading
 
@@ -40,7 +40,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ### Release packaging
 
-- Bumped the package and docs version to `0.8.0b4`.
+- Bumped the package and docs version to `0.8.1b4`.
 - Verified the release with `pyright`, the full pytest suite, `python -m build`,
   `twine check`, and an artifact scan for local env/sample/log/cache files.
 
@@ -511,12 +511,21 @@ gedcomtools/
 pip install gedcomtools
 ```
 
+Install the optional MCP server dependencies when you want to expose the
+toolkit to MCP clients:
+
+```bash
+pip install "gedcomtools[mcp]"
+```
+
 Or from source:
 
 ```bash
 git clone https://github.com/cartwrightdj/gedcomtools.git
 cd gedcomtools
 pip install -e .
+# or, with the MCP server extra:
+pip install -e ".[mcp]"
 ```
 
 ---
@@ -688,6 +697,16 @@ Commands: `load`, `reload`, `write`, `validate`, `info`, `ls`, `cd`, `pwd`,
 ```bash
 gxcli convert input.ged output.json
 ```
+
+### `gedcomtools-mcp` — MCP server
+
+```bash
+gedcomtools-mcp
+```
+
+The server uses stdio transport for MCP clients and exposes tools for loading,
+summarizing, navigating, converting, and validating GEDCOM 5.x, GEDCOM 7, and
+GEDCOM X JSON files.
 
 ---
 

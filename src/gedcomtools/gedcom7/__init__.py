@@ -64,7 +64,7 @@ from .models import (
     submitter_detail,
 )
 
-__version__ = "0.8.0b4"
+__version__ = "0.8.1b4"
 
 __all__ = [
     "__version__",
