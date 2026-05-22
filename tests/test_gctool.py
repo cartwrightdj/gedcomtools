@@ -30,7 +30,7 @@ import pytest
 from gedcomtools.gctool import main
 from gedcomtools.gctool_commands import _package_version
 from gedcomtools.gctool_examine import _Node, _build_label, _ls, _path_str
-from gedcomtools.gctool_load import _sniff
+from gedcomtools.gctool_load import _load, _sniff
 from gedcomtools.gctool_output import _norm_xref
 
 # ---------------------------------------------------------------------------
@@ -158,6 +158,25 @@ class TestSniff:
         p = tmp_path / "archive.gdz"
         p.write_bytes(b"PK\x03\x04")   # minimal zip magic
         assert _sniff(p) == "g7"
+
+    def test_gdz_load_decodes_windows_cp1252_bytes(self, tmp_path):
+        ged = (
+            b"0 HEAD\n"
+            b"1 GEDC\n"
+            b"2 VERS 7.0\n"
+            b"0 @I1@ INDI\n"
+            b"1 NOTE Middle\xb7dot\n"
+            b"0 TRLR\n"
+        )
+        p = tmp_path / "archive.gdz"
+        with zipfile.ZipFile(p, "w") as zf:
+            zf.writestr("tree.ged", ged)
+
+        fmt, obj = _load(p)
+
+        assert fmt == "g7"
+        assert obj["INDI"][0].children[0].payload == "Middle·dot"
+        assert any(error.code == "non_utf8_encoding" for error in obj.errors)
 
     def test_json_object_is_gx(self, tmp_path):
         p = tmp_path / "data.json"

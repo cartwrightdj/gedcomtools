@@ -43,7 +43,7 @@ class Document(Conclusion):
     identifier: ClassVar[str] = "http://gedcomx.org/v1/Document"
     version: ClassVar[str] = "http://gedcomx.org/conceptual-model/v1"
 
-    id: str = Field(default_factory=make_uid)
+    id: Optional[str] = Field(default_factory=make_uid)
 
     type: Optional[DocumentType] = None
     extracted: Optional[bool] = None

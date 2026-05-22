@@ -340,7 +340,9 @@ severity: <code class="docutils literal notranslate"><span class="pre">&quot;err
 <span class="sig-name descname"><span class="pre">load_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.load_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.</p>
 <p>The response body is decoded as UTF-8 (required by the GEDCOM 7
-specification) and passed to <code class="xref py py-meth docutils literal notranslate"><span class="pre">parse_string()</span></code>.</p>
+specification). Windows legacy encodings are accepted as a
+cross-platform compatibility fallback and reported as validation
+warnings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -352,7 +354,7 @@ specification) and passed to <code class="xref py py-meth docutils literal notra
 <dt>Raises:</dt><dd><p>ValueError:             If the URL does not end in <code class="docutils literal notranslate"><span class="pre">.ged</span></code>.
 urllib.error.URLError:  If the URL cannot be reached.
 urllib.error.HTTPError: If the server returns an error status.
-GedcomParseError:       If the response body is not valid UTF-8.</p>
+GedcomParseError:       If the response body cannot be decoded.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -369,7 +371,27 @@ GedcomParseError:       If the response body is not valid UTF-8.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>filepath: Path to the GEDCOM file.</p>
 </dd>
-<dt>Raises:</dt><dd><p>GedcomParseError: If the file cannot be opened or read.</p>
+<dt>Raises:</dt><dd><p>GedcomParseError: If the file cannot be opened, read, or decoded.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">parse_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEDCOM</span> <span class="pre">7</span> <span class="pre">data'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcom7/gedcom7.html#Gedcom7.parse_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Parse GEDCOM 7 content from bytes.</p>
+<p>GEDCOM 7 requires UTF-8.  Windows legacy encodings are accepted as a
+compatibility fallback and reported as validation warnings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>raw: Complete GEDCOM 7 file content as bytes.
+source: Human-readable source description for diagnostics.</p>
+</dd>
+<dt>Raises:</dt><dd><p>GedcomParseError: If the bytes cannot be decoded.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3279,7 +3301,7 @@ the final line terminator on the TRLR line.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

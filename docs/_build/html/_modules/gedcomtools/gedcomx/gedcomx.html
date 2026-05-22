@@ -272,7 +272,7 @@
 <span class="c1">#                         remove stale entries before re-adding current values</span>
 <span class="c1">#                       — TypeCollection: added _rebuild_indexes() for full O(n)</span>
 <span class="c1">#                         recovery after out-of-band mutations</span>
-<span class="c1">#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging</span>
+<span class="c1">#           2026-04-15 — release refresh for v0.8.0b4 docs/build packaging</span>
 <span class="c1">#                       — TypeCollection: added class-level docstring documenting</span>
 <span class="c1">#                         the mutation contract and safe update patterns</span>
 <span class="c1">#                       — TypeCollection: added change_id/change_uri/change_name</span>
@@ -305,8 +305,6 @@
 <span class="c1">#=====================================================================</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="n">serial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
-<span class="n">deserial_log</span> <span class="o">=</span> <span class="s2">&quot;gedcomx.serialization&quot;</span>
 
 
 
@@ -447,12 +445,12 @@
 
 <div class="viewcode-block" id="TypeCollection.by_name">
 <a class="viewcode-back" href="../../../api/gedcomx.html#gedcomtools.gedcomx.gedcomx.TypeCollection.by_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return items whose name matches sname (stripped), or None if not found.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return items whose name matches sname (stripped), or [] if not found.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sname</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">[]</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sname</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="kc">None</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="p">[]</span></div>
 
 
     <span class="c1"># --- mutation ---</span>
@@ -610,13 +608,13 @@
         <span class="n">old_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">old_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">item</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">new_id</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">new_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_id_index</span><span class="p">[</span><span class="n">new_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
         <span class="c1"># Keep the auto-generated document-fragment URI in sync with the new id.</span>
         <span class="n">cur_uri</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cur_uri</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cur_uri</span><span class="p">,</span> <span class="s2">&quot;fragment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">old_id</span><span class="p">:</span>
-            <span class="n">item</span><span class="o">.</span><span class="n">_uri</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="n">new_id</span><span class="p">)</span></div>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;_uri&quot;</span><span class="p">,</span> <span class="n">URI</span><span class="p">(</span><span class="n">fragment</span><span class="o">=</span><span class="n">new_id</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="TypeCollection.change_uri">
@@ -650,7 +648,7 @@
             <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_uri</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">new_key</span> <span class="o">=</span> <span class="n">new_uri</span> <span class="ow">or</span> <span class="kc">None</span>
-            <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="n">URI</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">new_uri</span><span class="p">)</span> <span class="k">if</span> <span class="n">new_uri</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="n">URI</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">new_uri</span><span class="p">})</span> <span class="k">if</span> <span class="n">new_uri</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">new_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">new_uri</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
             <span class="n">new_uri_obj</span> <span class="o">=</span> <span class="n">new_uri</span>
@@ -664,7 +662,7 @@
         <span class="n">old_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">old_u</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">old_u</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">old_key</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">item</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">new_uri_obj</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s2">&quot;uri&quot;</span><span class="p">,</span> <span class="n">new_uri_obj</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">new_key</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_uri_index</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span></div>
 
@@ -1502,7 +1500,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

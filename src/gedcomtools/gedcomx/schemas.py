@@ -24,7 +24,7 @@ import operator
 import threading
 import types
 from functools import reduce
-from typing import Any, Callable, Dict, Union, get_args, get_origin, get_type_hints
+from typing import Any, Callable, Dict, Iterable, Union, cast, get_args, get_origin, get_type_hints
 try:
     from typing import Annotated  # type: ignore
 except ImportError:  # pragma: no cover
@@ -902,7 +902,7 @@ def accept_extras(*, stash_attr: str = "_extras",
         @classmethod
         def __init_subclass__(subcls, **kw):
             if prev_func:
-                prev_func(**kw)
+                cast(Callable[..., Any], prev_func)(subcls, **kw)
             _wrap_init(subcls)
 
         klass.__init_subclass__ = __init_subclass__
@@ -944,7 +944,7 @@ class ExtrasAwareMeta(type):
     def __call__(cls, *args, **kwargs):
         allow_fn = getattr(cls, "__extras_allow__", None)
         allowed = (
-            set(allow_fn(cls))
+            set(cast(Iterable[str], allow_fn(cls)))
             if callable(allow_fn)
             else set(SCHEMA.get_all_extras(cls).keys())  # type: ignore[arg-type]
         )

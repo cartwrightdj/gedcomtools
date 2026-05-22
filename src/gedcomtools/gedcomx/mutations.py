@@ -16,9 +16,11 @@
 """
 
 # GEDCOM Module Types
+from typing import cast
+
 from .._gedcom5x import Gedcom5xRecord
-from .fact import Fact
-from .event import Event
+from .fact import Fact, FactType
+from .event import Event, EventType
 from .tag_mappings import GEDCOM_TAG_TO_FACT_EVENT_TYPE
 # Logging
 #=====================================================================
@@ -63,10 +65,10 @@ class GedcomXEventOrFact(GedcomXObject):
         if record.tag in fact_event_table:
 
             if 'Fact' in fact_event_table[record.tag]:
-                obj = Fact(type=fact_event_table[record.tag]['Fact'])
+                obj = Fact(type=cast(FactType, fact_event_table[record.tag]['Fact']))
                 return obj
             if 'Event' in fact_event_table[record.tag]:
-                obj = Event(type=fact_event_table[record.tag]['Event'])
+                obj = Event(type=cast(EventType, fact_event_table[record.tag]['Event']))
                 return obj
             raise ValueError(
                 f"tag '{record.tag}' found in map but has neither 'Fact' nor 'Event' key"

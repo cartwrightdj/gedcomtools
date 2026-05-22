@@ -5,7 +5,7 @@ Updated: 2026-04-06 — add regression coverage for polymorphic
 ``GedcomX.add(Group(...))`` support.
 Updated: 2026-04-12 — TypeCollection index-safety tests: replace(), reindex(),
 _rebuild_indexes(), and append() partial-rollback correctness.
-Updated: 2026-04-15 — release refresh for v0.8.0b3 docs/build packaging.
+Updated: 2026-04-15 — release refresh for v0.8.0b4 docs/build packaging.
 """
 import pytest
 from gedcomtools.gedcomx.gedcomx import GedcomX, TypeCollection

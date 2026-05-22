@@ -78,12 +78,12 @@ def _fetch(url: str, accept: str = "") -> str:
 def _list_term_names(cache_dir: Path) -> list[str]:
     cache_file = cache_dir / "_index.json"
     if cache_file.exists():
-        return json.loads(cache_file.read_text())
+        return json.loads(cache_file.read_text(encoding="utf-8"))
     print("  Fetching term index from GitHub API …", flush=True)
     data = json.loads(_fetch(GITHUB_API, accept="application/vnd.github+json"))
     names = [e["name"].removesuffix(".md") for e in data if e["name"].endswith(".md")]
     names.sort()
-    cache_file.write_text(json.dumps(names))
+    cache_file.write_text(json.dumps(names), encoding="utf-8")
     return names
 
 
@@ -117,7 +117,7 @@ def _extract_yaml_from_md(md: str) -> str:
 def _fetch_term_yaml(name: str, cache_dir: Path) -> str | None:
     cache_file = cache_dir / f"{name}.yaml"
     if cache_file.exists():
-        return cache_file.read_text()
+        return cache_file.read_text(encoding="utf-8")
     try:
         md = _fetch(f"{GITHUB_RAW_BASE}/{name}.md")
     except RuntimeError as exc:
@@ -125,7 +125,7 @@ def _fetch_term_yaml(name: str, cache_dir: Path) -> str | None:
         return None
     time.sleep(FETCH_DELAY)
     raw = _extract_yaml_from_md(md)
-    cache_file.write_text(raw)
+    cache_file.write_text(raw, encoding="utf-8")
     return raw
 
 

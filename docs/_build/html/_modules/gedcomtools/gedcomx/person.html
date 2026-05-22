@@ -248,7 +248,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span><span class="p">,</span> <span class="n">model_validator</span>
 
@@ -260,6 +260,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..glog</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.fs.fs_types_rs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplayProperties</span>
 
 
 <div class="viewcode-block" id="Person">
@@ -451,6 +454,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Materialize display properties from current person data.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.fs.fs_types_rs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplayProperties</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_object</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span> <span class="o">=</span> <span class="n">DisplayProperties</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">displayProperties</span></div>
 
 
@@ -523,7 +528,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../../../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

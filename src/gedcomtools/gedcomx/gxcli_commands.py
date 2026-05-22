@@ -10,7 +10,7 @@ from __future__ import annotations
 #  Created: 2026-03-31 — split from gxcli.py
 #  Updated: 2026-04-03 — _is_url moved to utils.Utilities; removed _LoadMixin._is_url staticmethod
 #           2026-04-10 — bounded remote downloads with shared timeout/size helper
-#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+#           2026-04-15 — release refresh for v0.8.0b4 docs/build packaging
 # ======================================================================
 import inspect
 import logging

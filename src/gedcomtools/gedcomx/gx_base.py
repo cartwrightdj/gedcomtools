@@ -18,7 +18,7 @@
 """
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, Optional
+from typing import Any, ClassVar, Dict, Optional, cast
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.fields import FieldInfo
@@ -121,7 +121,7 @@ class GedcomXModel(BaseModel):
         # pydantic v2 — __pydantic_fields__ must be updated explicitly.
         if "__pydantic_fields__" not in vars(cls):
             cls.__pydantic_fields__ = dict(getattr(cls, "__pydantic_fields__", {}))
-        cls.__pydantic_fields__[name] = FieldInfo.from_annotated_attribute(annotated_type, default)
+        cls.__pydantic_fields__[name] = FieldInfo.from_annotated_attribute(cast(type[Any], annotated_type), default)
 
         # Record the field name in this class's own _ext_field_names set.
         if "_ext_field_names" not in vars(cls):

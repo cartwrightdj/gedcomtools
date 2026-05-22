@@ -565,7 +565,7 @@ class GedcomConverter(GxConverterBase):
         if isinstance(self.object_map[record.level-1], Agent):
             if v := self.clean_str(record.value):
                 if _is_url(v):
-                    self.object_map[record.level-1].homepage = URI(target=v)
+                    self.object_map[record.level-1].homepage = URI.model_validate({"value": v})
                     return
                 gxobject = Address.model_validate({"value": v})
             else:

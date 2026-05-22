@@ -14,7 +14,7 @@
 """
 from __future__ import annotations
 
-from typing import Any, ClassVar, List, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
 
 from pydantic import Field, PrivateAttr, model_validator
 
@@ -26,6 +26,9 @@ from .subject import Subject
 from ..glog import get_logger
 
 log = get_logger(__name__)
+
+if TYPE_CHECKING:
+    from .extensions.fs.fs_types_rs import DisplayProperties
 
 
 class Person(Subject):
@@ -204,6 +207,8 @@ class Person(Subject):
         """Materialize display properties from current person data."""
         from .extensions.fs.fs_types_rs import DisplayProperties
         self.displayProperties = self.display_object()
+        if self.displayProperties is None:
+            self.displayProperties = DisplayProperties()
         return self.displayProperties
 
     def display(self) -> dict:

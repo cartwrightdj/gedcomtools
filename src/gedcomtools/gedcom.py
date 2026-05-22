@@ -37,7 +37,7 @@ class Gedcom():
         inside_head = False
         inside_gedc = False
 
-        with open(filepath, "r", encoding="utf-8-sig") as f:
+        with open(filepath, "r", encoding="utf-8-sig", errors="replace") as f:
             for line in f:
                 parts = line.strip().split(maxsplit=2)
                 if not parts:

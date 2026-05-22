@@ -250,9 +250,11 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># GEDCOM Module Types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.._gedcom5x</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom5xRecord</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fact</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fact</span><span class="p">,</span> <span class="n">FactType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.tag_mappings</span><span class="w"> </span><span class="kn">import</span> <span class="n">GEDCOM_TAG_TO_FACT_EVENT_TYPE</span>
 <span class="c1"># Logging</span>
 <span class="c1">#=====================================================================</span>
@@ -305,10 +307,10 @@
         <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">:</span>
 
             <span class="k">if</span> <span class="s1">&#39;Fact&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]:</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Fact&#39;</span><span class="p">])</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">Fact</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">FactType</span><span class="p">,</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Fact&#39;</span><span class="p">]))</span>
                 <span class="k">return</span> <span class="n">obj</span>
             <span class="k">if</span> <span class="s1">&#39;Event&#39;</span> <span class="ow">in</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">]:</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Event&#39;</span><span class="p">])</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">EventType</span><span class="p">,</span> <span class="n">fact_event_table</span><span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s1">&#39;Event&#39;</span><span class="p">]))</span>
                 <span class="k">return</span> <span class="n">obj</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;tag &#39;</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2">&#39; found in map but has neither &#39;Fact&#39; nor &#39;Event&#39; key&quot;</span>
@@ -353,7 +355,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../../../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

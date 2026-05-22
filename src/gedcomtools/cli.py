@@ -106,14 +106,13 @@ def _load_g7(path: Path):
 def _load_gx(path: Path):
     from gedcomtools.gedcomx.gedcomx import GedcomX
     from gedcomtools.gedcomx.serialization import Serialization
+    raw = path.read_bytes()
     try:
         import orjson  # pylint: disable=redefined-outer-name
-        with open(path, "rb") as f:
-            data = orjson.loads(f.read())
+        data = orjson.loads(raw.removeprefix(b"\xef\xbb\xbf"))
     except ImportError:
         import json  # pylint: disable=redefined-outer-name
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = json.loads(raw.decode("utf-8-sig"))
     if not isinstance(data, dict):
         raise ValueError(f"Expected a JSON object at root of {path}, got {type(data).__name__}")
     return Serialization.deserialize(data=data, class_type=GedcomX)

@@ -10,7 +10,7 @@
            2026-04-12 — single-parent FAM fallback: score candidates by number of
                         matching parents; avoids assigning a child to a FAM from a
                         different partnership when a parent belongs to multiple families
-           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+           2026-04-15 — release refresh for v0.8.0b4 docs/build packaging
 ======================================================================
 
 Converts a populated :class:`~gedcomtools.gedcomx.gedcomx.GedcomX`
@@ -242,7 +242,8 @@ class GedcomXConverter:
         gx = self._gx
 
         for i, person in enumerate(gx.persons, 1):
-            self._person_xref[person.id] = f"@I{i}@"
+            if person.id is not None:
+                self._person_xref[person.id] = f"@I{i}@"
 
         for i, sd in enumerate(gx.sourceDescriptions, 1):
             self._source_xref[sd.id] = f"@S{i}@"
@@ -341,6 +342,8 @@ class GedcomXConverter:
                 best_fam: Optional[str] = None
                 best_score = 0
                 for pid in parent_ids:
+                    if pid is None:
+                        continue
                     for fam_xref in self._person_fams.get(pid, []):
                         fdata = self._fam_data[fam_xref]
                         score = sum(
@@ -483,6 +486,8 @@ class GedcomXConverter:
 
     def _build_indi_records(self) -> None:
         for person in self._gx.persons:
+            if person.id is None:
+                continue
             xref = self._person_xref.get(person.id)
             if not xref:
                 continue

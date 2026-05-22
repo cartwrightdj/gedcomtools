@@ -258,7 +258,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">get_type_hints</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">get_type_hints</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>  <span class="c1"># type: ignore</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -1198,7 +1198,7 @@
         <span class="nd">@classmethod</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="n">subcls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">prev_func</span><span class="p">:</span>
-                <span class="n">prev_func</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">prev_func</span><span class="p">)(</span><span class="n">subcls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
             <span class="n">_wrap_init</span><span class="p">(</span><span class="n">subcls</span><span class="p">)</span>
 
         <span class="n">klass</span><span class="o">.</span><span class="n">__init_subclass__</span> <span class="o">=</span> <span class="n">__init_subclass__</span>
@@ -1249,7 +1249,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">allow_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;__extras_allow__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">allowed</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">allow_fn</span><span class="p">(</span><span class="bp">cls</span><span class="p">)))</span>
             <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">allow_fn</span><span class="p">)</span>
             <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">SCHEMA</span><span class="o">.</span><span class="n">get_all_extras</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c1"># type: ignore[arg-type]</span>
         <span class="p">)</span>
@@ -1343,7 +1343,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../../../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

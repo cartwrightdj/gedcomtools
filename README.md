@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **BETA SOFTWARE — v0.8.0b3**
+> **BETA SOFTWARE — v0.8.0b4**
 >
 > `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
 > *may change between releases without notice. It is not yet recommended for
@@ -13,53 +13,36 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-## What's New in v0.8.0b3
+## What's New in v0.8.0b4
 
-### FamilySearch deserialization
+### Cross-platform GEDCOM loading
 
-- Added typed FamilySearch deserialization for `PersonInfo`, `NameFormInfo`,
-  normalized dates, normalized place text, and FamilySearch `display`
-  payloads.
-- Expanded `FamilySearchPlatform` deserialization so `persons`,
-  `relationships`, `places`, `links`, and `sourceDescriptions` build typed
-  model objects instead of being left as loose extra data.
-- Added `FamilySearchPersonEnvelope` for the observed outer FamilySearch web
-  payload wrapper containing `data`, `person`, `personId`, `summary`,
-  `title`, and related display fields.
-- `Person.display()` now prefers deserialized FamilySearch display data and
-  computes only the fields that are missing from the payload.
+- Fixed GEDCOM 7 loading on Windows and Linux for legacy Windows-encoded bytes
+  such as `0xb7`. GEDCOM 7 data is still decoded as UTF-8 first, but CP-1252
+  and Latin-1 compatibility fallbacks now produce a `non_utf8_encoding`
+  validation warning instead of crashing.
+- Added a shared `Gedcom7.parse_bytes()` path used by local files, URLs, and
+  `.gdz` archive entries, so zipped GEDCOM 7 files behave the same as regular
+  `.ged` files.
+- Added regression tests for UTF-8 BOM files, Windows CP-1252 GEDCOM 7 files,
+  and CP-1252 `.gdz` archive entries.
+- Made GedcomX JSON CLI loading byte-based so Windows default text encodings do
+  not affect JSON imports.
 
-### Samples and examples
+### Release cleanup
 
-- Added FamilySearch sample JSON fixtures under
-  `.sample_data/familysearch/`.
-- Added disk-based tests covering both the platform payload and the outer
-  FamilySearch person envelope.
-- Added `examples/familysearch_deserialize.py` showing how to load the
-  FamilySearch extension plugin and deserialize the sample payloads.
-
-### Reliability and release refresh
-
-- Added symmetric custom deserialization hooks so `Serialization.deserialize()`
-  now checks `_deserializer(data)` and `from_json(data, None)` before falling
-  back to `model_validate`, `from_dict`, or schema-driven construction.
-- Fixed the GedcomX -> GEDCOM 7 facade path so `Gedcom7.from_gedcomx()` and
-  `GedcomX.to_gedcom7()` rebuild their GEDCOM 7 tag/xref indexes after
-  conversion. Converted objects now work immediately with `g7["HEAD"]`,
-  `individuals()`, `get_individual()`, validation, version detection, and
-  relationship traversal without requiring a write/read round trip.
-- Hardened public remote-loading paths with a shared bounded download helper:
-  URL fetches now use a timeout and a hard response-size cap instead of
-  unbounded `urlopen(...).read()` calls.
-- Tightened repo tooling configuration so `pyright` ignores generated build
-  artifacts and `pylint` focuses on maintained source paths.
+- Removed `.env` from git tracking and added it to `.gitignore`.
+- Made GEDCOM version sniffing and the legacy `_gedcom5x` helper more tolerant
+  of non-UTF-8 input bytes.
+- Made spec cache text reads and writes explicit UTF-8.
+- Consolidated release history into `CHANGES.md`; `UPDATES.md` has been folded
+  into that changelog.
 
 ### Release packaging
 
-- Bumped the package and docs version to `0.8.0b3`.
-- Rebuilt the Sphinx HTML documentation and release artifacts for this beta
-  cut, including `gedcomtools-0.8.0b3.tar.gz` and
-  `gedcomtools-0.8.0b3-py3-none-any.whl`.
+- Bumped the package and docs version to `0.8.0b4`.
+- Verified the release with `pyright`, the full pytest suite, `python -m build`,
+  `twine check`, and an artifact scan for local env/sample/log/cache files.
 
 ## Previous Development Updates
 

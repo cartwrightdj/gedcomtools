@@ -53,6 +53,35 @@ class TestMinimalFile:
         assert vers.payload == "7.0"
 
 
+class TestFileDecoding:
+    def test_loadfile_accepts_utf8_bom(self, tmp_path):
+        path = tmp_path / "bom.ged"
+        path.write_bytes(("\ufeff" + _MINIMAL).encode("utf-8"))
+
+        g = Gedcom7()
+        g.loadfile(path)
+
+        assert not g.errors
+        assert g.records[0].tag == "HEAD"
+
+    def test_loadfile_warns_and_decodes_windows_cp1252_bytes(self, tmp_path):
+        path = tmp_path / "windows_export.ged"
+        path.write_bytes(
+            b"0 HEAD\n"
+            b"1 GEDC\n"
+            b"2 VERS 7.0\n"
+            b"0 @N1@ SNOTE Middle\xb7dot\n"
+            b"0 TRLR\n"
+        )
+
+        g = Gedcom7()
+        g.loadfile(path)
+
+        assert g["SNOTE"][0].payload == "Middle·dot"
+        assert any(issue.code == "non_utf8_encoding" for issue in g.errors)
+        assert any(issue.code == "non_utf8_encoding" for issue in g.validate())
+
+
 class TestIndexing:
     def test_getitem_by_tag(self):
         g = _parse(_MINIMAL)

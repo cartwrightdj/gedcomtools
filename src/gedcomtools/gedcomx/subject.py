@@ -32,7 +32,7 @@ class Subject(Conclusion):
     identifier = "http://gedcomx.org/v1/Subject"
     version = "http://gedcomx.org/conceptual-model/v1"
 
-    id: str = Field(default_factory=make_uid)
+    id: Optional[str] = Field(default_factory=make_uid)
 
     extracted: Optional[bool] = None
     evidence: List[EvidenceReference] = Field(default_factory=list)

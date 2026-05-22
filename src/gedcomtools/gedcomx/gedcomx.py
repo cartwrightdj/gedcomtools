@@ -38,7 +38,7 @@ import orjson
 #                         remove stale entries before re-adding current values
 #                       — TypeCollection: added _rebuild_indexes() for full O(n)
 #                         recovery after out-of-band mutations
-#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+#           2026-04-15 — release refresh for v0.8.0b4 docs/build packaging
 #                       — TypeCollection: added class-level docstring documenting
 #                         the mutation contract and safe update patterns
 #                       — TypeCollection: added change_id/change_uri/change_name
@@ -343,13 +343,13 @@ class TypeCollection(Generic[T]):
         old_id = getattr(item, "id", None)
         if old_id is not None:
             self._id_index.pop(old_id, None)
-        item.id = new_id
+        setattr(item, "id", new_id)
         if new_id is not None:
             self._id_index[new_id] = item
         # Keep the auto-generated document-fragment URI in sync with the new id.
         cur_uri = getattr(item, "_uri", None)
         if cur_uri is not None and getattr(cur_uri, "fragment", None) == old_id:
-            item._uri = URI(fragment=new_id)
+            setattr(item, "_uri", URI(fragment=new_id))
 
     def change_uri(self, item: T, new_uri: Union["URI", str, None]) -> None:
         """Change *item*'s ``uri`` and keep the uri index consistent.
@@ -380,7 +380,7 @@ class TypeCollection(Generic[T]):
             new_uri_obj = None
         elif isinstance(new_uri, str):
             new_key = new_uri or None
-            new_uri_obj = URI(value=new_uri) if new_uri else None
+            new_uri_obj = URI.model_validate({"value": new_uri}) if new_uri else None
         else:
             new_key = getattr(new_uri, "value", None) or None
             new_uri_obj = new_uri
@@ -394,7 +394,7 @@ class TypeCollection(Generic[T]):
         old_key = getattr(old_u, "value", None) if old_u is not None else None
         if old_key:
             self._uri_index.pop(old_key, None)
-        item.uri = new_uri_obj
+        setattr(item, "uri", new_uri_obj)
         if new_key:
             self._uri_index[new_key] = item
 

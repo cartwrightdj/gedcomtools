@@ -1,5 +1,6 @@
 *.json
 *.log
+.env
 .pypirc
 DJC.ged
 x_*.py

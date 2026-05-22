@@ -267,7 +267,7 @@
 <span class="sd">                 parse_gedcom_line() consolidates payload strip via rstrip() on line;</span>
 <span class="sd">                 added *_details_iter() generator variants alongside *_details() methods</span>
 <span class="sd">   - 2026-04-12: get_spouses(): replaced string .upper() self-exclusion with object</span>
-<span class="sd">   - 2026-04-15: release refresh for v0.8.0b3 docs/build packaging</span>
+<span class="sd">   - 2026-04-15: release refresh for v0.8.0b4 docs/build packaging</span>
 <span class="sd">                 identity check (candidate is not indi_node); clearer and avoids</span>
 <span class="sd">                 a redundant normalisation now that _xref_index handles case folding</span>
 <span class="sd">======================================================================</span>
@@ -316,6 +316,36 @@
     <span class="n">media_detail</span><span class="p">,</span> <span class="n">shared_note_detail</span><span class="p">,</span> <span class="n">submitter_detail</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..rel_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipCacheMixin</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decode_gedcom7_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GedcomValidationError</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode GEDCOM 7 bytes consistently on every platform.</span>
+
+<span class="sd">    GEDCOM 7 requires UTF-8, but files exported on Windows sometimes contain</span>
+<span class="sd">    CP-1252/Latin-1 bytes.  Falling back makes parsing deterministic while</span>
+<span class="sd">    still surfacing the encoding problem as a validation warning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8-sig&quot;</span><span class="p">),</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">utf8_error</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;cp1252&quot;</span><span class="p">,</span> <span class="s2">&quot;latin-1&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">return</span> <span class="n">text</span><span class="p">,</span> <span class="n">GedcomValidationError</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;non_utf8_encoding&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> is not valid UTF-8; decoded as </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="s2">&quot;GEDCOM 7 requires UTF-8, so re-save the file as UTF-8 &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;for strict compatibility. (</span><span class="si">{</span><span class="n">utf8_error</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> is not valid UTF-8. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 requires UTF-8 encoding. (</span><span class="si">{</span><span class="n">utf8_error</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">utf8_error</span>
 
 
 <div class="viewcode-block" id="GedcomValidationError">
@@ -550,7 +580,9 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.</span>
 
 <span class="sd">        The response body is decoded as UTF-8 (required by the GEDCOM 7</span>
-<span class="sd">        specification) and passed to :meth:`parse_string`.</span>
+<span class="sd">        specification). Windows legacy encodings are accepted as a</span>
+<span class="sd">        cross-platform compatibility fallback and reported as validation</span>
+<span class="sd">        warnings.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            url: HTTP or HTTPS URL pointing to a ``.ged`` file.</span>
@@ -559,7 +591,7 @@
 <span class="sd">            ValueError:             If the URL does not end in ``.ged``.</span>
 <span class="sd">            urllib.error.URLError:  If the URL cannot be reached.</span>
 <span class="sd">            urllib.error.HTTPError: If the server returns an error status.</span>
-<span class="sd">            GedcomParseError:       If the response body is not valid UTF-8.</span>
+<span class="sd">            GedcomParseError:       If the response body cannot be decoded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_check_ged_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -576,14 +608,7 @@
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot fetch GEDCOM from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Response from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> is not valid UTF-8. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 requires UTF-8 encoding. (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parse_string</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Response from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.loadfile">
@@ -595,22 +620,37 @@
 <span class="sd">            filepath: Path to the GEDCOM file.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            GedcomParseError: If the file cannot be opened or read.</span>
+<span class="sd">            GedcomParseError: If the file cannot be opened, read, or decoded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">handle</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot open file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">path</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">handle</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parse_lines</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> is not valid UTF-8. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;GEDCOM 7 requires UTF-8 encoding. (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GedcomParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot open file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="Gedcom7.parse_bytes">
+<a class="viewcode-back" href="../../../api/gedcom7.html#gedcomtools.gedcom7.gedcom7.Gedcom7.parse_bytes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GEDCOM 7 data&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse GEDCOM 7 content from bytes.</span>
+
+<span class="sd">        GEDCOM 7 requires UTF-8.  Windows legacy encodings are accepted as a</span>
+<span class="sd">        compatibility fallback and reported as validation warnings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw: Complete GEDCOM 7 file content as bytes.</span>
+<span class="sd">            source: Human-readable source description for diagnostics.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            GedcomParseError: If the bytes cannot be decoded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">encoding_warning</span> <span class="o">=</span> <span class="n">_decode_gedcom7_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_string</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">encoding_warning</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">encoding_warning</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Gedcom7.parse_string">
@@ -1320,6 +1360,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">.gxtog7</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomXConverter</span>
         <span class="n">g7</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
         <span class="n">g7</span><span class="o">.</span><span class="n">records</span> <span class="o">=</span> <span class="n">GedcomXConverter</span><span class="p">()</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
+        <span class="n">g7</span><span class="o">.</span><span class="n">_rebuild_tag_index</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">g7</span></div>
 
 
@@ -1432,7 +1473,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

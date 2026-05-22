@@ -532,42 +532,47 @@ class Gedcom5x():
             raise ValueError(f"File does not have a .ged extension: {file_path}")
 
         log.debug("Reading from GEDCOM file: {}", file_path)
-        with open(file_path, 'r', encoding='utf-8-sig') as file:
-            lines = [raw_line.strip() for raw_line in file]
+        with open(file_path, 'rb') as file:
+            raw = file.read()
+        try:
+            lines = [raw_line.strip() for raw_line in raw.decode('utf-8-sig').splitlines()]
+        except UnicodeDecodeError as exc:
+            log.warning("File {} is not valid UTF-8; decoded as cp1252: {}", file_path, exc)
+            lines = [raw_line.strip() for raw_line in raw.decode('cp1252').splitlines()]
 
-            records = []
-            record_map: dict[int,Any] = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
+        records = []
+        record_map: dict[int,Any] = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
 
-            for line_idx, raw_line in enumerate(lines):
-                raw_line = html.unescape(raw_line).replace('&quot;', '')
+        for line_idx, raw_line in enumerate(lines):
+            raw_line = html.unescape(raw_line).replace('&quot;', '')
 
-                if not raw_line:
-                    continue
+            if not raw_line:
+                continue
 
-                lvl, xref_str, tag_str, value, xref_value = parse_gedcom7_line(raw_line) or (None, None, None, None, None)
+            lvl, xref_str, tag_str, value, xref_value = parse_gedcom7_line(raw_line) or (None, None, None, None, None)
 
-                if xref_str is None and xref_value is not None:
-                    xref_str = xref_value
+            if xref_str is None and xref_value is not None:
+                xref_str = xref_value
 
-                if not isinstance(lvl, int):
-                    log.warning("Skipping unparseable line {}: {!r}", line_idx + 1, raw_line)
-                    continue
+            if not isinstance(lvl, int):
+                log.warning("Skipping unparseable line {}: {!r}", line_idx + 1, raw_line)
+                continue
 
-                new_record = Gedcom5xRecord(line_num=line_idx + 1, lvl=lvl, tag_str=tag_str if tag_str else None, xref_str=xref_str, value=value)
+            new_record = Gedcom5xRecord(line_num=line_idx + 1, lvl=lvl, tag_str=tag_str if tag_str else None, xref_str=xref_str, value=value)
 
 
-                if lvl == 0:
-                    records.append(new_record)
-                elif lvl > 5 or record_map[lvl - 1] is None:
-                    log.warning("Skipping line {}: level {} has no parent in record_map", line_idx + 1, lvl)
-                    continue
-                else:
-                    new_record.root = record_map[0]
-                    new_record.parent = record_map[lvl - 1]
-                    record_map[lvl - 1].add_sub_record(new_record)
-                record_map[lvl] = new_record
-                with hub.use(job_id):
-                    log.info(new_record.describe())
+            if lvl == 0:
+                records.append(new_record)
+            elif lvl > 5 or record_map[lvl - 1] is None:
+                log.warning("Skipping line {}: level {} has no parent in record_map", line_idx + 1, lvl)
+                continue
+            else:
+                new_record.root = record_map[0]
+                new_record.parent = record_map[lvl - 1]
+                record_map[lvl - 1].add_sub_record(new_record)
+            record_map[lvl] = new_record
+            with hub.use(job_id):
+                log.info(new_record.describe())
 
 
         return records if records else []

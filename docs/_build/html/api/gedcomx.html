@@ -894,7 +894,7 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 <dd><p>Materialize display properties from current person data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">DisplayProperties</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplayProperties</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1177,6 +1177,11 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.name.NameForm.nameFormInfo">
+<span class="sig-name descname"><span class="pre">nameFormInfo</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><span class="pre">NameFormInfo</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.name.NameForm.nameFormInfo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -1236,6 +1241,11 @@ as <code class="docutils literal notranslate"><span class="pre">{&quot;resource&
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.name.Name.prefered">
+<span class="sig-name descname"><span class="pre">prefered</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.name.Name.prefered" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -3347,7 +3357,7 @@ Subject’s own override of Conclusion.id.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.subject.Subject.id">
-<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.subject.Subject.id" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.subject.Subject.id" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -3534,6 +3544,26 @@ Subject’s own override of Conclusion.id.</p>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conclusion.Conclusion.additionalAttributions">
+<span class="sig-name descname"><span class="pre">additionalAttributions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><span class="pre">AdditionalAttribution</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.conclusion.Conclusion.additionalAttributions" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conclusion.Conclusion.tags">
+<span class="sig-name descname"><span class="pre">tags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Tag</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.conclusion.Conclusion.tags" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conclusion.Conclusion.discussionReferences">
+<span class="sig-name descname"><span class="pre">discussionReferences</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><span class="pre">DiscussionReference</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.conclusion.Conclusion.discussionReferences" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gedcomtools.gedcomx.conclusion.Conclusion.links">
+<span class="sig-name descname"><span class="pre">links</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">RsLinks</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.conclusion.Conclusion.links" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class" id="module-gedcomtools.gedcomx.gender">
@@ -3675,7 +3705,7 @@ Subject’s own override of Conclusion.id.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.document.Document.id">
-<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.document.Document.id" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#gedcomtools.gedcomx.document.Document.id" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -6396,6 +6426,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.NameForm.fullText"><code class="docutils literal notranslate"><span class="pre">NameForm.fullText</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.NameForm.parts"><code class="docutils literal notranslate"><span class="pre">NameForm.parts</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.NameForm.model_config"><code class="docutils literal notranslate"><span class="pre">NameForm.model_config</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.name.NameForm.nameFormInfo"><code class="docutils literal notranslate"><span class="pre">NameForm.nameFormInfo</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.Name"><code class="docutils literal notranslate"><span class="pre">Name</span></code></a><ul>
@@ -6407,6 +6438,7 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.Name.simple"><code class="docutils literal notranslate"><span class="pre">Name.simple()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.Name.model_config"><code class="docutils literal notranslate"><span class="pre">Name.model_config</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.Name.model_post_init"><code class="docutils literal notranslate"><span class="pre">Name.model_post_init()</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.name.Name.prefered"><code class="docutils literal notranslate"><span class="pre">Name.prefered</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.name.QuickName"><code class="docutils literal notranslate"><span class="pre">QuickName</span></code></a></li>
@@ -6855,6 +6887,10 @@ Manifest entries are included.</p>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.add_note"><code class="docutils literal notranslate"><span class="pre">Conclusion.add_note()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.add_source_reference"><code class="docutils literal notranslate"><span class="pre">Conclusion.add_source_reference()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.model_config"><code class="docutils literal notranslate"><span class="pre">Conclusion.model_config</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.additionalAttributions"><code class="docutils literal notranslate"><span class="pre">Conclusion.additionalAttributions</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.tags"><code class="docutils literal notranslate"><span class="pre">Conclusion.tags</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.discussionReferences"><code class="docutils literal notranslate"><span class="pre">Conclusion.discussionReferences</span></code></a></li>
+<li><a class="reference internal" href="#gedcomtools.gedcomx.conclusion.Conclusion.links"><code class="docutils literal notranslate"><span class="pre">Conclusion.links</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.gender.GenderType"><code class="docutils literal notranslate"><span class="pre">GenderType</span></code></a><ul>
@@ -7293,7 +7329,7 @@ Manifest entries are included.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../_static/documentation_options.js?v=c7d9d5b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
