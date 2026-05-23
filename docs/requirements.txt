@@ -3,6 +3,9 @@
 loguru
 python-dateutil
 orjson
+pydantic>=2.0
+python-dotenv
+networkx
 
 # Sphinx core
 sphinx>=7.0

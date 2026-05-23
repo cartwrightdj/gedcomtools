@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="GedcomX API" href="api/gedcomx.html"><link rel="prev" title="gedcomtools" href="index.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="MCP Server" href="mcp.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Getting Started - gedcomtools</title>
+        <title>Using MCP With Agents - gedcomtools</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -192,7 +192,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom7.html">GEDCOM 7 API</a></li>
@@ -201,7 +201,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mcp.html">MCP Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mcp-agents.html">Using MCP With Agents</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Using MCP With Agents</a></li>
 </ul>
 
 </div>
@@ -222,7 +222,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/getting-started.rst.txt" title="View this page">
+  <a class="muted-link" href="_sources/mcp-agents.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -240,102 +240,141 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="getting-started">
-<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>gedcomtools
+          <section id="using-mcp-with-agents">
+<h1>Using MCP With Agents<a class="headerlink" href="#using-mcp-with-agents" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">gedcomtools-mcp</span></code> is a local stdio MCP server. Agent clients start it as a
+subprocess, discover its tools, and call those tools with local file paths.</p>
+<p>Install the optional MCP extra before configuring an agent:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;gedcomtools[mcp]&quot;</span>
+</pre></div>
+</div>
+<p>For a source checkout, install the checkout into the same Python environment
+that the agent will use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[mcp]&quot;</span>
+</pre></div>
+</div>
+<section id="quick-smoke-test">
+<h2>Quick Smoke Test<a class="headerlink" href="#quick-smoke-test" title="Link to this heading">¶</a></h2>
+<p>Before wiring an agent to the server, make sure the command is available:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools-mcp
+</pre></div>
+</div>
+<p>The command is a stdio server, so it waits for MCP JSON-RPC traffic and does
+not print an interactive prompt. Stop it with <code class="docutils literal notranslate"><span class="pre">Ctrl-C</span></code> after confirming it
+starts without an import error.</p>
+</section>
+<section id="codex">
+<h2>Codex<a class="headerlink" href="#codex" title="Link to this heading">¶</a></h2>
+<p>Codex can manage MCP servers with its <code class="docutils literal notranslate"><span class="pre">codex</span> <span class="pre">mcp</span></code> subcommand. Add the local
+stdio server with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>codex<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>gedcomtools<span class="w"> </span>--<span class="w"> </span>gedcomtools-mcp
+</pre></div>
+</div>
+<p>Then confirm that Codex knows about the server:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>codex<span class="w"> </span>mcp<span class="w"> </span>list
+codex<span class="w"> </span>mcp<span class="w"> </span>get<span class="w"> </span>gedcomtools
+</pre></div>
+</div>
+<p>You can also configure Codex manually in <code class="docutils literal notranslate"><span class="pre">~/.codex/config.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[mcp_servers.gedcomtools]</span>
+<span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gedcomtools-mcp&quot;</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">gedcomtools-mcp</span></code> is installed in a virtual environment that is not on the
+agent process <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, use the absolute executable path:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[mcp_servers.gedcomtools]</span>
+<span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/path/to/venv/bin/gedcomtools-mcp&quot;</span>
+</pre></div>
+</div>
+<p>Start a new Codex session after changing MCP configuration. A useful first
+prompt is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Use the gedcomtools MCP server. Call man(), then summarize /path/to/tree.ged.
 </pre></div>
 </div>
 </section>
-<section id="quick-example">
-<h2>Quick Example<a class="headerlink" href="#quick-example" title="Link to this heading">¶</a></h2>
-<p>Convert a GEDCOM 5.x file to GedcomX JSON:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools<span class="w"> </span>convert<span class="w"> </span>family.ged<span class="w"> </span>output.json<span class="w"> </span>-gx
+<section id="claude-code">
+<h2>Claude Code<a class="headerlink" href="#claude-code" title="Link to this heading">¶</a></h2>
+<p>Claude Code can add the same local stdio server with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>claude<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>gedcomtools<span class="w"> </span>--<span class="w"> </span>gedcomtools-mcp
 </pre></div>
 </div>
-<p>Or use the Python API directly:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcom5.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gedcom5x</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomConverter</span>
-
-<span class="n">parser</span> <span class="o">=</span> <span class="n">Gedcom5x</span><span class="p">()</span>
-<span class="n">parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="s2">&quot;family.ged&quot;</span><span class="p">)</span>
-
-<span class="n">converter</span> <span class="o">=</span> <span class="n">GedcomConverter</span><span class="p">()</span>
-<span class="n">gx</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">Gedcom5x_GedcomX</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Persons: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gx</span><span class="o">.</span><span class="n">persons</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gx</span><span class="o">.</span><span class="n">relationships</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<p>For a project-shared configuration, use project scope:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>claude<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>--scope<span class="w"> </span>project<span class="w"> </span>gedcomtools<span class="w"> </span>--<span class="w"> </span>gedcomtools-mcp
 </pre></div>
 </div>
+<p>Project scope writes a <code class="docutils literal notranslate"><span class="pre">.mcp.json</span></code> file at the project root. A minimal
+shareable configuration looks like this:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;gedcomtools&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gedcomtools-mcp&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Claude Code prompts before using project-scoped MCP servers from <code class="docutils literal notranslate"><span class="pre">.mcp.json</span></code>.
+That approval is a client-side safety step; it does not change the
+<code class="docutils literal notranslate"><span class="pre">gedcomtools-mcp</span></code> server.</p>
 </section>
-<section id="working-with-gedcomx-objects">
-<h2>Working with GedcomX objects<a class="headerlink" href="#working-with-gedcomx-objects" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.gedcomx</span><span class="w"> </span><span class="kn">import</span> <span class="n">GedcomX</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.person</span><span class="w"> </span><span class="kn">import</span> <span class="n">Person</span><span class="p">,</span> <span class="n">QuickPerson</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.name</span><span class="w"> </span><span class="kn">import</span> <span class="n">Name</span>
-
-<span class="n">gx</span> <span class="o">=</span> <span class="n">GedcomX</span><span class="p">()</span>
-
-<span class="c1"># Create a person with a GEDCOM-style name</span>
-<span class="n">person</span> <span class="o">=</span> <span class="n">QuickPerson</span><span class="p">(</span><span class="s2">&quot;John /Smith/&quot;</span><span class="p">,</span> <span class="n">dob</span><span class="o">=</span><span class="s2">&quot;1900-01-01&quot;</span><span class="p">)</span>
-<span class="n">gx</span><span class="o">.</span><span class="n">add_person</span><span class="p">(</span><span class="n">person</span><span class="p">)</span>
-
-<span class="c1"># Look up by id</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">gx</span><span class="o">.</span><span class="n">get_person_by_id</span><span class="p">(</span><span class="n">person</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>   <span class="c1"># &quot;John Smith&quot;</span>
+<section id="claude-desktop-and-other-mcp-clients">
+<h2>Claude Desktop And Other MCP Clients<a class="headerlink" href="#claude-desktop-and-other-mcp-clients" title="Link to this heading">¶</a></h2>
+<p>Most desktop MCP clients use the same <code class="docutils literal notranslate"><span class="pre">mcpServers</span></code> JSON shape:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;gedcomtools&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gedcomtools-mcp&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
 </pre></div>
 </div>
+<p>If the command is not on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, replace <code class="docutils literal notranslate"><span class="pre">gedcomtools-mcp</span></code> with an absolute
+path to the console script inside the environment where <code class="docutils literal notranslate"><span class="pre">gedcomtools[mcp]</span></code> is
+installed.</p>
 </section>
-<section id="serialization">
-<h2>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gedcomtools.gedcomx.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serialization</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-
-<span class="n">data</span> <span class="o">=</span> <span class="n">Serialization</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;output.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<section id="recommended-agent-workflow">
+<h2>Recommended Agent Workflow<a class="headerlink" href="#recommended-agent-workflow" title="Link to this heading">¶</a></h2>
+<p>Ask the agent to start with the built-in manual:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Call the gedcomtools MCP man() tool before choosing any other tool.
 </pre></div>
 </div>
-</section>
-<section id="cli-exit-codes">
-<h2>CLI Exit Codes<a class="headerlink" href="#cli-exit-codes" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Code</p></th>
-<th class="head"><p>Constant</p></th>
-<th class="head"><p>Meaning</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>0</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">OK</span></code></p></td>
-<td><p>Success</p></td>
-</tr>
-<tr class="row-odd"><td><p>1</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">ERR_FILE_NOT_FOUND</span></code></p></td>
-<td><p>Source file does not exist</p></td>
-</tr>
-<tr class="row-even"><td><p>2</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">ERR_UNKNOWN_SOURCE_TYPE</span></code></p></td>
-<td><p>Cannot determine source format</p></td>
-</tr>
-<tr class="row-odd"><td><p>3</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">ERR_UNSUPPORTED_CONV</span></code></p></td>
-<td><p>Conversion path not yet implemented</p></td>
-</tr>
-<tr class="row-even"><td><p>4</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">ERR_CONVERSION_FAILED</span></code></p></td>
-<td><p>Conversion raised an exception</p></td>
-</tr>
-<tr class="row-odd"><td><p>5</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">ERR_IO</span></code></p></td>
-<td><p>Could not write output file</p></td>
-</tr>
-</tbody>
-</table>
+<p>Then ask it to load or inspect a file:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Use load_gedcom(&quot;/absolute/path/to/family.ged&quot;), then list the first 20
+individuals and show the parents, spouses, and children for @I1@.
+</pre></div>
 </div>
+<p>Good agent prompts are explicit about:</p>
+<ul class="simple">
+<li><p>The absolute path to the GEDCOM, GEDCOM 7, or GEDCOM X JSON file.</p></li>
+<li><p>Whether the task is inspection, validation, conversion, or graph export.</p></li>
+<li><p>Whether output files may be overwritten when using export tools.</p></li>
+<li><p>How much data to return, such as list limits and ancestor/descendant depth.</p></li>
+</ul>
+</section>
+<section id="current-tool-surface">
+<h2>Current Tool Surface<a class="headerlink" href="#current-tool-surface" title="Link to this heading">¶</a></h2>
+<p>The MCP server is currently read-oriented, with conversion and export tools.
+It can inspect, summarize, validate, browse relationships, convert GEDCOM 5.x
+to GEDCOM X JSON, and export graph JSONL files.</p>
+<p>It does not currently expose write/edit tools such as setting sex, editing
+records, deleting records, or merging two individual records into one survivor.
+The project has CLI merge and repair functionality, but those operations are
+not wrapped as MCP tools yet.</p>
+</section>
+<section id="safety-notes">
+<h2>Safety Notes<a class="headerlink" href="#safety-notes" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">gedcomtools-mcp</span></code> works with local file paths available to the agent process.
+Point it at files you are comfortable letting the agent read.</p>
+<p>Conversion and graph export tools write only to the paths you pass in. Use a
+scratch output directory for agent experiments, and leave <code class="docutils literal notranslate"><span class="pre">overwrite</span></code> false
+unless replacing existing output is intentional.</p>
+<p>For large trees, ask the agent to use limits first. For example, start with
+<code class="docutils literal notranslate"><span class="pre">list_individuals(limit=20)</span></code> and raise the limit only when needed.</p>
 </section>
 </section>
 
@@ -344,23 +383,15 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="api/gedcomx.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">GedcomX API</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="index.html">
+          
+          <a class="prev-page" href="mcp.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Home</div>
+                <div class="title">MCP Server</div>
                 
               </div>
             </a>
@@ -394,12 +425,14 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Getting Started</a><ul>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#quick-example">Quick Example</a></li>
-<li><a class="reference internal" href="#working-with-gedcomx-objects">Working with GedcomX objects</a></li>
-<li><a class="reference internal" href="#serialization">Serialization</a></li>
-<li><a class="reference internal" href="#cli-exit-codes">CLI Exit Codes</a></li>
+<li><a class="reference internal" href="#">Using MCP With Agents</a><ul>
+<li><a class="reference internal" href="#quick-smoke-test">Quick Smoke Test</a></li>
+<li><a class="reference internal" href="#codex">Codex</a></li>
+<li><a class="reference internal" href="#claude-code">Claude Code</a></li>
+<li><a class="reference internal" href="#claude-desktop-and-other-mcp-clients">Claude Desktop And Other MCP Clients</a></li>
+<li><a class="reference internal" href="#recommended-agent-workflow">Recommended Agent Workflow</a></li>
+<li><a class="reference internal" href="#current-tool-surface">Current Tool Surface</a></li>
+<li><a class="reference internal" href="#safety-notes">Safety Notes</a></li>
 </ul>
 </li>
 </ul>

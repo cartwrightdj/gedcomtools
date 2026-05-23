@@ -1,5 +1,36 @@
 # Changes
 
+## v0.8.1b4 - 2026-05-22
+
+- Added an optional stdio MCP server, available through the `gedcomtools-mcp`
+  console script after installing `gedcomtools[mcp]`.
+- Added documentation for wiring `gedcomtools-mcp` into agent clients such as
+  Codex, Claude Code, Claude Desktop, and other MCP clients.
+- Integrated the server into the main package as `gedcomtools.mcp.server`
+  instead of requiring a separate local checkout.
+- Exposed MCP tools for genealogy workflows:
+  - Session help and runtime inspection: `man`, `server_info`.
+  - File detection and summaries: `load_gedcom`, `get_gedcom_version`,
+    `summarize_gedcom5x`, `validate_gedcom7`, `inspect_gedcom7`,
+    `summarize_gedcomx_json`.
+  - GEDCOM 5.x people and family navigation: `list_individuals`,
+    `get_individual`, `get_person_families`, `get_parents`,
+    `get_children`, `get_spouses`, `get_siblings`, `get_ancestors`,
+    `get_descendants`, `get_family`, `get_sources`, `get_record_tree`,
+    `find_relationship_path`.
+  - Conversion and export: `convert_gedcom5x_to_gedcomx`,
+    `export_arango_graph`.
+  - GEDCOM X browsing and schema inspection: `list_gedcomx_collections`,
+    `list_gedcomx_objects`, `get_gedcomx_object`,
+    `search_gedcomx_persons`, `get_gedcomx_person_relationships`,
+    `resolve_gedcomx_reference`, `get_gedcomx_schema_class`,
+    `search_gedcomx_schema`.
+- Made `networkx` a base dependency because `gedcomtools.graph` and the public
+  GML/graph facades import it directly.
+- Renamed the MCP graph JSONL export files to `nodes.jsonl` and `edges.jsonl`
+  so the output names match the mixed graph content.
+- Added regression coverage for the MCP graph export contract.
+
 ## v0.8.0b4 - 2026-05-21
 
 - Fixed GEDCOM 7 file loading on Windows and Linux for legacy Windows-encoded bytes such as `0xb7` by decoding GEDCOM 7 byte sources through a shared UTF-8/BOM-first path with CP-1252/Latin-1 compatibility fallback and a `non_utf8_encoding` validation warning.

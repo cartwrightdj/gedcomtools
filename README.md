@@ -15,6 +15,19 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ## What's New in v0.8.1b4
 
+### MCP server
+
+- Added `gedcomtools-mcp`, an optional stdio MCP server for using
+  gedcomtools from MCP-capable clients.
+- The server can detect and summarize GEDCOM 5.x, GEDCOM 7, and GEDCOM X JSON
+  files; browse people, families, sources, relationships, and raw record
+  trees; convert GEDCOM 5.x to GEDCOM X JSON; export graph JSONL files; and
+  inspect GEDCOM X schema metadata.
+- Added an in-server `man` tool so clients can discover recommended workflows,
+  exact parameters, return shapes, and caveats at runtime.
+- Made `networkx` a base dependency because graph and GML APIs import it
+  directly.
+
 ### Cross-platform GEDCOM loading
 
 - Fixed GEDCOM 7 loading on Windows and Linux for legacy Windows-encoded bytes
@@ -707,6 +720,55 @@ gedcomtools-mcp
 The server uses stdio transport for MCP clients and exposes tools for loading,
 summarizing, navigating, converting, and validating GEDCOM 5.x, GEDCOM 7, and
 GEDCOM X JSON files.
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "gedcomtools": {
+      "command": "gedcomtools-mcp"
+    }
+  }
+}
+```
+
+Agent quick setup:
+
+```bash
+# Codex
+codex mcp add gedcomtools -- gedcomtools-mcp
+
+# Claude Code
+claude mcp add gedcomtools -- gedcomtools-mcp
+```
+
+Recommended first call:
+
+```text
+man()
+```
+
+The `man` tool returns an overview, a tool index, and detailed help for a
+specific tool with `man("tool_name")`.
+
+For a longer agent integration guide, including Codex `config.toml`, Claude
+Code project `.mcp.json`, Claude Desktop-style JSON, recommended prompts, and
+safety notes, see `docs/mcp-agents.rst`.
+
+Core MCP tools:
+
+| Area | Tools |
+|---|---|
+| Help and runtime | `man`, `server_info` |
+| File loading and detection | `load_gedcom`, `get_gedcom_version`, `summarize_gedcom5x`, `summarize_gedcomx_json` |
+| GEDCOM 5.x people | `list_individuals`, `get_individual`, `get_person_families` |
+| GEDCOM 5.x relationships | `get_parents`, `get_children`, `get_spouses`, `get_siblings`, `get_ancestors`, `get_descendants`, `find_relationship_path` |
+| GEDCOM 5.x records and evidence | `get_family`, `get_sources`, `get_record_tree` |
+| Conversion and graph export | `convert_gedcom5x_to_gedcomx`, `export_arango_graph` |
+| GEDCOM 7 | `validate_gedcom7`, `inspect_gedcom7` |
+| GEDCOM X browsing | `list_gedcomx_collections`, `list_gedcomx_objects`, `get_gedcomx_object`, `search_gedcomx_persons`, `get_gedcomx_person_relationships`, `resolve_gedcomx_reference` |
+| GEDCOM X schema | `get_gedcomx_schema_class`, `search_gedcomx_schema` |
 
 ---
 

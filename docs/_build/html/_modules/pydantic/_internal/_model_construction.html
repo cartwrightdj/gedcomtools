@@ -199,6 +199,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mcp.html">MCP Server</a></li>
 </ul>
 
 </div>
@@ -275,6 +276,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldInfo</span><span class="p">,</span> <span class="n">ModelPrivateAttr</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateAttr</span> <span class="k">as</span> <span class="n">PydanticModelPrivateAttr</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..main</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">._fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticExtraInfo</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">PydanticModelField</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
     <span class="n">PydanticModelPrivateAttr</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
@@ -369,7 +371,7 @@
             <span class="k">if</span> <span class="n">private_attributes</span> <span class="ow">or</span> <span class="n">base_private_attributes</span><span class="p">:</span>
                 <span class="n">original_model_post_init</span> <span class="o">=</span> <span class="n">get_model_post_init</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">bases</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">original_model_post_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="c1"># if there are private_attributes and a model_post_init function, we handle both</span>
+                    <span class="c1"># if there are private attributes and a model_post_init function, we handle both</span>
 
                     <span class="nd">@wraps</span><span class="p">(</span><span class="n">original_model_post_init</span><span class="p">)</span>
                     <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -406,7 +408,7 @@
 
             <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_setattr_handlers__</span> <span class="o">=</span> <span class="p">{}</span>
 
-            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span> <span class="o">=</span> <span class="n">DecoratorInfos</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span> <span class="o">=</span> <span class="n">DecoratorInfos</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">replace_wrapped_methods</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span><span class="o">.</span><span class="n">update_from_config</span><span class="p">(</span><span class="n">config_wrapper</span><span class="p">)</span>
 
             <span class="c1"># Use the getattr below to grab the __parameters__ from the `typing.Generic` parent class</span>
@@ -420,7 +422,7 @@
 
                     <span class="n">missing_parameters</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent_parameters</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">RootModelRootType</span> <span class="ow">in</span> <span class="n">parent_parameters</span> <span class="ow">and</span> <span class="n">RootModelRootType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
-                        <span class="c1"># This is a special case where the user has subclassed `RootModel`, but has not parametrized</span>
+                        <span class="c1"># This is a special case where the user has subclassed RootModel, but has not parameterized</span>
                         <span class="c1"># RootModel with the generic type identifiers being used. Ex:</span>
                         <span class="c1"># class MyModel(RootModel, Generic[T]):</span>
                         <span class="c1">#    root: T</span>
@@ -528,7 +530,7 @@
 
     <span class="c1"># Due to performance and memory issues, in the ABCMeta.__subclasscheck__ implementation, we don&#39;t support</span>
     <span class="c1"># registered virtual subclasses. See https://github.com/python/cpython/issues/92810#issuecomment-2762454345.</span>
-    <span class="c1"># This may change once the CPython gets fixed (possibly in 3.15), in which case we should conditionally</span>
+    <span class="c1"># This may change once CPython is fixed (possibly in 3.15), in which case we should conditionally</span>
     <span class="c1"># define `register()`.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
@@ -570,7 +572,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__pydantic_fields_complete__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the fields where successfully collected (i.e. type hints were successfully resolves).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the fields were successfully collected (i.e. type hints were successfully resolved).</span>
 
 <span class="sd">        This is a private attribute, not meant to be used outside Pydantic.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -579,7 +581,13 @@
 
         <span class="n">field_infos</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s1">&#39;dict[str, FieldInfo]&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportAttributeAccessIssue]</span>
 
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">_complete</span> <span class="k">for</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="n">field_infos</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">pydantic_extra_info</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s1">&#39;PydanticExtraInfo | None&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pydantic_extra_info__</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportAttributeAccessIssue]</span>
+        <span class="k">if</span> <span class="n">pydantic_extra_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">extra_complete</span> <span class="o">=</span> <span class="n">pydantic_extra_info</span><span class="o">.</span><span class="n">complete</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extra_complete</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">_complete</span> <span class="k">for</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="n">field_infos</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="ow">and</span> <span class="n">extra_complete</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">attributes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__dir__</span><span class="p">())</span>
@@ -589,7 +597,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">init_private_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function is meant to behave like a BaseModel method to initialise private attributes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function is meant to behave like a BaseModel method to initialize private attributes.</span>
 
 <span class="sd">    It takes context as an argument since that&#39;s what pydantic-core passes when calling it.</span>
 
@@ -600,7 +608,13 @@
     <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__pydantic_private__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">pydantic_private</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">private_attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__private_attributes__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">default</span> <span class="o">=</span> <span class="n">private_attr</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
+            <span class="c1"># Avoid needlessly creating a new dict for the validated data:</span>
+            <span class="k">if</span> <span class="n">private_attr</span><span class="o">.</span><span class="n">default_factory_takes_validated_data</span><span class="p">:</span>
+                <span class="n">default</span> <span class="o">=</span> <span class="n">private_attr</span><span class="o">.</span><span class="n">get_default</span><span class="p">(</span>
+                    <span class="n">call_default_factory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validated_data</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span> <span class="o">**</span><span class="n">pydantic_private</span><span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">default</span> <span class="o">=</span> <span class="n">private_attr</span><span class="o">.</span><span class="n">get_default</span><span class="p">(</span><span class="n">call_default_factory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">PydanticUndefined</span><span class="p">:</span>
                 <span class="n">pydantic_private</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
         <span class="n">object_setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__pydantic_private__&#39;</span><span class="p">,</span> <span class="n">pydantic_private</span><span class="p">)</span>
@@ -637,7 +651,7 @@
 <span class="sd">        base_class_fields: A set of base class fields.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A dict contains private attributes info.</span>
+<span class="sd">        A dict containing private attributes info.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        TypeError: If there is a `__root__` field in model.</span>
@@ -787,7 +801,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">set_model_fields</span><span class="p">(</span>
     <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
     <span class="n">config_wrapper</span><span class="p">:</span> <span class="n">ConfigWrapper</span><span class="p">,</span>
-    <span class="n">ns_resolver</span><span class="p">:</span> <span class="n">NsResolver</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ns_resolver</span><span class="p">:</span> <span class="n">NsResolver</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect and set `cls.__pydantic_fields__` and `cls.__class_vars__`.</span>
 
@@ -797,9 +811,12 @@
 <span class="sd">        ns_resolver: Namespace resolver to use when getting model annotations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">typevars_map</span> <span class="o">=</span> <span class="n">get_model_typevars_map</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-    <span class="n">fields</span><span class="p">,</span> <span class="n">class_vars</span> <span class="o">=</span> <span class="n">collect_model_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="p">,</span> <span class="n">ns_resolver</span><span class="p">,</span> <span class="n">typevars_map</span><span class="o">=</span><span class="n">typevars_map</span><span class="p">)</span>
+    <span class="n">fields</span><span class="p">,</span> <span class="n">pydantic_extra_info</span><span class="p">,</span> <span class="n">class_vars</span> <span class="o">=</span> <span class="n">collect_model_fields</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="p">,</span> <span class="n">ns_resolver</span><span class="p">,</span> <span class="n">typevars_map</span><span class="o">=</span><span class="n">typevars_map</span>
+    <span class="p">)</span>
 
     <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span> <span class="o">=</span> <span class="n">fields</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_extra_info__</span> <span class="o">=</span> <span class="n">pydantic_extra_info</span>
     <span class="bp">cls</span><span class="o">.</span><span class="n">__class_vars__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">class_vars</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">class_vars</span><span class="p">:</span>
@@ -823,6 +840,7 @@
     <span class="n">raise_errors</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">call_on_complete_hook</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">create_model_module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">is_force_rebuild</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Finish building a model class.</span>
 
@@ -836,25 +854,27 @@
 <span class="sd">        raise_errors: Whether to raise errors.</span>
 <span class="sd">        call_on_complete_hook: Whether to call the `__pydantic_on_complete__` hook.</span>
 <span class="sd">        create_model_module: The module of the class to be created, if created by `create_model`.</span>
+<span class="sd">        is_force_rebuild: Whether the model is being force-rebuilt (if True, pre-built serializers and</span>
+<span class="sd">                          validators are not used, to avoid stale references).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        `True` if the model is successfully completed, else `False`.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        PydanticUndefinedAnnotation: If `PydanticUndefinedAnnotation` occurs in`__get_pydantic_core_schema__`</span>
+<span class="sd">        PydanticUndefinedAnnotation: If PydanticUndefinedAnnotation occurs in __get_pydantic_core_schema__</span>
 <span class="sd">            and `raise_errors=True`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">typevars_map</span> <span class="o">=</span> <span class="n">get_model_typevars_map</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields_complete__</span><span class="p">:</span>
         <span class="c1"># Note: when coming from `ModelMetaclass.__new__()`, this results in fields being built twice.</span>
-        <span class="c1"># We do so a second time here so that we can get the `NameError` for the specific undefined annotation.</span>
+        <span class="c1"># We do so a second time here so that we can get the ``NameError`` for the specific undefined annotation.</span>
         <span class="c1"># Alternatively, we could let `GenerateSchema()` raise the error, but there are cases where incomplete</span>
         <span class="c1"># fields are inherited in `collect_model_fields()` and can actually have their annotation resolved in the</span>
         <span class="c1"># generate schema process. As we want to avoid having `__pydantic_fields_complete__` set to `False`</span>
         <span class="c1"># when `__pydantic_complete__` is `True`, we rebuild here:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span> <span class="o">=</span> <span class="n">rebuild_model_fields</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_extra_info__</span> <span class="o">=</span> <span class="n">rebuild_model_fields</span><span class="p">(</span>
                 <span class="bp">cls</span><span class="p">,</span>
                 <span class="n">config_wrapper</span><span class="o">=</span><span class="n">config_wrapper</span><span class="p">,</span>
                 <span class="n">ns_resolver</span><span class="o">=</span><span class="n">ns_resolver</span><span class="p">,</span>
@@ -894,7 +914,7 @@
         <span class="n">set_model_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="c1"># This needs to happen *after* model schema generation, as the return type</span>
+    <span class="c1"># This needs to happen *after* model schema generation, as the return types</span>
     <span class="c1"># of the properties are evaluated and the `ComputedFieldInfo` are recreated:</span>
     <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_computed_fields__</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">info</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_decorators__</span><span class="o">.</span><span class="n">computed_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
@@ -910,8 +930,9 @@
         <span class="s1">&#39;create_model&#39;</span> <span class="k">if</span> <span class="n">create_model_module</span> <span class="k">else</span> <span class="s1">&#39;BaseModel&#39;</span><span class="p">,</span>
         <span class="n">core_config</span><span class="p">,</span>
         <span class="n">config_wrapper</span><span class="o">.</span><span class="n">plugin_settings</span><span class="p">,</span>
+        <span class="n">_use_prebuilt</span><span class="o">=</span><span class="ow">not</span> <span class="n">is_force_rebuild</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_serializer__</span> <span class="o">=</span> <span class="n">SchemaSerializer</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">core_config</span><span class="p">)</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_serializer__</span> <span class="o">=</span> <span class="n">SchemaSerializer</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">_use_prebuilt</span><span class="o">=</span><span class="ow">not</span> <span class="n">is_force_rebuild</span><span class="p">)</span>
 
     <span class="c1"># set __signature__ attr only for model class, but not for its instances</span>
     <span class="c1"># (because instances can define `__call__`, and `inspect.signature` shouldn&#39;t</span>
@@ -994,7 +1015,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">_PydanticWeakRef</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for `weakref.ref` that enables `pickle` serialization.</span>
 
-<span class="sd">    Cloudpickle fails to serialize `weakref.ref` objects due to an arcane error related</span>
+<span class="sd">    Cloudpickle fails to serialize weakref.ref objects due to an arcane error related to</span>
 <span class="sd">    to abstract base classes (`abc.ABC`). This class works around the issue by wrapping</span>
 <span class="sd">    `weakref.ref` instead of subclassing it.</span>
 
@@ -1112,7 +1133,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=b60c9fe1"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

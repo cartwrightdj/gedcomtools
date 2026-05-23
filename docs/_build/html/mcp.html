@@ -1,13 +1,13 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="./">
-  <head>
-<meta charset="utf-8">
+  <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="#">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Using MCP With Agents" href="mcp-agents.html"><link rel="prev" title="gxcli — GEDCOM-X Interactive Inspector" href="gxcli.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-<meta name="robots" content="noindex" />
-<title>Search - gedcomtools</title><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+        <title>MCP Server - gedcomtools</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -172,7 +172,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -184,14 +184,14 @@
   
   <span class="sidebar-brand-text">gedcomtools</span>
   
-</a><form class="sidebar-search-container" method="get" action="#" role="search">
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
@@ -200,7 +200,7 @@
 <li class="toctree-l2"><a class="reference internal" href="gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="mcp.html">MCP Server</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">MCP Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcp-agents.html">Using MCP With Agents</a></li>
 </ul>
 
@@ -221,7 +221,13 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          <div class="theme-toggle-container theme-toggle-content">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/mcp.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
@@ -229,30 +235,161 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          
-<noscript>
-<div class="admonition error">
-  <p class="admonition-title">Error</p>
-  <p>
-    Please activate JavaScript to enable the search functionality.
-  </p>
+          <section id="mcp-server">
+<h1>MCP Server<a class="headerlink" href="#mcp-server" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">gedcomtools</span></code> includes an optional stdio MCP server for exposing GEDCOM
+tools to MCP-capable clients.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>Install the MCP extra:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;gedcomtools[mcp]&quot;</span>
+</pre></div>
 </div>
-</noscript>
-
-<div id="search-results"></div>
+<p>From a source checkout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[mcp]&quot;</span>
+</pre></div>
+</div>
+<p>Run the server with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools-mcp
+</pre></div>
+</div>
+<p>The server uses stdio transport, which is the transport expected by many MCP
+desktop and agent clients.</p>
+</section>
+<section id="client-configuration">
+<h2>Client Configuration<a class="headerlink" href="#client-configuration" title="Link to this heading">¶</a></h2>
+<p>Example MCP client configuration:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;gedcomtools&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gedcomtools-mcp&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="recommended-workflow">
+<h2>Recommended Workflow<a class="headerlink" href="#recommended-workflow" title="Link to this heading">¶</a></h2>
+<p>Start each session by calling:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>man()
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">man</span></code> tool returns the server guide, a tool index, and recommended first
+calls. Use <code class="docutils literal notranslate"><span class="pre">man(&quot;tool_name&quot;)</span></code> before using an unfamiliar tool to get the
+exact parameters, output shape, caveats, and examples.</p>
+<p>For GEDCOM files, a typical workflow is:</p>
+<ol class="arabic simple">
+<li><p>Call <code class="docutils literal notranslate"><span class="pre">load_gedcom(file_path)</span></code> to detect the file type and get summary
+counts.</p></li>
+<li><p>For GEDCOM 5.x, use <code class="docutils literal notranslate"><span class="pre">list_individuals</span></code> to find an xref, then use
+relationship tools such as <code class="docutils literal notranslate"><span class="pre">get_parents</span></code>, <code class="docutils literal notranslate"><span class="pre">get_children</span></code>,
+<code class="docutils literal notranslate"><span class="pre">get_spouses</span></code>, <code class="docutils literal notranslate"><span class="pre">get_ancestors</span></code>, and <code class="docutils literal notranslate"><span class="pre">get_descendants</span></code>.</p></li>
+<li><p>For evidence and raw data, use <code class="docutils literal notranslate"><span class="pre">get_individual</span></code>, <code class="docutils literal notranslate"><span class="pre">get_family</span></code>,
+<code class="docutils literal notranslate"><span class="pre">get_sources</span></code>, and <code class="docutils literal notranslate"><span class="pre">get_record_tree</span></code>.</p></li>
+<li><p>For GEDCOM 7, use <code class="docutils literal notranslate"><span class="pre">validate_gedcom7</span></code> and <code class="docutils literal notranslate"><span class="pre">inspect_gedcom7</span></code>.</p></li>
+<li><p>For GEDCOM X JSON, use <code class="docutils literal notranslate"><span class="pre">list_gedcomx_collections</span></code>,
+<code class="docutils literal notranslate"><span class="pre">search_gedcomx_persons</span></code>, <code class="docutils literal notranslate"><span class="pre">get_gedcomx_object</span></code>, and schema/reference
+tools.</p></li>
+</ol>
+</section>
+<section id="tool-groups">
+<h2>Tool Groups<a class="headerlink" href="#tool-groups" title="Link to this heading">¶</a></h2>
+<p>Help and runtime:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">man</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">server_info</span></code></p></li>
+</ul>
+<p>File loading and format detection:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">load_gedcom</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_gedcom_version</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">summarize_gedcom5x</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">summarize_gedcomx_json</span></code></p></li>
+</ul>
+<p>GEDCOM 5.x people and family navigation:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">list_individuals</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_individual</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_person_families</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_parents</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_children</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_spouses</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_siblings</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_ancestors</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_descendants</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_family</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">find_relationship_path</span></code></p></li>
+</ul>
+<p>GEDCOM 5.x records and evidence:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_sources</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_record_tree</span></code></p></li>
+</ul>
+<p>Conversion and graph export:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">convert_gedcom5x_to_gedcomx</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export_arango_graph</span></code></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">export_arango_graph</span></code> writes <code class="docutils literal notranslate"><span class="pre">nodes.jsonl</span></code> and <code class="docutils literal notranslate"><span class="pre">edges.jsonl</span></code>. Despite the
+legacy tool name, the node file contains all graph node types, not only people.</p>
+<p>GEDCOM 7:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_gedcom7</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inspect_gedcom7</span></code></p></li>
+</ul>
+<p>GEDCOM X JSON browsing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">list_gedcomx_collections</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_gedcomx_objects</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_gedcomx_object</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">search_gedcomx_persons</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_gedcomx_person_relationships</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resolve_gedcomx_reference</span></code></p></li>
+</ul>
+<p>GEDCOM X schema inspection:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_gedcomx_schema_class</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">search_gedcomx_schema</span></code></p></li>
+</ul>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h2>
+<p>Parsed GEDCOM and GEDCOM X files are cached in-process during a normal MCP
+session, so repeated calls against the same file reuse loaded data.</p>
+</section>
+</section>
 
         </article>
       </div>
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="mcp-agents.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Using MCP With Agents</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="gxcli.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">gxcli — GEDCOM-X Interactive Inspector</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -271,8 +408,31 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">MCP Server</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#client-configuration">Client Configuration</a></li>
+<li><a class="reference internal" href="#recommended-workflow">Recommended Workflow</a></li>
+<li><a class="reference internal" href="#tool-groups">Tool Groups</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
@@ -281,8 +441,5 @@
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
-    
-<script src="_static/searchtools.js"></script>
-<script src="_static/language_data.js"></script>
-<script src="searchindex.js"></script></body>
+    </body>
 </html>

@@ -12,6 +12,8 @@ Python tools for working with GEDCOM 5.x, GEDCOM 7, and GedcomX genealogy data.
    api/gedcom5
    api/gedcom7
    api/cli
+   mcp
+   mcp-agents
 
 Indices
 -------
