@@ -14,7 +14,10 @@
 
 import argparse
 import sys
+from contextlib import contextmanager, nullcontext, redirect_stderr
+from io import StringIO
 from pathlib import Path
+from typing import Optional, Sequence
 
 # -----------------------------------------------------------------------
 # Exit codes
@@ -29,12 +32,91 @@ ERR_IO                  = 5
 
 try:
     import orjson
-    def _json_dumps(obj) -> bytes:
-        return orjson.dumps(obj, option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
+    def _json_dumps(obj, *, compact: bool = False) -> bytes:
+        option = orjson.OPT_APPEND_NEWLINE
+        if not compact:
+            option |= orjson.OPT_INDENT_2
+        return orjson.dumps(obj, option=option)
 except ImportError:
     import json
-    def _json_dumps(obj) -> bytes:
-        return (json.dumps(obj, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    def _json_dumps(obj, *, compact: bool = False) -> bytes:
+        if compact:
+            text = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+        else:
+            text = json.dumps(obj, ensure_ascii=False, indent=2)
+        return (text + "\n").encode("utf-8")
+
+
+class _NullWriter:
+    """Small file-like sink used for quiet status output."""
+
+    def write(self, _text: str) -> int:
+        return 0
+
+    def flush(self) -> None:
+        return None
+
+
+def _is_stdout_path(path: Path) -> bool:
+    """Return True when an output path means stdout."""
+    return str(path) == "-"
+
+
+def _status_stream(dest_path: Path, *, quiet: bool = False):
+    """Send status messages to stderr when stdout is reserved for data."""
+    if quiet:
+        return _NullWriter()
+    return sys.stderr if _is_stdout_path(dest_path) else sys.stdout
+
+
+def _write_bytes_output(dest_path: Path, data: bytes) -> None:
+    """Write bytes to a file or stdout when *dest_path* is ``-``."""
+    if _is_stdout_path(dest_path):
+        if hasattr(sys.stdout, "buffer"):
+            sys.stdout.buffer.write(data)
+        else:
+            sys.stdout.write(data.decode("utf-8"))
+            if not data.endswith(b"\n"):
+                sys.stdout.write("\n")
+            return
+        if not data.endswith(b"\n"):
+            sys.stdout.buffer.write(b"\n")
+        return
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest_path, "wb") as f:
+        f.write(data)
+
+
+def _write_text_output(dest_path: Path, text: str) -> None:
+    """Write text to a file or stdout when *dest_path* is ``-``."""
+    if _is_stdout_path(dest_path):
+        sys.stdout.write(text)
+        if not text.endswith("\n"):
+            sys.stdout.write("\n")
+        return
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    dest_path.write_text(text, encoding="utf-8")
+
+
+@contextmanager
+def _quiet_tool_stderr(quiet: bool):
+    """Suppress noisy converter/library stderr output in quiet mode."""
+    if not quiet:
+        with nullcontext():
+            yield
+        return
+    try:
+        from loguru import logger
+    except ImportError:
+        logger = None
+    if logger is not None:
+        logger.disable("")
+    try:
+        with redirect_stderr(StringIO()):
+            yield
+    finally:
+        if logger is not None:
+            logger.enable("")
 
 
 # -----------------------------------------------------------------------
@@ -52,8 +134,8 @@ def _sniff_source_type(path: Path) -> str:
     if suffix in (".json", ".gedcomx"):
         try:
             with open(path, "rb") as f:
-                first = f.read(1)
-            if first == b"{":
+                prefix = f.read(4096)
+            if prefix.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"{"):
                 return "gx"
         except OSError:
             pass
@@ -106,140 +188,162 @@ def _load_g7(path: Path):
 def _load_gx(path: Path):
     from gedcomtools.gedcomx.gedcomx import GedcomX
     from gedcomtools.gedcomx.serialization import Serialization
+    raw = path.read_bytes()
     try:
         import orjson  # pylint: disable=redefined-outer-name
-        with open(path, "rb") as f:
-            data = orjson.loads(f.read())
+        data = orjson.loads(raw.removeprefix(b"\xef\xbb\xbf"))
     except ImportError:
         import json  # pylint: disable=redefined-outer-name
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = json.loads(raw.decode("utf-8-sig"))
     if not isinstance(data, dict):
         raise ValueError(f"Expected a JSON object at root of {path}, got {type(data).__name__}")
     return Serialization.deserialize(data=data, class_type=GedcomX)
 
 
-def _convert_g5_to_gx(source_path: Path, dest_path: Path) -> int:
+def _convert_g5_to_gx(source_path: Path, dest_path: Path, *, quiet: bool = False, compact: bool = False) -> int:
     from gedcomtools.gedcomx.conversion import GedcomConverter
-    print(f"Loading GEDCOM 5 from {source_path} ...")
+    status = _status_stream(dest_path, quiet=quiet)
+    print(f"Loading GEDCOM 5 from {source_path} ...", file=status)
     try:
-        g5 = _load_g5(source_path)
+        with _quiet_tool_stderr(quiet):
+            g5 = _load_g5(source_path)
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print("Converting to GedcomX ...")
+    print("Converting to GedcomX ...", file=status)
     try:
-        conv = GedcomConverter()
-        gx = conv.Gedcom5x_GedcomX(g5)
-        data = gx._to_dict()
+        with _quiet_tool_stderr(quiet):
+            conv = GedcomConverter()
+            gx = conv.Gedcom5x_GedcomX(g5)
+            data = gx._to_dict()
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
     try:
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(dest_path, "wb") as f:
-            f.write(_json_dumps(data))
+        _write_bytes_output(dest_path, _json_dumps(data, compact=compact))
     except OSError as e:
         print(f"Error: could not write output file: {e}", file=sys.stderr)
         return ERR_IO
-    print(f"Written to {dest_path}")
+    print(f"Written to {dest_path}", file=status)
     if gx._import_unhandled_tags:
-        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}")
+        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}", file=status)
     return OK
 
 
-def _convert_g5_to_g7(source_path: Path, dest_path: Path, *, unknown_tags: str = "drop") -> int:
+def _convert_g5_to_g7(
+    source_path: Path,
+    dest_path: Path,
+    *,
+    unknown_tags: str = "drop",
+    quiet: bool = False,
+    compact: bool = False,
+) -> int:
     from gedcomtools.gedcom5.gedcom5 import Gedcom5
     from gedcomtools.gedcom5.g5tog7 import Gedcom5to7
     from gedcomtools.gedcom7.writer import Gedcom7Writer
-    print(f"Loading GEDCOM 5 from {source_path} ...")
+    _ = compact
+    status = _status_stream(dest_path, quiet=quiet)
+    print(f"Loading GEDCOM 5 from {source_path} ...", file=status)
     try:
-        g5 = Gedcom5(source_path)
+        with _quiet_tool_stderr(quiet):
+            g5 = Gedcom5(source_path)
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print("Converting to GEDCOM 7 ...")
+    print("Converting to GEDCOM 7 ...", file=status)
     try:
-        conv = Gedcom5to7(unknown_tags=unknown_tags)
-        records = conv.convert(g5)
+        with _quiet_tool_stderr(quiet):
+            conv = Gedcom5to7(unknown_tags=unknown_tags)
+            records = conv.convert(g5)
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
     for w in conv.warnings:
-        print(f"  warning: {w}")
+        print(f"  warning: {w}", file=status)
     try:
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        Gedcom7Writer().write(records, dest_path)
+        writer = Gedcom7Writer()
+        if _is_stdout_path(dest_path):
+            _write_text_output(dest_path, writer.serialize(records))
+        else:
+            writer.write(records, dest_path)
     except OSError as e:
         print(f"Error: could not write output file: {e}", file=sys.stderr)
         return ERR_IO
     n_indi = sum(1 for r in records if r.tag == "INDI")
     n_fam  = sum(1 for r in records if r.tag == "FAM")
-    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)", file=status)
     return OK
 
 
-def _convert_g7_to_gx(source_path: Path, dest_path: Path) -> int:
+def _convert_g7_to_gx(source_path: Path, dest_path: Path, *, quiet: bool = False, compact: bool = False) -> int:
     from gedcomtools.gedcom7.g7togx import Gedcom7Converter
-    print(f"Loading GEDCOM 7 from {source_path} ...")
+    status = _status_stream(dest_path, quiet=quiet)
+    print(f"Loading GEDCOM 7 from {source_path} ...", file=status)
     try:
-        g7 = _load_g7(source_path)
+        with _quiet_tool_stderr(quiet):
+            g7 = _load_g7(source_path)
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print("Converting to GedcomX ...")
+    print("Converting to GedcomX ...", file=status)
     try:
-        gx = Gedcom7Converter().convert(g7)
-        data = gx._to_dict()
+        with _quiet_tool_stderr(quiet):
+            gx = Gedcom7Converter().convert(g7)
+            data = gx._to_dict()
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
     try:
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(dest_path, "wb") as f:
-            f.write(_json_dumps(data))
+        _write_bytes_output(dest_path, _json_dumps(data, compact=compact))
     except OSError as e:
         print(f"Error: could not write output file: {e}", file=sys.stderr)
         return ERR_IO
-    print(f"Written to {dest_path}")
+    print(f"Written to {dest_path}", file=status)
     if gx._import_unhandled_tags:
-        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}")
+        print(f"Unhandled tags: {list(gx._import_unhandled_tags.keys())}", file=status)
     return OK
 
 
-def _convert_gx_to_g7(source_path: Path, dest_path: Path) -> int:
+def _convert_gx_to_g7(source_path: Path, dest_path: Path, *, quiet: bool = False, compact: bool = False) -> int:
     from gedcomtools.gedcom7.gxtog7 import GedcomXConverter
     from gedcomtools.gedcom7.writer import Gedcom7Writer
-    print(f"Loading GedcomX from {source_path} ...")
+    _ = compact
+    status = _status_stream(dest_path, quiet=quiet)
+    print(f"Loading GedcomX from {source_path} ...", file=status)
     try:
-        gx = _load_gx(source_path)
+        with _quiet_tool_stderr(quiet):
+            gx = _load_gx(source_path)
     except Exception as e:
         print(f"Error: failed to parse source file: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
-    print("Converting to GEDCOM 7 ...")
+    print("Converting to GEDCOM 7 ...", file=status)
     try:
-        records = GedcomXConverter().convert(gx)
+        with _quiet_tool_stderr(quiet):
+            records = GedcomXConverter().convert(gx)
     except Exception as e:
         print(f"Error: conversion failed: {e}", file=sys.stderr)
         return ERR_CONVERSION_FAILED
     try:
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        Gedcom7Writer().write(records, dest_path)
+        writer = Gedcom7Writer()
+        if _is_stdout_path(dest_path):
+            _write_text_output(dest_path, writer.serialize(records))
+        else:
+            writer.write(records, dest_path)
     except OSError as e:
         print(f"Error: could not write output file: {e}", file=sys.stderr)
         return ERR_IO
     n_indi = sum(1 for r in records if r.tag == "INDI")
     n_fam  = sum(1 for r in records if r.tag == "FAM")
-    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)")
+    print(f"Written to {dest_path}  ({n_indi} INDI · {n_fam} FAM)", file=status)
     return OK
 
 
-def _convert_gedcom_to_csv(source_path: Path, dest_path: Path) -> int:
+def _convert_gedcom_to_csv(source_path: Path, dest_path: Path, *, quiet: bool = False, compact: bool = False) -> int:
     """Export a GEDCOM 5/7 file to one CSV per top-level entity type."""
     from gedcomtools.gctool_dataops import export_gedcom_to_csv
 
-    print(f"Exporting top-level GEDCOM entities from {source_path} to CSV ...")
-    return export_gedcom_to_csv(source_path, dest_path)
+    print(f"Exporting top-level GEDCOM entities from {source_path} to CSV ...", file=_status_stream(dest_path, quiet=quiet))
+    return export_gedcom_to_csv(source_path, dest_path, quiet=quiet, compact=compact)
 
 
 # Conversion dispatch table: (source_type, dest_type) -> callable(source_path, dest_path)
@@ -269,6 +373,9 @@ def cmd_convert(args) -> int:
     source_path = Path(args.source)
     dest_path = Path(args.dest)
     dest_type = args.dest_type.lower()
+    quiet = getattr(args, "quiet", False)
+    compact = getattr(args, "compact", False)
+    status = _status_stream(dest_path, quiet=quiet)
 
     if not source_path.exists():
         print(f"Error: source file not found: {source_path}", file=sys.stderr)
@@ -280,10 +387,10 @@ def cmd_convert(args) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return ERR_UNKNOWN_SOURCE_TYPE
 
-    print(f"Detected source type: {source_type.upper()}")
+    print(f"Detected source type: {source_type.upper()}", file=status)
 
     if source_type == dest_type:
-        print("Source and destination types are the same — nothing to do.")
+        print("Source and destination types are the same — nothing to do.", file=status)
         return OK
 
     converter = _CONVERSIONS.get((source_type, dest_type))
@@ -297,6 +404,8 @@ def cmd_convert(args) -> int:
     kwargs = {}
     if (source_type, dest_type) == ("g5", "g7"):
         kwargs["unknown_tags"] = getattr(args, "on_unknown", "drop") or "drop"
+    kwargs["quiet"] = quiet
+    kwargs["compact"] = compact
     return converter(source_path, dest_path, **kwargs)
 
 
@@ -304,8 +413,8 @@ def cmd_convert(args) -> int:
 # Main
 # -----------------------------------------------------------------------
 
-def main() -> None:
-    """Entry point for the ``gedcomtools`` CLI; parses arguments and dispatches subcommands."""
+def _legacy_convert_main(argv: Sequence[str]) -> int:
+    """Run the historical ``gedcomtools convert SOURCE DEST -gx`` interface."""
     parser = argparse.ArgumentParser(
         prog="gedcomtools",
         description="Gedcom Tools CLI",
@@ -352,10 +461,39 @@ def main() -> None:
             "'convert' renames them to _TAG extension tags declared in HEAD.SCHMA."
         ),
     )
+    p_convert.add_argument("--quiet", action="store_true", help="Suppress status output")
+    p_convert.add_argument("--compact", action="store_true", help="Write compact JSON when the target is JSON")
     p_convert.set_defaults(func=cmd_convert)
 
-    args = parser.parse_args()
-    sys.exit(args.func(args))
+    args = parser.parse_args(list(argv))
+    return args.func(args)
+
+
+def _looks_like_legacy_convert(argv: Sequence[str]) -> bool:
+    """Return True for the old conversion syntax kept for compatibility."""
+    if not argv or argv[0] != "convert":
+        return False
+    if any(arg in {"-g5", "-g7", "-gx", "-csv"} for arg in argv[1:]):
+        return True
+    if len(argv) >= 4 and not argv[2].startswith("-"):
+        return True
+    return False
+
+
+def main(argv: Optional[Sequence[str]] = None) -> None:
+    """Entry point for the ``gedcomtools`` CLI.
+
+    ``gedcomtools`` now exposes the richer ``gctool`` command surface. The
+    original ``gedcomtools convert SOURCE DEST -gx`` syntax is still accepted
+    so existing scripts continue to work.
+    """
+    args = list(sys.argv[1:] if argv is None else argv)
+    if _looks_like_legacy_convert(args):
+        sys.exit(_legacy_convert_main(args))
+
+    from gedcomtools.gctool import main as gctool_main
+
+    sys.exit(gctool_main(args, prog="gedcomtools"))
 
 
 if __name__ == "__main__":

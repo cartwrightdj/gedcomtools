@@ -11,7 +11,7 @@
 #           2026-04-10 — bounded remote downloads with shared timeout/size helper
 #           2026-04-12 — pre-compile GEDCOM line-parse regexes at module load;
 #                         removed per-line pattern construction in __parse_line()
-#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+#           2026-04-15 — release refresh for v0.8.2b4 docs/build packaging
 # ======================================================================
 """Parse GEDCOM 5.x files into the project’s element tree representation."""
 

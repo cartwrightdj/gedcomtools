@@ -29,8 +29,8 @@ import pytest
 
 from gedcomtools.gctool import main
 from gedcomtools.gctool_commands import _package_version
-from gedcomtools.gctool_examine import _Node, _build_label, _ls, _path_str
-from gedcomtools.gctool_load import _sniff
+from gedcomtools.gctool_examine import _Node, _build_label, _path_str
+from gedcomtools.gctool_load import _load, _sniff
 from gedcomtools.gctool_output import _norm_xref
 
 # ---------------------------------------------------------------------------
@@ -159,9 +159,33 @@ class TestSniff:
         p.write_bytes(b"PK\x03\x04")   # minimal zip magic
         assert _sniff(p) == "g7"
 
+    def test_gdz_load_decodes_windows_cp1252_bytes(self, tmp_path):
+        ged = (
+            b"0 HEAD\n"
+            b"1 GEDC\n"
+            b"2 VERS 7.0\n"
+            b"0 @I1@ INDI\n"
+            b"1 NOTE Middle\xb7dot\n"
+            b"0 TRLR\n"
+        )
+        p = tmp_path / "archive.gdz"
+        with zipfile.ZipFile(p, "w") as zf:
+            zf.writestr("tree.ged", ged)
+
+        fmt, obj = _load(p)
+
+        assert fmt == "g7"
+        assert obj["INDI"][0].children[0].payload == "Middle·dot"
+        assert any(error.code == "non_utf8_encoding" for error in obj.errors)
+
     def test_json_object_is_gx(self, tmp_path):
         p = tmp_path / "data.json"
         p.write_text('{"persons": []}')
+        assert _sniff(p) == "gx"
+
+    def test_json_object_with_bom_and_whitespace_is_gx(self, tmp_path):
+        p = tmp_path / "data.json"
+        p.write_bytes(b"\xef\xbb\xbf\n  {\"persons\": []}")
         assert _sniff(p) == "gx"
 
     def test_no_vers_defaults_to_g5(self, tmp_path):
@@ -581,6 +605,79 @@ class TestExport:
         assert data["repositories"]["rows"] == 1
         assert data["submitters"]["rows"] == 1
 
+    def test_raw_json_export_writes_g5_tree_to_stdout(self, tmp_path):
+        source = _make_g5(tmp_path)
+
+        rc, stdout = _capture(["export", str(source), "--to", "raw-json", "--out", "-"])
+
+        assert rc == 0
+        data = json.loads(stdout)
+        assert data["format"] == "GEDCOM 5"
+        assert data["version"] == "5.5.1"
+        indi = next(record for record in data["records"] if record["tag"] == "INDI")
+        assert indi["xref"] == "@I1@"
+        assert any(child["tag"] == "NAME" for child in indi["children"])
+
+    def test_raw_json_export_compact_stdout(self, tmp_path):
+        source = _make_g5(tmp_path)
+
+        rc, stdout = _capture(["export", str(source), "--to", "raw-json", "--out", "-", "--compact"])
+
+        assert rc == 0
+        assert "\n  " not in stdout
+        assert json.loads(stdout)["format"] == "GEDCOM 5"
+
+    def test_raw_json_export_writes_g7_tree_to_file(self, tmp_path):
+        source = tmp_path / "tiny7.ged"
+        source.write_text(_G7_TEXT, encoding="utf-8")
+        out = tmp_path / "tiny7.json"
+
+        rc = _run(["export", str(source), "--to", "json", "--out", str(out)])
+
+        assert rc == 0
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["format"] == "GEDCOM 7"
+        assert data["version"] == "7.0"
+        indi = next(record for record in data["records"] if record["tag"] == "INDI")
+        assert indi["xref"] == "@I1@"
+        assert any(child["tag"] == "SEX" for child in indi["children"])
+
+    def test_csv_export_can_write_stdout_envelope(self, tmp_path):
+        source = _make_g5(tmp_path)
+
+        rc, stdout = _capture(["export", str(source), "--to", "csv", "--out", "-"])
+
+        assert rc == 0
+        data = json.loads(stdout)
+        assert data["individuals"]["rows"] == 2
+        assert data["individuals"]["csv"].startswith("xref,full_name,sex")
+
+    def test_csv_export_quiet_suppresses_file_summary(self, tmp_path):
+        source = _make_g5(tmp_path)
+        out = tmp_path / "exported"
+
+        rc, stdout = _capture(["export", str(source), "--to", "csv", "--out", str(out), "--quiet"])
+
+        assert rc == 0
+        assert stdout == ""
+        assert (tmp_path / "exported_individuals.csv").exists()
+
+
+# ---------------------------------------------------------------------------
+# repair command
+# ---------------------------------------------------------------------------
+
+class TestRepair:
+    def test_repair_json_quiet_still_prints_json_summary(self, tmp_path):
+        source = _make_g5(tmp_path)
+
+        rc, stdout = _capture(["--json", "repair", str(source), "--dry-run", "--quiet"])
+
+        assert rc == 0
+        data = json.loads(stdout)
+        assert data["dry_run"] is True
+        assert "before" in data
+
 
 # ---------------------------------------------------------------------------
 # convert command
@@ -607,12 +704,135 @@ class TestConvert:
         assert rc == 0
         assert "nothing to do" in out.lower() or "same" in out.lower()
 
+    def test_same_format_no_op_quiet_suppresses_message(self, tmp_path):
+        p = _make_g5(tmp_path)
+        rc, out = _capture(["convert", str(p), "--to", "g5", "--quiet"])
+        assert rc == 0
+        assert out == ""
+
     def test_g5_to_g7_conversion(self, tmp_path):
         p = _make_g5(tmp_path)
         out = tmp_path / "out.ged"
         rc = _run(["convert", str(p), "--to", "g7", "--out", str(out)])
         assert rc == 0
         assert out.exists()
+
+    def test_g5_to_g7_accepts_on_unknown(self, tmp_path):
+        p = _make_g5(tmp_path)
+        out = tmp_path / "out.ged"
+        rc = _run([
+            "convert",
+            str(p),
+            "--to",
+            "g7",
+            "--out",
+            str(out),
+            "--on-unknown",
+            "convert",
+        ])
+        assert rc == 0
+        assert out.exists()
+
+    @needs_g5
+    def test_g5_to_gx_can_write_stdout(self):
+        rc, stdout = _capture(["convert", str(GED5_SAMPLE), "--to", "gx", "--out", "-"])
+
+        assert rc == 0
+        data = json.loads(stdout)
+        assert isinstance(data, dict)
+        assert "persons" in data
+
+    @needs_g5
+    def test_g5_to_gx_stdout_can_be_compact(self):
+        rc, stdout = _capture(["convert", str(GED5_SAMPLE), "--to", "gx", "--out", "-", "--compact"])
+
+        assert rc == 0
+        assert "\n  " not in stdout
+        assert "persons" in json.loads(stdout)
+
+    @needs_g5
+    def test_convert_quiet_suppresses_file_status(self, tmp_path):
+        out = tmp_path / "out.json"
+
+        rc, stdout = _capture(["convert", str(GED5_SAMPLE), "--to", "gx", "--out", str(out), "--quiet"])
+
+        assert rc == 0
+        assert stdout == ""
+        assert out.exists()
+
+
+# ---------------------------------------------------------------------------
+# merge command
+# ---------------------------------------------------------------------------
+
+class TestMerge:
+    def test_keep_file1_duplicate_remaps_file2_family_links(self, tmp_path):
+        file1 = tmp_path / "file1.ged"
+        file2 = tmp_path / "file2.ged"
+        out = tmp_path / "merged.ged"
+        file1.write_text(
+            """\
+0 HEAD
+1 GEDC
+2 VERS 5.5.1
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Alice /Smith/
+1 BIRT
+2 DATE 1 JAN 1900
+0 TRLR
+""",
+            encoding="utf-8",
+        )
+        file2.write_text(
+            """\
+0 HEAD
+1 GEDC
+2 VERS 5.5.1
+1 CHAR UTF-8
+0 @I9@ INDI
+1 NAME Alice /Smith/
+1 BIRT
+2 DATE 1 JAN 1900
+1 FAMS @F9@
+0 @I10@ INDI
+1 NAME Bob /Jones/
+1 SEX M
+1 FAMS @F9@
+0 @F9@ FAM
+1 WIFE @I9@
+1 HUSB @I10@
+0 TRLR
+""",
+            encoding="utf-8",
+        )
+
+        with patch("sys.stdin.isatty", return_value=True), \
+             patch("builtins.input", return_value="1"):
+            rc = _run(["merge", str(file1), str(file2), "--out", str(out)])
+
+        text = out.read_text(encoding="utf-8")
+        assert rc == 0
+        assert "0 @I9@ INDI" not in text
+        assert "1 WIFE @I1@" in text
+        assert "0 @I3@ INDI" in text
+        assert "1 HUSB @I3@" in text
+
+
+# ---------------------------------------------------------------------------
+# g7cli
+# ---------------------------------------------------------------------------
+
+class TestG7Cli:
+    def test_help_option_prints_help_without_opening_shell(self):
+        from gedcomtools.gedcom7.g7cli import main as g7cli_main
+
+        buf = StringIO()
+        with patch("sys.stdout", buf):
+            rc = g7cli_main(["g7cli", "--help"])
+
+        assert rc == 0
+        assert "GEDCOM 7 browser" in buf.getvalue()
 
 
 # ---------------------------------------------------------------------------

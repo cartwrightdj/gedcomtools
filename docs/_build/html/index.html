@@ -193,6 +193,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">gedcomtools CLI Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom7.html">GEDCOM 7 API</a></li>
@@ -200,6 +201,8 @@
 <li class="toctree-l2"><a class="reference internal" href="gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="mcp.html">MCP Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp-agents.html">Using MCP With Agents</a></li>
 </ul>
 
 </div>
@@ -250,6 +253,25 @@
 <li class="toctree-l2"><a class="reference internal" href="getting-started.html#working-with-gedcomx-objects">Working with GedcomX objects</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting-started.html#serialization">Serialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting-started.html#cli-exit-codes">CLI Exit Codes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">gedcomtools CLI Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#commands-at-a-glance">Commands At A Glance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#input-formats">Input Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#basic-inspection">Basic Inspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#searching-and-trees">Searching And Trees</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#conversion">Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#repair">Repair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#export">Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#diff-and-merge">Diff And Merge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#interactive-shell">Interactive Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#gedcom-7-helper-commands">GEDCOM 7 Helper Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#gedcom-x-shell">GEDCOM X Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#mcp-server">MCP Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#practical-recipes">Practical Recipes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#exit-codes-and-scripting">Exit Codes And Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a><ul>
@@ -430,12 +452,26 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/cli.html">CLI Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#gedcomtools.gedcomx.cli.objects_to_schema_table"><code class="docutils literal notranslate"><span class="pre">objects_to_schema_table()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#gedcomtools.gedcomx.cli.write_jsonl"><code class="docutils literal notranslate"><span class="pre">write_jsonl()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#commands">Commands</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#gedcomtools.gedcom7.g7cli.Shell"><code class="docutils literal notranslate"><span class="pre">Shell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#gedcomtools.gedcom7.g7cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/cli.html#raw-json-and-stdout-export">Raw JSON and stdout export</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/cli.html#gxcli-guide">gxcli Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mcp.html">MCP Server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mcp.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp.html#client-configuration">Client Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp.html#recommended-workflow">Recommended Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp.html#tool-groups">Tool Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp.html#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mcp-agents.html">Using MCP With Agents</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#quick-smoke-test">Quick Smoke Test</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#codex">Codex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#claude-code">Claude Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#claude-desktop-and-other-mcp-clients">Claude Desktop And Other MCP Clients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#recommended-agent-workflow">Recommended Agent Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#current-tool-surface">Current Tool Surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcp-agents.html#safety-notes">Safety Notes</a></li>
 </ul>
 </li>
 </ul>
@@ -507,7 +543,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=0c504575"></script>
+</div><script src="_static/documentation_options.js?v=2473410a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

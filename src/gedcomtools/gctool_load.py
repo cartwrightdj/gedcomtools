@@ -13,7 +13,7 @@
           2026-04-12 — narrowed broad except Exception in _load() to specific types:
                        GedcomFormatViolationError/OSError/ValueError (g5) and
                        GedcomParseError/OSError/ValueError (g7)
-          2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+          2026-04-15 — release refresh for v0.8.2b4 docs/build packaging
 ======================================================================
 """
 
@@ -44,7 +44,8 @@ def _sniff(path: Path) -> str:
     if suffix in (".json", ".gedcomx"):
         try:
             with open(path, "rb") as fh:
-                if fh.read(1) == b"{":
+                prefix = fh.read(4096)
+                if prefix.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"{"):
                     return "gx"
         except OSError:
             pass
@@ -142,7 +143,7 @@ def _load(path: Path) -> Tuple[str, GedcomFile]:
                 if not ged_names:
                     print(f"error: no .ged file inside {path.name}", file=sys.stderr)
                     sys.exit(1)
-                obj.parse_string(zf.read(ged_names[0]).decode("utf-8-sig"))
+                obj.parse_bytes(zf.read(ged_names[0]), source=f"{path}:{ged_names[0]}")
         else:
             obj.loadfile(path)
     except (GedcomParseError, OSError, ValueError) as exc:

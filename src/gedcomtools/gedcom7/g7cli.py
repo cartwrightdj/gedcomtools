@@ -714,6 +714,9 @@ class Shell:
 def main(argv: Optional[List[str]] = None) -> int:
     """Run the command-line entry point."""
     args = (argv if argv is not None else sys.argv)[1:]
+    if args and args[0] in {"-h", "--help"}:
+        print(__doc__)
+        return 0
     shell = Shell()
     shell.run(initial_file=args[0] if args else None)
     return 0

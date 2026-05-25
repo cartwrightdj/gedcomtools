@@ -199,6 +199,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mcp.html">MCP Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mcp-agents.html">Using MCP With Agents</a></li>
 </ul>
 
 </div>
@@ -956,6 +958,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the command-line entry point.&quot;&quot;&quot;</span>
     <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">argv</span> <span class="k">if</span> <span class="n">argv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;-h&quot;</span><span class="p">,</span> <span class="s2">&quot;--help&quot;</span><span class="p">}:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
     <span class="n">shell</span> <span class="o">=</span> <span class="n">Shell</span><span class="p">()</span>
     <span class="n">shell</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">initial_file</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span></div>
@@ -996,7 +1001,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=eba77b5f"></script>
+</div><script src="../../../_static/documentation_options.js?v=b60c9fe1"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

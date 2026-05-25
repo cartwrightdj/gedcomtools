@@ -26,7 +26,7 @@ from gedcomtools.gedcomx.schemas import SCHEMA, type_repr
 from gedcomtools.gedcomx.serialization import Serialization
 
 
-SHELL_VERSION = '0.8.1'
+SHELL_VERSION = '0.8.2'
 
 # Logging is initialized in main() to avoid side effects on import.
 _LOG_MGR = None

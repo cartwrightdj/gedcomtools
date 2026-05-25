@@ -26,12 +26,12 @@ if TYPE_CHECKING:
 
 from gedcomtools.glog import get_logger
 
-log = get_logger(__name__)
-
 from .gctool_output import (
     _bold, _dim, _green, _kv, _norm_xref, _red, _table, _yellow,
 )
 from .gctool_load import _load
+
+log = get_logger(__name__)
 
 
 _LIST_TYPES = ("indi", "fam", "sour", "repo", "obje", "subm", "snote")
@@ -543,7 +543,8 @@ def cmd_convert(args) -> int:
         return 1
 
     if source_type == dest_type:
-        print("Source and destination formats are the same — nothing to do.")
+        if not getattr(args, "quiet", False):
+            print("Source and destination formats are the same — nothing to do.")
         return 0
 
     dest_ext = {"gx": ".json", "g7": ".ged", "g5": ".ged"}.get(dest_type, ".ged")
@@ -559,7 +560,12 @@ def cmd_convert(args) -> int:
         )
         return 1
 
-    return converter(source_path, dest_path)
+    kwargs = {}
+    if (source_type, dest_type) == ("g5", "g7"):
+        kwargs["unknown_tags"] = getattr(args, "on_unknown", "drop") or "drop"
+    kwargs["quiet"] = getattr(args, "quiet", False)
+    kwargs["compact"] = getattr(args, "compact", False)
+    return converter(source_path, dest_path, **kwargs)
 
 
 # ---------------------------------------------------------------------------

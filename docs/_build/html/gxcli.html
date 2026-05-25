@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="CLI Reference" href="api/cli.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="MCP Server" href="mcp.html"><link rel="prev" title="CLI Reference" href="api/cli.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>gxcli — GEDCOM-X Interactive Inspector - gedcomtools</title>
@@ -193,6 +193,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">gedcomtools CLI Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gedcom7.html">GEDCOM 7 API</a></li>
@@ -200,6 +201,8 @@
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="mcp.html">MCP Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp-agents.html">Using MCP With Agents</a></li>
 </ul>
 
 </div>
@@ -240,7 +243,7 @@
         <article role="main" id="furo-main-content">
           <section id="gxcli-gedcom-x-interactive-inspector">
 <h1>gxcli — GEDCOM-X Interactive Inspector<a class="headerlink" href="#gxcli-gedcom-x-interactive-inspector" title="Link to this heading">¶</a></h1>
-<p>A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version <strong>0.8.1</strong>.</p>
+<p>A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version <strong>0.8.2</strong>.</p>
 <hr class="docutils" />
 <section id="overview">
 <h2>1. Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
@@ -279,7 +282,7 @@ python<span class="w"> </span>src/gedcomtools/gedcomx/gxcli.py<span class="w"> <
 </pre></div>
 </div>
 <p>On startup, an interactive session prints:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Entering</span> <span class="n">GEDCOM</span><span class="o">-</span><span class="n">X</span> <span class="n">browser</span> <span class="p">(</span><span class="mf">0.8.1</span><span class="p">)</span> <span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">commands</span><span class="p">,</span> <span class="s1">&#39;quit&#39;</span> <span class="n">to</span> <span class="n">exit</span><span class="o">.</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Entering</span> <span class="n">GEDCOM</span><span class="o">-</span><span class="n">X</span> <span class="n">browser</span> <span class="p">(</span><span class="mf">0.8.2</span><span class="p">)</span> <span class="n">Type</span> <span class="s1">&#39;help&#39;</span> <span class="k">for</span> <span class="n">commands</span><span class="p">,</span> <span class="s1">&#39;quit&#39;</span> <span class="n">to</span> <span class="n">exit</span><span class="o">.</span>
 <span class="n">gx</span><span class="p">:</span><span class="o">/&gt;</span>
 </pre></div>
 </div>
@@ -1800,7 +1803,15 @@ log files on /var/log/gedcomtools
       <footer>
         
         <div class="related-pages">
-          
+          <a class="next-page" href="mcp.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">MCP Server</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
           <a class="prev-page" href="api/cli.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
@@ -1938,7 +1949,7 @@ log files on /var/log/gedcomtools
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=0c504575"></script>
+</div><script src="_static/documentation_options.js?v=2473410a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

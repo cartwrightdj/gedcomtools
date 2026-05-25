@@ -28,7 +28,8 @@ Usage::
     gctool find     <file> <tag> [--payload TEXT]
     gctool tree     <file> <xref> [--depth N]
     gctool stats    <file>
-    gctool convert      <file> --to <fmt> [--out <path>]
+    gctool convert  <file> --to <fmt> [--out <path>|-]
+    gctool export   <file> --to csv|raw-json [--out <path>|-]
     gctool interactive  <file>
 
 Commands
@@ -41,7 +42,8 @@ show      All detail fields for a single record (any type).
 find      Search the whole tree for nodes matching a tag (and optional payload).
 tree      ASCII ancestry + descendant tree for one individual.
 stats     Individual/family completeness and coverage summary.
-convert       Convert between formats.  Currently supports: g5 → gx.
+convert       Convert between supported formats.
+export        Export CSV files or raw GEDCOM tree JSON.
 interactive   Drop into an interactive REPL for the loaded file.
 """
 
@@ -75,10 +77,10 @@ from .gctool_interactive import cmd_interactive
 _LIST_TYPES_STR = "|".join(_LIST_TYPES)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: Optional[List[str]] = None, *, prog: str = "gctool") -> int:
     """Run the command-line entry point."""
     parser = argparse.ArgumentParser(
-        prog="gctool",
+        prog=prog,
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -140,25 +142,44 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--to", required=True, metavar="FORMAT",
                    choices=["g5", "g7", "gx"], help="Target format")
     p.add_argument("--out", "-o", metavar="PATH",
-                   help="Output path (default: auto-named next to source)")
+                   help="Output path, or '-' for stdout (default: auto-named next to source)")
+    p.add_argument("--quiet", action="store_true",
+                   help="Suppress status output")
+    p.add_argument("--compact", action="store_true",
+                   help="Write compact JSON when the target format is JSON")
+    p.add_argument(
+        "--on-unknown",
+        choices=["drop", "convert"],
+        default="drop",
+        help=(
+            "How to handle vendor/non-standard G5 tags during G5→G7 conversion. "
+            "'drop' discards them; 'convert' emits _TAG extension tags."
+        ),
+    )
     p.set_defaults(func=cmd_convert)
 
     # repair
     p = sub.add_parser("repair", help="Auto-fix common validation issues")
     _file(p)
     p.add_argument("--out", "-o", metavar="FILE",
-                   help="Output path (default: FILE_repaired.ged)")
+                   help="Output path, or '-' for stdout (default: FILE_repaired.ged)")
+    p.add_argument("--quiet", action="store_true",
+                   help="Suppress status output")
     p.add_argument("--dry-run", action="store_true",
                    help="Show what would be fixed without writing")
     p.set_defaults(func=cmd_repair)
 
     # export
-    p = sub.add_parser("export", help="Dump top-level GEDCOM entities to CSV")
+    p = sub.add_parser("export", help="Export GEDCOM data to CSV or raw JSON")
     _file(p)
-    p.add_argument("--to", required=True, metavar="FORMAT", choices=["csv"],
-                   help="Output format (csv)")
+    p.add_argument("--to", required=True, metavar="FORMAT", choices=["csv", "json", "raw-json"],
+                   help="Output format: csv or raw-json (json is an alias)")
     p.add_argument("--out", "-o", metavar="FILE",
-                   help="Output base path (auto-named if omitted)")
+                   help="Output path/base path, or '-' for stdout")
+    p.add_argument("--quiet", action="store_true",
+                   help="Suppress status output")
+    p.add_argument("--compact", action="store_true",
+                   help="Write compact JSON output")
     p.set_defaults(func=cmd_export)
 
     # diff

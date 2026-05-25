@@ -38,7 +38,7 @@ import orjson
 #                         remove stale entries before re-adding current values
 #                       — TypeCollection: added _rebuild_indexes() for full O(n)
 #                         recovery after out-of-band mutations
-#           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+#           2026-04-15 — release refresh for v0.8.2b4 docs/build packaging
 #                       — TypeCollection: added class-level docstring documenting
 #                         the mutation contract and safe update patterns
 #                       — TypeCollection: added change_id/change_uri/change_name

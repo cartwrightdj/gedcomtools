@@ -10,7 +10,7 @@
            2026-04-12 — single-parent FAM fallback: score candidates by number of
                         matching parents; avoids assigning a child to a FAM from a
                         different partnership when a parent belongs to multiple families
-           2026-04-15 — release refresh for v0.8.0b3 docs/build packaging
+           2026-04-15 — release refresh for v0.8.2b4 docs/build packaging
 ======================================================================
 
 Converts a populated :class:`~gedcomtools.gedcomx.gedcomx.GedcomX`

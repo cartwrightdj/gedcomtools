@@ -33,7 +33,7 @@
                  parse_gedcom_line() consolidates payload strip via rstrip() on line;
                  added *_details_iter() generator variants alongside *_details() methods
    - 2026-04-12: get_spouses(): replaced string .upper() self-exclusion with object
-   - 2026-04-15: release refresh for v0.8.0b3 docs/build packaging
+   - 2026-04-15: release refresh for v0.8.2b4 docs/build packaging
                  identity check (candidate is not indi_node); clearer and avoids
                  a redundant normalisation now that _xref_index handles case folding
 ======================================================================
@@ -82,6 +82,31 @@ from .models import (
     media_detail, shared_note_detail, submitter_detail,
 )
 from ..rel_cache import RelationshipCacheMixin
+
+
+def _decode_gedcom7_bytes(raw: bytes, source: str) -> tuple[str, Optional[GedcomValidationError]]:
+    """Decode GEDCOM 7 bytes consistently on every platform."""
+    try:
+        return raw.decode("utf-8-sig"), None
+    except UnicodeDecodeError as utf8_error:
+        for encoding in ("cp1252", "latin-1"):
+            try:
+                text = raw.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+            return text, GedcomValidationError(
+                code="non_utf8_encoding",
+                message=(
+                    f"{source} is not valid UTF-8; decoded as {encoding}. "
+                    "GEDCOM 7 requires UTF-8, so re-save the file as UTF-8 "
+                    f"for strict compatibility. ({utf8_error})"
+                ),
+                severity="warning",
+            )
+        raise GedcomParseError(
+            f"{source} is not valid UTF-8. "
+            f"GEDCOM 7 requires UTF-8 encoding. ({utf8_error})"
+        ) from utf8_error
 
 
 @dataclass(slots=True)
@@ -306,7 +331,9 @@ class Gedcom7(RelationshipCacheMixin):
         """Download and parse a GEDCOM 7 file from an HTTP/HTTPS URL.
 
         The response body is decoded as UTF-8 (required by the GEDCOM 7
-        specification) and passed to :meth:`parse_string`.
+        specification). Windows legacy encodings are accepted as a
+        cross-platform compatibility fallback and reported as validation
+        warnings.
 
         Args:
             url: HTTP or HTTPS URL pointing to a ``.ged`` file.
@@ -315,7 +342,7 @@ class Gedcom7(RelationshipCacheMixin):
             ValueError:             If the URL does not end in ``.ged``.
             urllib.error.URLError:  If the URL cannot be reached.
             urllib.error.HTTPError: If the server returns an error status.
-            GedcomParseError:       If the response body is not valid UTF-8.
+            GedcomParseError:       If the response body cannot be decoded.
         """
         _check_ged_url(url)
         try:
@@ -332,14 +359,7 @@ class Gedcom7(RelationshipCacheMixin):
             ) from exc
         except ValueError as exc:
             raise ValueError(f"Cannot fetch GEDCOM from {url}: {exc}") from exc
-        try:
-            text = raw.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise GedcomParseError(
-                f"Response from {url} is not valid UTF-8. "
-                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
-            ) from exc
-        self.parse_string(text)
+        self.parse_bytes(raw, source=f"Response from {url}")
 
     def loadfile(self, filepath: Union[str, Path]) -> None:
         """Load and parse a GEDCOM file.
@@ -348,22 +368,34 @@ class Gedcom7(RelationshipCacheMixin):
             filepath: Path to the GEDCOM file.
 
         Raises:
-            GedcomParseError: If the file cannot be opened or read.
+            GedcomParseError: If the file cannot be opened, read, or decoded.
         """
         path = Path(filepath)
-        try:
-            handle = path.open("r", encoding="utf-8")
-        except OSError as exc:
-            raise GedcomParseError(f"Cannot open file {path}: {exc}") from exc
         self.filepath = path
         try:
-            with handle:
-                self.parse_lines(handle)
-        except UnicodeDecodeError as exc:
-            raise GedcomParseError(
-                f"File {path} is not valid UTF-8. "
-                f"GEDCOM 7 requires UTF-8 encoding. ({exc})"
-            ) from exc
+            raw = path.read_bytes()
+        except OSError as exc:
+            raise GedcomParseError(f"Cannot open file {path}: {exc}") from exc
+        self.parse_bytes(raw, source=f"File {path}")
+        self.filepath = path
+
+    def parse_bytes(self, raw: bytes, *, source: str = "GEDCOM 7 data") -> None:
+        """Parse GEDCOM 7 content from bytes.
+
+        GEDCOM 7 requires UTF-8. Windows legacy encodings are accepted as a
+        compatibility fallback and reported as validation warnings.
+
+        Args:
+            raw: Complete GEDCOM 7 file content as bytes.
+            source: Human-readable source description for diagnostics.
+
+        Raises:
+            GedcomParseError: If the bytes cannot be decoded.
+        """
+        text, encoding_warning = _decode_gedcom7_bytes(raw, source)
+        self.parse_string(text)
+        if encoding_warning is not None:
+            self.errors.insert(0, encoding_warning)
 
     def parse_string(self, text: str) -> None:
         """Parse GEDCOM 7 content from a string.

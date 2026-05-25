@@ -193,6 +193,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">gedcomtools CLI Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gedcomx.html">GedcomX API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gedcom5.html">GEDCOM 5.x API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gedcom7.html">GEDCOM 7 API</a></li>
@@ -200,6 +201,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../gxcli.html">gxcli — GEDCOM-X Interactive Inspector</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">MCP Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp-agents.html">Using MCP With Agents</a></li>
 </ul>
 
 </div>
@@ -238,9 +241,39 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-gedcomtools.gedcomx.cli">
-<span id="cli-reference"></span><h1>CLI Reference<a class="headerlink" href="#module-gedcomtools.gedcomx.cli" title="Link to this heading">¶</a></h1>
-<dl class="py function">
+          <section id="cli-reference">
+<h1>CLI Reference<a class="headerlink" href="#cli-reference" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">gedcomtools</span></code> can inspect, validate, convert, repair, diff, merge, and export
+GEDCOM 5.x and GEDCOM 7 files.</p>
+<section id="raw-json-and-stdout-export">
+<h2>Raw JSON and stdout export<a class="headerlink" href="#raw-json-and-stdout-export" title="Link to this heading">¶</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">--to</span> <span class="pre">raw-json</span></code> to preserve the parsed GEDCOM record tree as JSON
+without converting it to GEDCOM X:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools<span class="w"> </span><span class="nb">export</span><span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>raw-json<span class="w"> </span>--out<span class="w"> </span>family.raw.json
+gedcomtools<span class="w"> </span><span class="nb">export</span><span class="w"> </span>family7.ged<span class="w"> </span>--to<span class="w"> </span>raw-json<span class="w"> </span>--out<span class="w"> </span>family7.raw.json
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--to</span> <span class="pre">json</span></code> is accepted as an alias for <code class="docutils literal notranslate"><span class="pre">raw-json</span></code>. The JSON document
+contains the source file, detected GEDCOM format/version, and a <code class="docutils literal notranslate"><span class="pre">records</span></code>
+array. Each node includes <code class="docutils literal notranslate"><span class="pre">level</span></code>, <code class="docutils literal notranslate"><span class="pre">xref</span></code>, <code class="docutils literal notranslate"><span class="pre">tag</span></code>, <code class="docutils literal notranslate"><span class="pre">value</span></code>, <code class="docutils literal notranslate"><span class="pre">pointer</span></code>,
+<code class="docutils literal notranslate"><span class="pre">line</span></code>, and <code class="docutils literal notranslate"><span class="pre">children</span></code>. GEDCOM 7 nodes also include <code class="docutils literal notranslate"><span class="pre">uri</span></code> and
+<code class="docutils literal notranslate"><span class="pre">extension</span></code> metadata when available.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--out</span> <span class="pre">-</span></code> to send generated output to stdout:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools<span class="w"> </span><span class="nb">export</span><span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>raw-json<span class="w"> </span>--out<span class="w"> </span>-<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.records | length&#39;</span>
+gedcomtools<span class="w"> </span>convert<span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>gx<span class="w"> </span>--out<span class="w"> </span>-<span class="w"> </span>&gt;<span class="w"> </span>family.gedcomx.json
+gedcomtools<span class="w"> </span>convert<span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>g7<span class="w"> </span>--out<span class="w"> </span>-<span class="w"> </span>&gt;<span class="w"> </span>family7.ged
+</pre></div>
+</div>
+<p>When stdout carries the generated payload, progress/status text is written to
+stderr. CSV export normally creates several files; with <code class="docutils literal notranslate"><span class="pre">--out</span> <span class="pre">-</span></code> it emits a
+JSON envelope containing each CSV document as a string.</p>
+<p>For scripts and agent integrations, add <code class="docutils literal notranslate"><span class="pre">--quiet</span></code> to suppress status text and
+<code class="docutils literal notranslate"><span class="pre">--compact</span></code> to emit compact JSON:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gedcomtools<span class="w"> </span>convert<span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>gx<span class="w"> </span>--out<span class="w"> </span>-<span class="w"> </span>--quiet<span class="w"> </span>--compact
+gedcomtools<span class="w"> </span><span class="nb">export</span><span class="w"> </span>family.ged<span class="w"> </span>--to<span class="w"> </span>raw-json<span class="w"> </span>--out<span class="w"> </span>-<span class="w"> </span>--compact
+</pre></div>
+</div>
+<dl class="py function" id="module-gedcomtools.gedcomx.cli">
 <dt class="sig sig-object py" id="gedcomtools.gedcomx.cli.objects_to_schema_table">
 <span class="sig-prename descclassname"><span class="pre">gedcomtools.gedcomx.cli.</span></span><span class="sig-name descname"><span class="pre">objects_to_schema_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objs</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">include</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_col_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gedcomtools/gedcomx/cli.html#objects_to_schema_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gedcomtools.gedcomx.cli.objects_to_schema_table" title="Link to this definition">¶</a></dt>
 <dd><p>Build a text table for a homogeneous list of objects using SCHEMA
@@ -286,7 +319,7 @@ ValueError: if both overwrite and append are set.</p>
 </pre></div>
 </div>
 <section id="commands">
-<h2>Commands<a class="headerlink" href="#commands" title="Link to this heading">¶</a></h2>
+<h3>Commands<a class="headerlink" href="#commands" title="Link to this heading">¶</a></h3>
 <p>load &lt;path&gt;            Load a GEDCOM 7 file.
 write &lt;path&gt;           Write the current file to <em>path</em>.
 validate               Run the GEDCOM 7 validator and show issues.
@@ -334,6 +367,7 @@ quit / exit            Exit the shell.</p>
 </dl>
 </dd></dl>
 
+</section>
 <section id="gxcli-guide">
 <h2>gxcli Guide<a class="headerlink" href="#gxcli-guide" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -415,6 +449,7 @@ quit / exit            Exit the shell.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">CLI Reference</a><ul>
+<li><a class="reference internal" href="#raw-json-and-stdout-export">Raw JSON and stdout export</a><ul>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.cli.objects_to_schema_table"><code class="docutils literal notranslate"><span class="pre">objects_to_schema_table()</span></code></a></li>
 <li><a class="reference internal" href="#gedcomtools.gedcomx.cli.write_jsonl"><code class="docutils literal notranslate"><span class="pre">write_jsonl()</span></code></a></li>
 <li><a class="reference internal" href="#commands">Commands</a></li>
@@ -423,6 +458,8 @@ quit / exit            Exit the shell.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#gedcomtools.gedcom7.g7cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gxcli-guide">gxcli Guide</a></li>
 </ul>
 </li>
@@ -435,7 +472,7 @@ quit / exit            Exit the shell.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=0c504575"></script>
+</div><script src="../_static/documentation_options.js?v=2473410a"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

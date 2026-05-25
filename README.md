@@ -5,7 +5,7 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-> **BETA SOFTWARE — v0.8.0b3**
+> **BETA SOFTWARE — v0.8.2b4**
 >
 > `gedcomtools` is under active development. Public APIs and serialization should be considered stable. Data models and formats
 > *may change between releases without notice. It is not yet recommended for
@@ -13,53 +13,59 @@ genealogical data using the **GEDCOM 5.x**, **GEDCOM 7**, and **GEDCOM X** data 
 
 ---
 
-## What's New in v0.8.0b3
+## What's New in v0.8.2b4
 
-### FamilySearch deserialization
+### CLI, exports, and docs
 
-- Added typed FamilySearch deserialization for `PersonInfo`, `NameFormInfo`,
-  normalized dates, normalized place text, and FamilySearch `display`
-  payloads.
-- Expanded `FamilySearchPlatform` deserialization so `persons`,
-  `relationships`, `places`, `links`, and `sourceDescriptions` build typed
-  model objects instead of being left as loose extra data.
-- Added `FamilySearchPersonEnvelope` for the observed outer FamilySearch web
-  payload wrapper containing `data`, `person`, `personId`, `summary`,
-  `title`, and related display fields.
-- `Person.display()` now prefers deserialized FamilySearch display data and
-  computes only the fields that are missing from the payload.
+- Added raw GEDCOM 5.x/7 JSON export with `gedcomtools export --to raw-json`.
+- Added stdout output with `--out -` for generated CLI outputs, plus
+  `--quiet` and `--compact` for script and agent workflows.
+- Moved the CLI manual into the Sphinx docs at `docs/cli.md` and included it
+  in the main docs navigation.
+- Added Bash, Windows batch, and PowerShell examples for both CLI usage and
+  Python module/API workflows under `examples/`.
 
-### Samples and examples
+### MCP server
 
-- Added FamilySearch sample JSON fixtures under
-  `.sample_data/familysearch/`.
-- Added disk-based tests covering both the platform payload and the outer
-  FamilySearch person envelope.
-- Added `examples/familysearch_deserialize.py` showing how to load the
-  FamilySearch extension plugin and deserialize the sample payloads.
+- Added `gedcomtools-mcp`, an optional stdio MCP server for using
+  gedcomtools from MCP-capable clients.
+- The server can detect and summarize GEDCOM 5.x, GEDCOM 7, and GEDCOM X JSON
+  files; browse people, families, sources, relationships, and raw record
+  trees; convert GEDCOM 5.x to GEDCOM X JSON; export raw GEDCOM JSON and graph
+  JSONL files; and inspect GEDCOM X schema metadata.
+- Added an in-server `man` tool so clients can discover recommended workflows,
+  exact parameters, return shapes, and caveats at runtime.
+- Made `networkx` a base dependency because graph and GML APIs import it
+  directly.
 
-### Reliability and release refresh
+### Cross-platform GEDCOM loading
 
-- Added symmetric custom deserialization hooks so `Serialization.deserialize()`
-  now checks `_deserializer(data)` and `from_json(data, None)` before falling
-  back to `model_validate`, `from_dict`, or schema-driven construction.
-- Fixed the GedcomX -> GEDCOM 7 facade path so `Gedcom7.from_gedcomx()` and
-  `GedcomX.to_gedcom7()` rebuild their GEDCOM 7 tag/xref indexes after
-  conversion. Converted objects now work immediately with `g7["HEAD"]`,
-  `individuals()`, `get_individual()`, validation, version detection, and
-  relationship traversal without requiring a write/read round trip.
-- Hardened public remote-loading paths with a shared bounded download helper:
-  URL fetches now use a timeout and a hard response-size cap instead of
-  unbounded `urlopen(...).read()` calls.
-- Tightened repo tooling configuration so `pyright` ignores generated build
-  artifacts and `pylint` focuses on maintained source paths.
+- Fixed GEDCOM 7 loading on Windows and Linux for legacy Windows-encoded bytes
+  such as `0xb7`. GEDCOM 7 data is still decoded as UTF-8 first, but CP-1252
+  and Latin-1 compatibility fallbacks now produce a `non_utf8_encoding`
+  validation warning instead of crashing.
+- Added a shared `Gedcom7.parse_bytes()` path used by local files, URLs, and
+  `.gdz` archive entries, so zipped GEDCOM 7 files behave the same as regular
+  `.ged` files.
+- Added regression tests for UTF-8 BOM files, Windows CP-1252 GEDCOM 7 files,
+  and CP-1252 `.gdz` archive entries.
+- Made GedcomX JSON CLI loading byte-based so Windows default text encodings do
+  not affect JSON imports.
+
+### Release cleanup
+
+- Removed `.env` from git tracking and added it to `.gitignore`.
+- Made GEDCOM version sniffing and the legacy `_gedcom5x` helper more tolerant
+  of non-UTF-8 input bytes.
+- Made spec cache text reads and writes explicit UTF-8.
+- Consolidated release history into `CHANGES.md`; `UPDATES.md` has been folded
+  into that changelog.
 
 ### Release packaging
 
-- Bumped the package and docs version to `0.8.0b3`.
-- Rebuilt the Sphinx HTML documentation and release artifacts for this beta
-  cut, including `gedcomtools-0.8.0b3.tar.gz` and
-  `gedcomtools-0.8.0b3-py3-none-any.whl`.
+- Bumped the package and docs version to `0.8.2b4`.
+- Verified this refresh with `ruff`, `pylint`, pytest, `py_compile`, and a
+  Sphinx HTML docs build.
 
 ## Previous Development Updates
 
@@ -528,12 +534,24 @@ gedcomtools/
 pip install gedcomtools
 ```
 
+For command-line usage, see the basic-to-advanced user manual in
+[`docs/cli.md`](docs/cli.md).
+
+Install the optional MCP server dependencies when you want to expose the
+toolkit to MCP clients:
+
+```bash
+pip install "gedcomtools[mcp]"
+```
+
 Or from source:
 
 ```bash
 git clone https://github.com/cartwrightdj/gedcomtools.git
 cd gedcomtools
 pip install -e .
+# or, with the MCP server extra:
+pip install -e ".[mcp]"
 ```
 
 ---
@@ -657,9 +675,11 @@ for indi_node in g["INDI"]:
 ```bash
 # GEDCOM 5 → GEDCOM X JSON (auto-detects source format)
 gedcomtools convert family.ged output.json -gx
+gedcomtools convert family.ged --to gx --out output.json
 
 # GEDCOM 5 → GEDCOM 7
 gedcomtools convert family.ged output.ged -g7
+gedcomtools convert family.ged --to g7 --out output.ged
 
 # Drop vendor/non-standard tags during G5→G7 (default)
 gedcomtools convert family.ged output.ged -g7 --on-unknown drop
@@ -667,6 +687,39 @@ gedcomtools convert family.ged output.ged -g7 --on-unknown drop
 # Rename vendor tags to _TAG extension tags instead of dropping them
 gedcomtools convert family.ged output.ged -g7 --on-unknown convert
 ```
+
+Use `--out -` with the modern CLI form to write converted data to stdout:
+
+```bash
+gedcomtools convert family.ged --to gx --out - > family.gedcomx.json
+gedcomtools convert family.ged --to g7 --out - > family7.ged
+```
+
+For scripts, add `--quiet` to suppress status text and `--compact` for
+single-line JSON:
+
+```bash
+gedcomtools convert family.ged --to gx --out - --quiet --compact > family.json
+```
+
+### `gedcomtools export` — CSV and raw JSON export
+
+```bash
+# Preserve the GEDCOM 5.x/7 record tree as JSON
+gedcomtools export family.ged --to raw-json --out family.raw.json
+
+# Stream raw JSON to stdout for agents and shell pipelines
+gedcomtools export family.ged --to raw-json --out - | jq '.records | length'
+gedcomtools export family.ged --to raw-json --out - --compact
+
+# Export one CSV per top-level entity type
+gedcomtools export family.ged --to csv --out export/family
+gedcomtools export family.ged --to csv --out export/family --quiet
+```
+
+Raw JSON nodes include `level`, `xref`, `tag`, `value`, `pointer`, `line`, and
+`children`; GEDCOM 7 nodes also include `uri` and `extension` metadata.
+CSV stdout mode emits a JSON envelope containing each CSV document.
 
 | Exit code | Meaning |
 |---|---|
@@ -705,6 +758,65 @@ Commands: `load`, `reload`, `write`, `validate`, `info`, `ls`, `cd`, `pwd`,
 ```bash
 gxcli convert input.ged output.json
 ```
+
+### `gedcomtools-mcp` — MCP server
+
+```bash
+gedcomtools-mcp
+```
+
+The server uses stdio transport for MCP clients and exposes tools for loading,
+summarizing, navigating, converting, and validating GEDCOM 5.x, GEDCOM 7, and
+GEDCOM X JSON files.
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "gedcomtools": {
+      "command": "gedcomtools-mcp"
+    }
+  }
+}
+```
+
+Agent quick setup:
+
+```bash
+# Codex
+codex mcp add gedcomtools -- gedcomtools-mcp
+
+# Claude Code
+claude mcp add gedcomtools -- gedcomtools-mcp
+```
+
+Recommended first call:
+
+```text
+man()
+```
+
+The `man` tool returns an overview, a tool index, and detailed help for a
+specific tool with `man("tool_name")`.
+
+For a longer agent integration guide, including Codex `config.toml`, Claude
+Code project `.mcp.json`, Claude Desktop-style JSON, recommended prompts, and
+safety notes, see `docs/mcp-agents.rst`.
+
+Core MCP tools:
+
+| Area | Tools |
+|---|---|
+| Help and runtime | `man`, `server_info` |
+| File loading and detection | `load_gedcom`, `get_gedcom_version`, `summarize_gedcom5x`, `summarize_gedcomx_json` |
+| GEDCOM 5.x people | `list_individuals`, `get_individual`, `get_person_families` |
+| GEDCOM 5.x relationships | `get_parents`, `get_children`, `get_spouses`, `get_siblings`, `get_ancestors`, `get_descendants`, `find_relationship_path` |
+| GEDCOM 5.x records and evidence | `get_family`, `get_sources`, `get_record_tree` |
+| Conversion and export | `convert_gedcom5x_to_gedcomx`, `export_raw_gedcom_json`, `export_arango_graph` |
+| GEDCOM 7 | `validate_gedcom7`, `inspect_gedcom7` |
+| GEDCOM X browsing | `list_gedcomx_collections`, `list_gedcomx_objects`, `get_gedcomx_object`, `search_gedcomx_persons`, `get_gedcomx_person_relationships`, `resolve_gedcomx_reference` |
+| GEDCOM X schema | `get_gedcomx_schema_class`, `search_gedcomx_schema` |
 
 ---
 

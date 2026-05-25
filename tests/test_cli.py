@@ -21,8 +21,7 @@ import pytest
 
 from gedcomtools.cli import (
     _sniff_source_type,
-    OK, ERR_FILE_NOT_FOUND, ERR_UNKNOWN_SOURCE_TYPE,
-    ERR_UNSUPPORTED_CONV, ERR_CONVERSION_FAILED, ERR_IO,
+    OK, ERR_FILE_NOT_FOUND, ERR_CONVERSION_FAILED, ERR_IO,
 )
 
 
@@ -70,6 +69,11 @@ class TestSniffSourceType:
     def test_json_object_detected_as_gx(self, tmp_path):
         f = tmp_path / "test.json"
         f.write_text('{"persons": []}')
+        assert _sniff_source_type(f) == "gx"
+
+    def test_json_object_with_bom_and_whitespace_detected_as_gx(self, tmp_path):
+        f = tmp_path / "test.json"
+        f.write_bytes(b"\xef\xbb\xbf\n  {\"persons\": []}")
         assert _sniff_source_type(f) == "gx"
 
     def test_g5_synthetic_file(self, tmp_path):
@@ -138,6 +142,31 @@ class TestExitCodes:
             data = json.load(f)
         assert isinstance(data, dict)
 
+    def test_legacy_convert_can_write_stdout(self, ged_tiny):
+        result = run_cli("convert", str(ged_tiny), "-", "-gx")
+
+        assert result.returncode == OK
+        data = json.loads(result.stdout)
+        assert isinstance(data, dict)
+        assert "Detected source type" in result.stderr
+
+    def test_legacy_convert_stdout_can_be_quiet_and_compact(self, ged_tiny):
+        result = run_cli("convert", str(ged_tiny), "-", "-gx", "--quiet", "--compact")
+
+        assert result.returncode == OK
+        assert result.stderr == ""
+        assert "\n  " not in result.stdout
+        assert isinstance(json.loads(result.stdout), dict)
+
+    def test_legacy_csv_stdout_can_be_quiet_and_compact(self, ged_tiny):
+        result = run_cli("convert", str(ged_tiny), "-", "-csv", "--quiet", "--compact")
+
+        assert result.returncode == OK
+        assert result.stderr == ""
+        assert "\n  " not in result.stdout
+        data = json.loads(result.stdout)
+        assert data["individuals"]["rows"] > 0
+
     def test_output_has_persons(self, ged_tiny, tmp_path):
         out = tmp_path / "out.json"
         run_cli("convert", str(ged_tiny), str(out), "-gx")
@@ -173,14 +202,21 @@ class TestHelp:
         result = run_cli("--help")
         assert result.returncode == 0
         assert "convert" in result.stdout
+        assert "info" in result.stdout
+        assert "validate" in result.stdout
 
     def test_convert_help(self):
         result = run_cli("convert", "--help")
         assert result.returncode == 0
+        assert "--to" in result.stdout
+        assert "--out" in result.stdout
+        assert "--quiet" in result.stdout
+        assert "--compact" in result.stdout
+
+    def test_legacy_convert_help(self):
+        result = run_cli("convert", "source.ged", "dest.json", "-gx", "--help")
+        assert result.returncode == 0
         assert "-gx" in result.stdout
-        assert "-g5" in result.stdout
-        assert "-g7" in result.stdout
-        assert "-csv" in result.stdout
 
     def test_no_args_exits_nonzero(self):
         result = run_cli()

@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import csv as _csv
+import io
 import json
 import re
 import sys
@@ -28,10 +29,10 @@ if TYPE_CHECKING:
 from gedcomtools.gedcom_protocol import GedcomFile
 from gedcomtools.glog import get_logger
 
-log = get_logger(__name__)
-
 from .gctool_output import _green, _red, _yellow
 from .gctool_load import _load
+
+log = get_logger(__name__)
 
 
 _MONTH_ABBREVS = frozenset(
@@ -284,39 +285,51 @@ def cmd_repair(args) -> int:
     errors_after   = sum(1 for i in issues_after if i.severity == "error")
     warnings_after = len(issues_after) - errors_after
 
+    stdout_output = args.out == "-"
     out_path = Path(args.out) if args.out else path.with_stem(path.stem + "_repaired")
     dry_run  = getattr(args, "dry_run", False)
+    quiet = getattr(args, "quiet", False)
 
     if not dry_run:
-        if fmt == "g7":
+        if stdout_output and fmt == "g7":
+            from gedcomtools.gedcom7.writer import Gedcom7Writer
+            sys.stdout.write(Gedcom7Writer().serialize(cast("Gedcom7", obj).records))
+        elif stdout_output:
+            cast("Gedcom5", obj)._parser.save_gedcom(sys.stdout)
+        elif fmt == "g7":
             cast("Gedcom7", obj).write(out_path)
         else:
             with open(out_path, "w", encoding="utf-8") as fh:
                 cast("Gedcom5", obj)._parser.save_gedcom(fh)
 
     if args.json:
+        status = sys.stderr if stdout_output and not dry_run else sys.stdout
         print(json.dumps({
             "before":  {"errors": errors_before, "warnings": warnings_before},
             "after":   {"errors": errors_after,  "warnings": warnings_after},
             "fixes":   [{"code": k, "count": v} for k, v in sorted(counts.items())],
-            "output":  str(out_path) if not dry_run else None,
+            "output":  "stdout" if stdout_output and not dry_run else str(out_path) if not dry_run else None,
             "dry_run": dry_run,
-        }, indent=2))
+        }, indent=2), file=status)
     else:
+        status = sys.stderr if stdout_output and not dry_run else sys.stdout
+        if quiet:
+            return 0
         def _pl(n: int, word: str) -> str:
             return f"{n} {word}{'s' if n != 1 else ''}"
-        print(f"Before: {_pl(errors_before, 'error')}, {_pl(warnings_before, 'warning')}")
+        print(f"Before: {_pl(errors_before, 'error')}, {_pl(warnings_before, 'warning')}", file=status)
         if counts:
-            print("Fixes applied:")
+            print("Fixes applied:", file=status)
             for code, n in sorted(counts.items()):
-                print(f"  [{code}]  {_pl(n, 'node')}")
+                print(f"  [{code}]  {_pl(n, 'node')}", file=status)
         else:
-            print("No fixes needed.")
-        print(f"After:  {_pl(errors_after, 'error')}, {_pl(warnings_after, 'warning')}")
+            print("No fixes needed.", file=status)
+        print(f"After:  {_pl(errors_after, 'error')}, {_pl(warnings_after, 'warning')}", file=status)
         if dry_run:
-            print(f"[dry-run] would write to: {out_path}")
+            print(f"[dry-run] would write to: {out_path}", file=status)
         else:
-            print(f"Repaired file written to: {out_path}")
+            target = "stdout" if stdout_output else str(out_path)
+            print(f"Repaired file written to: {target}", file=status)
     return 0
 
 
@@ -345,23 +358,133 @@ def _write_detail_csv(path: Path, headers: List[str], rows: List[List[Any]]) -> 
     return len(rows)
 
 
-def export_gedcom_to_csv(file: "Path | str", out: "Path | str") -> int:
+def _g5_element_to_raw_json(el: Any) -> Dict[str, Any]:
+    """Return a faithful JSON-friendly snapshot of a GEDCOM 5 element."""
+    try:
+        children = el.get_child_elements()
+    except (AttributeError, TypeError):
+        children = []
+    value = getattr(el, "value", None)
+    if value is None:
+        try:
+            value = el.get_value()
+        except (AttributeError, TypeError):
+            value = ""
+    return {
+        "level": getattr(el, "level", None),
+        "xref": getattr(el, "xref", "") or None,
+        "tag": getattr(el, "tag", ""),
+        "value": value or "",
+        "pointer": bool(re.fullmatch(r"@[^@\s]+@", value or "")),
+        "line": getattr(el, "_line_num", None) or None,
+        "children": [_g5_element_to_raw_json(child) for child in children],
+    }
+
+
+def _g7_structure_to_raw_json(node: Any) -> Dict[str, Any]:
+    """Return a faithful JSON-friendly snapshot of a GEDCOM 7 structure."""
+    return {
+        "level": getattr(node, "level", None),
+        "xref": getattr(node, "xref_id", None),
+        "tag": getattr(node, "tag", ""),
+        "value": getattr(node, "payload", "") or "",
+        "pointer": bool(getattr(node, "payload_is_pointer", False)),
+        "line": getattr(node, "line_num", None),
+        "uri": getattr(node, "uri", None),
+        "extension": bool(getattr(node, "extension", False)),
+        "children": [
+            _g7_structure_to_raw_json(child)
+            for child in getattr(node, "children", [])
+        ],
+    }
+
+
+def _raw_json_document(path: Path, fmt: str, obj: GedcomFile) -> Dict[str, Any]:
+    """Build a raw GEDCOM tree document that preserves records and children."""
+    version = obj.detect_gedcom_version() or "unknown"
+    if fmt == "g7":
+        records = [_g7_structure_to_raw_json(record) for record in cast("Gedcom7", obj).records]
+    else:
+        records = [
+            _g5_element_to_raw_json(record)
+            for record in cast("Gedcom5", obj)._parser.get_root_child_elements()
+        ]
+    return {
+        "file": str(path),
+        "format": f"GEDCOM {fmt[-1]}",
+        "version": version,
+        "records": records,
+    }
+
+
+def _csv_to_string(headers: List[str], rows: List[List[Any]]) -> str:
+    """Render CSV data to a string for stdout/export envelopes."""
+    buf = io.StringIO()
+    w = _csv.writer(buf)
+    w.writerow(headers)
+    for row in rows:
+        w.writerow(["" if value is None else value for value in row])
+    return buf.getvalue()
+
+
+def _json_text(data: Any, *, compact: bool = False) -> str:
+    """Render JSON for CLI output."""
+    if compact:
+        return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+def export_gedcom_to_csv(
+    file: "Path | str",
+    out: "Path | str",
+    *,
+    quiet: bool = False,
+    compact: bool = False,
+) -> int:
     """Export a GEDCOM 5/7 file to one CSV per top-level entity type."""
     from argparse import Namespace
-    return cmd_export(Namespace(file=str(file), to="csv", out=str(out), json=False))
+    return cmd_export(
+        Namespace(
+            file=str(file),
+            to="csv",
+            out=str(out),
+            json=False,
+            compact=compact,
+            quiet=quiet,
+        )
+    )
 
 
 def cmd_export(args) -> int:
-    """Dump each top-level GEDCOM entity type to CSV files."""
+    """Dump GEDCOM data to CSV files or a raw JSON tree."""
     path = Path(args.file)
-    _fmt, obj = _load(path)
+    fmt, obj = _load(path)
 
-    if args.to.lower() != "csv":
+    export_format = args.to.lower()
+    compact = getattr(args, "compact", False)
+    quiet = getattr(args, "quiet", False)
+    if export_format in {"json", "raw-json"}:
+        data = _raw_json_document(path, fmt, obj)
+        text = _json_text(data, compact=compact)
+        if args.out and args.out != "-":
+            out_path = Path(args.out)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(text + "\n", encoding="utf-8")
+            if args.json:
+                print(_json_text({"path": str(out_path), "records": len(data["records"])}, compact=compact))
+            elif not quiet:
+                print(f"Raw JSON written to: {out_path}  ({len(data['records'])} records)")
+        else:
+            print(text)
+        return 0
+
+    if export_format != "csv":
         print(f"error: unsupported export format {args.to!r}", file=sys.stderr)
         return 1
 
+    stdout_export = args.out == "-"
     base = Path(args.out) if args.out else path.with_suffix("")
-    if not base.name:
+    if not stdout_export and not base.name:
         print(f"error: --out must be a file prefix, not a bare directory: {base}", file=sys.stderr)
         return 1
 
@@ -515,17 +638,27 @@ def cmd_export(args) -> int:
         },
     }
 
+    if stdout_export:
+        for spec in outputs.values():
+            spec["rows_written"] = len(spec["rows"])
+            spec["csv"] = _csv_to_string(spec["headers"], spec["rows"])
+        print(_json_text({
+            key: {"rows": spec["rows_written"], "csv": spec["csv"]}
+            for key, spec in outputs.items()
+        }, compact=compact))
+        return 0
+
     for spec in outputs.values():
-        spec["rows_written"] = _write_detail_csv(
-            spec["path"], spec["headers"], spec["rows"]
-        )
+        spec["rows_written"] = _write_detail_csv(spec["path"], spec["headers"], spec["rows"])
 
     if args.json:
-        print(json.dumps({
+        print(_json_text({
             key: {"path": str(spec["path"]), "rows": spec["rows_written"]}
             for key, spec in outputs.items()
-        }, indent=2))
+        }, compact=compact))
     else:
+        if quiet:
+            return 0
         labels = {
             "individuals": "Individuals",
             "families": "Families",
@@ -685,8 +818,10 @@ def cmd_merge(args) -> int:
 
     print(f"  {len(conflicts)} potential duplicate{'s' if len(conflicts) != 1 else ''} found")
 
-    # Conflict resolution: sets of xrefs from file2 to skip
+    # Conflict resolution: xrefs from file2 to skip, plus survivor remaps for
+    # references in copied family/source records.
     skip_xrefs2: set = set()
+    survivor_remap: Dict[str, str] = {}
     no_interactive = getattr(args, "no_interactive", False) or not sys.stdin.isatty()
 
     for xref1, d2 in conflicts:
@@ -706,6 +841,7 @@ def cmd_merge(args) -> int:
             ).strip()
             if choice == "1":
                 skip_xrefs2.add(d2.xref.upper())
+                survivor_remap[d2.xref.upper()] = xref1
                 break
             if choice == "2":
                 # remove from file1 — not supported in this implementation
@@ -717,6 +853,7 @@ def cmd_merge(args) -> int:
 
     # Build xref remap for file2
     remap = _alloc_xref_remap(obj1, obj2, fmt1, fmt2)
+    remap.update(survivor_remap)
 
     # Determine output path
     stem = Path(args.file1).stem

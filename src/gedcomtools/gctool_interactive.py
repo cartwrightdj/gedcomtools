@@ -23,8 +23,6 @@ from typing import Any, Dict, List, Optional
 from gedcomtools.glog import get_logger
 from gedcomtools.utils.Utilities import _is_url
 
-log = get_logger(__name__)
-
 from .gctool_output import (
     _bold, _cyan, _dim, _green, _kv, _norm_xref, _red, _table, _yellow,
 )
@@ -32,6 +30,8 @@ from .gctool_load import _load, _load_url
 from .gctool_examine import _Node, _run_examine
 from .gctool_dataops import cmd_diff, cmd_export, cmd_merge, cmd_repair
 from .gctool_commands import _LIST_TYPES
+
+log = get_logger(__name__)
 
 
 _INTERACTIVE_HELP = """\
@@ -48,7 +48,7 @@ Commands:
   edit    [XREF]           Browse and modify the GEDCOM tree
   merge FILE2 [OUT]        Merge current file with FILE2
   diff  FILE2              Structural diff against FILE2
-  export [csv [OUT]]       Dump top-level GEDCOM entities to CSV
+  export [csv|raw-json [OUT]] Dump top-level entities to CSV or raw JSON
   repair [OUT]             Auto-fix common validation issues
   help                     Show this message
   exit / quit              Exit the REPL

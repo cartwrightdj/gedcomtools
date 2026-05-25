@@ -1,6 +1,6 @@
 # gxcli — GEDCOM-X Interactive Inspector
 
-A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version **0.8.1**.
+A schema-aware, shell-style REPL for loading, navigating, inspecting, editing, and exporting GEDCOM-X data. Version **0.8.2**.
 
 ---
 
@@ -44,7 +44,7 @@ python src/gedcomtools/gedcomx/gxcli.py path/to/archive.zip  # GEDCOM-X ZIP
 On startup, an interactive session prints:
 
 ```
-Entering GEDCOM-X browser (0.8.1) Type 'help' for commands, 'quit' to exit.
+Entering GEDCOM-X browser (0.8.2) Type 'help' for commands, 'quit' to exit.
 gx:/>
 ```
 
